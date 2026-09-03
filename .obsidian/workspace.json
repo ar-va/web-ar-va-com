@@ -192,6 +192,18 @@
   },
   "active": "d8508e47527a1c42",
   "lastOpenFiles": [
+    "dist/index.html",
+    "dist/blog/seven-elements-of-public-education/index.html",
+    "dist/blog/solaris-movie/index.html",
+    "dist/blog/popa-mopa/index.html",
+    "dist/blog/hey/index.html",
+    "dist/blog/solaris-movie",
+    "dist/blog/seven-elements-of-public-education",
+    "dist/blog/popa-mopa",
+    "dist/blog/index.html",
+    "dist/blog/hey",
+    "dist/blog",
+    "dist/favicon.svg",
     "src/content/blog/2026-09-03T1513.md",
     "src/content/blog/2026-09-03T1703.md",
     "src/content/blog/2026-09-03T0153.md",
@@ -214,7 +226,6 @@
     "src/content/blog/Untitled 2.md",
     "src/content/blog/Hello World.md",
     "src/content/blog/2026-09-02T0120 - 7 элементов системы образования XXI века.md",
-    "templates",
     "Untitled.md"
   ]
 }
