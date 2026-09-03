@@ -5,8 +5,10 @@ import { glob } from 'astro/loaders';
 const blogCollection = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/blog' }),
   schema: z.object({
-    public: z.coerce.date().optional(),
+    created: z.coerce.date().optional(),
     modified: z.coerce.date().optional(),
+    slug: z.string().optional(),
+    excerpt: z.string().optional(),
     tags: z.preprocess((val) => {
       if (typeof val === 'string') return val.split(',').map(t => t.trim());
       return val;

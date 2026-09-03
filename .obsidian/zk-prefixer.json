@@ -1,0 +1,5 @@
+{
+  "folder": "src/content/blog",
+  "template": "templates/Blog Post Template.md",
+  "format": "YYYY-MM-DDTHHmm"
+}

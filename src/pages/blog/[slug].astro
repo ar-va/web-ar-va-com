@@ -6,7 +6,8 @@ import { createCleanSlug } from '../../utils/helpers';
 export async function getStaticPaths() {
   const blogEntries = await getCollection('blog');
   return blogEntries.map(entry => ({
-    params: { slug: createCleanSlug(entry.id) }, 
+    // Tells Astro to use your frontmatter slug for the URL
+    params: { slug: entry.data.slug || createCleanSlug(entry.id) }, 
     props: { entry },
   }));
 }
@@ -35,9 +36,9 @@ const displayTitle = h1 ? h1.text : 'Untitled Post';
       <h1 class="text-4xl font-bold mb-4 text-zinc-900 dark:text-white leading-tight">{displayTitle}</h1>
       
       <div class="flex flex-wrap items-center gap-3 text-sm uppercase tracking-widest text-zinc-500 font-medium mt-6">
-        {entry.data.public && (
+        {entry.data.created && (
           <time>
-            Published {entry.data.public.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
+            Published {entry.data.created.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
           </time>
         )}
         

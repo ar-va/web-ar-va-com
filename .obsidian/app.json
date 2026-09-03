@@ -1,1 +1,7 @@
-{}
+{
+  "newFileLocation": "folder",
+  "newFileFolderPath": "src/content/blog",
+  "attachmentFolderPath": "./attachments",
+  "useMarkdownLinks": true,
+  "newLinkFormat": "relative"
+}
