@@ -1,0 +1,454 @@
+---
+import { getCollection, render } from 'astro:content';
+import { createCleanSlug, getReadingTime } from '../utils/helpers';
+
+const allPosts = await getCollection('blog');
+const sortedPosts = allPosts
+  .filter(post => post.data.created)
+  .sort((a, b) => b.data.created!.valueOf() - a.data.created!.valueOf());
+
+const postsWithData = await Promise.all(sortedPosts.map(async (post) => {
+  const { headings } = await render(post);
+  const h1 = headings.find(h => h.depth === 1);
+  
+  const sortedTags = (post.data.tags || [])
+    .map(t => t.toLowerCase().trim())
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b));
+
+  return {
+    ...post,
+    displayTitle: h1 ? h1.text : 'Untitled Post',
+    sortedTags
+  };
+}));
+
+const latestPost = postsWithData[0];
+
+// Extract Tags
+const tagCounts: Record<string, number> = {};
+allPosts.forEach(post => {
+  const tags = post.data.tags || [];
+  tags.forEach(tag => {
+    const cleanTag = tag.toLowerCase().trim();
+    if (cleanTag) {
+      tagCounts[cleanTag] = (tagCounts[cleanTag] || 0) + 1;
+    }
+  });
+});
+
+const topics = Object.entries(tagCounts)
+  .sort(([a], [b]) => a.localeCompare(b))
+  .map(([tag, count]) => ({ tag, count }));
+
+// Extract Years and Months
+const yearsMap = new Map<string, Record<string, number>>();
+sortedPosts.forEach(post => {
+  if (post.data.created) {
+    const dateStr = post.data.created.toISOString().split('T')[0];
+    const [year, month] = dateStr.split('-');
+    
+    if (!yearsMap.has(year)) {
+      yearsMap.set(year, {});
+    }
+    const yearObj = yearsMap.get(year)!;
+    yearObj[month] = (yearObj[month] || 0) + 1;
+  }
+});
+
+const yearTotals: Record<string, number> = {};
+yearsMap.forEach((months, year) => {
+  yearTotals[year] = Object.values(months).reduce((sum, count) => sum + count, 0);
+});
+
+// Years sorted descending (newest to oldest)
+const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(a));
+---
+
+<div id="writing" class="font-normal">
+  
+  <div class="flex justify-between items-center mb-2">
+    <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Writing</h2>
+    <a href="#writing" class="text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 px-4 py-2 rounded-full transition-colors">All writing →</a>
+  </div>
+
+  <!-- Latest Section -->
+  {latestPost && (
+    <section>
+      <h2 class="text-zinc-500 dark:text-zinc-500 text-sm">Latest</h2>
+      <a href={`/blog/${latestPost.data.slug || createCleanSlug(latestPost.id)}`} class="group block">
+        <h3 class="text-2xl text-zinc-900 dark:text-zinc-200 group-hover:text-blue-violet-600 dark:group-hover:text-white transition-colors">
+          {latestPost.displayTitle}
+        </h3>
+        
+        <div class="text-zinc-500 text-sm mb-1 flex flex-wrap items-center gap-1">
+          <span>{latestPost.data.created!.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</span>
+          <span>·</span>
+          <span>{getReadingTime(latestPost.id)}</span>
+          
+          {latestPost.sortedTags.length > 0 && (
+            <>
+              <span>·</span>
+              <span class="flex flex-wrap gap-y-1" onclick="event.preventDefault();">
+                {latestPost.sortedTags.map((tag, index) => (
+                  <span class="inline-flex"><button data-tag={tag} class="tag-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{tag}</span></button>{index < latestPost.sortedTags.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1">,</span>}</span>
+                ))}
+              </span>
+            </>
+          )}
+        </div>
+        
+        {latestPost.data.excerpt && (
+          <p class="text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-300 transition-colors">
+            {latestPost.data.excerpt}
+          </p>
+        )}
+      </a>
+    </section>
+  )}
+
+  <hr class="border-zinc-200 dark:border-zinc-800/80 my-6" />
+
+  <!-- Publishing Date Filters -->
+  <section class="mb-2">
+    <h2 class="text-zinc-500 dark:text-zinc-500 text-sm">Date published</h2>
+    <div class="leading-8 text-base" id="date-filters">
+      {years.map((year, yearIndex) => (
+        <span class="year-block inline" data-year-group={year}><button data-year={year} class="year-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{year}</span><span class="no-underline text-zinc-500 dark:text-zinc-400"> ({yearTotals[year]})</span></button><span class="colon hidden text-zinc-500 dark:text-zinc-400 mr-1.5">:</span><span class="month-group hidden" data-year-group={year}>{Object.entries(yearsMap.get(year)!).sort(([a],[b])=>parseInt(a)-parseInt(b)).map(([month, count], monthIndex, arr) => {
+            const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('en-US', { month: 'long' }).toLowerCase();
+            return (
+              <span class="inline"><button data-month={`${year}-${month}`} class="month-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{monthName}</span><span class="no-underline text-zinc-500 dark:text-zinc-400"> ({count})</span></button>{monthIndex < arr.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
+            );
+          })}</span>{yearIndex < years.length - 1 && <span class="year-separator text-zinc-500 dark:text-zinc-600 mx-1.5">·</span>}</span>
+      ))}
+    </div>
+  </section>
+
+  <!-- Topics Section -->
+  <section>
+    <h2 class="text-zinc-500 dark:text-zinc-500 text-sm ">Topics</h2>
+    <div class="leading-8 text-base" id="topics-container">
+      {topics.length > 0 ? topics.map((topic, index) => (
+        <span class="topic-item inline"><button data-tag={topic.tag} class="tag-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{topic.tag}</span><span class="no-underline text-zinc-500 dark:text-zinc-400 transition-colors"> ({topic.count})</span></button><span class={`topic-comma text-zinc-500 dark:text-zinc-600 mr-1.5 ${index < topics.length - 1 ? '' : 'hidden'}`}>,</span></span>
+      )) : null}
+      
+      <span id="no-topics-message" class="text-zinc-500 text-sm hidden">No relevant topics found.</span>
+      {topics.length === 0 && <span class="text-zinc-500 text-sm">No topics found.</span>}
+    </div>
+  </section>
+
+  <hr class="border-zinc-200 dark:border-zinc-800/80 my-6" />
+
+  <!-- All Writing Section -->
+  <section>
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <h2 class="text-zinc-500 dark:text-zinc-500 text-sm m-0 shrink-0">All writing</h2>
+      
+      <div class="relative w-full sm:w-64">
+        <input 
+          type="text" 
+          id="search-input" 
+          placeholder="Search" 
+          class="w-full bg-transparent border-b border-zinc-300 dark:border-zinc-700 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 dark:focus:border-blue-violet-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+        />
+        <svg class="w-4 h-4 absolute right-0 bottom-1 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+    </div>
+
+    <div id="posts-container" class="flex flex-col">
+      {postsWithData.map((post) => (
+        <div 
+          class="post-item flex items-center justify-between group py-2.5 gap-4 border-b border-zinc-100 dark:border-zinc-800/40 last:border-none"
+          data-title={post.displayTitle.toLowerCase()}
+          data-tags={post.sortedTags.join(',').toLowerCase()}
+          data-body={post.body ? post.body.toLowerCase() : ''}
+          data-date={post.data.created!.toISOString().split('T')[0]}
+        >
+          <!-- Left side: Date + Title (min-w-0 allows it to shrink and clip properly) -->
+          <div class="flex items-center min-w-0 flex-grow pr-4">
+            <!-- Date (Hidden on mobile, visible on sm+) -->
+            <div class="hidden sm:flex items-center shrink-0">
+              <time class="text-zinc-500 dark:text-zinc-500 text-sm tabular-nums">
+                {post.data.created!.toISOString().split('T')[0]}
+              </time>
+              <span class="text-zinc-300 dark:text-zinc-700 mx-1.5">·</span>
+            </div>
+
+            <!-- Title (Clips with an ellipsis if it's too long) -->
+            <a href={`/blog/${post.data.slug || createCleanSlug(post.id)}`} class="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white underline decoration-zinc-300 dark:decoration-zinc-700 hover:decoration-zinc-500 dark:hover:decoration-zinc-400 underline-offset-4 transition-colors text-base truncate block w-full">
+              {post.displayTitle}
+            </a>
+          </div>
+          
+          <!-- Tags (Locked to the right, forced on the same line, never shrinks) -->
+          <div class="flex flex-wrap justify-end gap-1 text-sm shrink-0">
+            {post.sortedTags.map((tag, index) => (
+              <span class="inline-flex">
+                <button data-tag={tag} class="tag-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
+                  <span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{tag}</span>
+                </button>
+                {index < post.sortedTags.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1">,</span>}
+              </span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+    
+    <div id="filter-info-container" class="hidden mt-4 text-sm text-zinc-500 items-baseline">
+      <span id="filter-info-text"></span>
+      <button id="clear-all-btn" class="ml-1 text-blue-violet-600 dark:text-blue-violet-400 hover:text-zinc-900 dark:hover:text-white transition-colors underline decoration-blue-violet-500/50 hover:decoration-blue-violet-500 underline-offset-4">Clear all</button>
+    </div>
+    
+    <p id="no-results-message" class="text-zinc-500 text-sm hidden mt-4">No matching posts found.</p>
+  </section>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const searchInput = document.getElementById('search-input');
+    const allTagBtns = document.querySelectorAll('.tag-btn');
+    const topicItems = document.querySelectorAll('.topic-item'); 
+    const yearBlocks = document.querySelectorAll('.year-block');
+    const yearBtns = document.querySelectorAll('.year-btn');
+    const monthBtns = document.querySelectorAll('.month-btn');
+    const posts = document.querySelectorAll('.post-item');
+    
+    const noResults = document.getElementById('no-results-message');
+    const noTopicsMessage = document.getElementById('no-topics-message');
+    const filterInfoContainer = document.getElementById('filter-info-container');
+    const filterInfoText = document.getElementById('filter-info-text');
+    const clearAllBtn = document.getElementById('clear-all-btn');
+
+    let currentSearch = '';
+    let activeTags = new Set();
+    let activeYears = new Set(); 
+    let activeMonths = new Set(); 
+
+    function filterPosts() {
+      const searchWords = currentSearch.split(/\s+/).filter(Boolean);
+      let visibleCount = 0;
+      let visibleTags = new Set(); 
+
+      posts.forEach(post => {
+        const title = post.getAttribute('data-title') || '';
+        const tagsString = post.getAttribute('data-tags') || '';
+        const body = post.getAttribute('data-body') || '';
+        const postDate = post.getAttribute('data-date') || '';
+        const postTagsArray = tagsString.split(',').filter(Boolean);
+
+        const postYear = postDate.substring(0, 4);
+        const postMonthStr = postDate.substring(5, 7); 
+        
+        const dateObj = new Date(parseInt(postYear), parseInt(postMonthStr) - 1);
+        const postMonthName = dateObj.toLocaleString('en-US', { month: 'long' }).toLowerCase();
+        
+        const searchableText = `${title} ${tagsString} ${body} ${postYear} ${postMonthName}`;
+
+        const matchesSearch = searchWords.length === 0 || searchWords.every(word => 
+          searchableText.includes(word)
+        );
+          
+        const matchesTags = activeTags.size === 0 || 
+          Array.from(activeTags).every(activeTag => postTagsArray.includes(activeTag));
+          
+        let matchesDate = true;
+        if (activeYears.size > 0) {
+          if (activeYears.has(postYear)) {
+            const monthsForThisYear = Array.from(activeMonths).filter(m => String(m).startsWith(postYear));
+            if (monthsForThisYear.length > 0) {
+              matchesDate = activeMonths.has(postDate.substring(0, 7));
+            } else {
+              matchesDate = true; 
+            }
+          } else {
+            matchesDate = false;
+          }
+        }
+
+        if (matchesSearch && matchesTags && matchesDate) {
+          (post as HTMLElement).style.display = 'flex';
+          visibleCount++;
+          postTagsArray.forEach(t => visibleTags.add(t)); 
+        } else {
+          (post as HTMLElement).style.display = 'none';
+        }
+      });
+
+      if (noResults) {
+        noResults.style.display = visibleCount === 0 ? 'block' : 'none';
+      }
+
+      let visibleTopicElements = [];
+      topicItems.forEach(item => {
+        const btn = item.querySelector('.tag-btn');
+        const tag = btn?.getAttribute('data-tag');
+        
+        if (tag && visibleTags.has(tag)) {
+          item.classList.remove('hidden');
+          item.classList.add('inline');
+          visibleTopicElements.push(item);
+        } else {
+          item.classList.add('hidden');
+          item.classList.remove('inline');
+        }
+      });
+
+      visibleTopicElements.forEach((item, index) => {
+        const comma = item.querySelector('.topic-comma');
+        if (comma) {
+          if (index < visibleTopicElements.length - 1) {
+            comma.classList.remove('hidden');
+          } else {
+            comma.classList.add('hidden');
+          }
+        }
+      });
+
+      if (visibleTopicElements.length === 0 && noTopicsMessage && topicItems.length > 0) {
+        noTopicsMessage.classList.remove('hidden');
+        noTopicsMessage.classList.add('inline');
+      } else if (noTopicsMessage) {
+        noTopicsMessage.classList.add('hidden');
+        noTopicsMessage.classList.remove('inline');
+      }
+
+      const isFilterActive = currentSearch !== '' || activeTags.size > 0 || activeYears.size > 0 || activeMonths.size > 0;
+      if (isFilterActive && filterInfoContainer && filterInfoText) {
+        const hiddenPosts = posts.length - visibleCount;
+        const hiddenTopics = topicItems.length - visibleTopicElements.length;
+        
+        const topicWord = hiddenTopics === 1 ? 'topic' : 'topics';
+        const postWord = hiddenPosts === 1 ? 'post' : 'posts';
+        
+        if (hiddenPosts > 0 || hiddenTopics > 0) {
+          filterInfoText.textContent = `Filtered: ${hiddenTopics} ${topicWord}, ${hiddenPosts} ${postWord} hidden.`;
+          filterInfoContainer.classList.remove('hidden');
+          filterInfoContainer.classList.add('flex');
+        } else {
+          filterInfoContainer.classList.add('hidden');
+          filterInfoContainer.classList.remove('flex');
+        }
+      } else if (filterInfoContainer) {
+        filterInfoContainer.classList.add('hidden');
+        filterInfoContainer.classList.remove('flex');
+      }
+    }
+
+    function syncStyles() {
+      allTagBtns.forEach(btn => {
+        const tag = btn.getAttribute('data-tag');
+        if (tag && activeTags.has(tag)) {
+          btn.classList.add('active-tag');
+        } else {
+          btn.classList.remove('active-tag');
+        }
+      });
+      
+      yearBlocks.forEach((block) => {
+        const year = block.getAttribute('data-year-group');
+        const yearBtn = block.querySelector('.year-btn');
+        const colon = block.querySelector('.colon');
+        const monthGroup = block.querySelector('.month-group');
+        
+        if (year && activeYears.has(year)) {
+          yearBtn?.classList.add('active-tag');
+          colon?.classList.remove('hidden');
+          monthGroup?.classList.remove('hidden');
+          monthGroup?.classList.add('inline');
+        } else {
+          yearBtn?.classList.remove('active-tag');
+          colon?.classList.add('hidden');
+          monthGroup?.classList.add('hidden');
+          monthGroup?.classList.remove('inline');
+        }
+      });
+      
+      monthBtns.forEach(btn => {
+        const month = btn.getAttribute('data-month');
+        if (month && activeMonths.has(month)) {
+          btn.classList.add('active-tag');
+        } else {
+          btn.classList.remove('active-tag');
+        }
+      });
+    }
+
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        currentSearch = (e.target as HTMLInputElement).value.toLowerCase();
+        filterPosts();
+      });
+    }
+
+    if (clearAllBtn) {
+      clearAllBtn.addEventListener('click', () => {
+        if (searchInput) (searchInput as HTMLInputElement).value = '';
+        currentSearch = '';
+        activeTags.clear();
+        activeYears.clear();
+        activeMonths.clear();
+        syncStyles();
+        filterPosts();
+      });
+    }
+
+    allTagBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation(); 
+        
+        const tag = btn.getAttribute('data-tag');
+        if (!tag) return;
+
+        if (activeTags.has(tag)) {
+          activeTags.delete(tag);
+        } else {
+          activeTags.add(tag);
+        }
+
+        syncStyles();
+        filterPosts();
+      });
+    });
+    
+    yearBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const year = btn.getAttribute('data-year');
+        if (!year) return;
+
+        if (activeYears.has(year)) {
+          activeYears.delete(year);
+          Array.from(activeMonths).forEach(m => {
+            if (String(m).startsWith(year)) activeMonths.delete(m);
+          });
+        } else {
+          activeYears.add(year);
+        }
+        
+        syncStyles();
+        filterPosts();
+      });
+    });
+    
+    monthBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const month = btn.getAttribute('data-month');
+        if (!month) return;
+
+        if (activeMonths.has(month)) {
+          activeMonths.delete(month);
+        } else {
+          activeMonths.add(month);
+        }
+        
+        syncStyles();
+        filterPosts();
+      });
+    });
+  });
+</script>

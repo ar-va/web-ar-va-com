@@ -8,10 +8,11 @@ const blogCollection = defineCollection({
     created: z.coerce.date().optional(),
     modified: z.coerce.date().optional(),
     slug: z.string().optional(),
-    excerpt: z.string().optional(),
+    excerpt: z.any().transform(val => typeof val === 'string' ? val : undefined).optional(),
     tags: z.preprocess((val) => {
       if (typeof val === 'string') return val.split(',').map(t => t.trim());
-      return val;
+      if (Array.isArray(val)) return val.map(t => String(t).trim());
+      return [];
     }, z.array(z.string())).optional(),
   }),
 });
