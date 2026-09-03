@@ -1,0 +1,110 @@
+---
+import { getCollection, render } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import { createCleanSlug } from '../../utils/helpers';
+
+export async function getStaticPaths() {
+  const blogEntries = await getCollection('blog');
+  return blogEntries.map(entry => ({
+    params: { slug: createCleanSlug(entry.id) }, 
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+
+const h1 = headings.find(h => h.depth === 1);
+const displayTitle = h1 ? h1.text : 'Untitled Post';
+---
+
+<style>
+  :global(.hide-first-h1 h1:first-of-type) {
+    display: none !important;
+  }
+  /* Absolutely forces Tailwind to remove blockquote quotation marks from nested elements */
+  :global(.prose blockquote p:first-of-type::before),
+  :global(.prose blockquote p:last-of-type::after) {
+    content: none !important;
+  }
+</style>
+
+<Layout title={`${displayTitle} - ARVA`}>
+  <article class="max-w-3xl mx-auto px-6 w-full flex-grow py-24">
+    <header class="mb-12 border-b border-zinc-200 dark:border-zinc-800 pb-8">
+      <h1 class="text-4xl font-bold mb-4 text-zinc-900 dark:text-white leading-tight">{displayTitle}</h1>
+      
+      <div class="flex flex-wrap items-center gap-3 text-sm uppercase tracking-widest text-zinc-500 font-medium mt-6">
+        {entry.data.public && (
+          <time>
+            Published {entry.data.public.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
+          </time>
+        )}
+        
+        {entry.data.modified && (
+          <span class="flex items-center gap-3">
+            <span class="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
+            <span>
+              Updated {entry.data.modified.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} at {entry.data.modified.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })}
+            </span>
+          </span>
+        )}
+      </div>
+    </header>
+    
+    <div class="prose prose-lg prose-zinc dark:prose-invert max-w-none hide-first-h1 font-normal
+                prose-p:leading-relaxed prose-p:my-5 prose-p:font-normal prose-li:font-normal prose-blockquote:font-normal
+                prose-headings:font-bold prose-headings:tracking-tight prose-headings:mt-0 prose-headings:mb-0
+                prose-img:mx-auto prose-img:rounded-xl prose-img:border prose-img:border-zinc-200 dark:prose-img:border-zinc-800 prose-img:max-h-[550px] prose-img:w-auto prose-img:object-contain prose-img:shadow-sm
+                prose-a:text-blue-violet-600 dark:prose-a:text-blue-violet-400 prose-a:decoration-blue-violet-500/30 hover:prose-a:decoration-blue-violet-500 prose-a:underline-offset-4 prose-a:font-medium transition-colors
+                prose-blockquote:border-l-4 prose-blockquote:border-l-blue-violet-500 prose-blockquote:bg-zinc-50 dark:prose-blockquote:bg-zinc-800/40 prose-blockquote:px-6 prose-blockquote:py-4 prose-blockquote:rounded-r-xl prose-blockquote:not-italic prose-blockquote:text-zinc-700 dark:prose-blockquote:text-zinc-300
+                prose-code:text-blue-violet-600 dark:prose-code:text-blue-violet-400 prose-code:bg-zinc-100 dark:prose-code:bg-zinc-800/70 prose-code:px-1.5 prose-code:py-0.5 prose-code:font-medium prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none
+                prose-hr:border-zinc-200 dark:prose-hr:border-zinc-800 prose-hr:my-8">
+      <Content />
+    </div>
+  </article>
+
+  <script>
+    // Parses Obsidian's > [!type] syntax securely and formats it into the design system
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.prose blockquote').forEach(quote => {
+        const firstP = quote.querySelector('p');
+        
+        if (firstP && firstP.innerHTML.trim().startsWith('[!')) {
+          let html = firstP.innerHTML.trim();
+          
+          // Isolate the very first line containing the [!type] declaration
+          const brIndex = html.indexOf('<br>');
+          const newlineIndex = html.indexOf('\n');
+          let firstLineEnd = html.length;
+          
+          if (brIndex !== -1) firstLineEnd = brIndex;
+          else if (newlineIndex !== -1) firstLineEnd = Math.min(firstLineEnd, newlineIndex);
+
+          const firstLine = html.substring(0, firstLineEnd);
+          const match = firstLine.match(/^\[!([a-zA-Z]+)\](.*)/);
+
+          if (match) {
+            const type = match[1];
+            const rawTitle = match[2].trim();
+            // Automatically fall back to capitalized type name if no custom title is provided
+            const title = rawTitle || type.charAt(0).toUpperCase() + type.slice(1);
+            
+            // Extract the rest of the text and strip the leading <br> if it exists
+            const remainingHtml = html.substring(firstLineEnd).replace(/^(<br>|\n)/, '').trim();
+
+            // Inject the styled component
+            firstP.innerHTML = `<strong class="block text-blue-violet-600 dark:text-blue-violet-400 mb-3 font-bold uppercase tracking-widest text-xs flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                </svg>
+                ${title}
+              </strong>${remainingHtml}`;
+            
+            quote.classList.add('!py-2');
+          }
+        }
+      });
+    });
+  </script>
+</Layout>

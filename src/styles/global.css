@@ -1,0 +1,20 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Enable manual class-based dark mode */
+@custom-variant dark (&:is(.dark *));
+
+/* Define your custom color palette */
+@theme {
+  --color-blue-violet-50: #edf2ff;
+  --color-blue-violet-100: #dfe7ff;
+  --color-blue-violet-200: #c5d3ff;
+  --color-blue-violet-300: #a2b6ff;
+  --color-blue-violet-400: #7d8efc;
+  --color-blue-violet-500: #5f68f5;
+  --color-blue-violet-600: #4f4ceb;
+  --color-blue-violet-700: #3a34ce;
+  --color-blue-violet-800: #302da6;
+  --color-blue-violet-900: #2b2b84;
+  --color-blue-violet-950: #1b1a4c;
+}
