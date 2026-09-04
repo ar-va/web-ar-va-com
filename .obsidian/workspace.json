@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "src/content/blog/2026-09-03T1407.md",
+                "file": "src/content/blog/2026-09-03T0153.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "2026-09-03T1407"
+              "title": "2026-09-03T0153"
             }
           }
         ]
@@ -190,45 +190,32 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "d8508e47527a1c42",
+  "active": "4ecd01f46834c927",
   "lastOpenFiles": [
     "wrangler.jsonc",
-    "node_modules/@cloudflare/vite-plugin/dist/index.d.mts",
-    "node_modules/@cloudflare/vite-plugin/dist/experimental-config.d.mts",
-    "node_modules/@cloudflare/vite-plugin/dist/package-DhQSlwFD.mjs",
-    "node_modules/@cloudflare/vite-plugin/dist/open-PBXRGS4R-HMkvHv1N.mjs",
-    "node_modules/@cloudflare/vite-plugin/dist/experimental-config.mjs",
-    "node_modules/@cloudflare/vite-plugin/dist/index.mjs",
-    "node_modules/@cloudflare/vite-plugin/dist/chunk-Q72B4Q5Z-izl5Qmnx.mjs",
-    "node_modules/@cloudflare/vite-plugin/dist/cf-vite.mjs",
-    "node_modules/@cloudflare/vite-plugin/dist/package-DhQSlwFD.mjs.map",
-    "node_modules/@cloudflare/vite-plugin/README.md",
-    "node_modules/@cloudflare/vite-plugin/dist/open-PBXRGS4R-HMkvHv1N.mjs.map",
-    "node_modules/@astrojs/cloudflare/README.md",
-    "node_modules/@astrojs/underscore-redirects/README.md",
-    "node_modules/@cloudflare/workerd-darwin-arm64/README.md",
-    "node_modules/miniflare/node_modules/@img/sharp-libvips-darwin-arm64/README.md",
-    "node_modules/wrangler/node_modules/@esbuild/darwin-arm64/README.md",
-    "node_modules/miniflare/dist/local-explorer-ui/favicon.svg",
-    "node_modules/miniflare/README.md",
-    "node_modules/wrangler/README.md",
-    "node_modules/miniflare/node_modules/sharp/README.md",
-    "node_modules/miniflare/node_modules/undici/README.md",
-    "node_modules/miniflare/node_modules/undici/types/README.md",
-    "node_modules/miniflare/node_modules/undici/docs/docs/api/api-lifecycle.md",
-    "node_modules/miniflare/node_modules/undici/docs/docs/api/WebSocket.md",
-    "node_modules/miniflare/node_modules/undici/docs/docs/api/Util.md",
-    "node_modules/miniflare/node_modules/undici/docs/docs/api/Socks5ProxyAgent.md",
-    "node_modules/miniflare/node_modules/undici/docs/docs/api/SnapshotAgent.md",
-    "node_modules/miniflare/node_modules/undici/docs/docs/api/RoundRobinPool.md",
-    "node_modules/miniflare/node_modules/undici/docs/docs/api/RetryHandler.md",
-    "node_modules/miniflare/node_modules/undici/docs/docs/api/RetryAgent.md",
-    "node_modules/miniflare/node_modules/undici/docs/docs/api/RedirectHandler.md",
-    "node_modules/miniflare/node_modules/undici/docs/docs/api/ProxyAgent.md",
-    "node_modules/miniflare/node_modules/undici/docs/docs/api/PoolStats.md",
-    "node_modules/miniflare/node_modules/undici/docs/docs/api/Pool.md",
-    "node_modules/miniflare/node_modules/undici/docs/docs/api/MockPool.md",
-    "node_modules/miniflare/node_modules/undici/docs/docs/api/MockErrors.md",
-    "dist/favicon.svg"
+    "src/content/blog/2026-09-03T1703.md",
+    "src/content/blog/2026-09-03T1513.md",
+    "src/content/blog/2026-09-03T1407.md",
+    "src/components/Writing.astro",
+    "src/content/blog/2026-09-03T0145.md",
+    "src/content/blog/2026-09-03T0153.md",
+    "templates/Blog Post Template.md",
+    "src/content/blog/2026-09-03T0140.md",
+    "src/content/blog/2026-09-03T0135 -.md",
+    "src/content/blog/2026-09-03T0131.md",
+    "src/content/blog/2026-09-03T0130.md",
+    "src/content/blog/202609030128.md",
+    "src/content/blog/202609030126.md",
+    "src/content/blog/202609030118.md",
+    "src/content/blog/202609030125.md",
+    "src/content/blog/Untitled 1.md",
+    "src/content/blog/202609030121.md",
+    "src/content/blog/202609030120.md",
+    "src/content/blog/Untitled.md",
+    "src/content/blog/Untitled 2.md",
+    "src/content/blog/Hello World.md",
+    "src/content/blog/2026-09-02T0120 - 7 элементов системы образования XXI века.md",
+    "templates",
+    "Untitled.md"
   ]
 }
