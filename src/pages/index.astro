@@ -1,38 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { getCollection, render } from 'astro:content';
-import { createCleanSlug, getReadingTime } from '../utils/helpers';
-
-const allPosts = await getCollection('blog');
-const sortedPosts = allPosts
-  .filter(post => post.data.created)
-  .sort((a, b) => b.data.created!.valueOf() - a.data.created!.valueOf());
-
-const postsWithData = await Promise.all(sortedPosts.map(async (post) => {
-  const { headings } = await render(post);
-  const h1 = headings.find(h => h.depth === 1);
-  return {
-    ...post,
-    displayTitle: h1 ? h1.text : 'Untitled Post'
-  };
-}));
-
-const latestPost = postsWithData[0];
-
-const tagCounts: Record<string, number> = {};
-allPosts.forEach(post => {
-  const tags = post.data.tags || [];
-  tags.forEach(tag => {
-    const cleanTag = tag.toLowerCase().trim();
-    if (cleanTag) {
-      tagCounts[cleanTag] = (tagCounts[cleanTag] || 0) + 1;
-    }
-  });
-});
-
-const topics = Object.entries(tagCounts)
-  .sort(([a], [b]) => a.localeCompare(b))
-  .map(([tag, count]) => ({ tag, count }));
+import Writing from '../components/Writing.astro';
 ---
 
 <Layout title="ARVA - Portfolio">
@@ -41,16 +9,16 @@ const topics = Object.entries(tagCounts)
     <!-- Hero Section -->
     <main class="py-24 grid grid-cols-1 md:grid-cols-2 gap-12">
       <div>
-        <div class="flex items-center gap-4 mb-6">
+        <div class="flex items-center gap-4 mb-4">
           <div class="w-6 h-[2px] bg-blue-violet-500"></div>
           <span class="text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400">Business Success Specialist</span>
         </div>
         
-        <h1 class="text-6xl font-bold mb-6 tracking-tight text-zinc-900 dark:text-white">
+        <h1 class="text-6xl font-bold mb-4 tracking-tight text-zinc-900 dark:text-white">
           Artur — ARVA<span class="text-blue-violet-500">.</span>
         </h1>
         
-        <p class="text-lg mb-8 leading-relaxed max-w-md text-zinc-600 dark:text-zinc-300">
+        <p class="text-lg mb-4 leading-relaxed max-w-md text-zinc-600 dark:text-zinc-300">
           I study and develop tools and approaches to different business mechanisms that help you to increase value and effectiveness of business processes.
         </p>
         
@@ -69,7 +37,7 @@ const topics = Object.entries(tagCounts)
       </div>
       
       <div class="text-sm leading-relaxed max-w-md text-zinc-600 dark:text-zinc-400 flex flex-col justify-center">
-        <p class="mb-6">
+        <p class="mb-4">
           Building a successful business takes patience and courage. You learn about human psychology and your own limits through daily challenges and decisions. But no matter how hard you try, sometimes you hit a wall: may it be a technical, behavioural or creative issue. 
         </p>
         <p>
@@ -80,18 +48,18 @@ const topics = Object.entries(tagCounts)
 
     <!-- Selected Work Section -->
     <section class="py-12">
-      <div class="flex justify-between items-center mb-8">
+      <div class="flex justify-between items-center mb-2">
         <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Selected work</h2>
         <a href="#" class="text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 px-4 py-2 rounded-full transition-colors">All work →</a>
       </div>
       
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-2">
         <a href="#" class="group block p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] hover:border-blue-violet-500 dark:hover:border-blue-violet-500 transition-all duration-300 hover:-translate-y-1.5 shadow-sm hover:shadow-md dark:shadow-none">
-          <div class="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-2">
             <div class="w-2 h-2 rounded-full bg-blue-violet-500"></div>
             Released
           </div>
-          <div class="flex justify-between items-center mb-4">
+          <div class="flex justify-between items-center mb-2">
             <h3 class="text-lg font-bold text-zinc-900 dark:text-white group-hover:text-blue-violet-500 transition-colors">Project One</h3>
             <span class="text-blue-violet-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
           </div>
@@ -101,11 +69,11 @@ const topics = Object.entries(tagCounts)
         </a>
 
         <a href="#" class="group block p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] hover:border-blue-violet-500 dark:hover:border-blue-violet-500 transition-all duration-300 hover:-translate-y-1.5 shadow-sm hover:shadow-md dark:shadow-none">
-          <div class="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-2">
             <div class="w-2 h-2 rounded-full bg-blue-violet-500"></div>
             In Development
           </div>
-          <div class="flex justify-between items-center mb-4">
+          <div class="flex justify-between items-center mb-2">
             <h3 class="text-lg font-bold text-zinc-900 dark:text-white group-hover:text-blue-violet-500 transition-colors">Project Two</h3>
             <span class="text-blue-violet-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
           </div>
@@ -115,11 +83,11 @@ const topics = Object.entries(tagCounts)
         </a>
 
         <a href="#" class="group block p-6 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] hover:border-blue-violet-500 dark:hover:border-blue-violet-500 transition-all duration-300 hover:-translate-y-1.5 shadow-sm hover:shadow-md dark:shadow-none">
-          <div class="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-4">
+          <div class="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-2">
             <div class="w-2 h-2 rounded-full bg-blue-violet-500"></div>
             Design System
           </div>
-          <div class="flex justify-between items-center mb-4">
+          <div class="flex justify-between items-center mb-2">
             <h3 class="text-lg font-bold text-zinc-900 dark:text-white group-hover:text-blue-violet-500 transition-colors">UI Kit</h3>
             <span class="text-blue-violet-500 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
           </div>
@@ -134,65 +102,8 @@ const topics = Object.entries(tagCounts)
       </p>
     </section>
 
-    <!-- Unified Blog Archive Section -->
-    <div id="writing" class="py-16 mt-8 font-normal border-t border-zinc-200 dark:border-zinc-800">
-      
-      <!-- Latest Section -->
-      {latestPost && (
-        <section class="mb-12">
-          <h2 class="text-zinc-500 dark:text-zinc-500 text-sm mb-6">Latest</h2>
-          <a href={`/blog/${latestPost.data.slug || createCleanSlug(latestPost.id)}`} class="group block">
-            <h3 class="text-2xl text-zinc-900 dark:text-zinc-200 group-hover:text-blue-violet-600 dark:group-hover:text-white transition-colors mb-2">
-              {latestPost.displayTitle}
-            </h3>
-            <p class="text-zinc-500 text-sm mb-4">
-              {latestPost.data.created!.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })} · {getReadingTime(latestPost.id)}
-            </p>
-            <p class="text-zinc-600 dark:text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-zinc-300 transition-colors">
-              {latestPost.data.excerpt || "It's hard to make a saw that cuts trees but not arms. Keep reading →"}
-            </p>
-          </a>
-        </section>
-      )}
+    <!-- Isolated Writing Component -->
+    <Writing />
 
-      <hr class="border-zinc-200 dark:border-zinc-800/80 my-12" />
-
-      <!-- Topics Section -->
-      <section class="mb-12">
-        <h2 class="text-zinc-500 dark:text-zinc-500 text-sm mb-6">Topics</h2>
-        <div class="flex flex-wrap gap-x-1.5 gap-y-2 leading-relaxed text-base">
-          {topics.length > 0 ? topics.map((topic, index) => (
-            <div class="inline-flex">
-              <a href="#" class="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white underline decoration-zinc-300 dark:decoration-zinc-700 hover:decoration-zinc-500 dark:hover:decoration-zinc-400 underline-offset-4 transition-colors">
-                {topic.tag} ({topic.count})
-              </a>
-              {index < topics.length - 1 && <span class="text-zinc-400 dark:text-zinc-600 ml-0.5">,</span>}
-            </div>
-          )) : (
-            <span class="text-zinc-500 text-sm">No topics found.</span>
-          )}
-        </div>
-      </section>
-
-      <hr class="border-zinc-200 dark:border-zinc-800/80 my-12" />
-
-      <!-- Writing Section -->
-      <section>
-        <h2 class="text-zinc-500 dark:text-zinc-500 text-sm mb-6">Writing</h2>
-        <div class="flex flex-col gap-4">
-          {postsWithData.map((post) => (
-            <div class="flex flex-col sm:flex-row sm:gap-6 items-baseline group">
-              <time class="text-zinc-500 dark:text-zinc-500 text-sm tabular-nums shrink-0 sm:w-28 mb-1 sm:mb-0">
-                {post.data.created!.toISOString().split('T')[0]}
-              </time>
-              <a href={`/blog/${post.data.slug || createCleanSlug(post.id)}`} class="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white underline decoration-zinc-300 dark:decoration-zinc-700 hover:decoration-zinc-500 dark:hover:decoration-zinc-400 underline-offset-4 transition-colors text-base">
-                {post.displayTitle}
-              </a>
-            </div>
-          ))}
-        </div>
-      </section>
-
-    </div>
   </div>
 </Layout>
