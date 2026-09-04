@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "src/content/blog/2026-09-03T0153.md",
+                "file": "src/content/blog/2012-09-01T1407 - 7 элементов системы образования XXI века.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "2026-09-03T0153"
+              "title": "2012-09-01T1407 - 7 элементов системы образования XXI века"
             }
           }
         ]
@@ -190,15 +190,23 @@
       "obsidian-git:Open Git source control": false
     }
   },
-  "active": "4ecd01f46834c927",
+  "active": "d8508e47527a1c42",
   "lastOpenFiles": [
-    "wrangler.jsonc",
+    "src/content/blog/2026-05-08T1245 - Recommended Reading for Tolkien Fans.md",
+    "src/content/blog/2012-09-01T1407 - 7 элементов системы образования XXI века.md",
+    "src/content/blog/2025-11-26T2010 - Тютчев Нам не дано предугадать.md",
+    "src/content/blog/2025-11-30T1905 - Татуировка.md",
+    "src/content/blog/2026-04-03T0017 - Alan Watts God Pretending to Be Human.md",
+    "src/content/blog/2026-05-25T1508 - Скучно наедине.md",
+    "src/content/blog/2026-05-31T1719 - Zippo Butane Lighter Refill.md",
+    "src/content/blog/2026-08-09T1615 - Цитаты из фильма Сталкер Андрея Тарковского.md",
+    "src/content/blog/2026-08-16T2340 - Цитаты из фильма Солярис Андрея Тарковского.md",
+    "src/content/blog/2026-09-03T2338 - Backrooms Theory.md",
     "src/content/blog/2026-09-03T1703.md",
     "src/content/blog/2026-09-03T1513.md",
-    "src/content/blog/2026-09-03T1407.md",
+    "wrangler.jsonc",
     "src/components/Writing.astro",
     "src/content/blog/2026-09-03T0145.md",
-    "src/content/blog/2026-09-03T0153.md",
     "templates/Blog Post Template.md",
     "src/content/blog/2026-09-03T0140.md",
     "src/content/blog/2026-09-03T0135 -.md",
@@ -212,10 +220,6 @@
     "src/content/blog/202609030121.md",
     "src/content/blog/202609030120.md",
     "src/content/blog/Untitled.md",
-    "src/content/blog/Untitled 2.md",
-    "src/content/blog/Hello World.md",
-    "src/content/blog/2026-09-02T0120 - 7 элементов системы образования XXI века.md",
-    "templates",
-    "Untitled.md"
+    "templates"
   ]
 }

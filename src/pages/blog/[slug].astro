@@ -35,7 +35,7 @@ const displayTitle = h1 ? h1.text : 'Untitled Post';
     <header class="mb-12 border-b border-zinc-200 dark:border-zinc-800 pb-8">
       <h1 class="text-4xl font-bold mb-4 text-zinc-900 dark:text-white leading-tight">{displayTitle}</h1>
       
-      <div class="flex flex-wrap items-center gap-3 text-sm uppercase tracking-widest text-zinc-500 font-medium mt-6">
+      <div class="flex flex-wrap items-center gap-3 text-sm tracking-widest text-zinc-500">
         {entry.data.created && (
           <time>
             Published {entry.data.created.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
@@ -58,7 +58,7 @@ const displayTitle = h1 ? h1.text : 'Untitled Post';
                 prose-headings:font-bold prose-headings:tracking-tight prose-headings:mt-0 prose-headings:mb-0
                 prose-img:mx-auto prose-img:rounded-xl prose-img:border prose-img:border-zinc-200 dark:prose-img:border-zinc-800 prose-img:max-h-[550px] prose-img:w-auto prose-img:object-contain prose-img:shadow-sm
                 prose-a:text-blue-violet-600 dark:prose-a:text-blue-violet-400 prose-a:decoration-blue-violet-500/30 hover:prose-a:decoration-blue-violet-500 prose-a:underline-offset-4 prose-a:font-medium transition-colors
-                prose-blockquote:border-l-4 prose-blockquote:border-l-blue-violet-500 prose-blockquote:bg-zinc-50 dark:prose-blockquote:bg-zinc-800/40 prose-blockquote:px-6 prose-blockquote:py-4 prose-blockquote:rounded-r-xl prose-blockquote:not-italic prose-blockquote:text-zinc-700 dark:prose-blockquote:text-zinc-300
+                prose-blockquote:border-l-2 prose-blockquote:border-l-blue-violet-500 prose-blockquote:not-italic
                 prose-code:text-blue-violet-600 dark:prose-code:text-blue-violet-400 prose-code:bg-zinc-100 dark:prose-code:bg-zinc-800/70 prose-code:px-1.5 prose-code:py-0.5 prose-code:font-medium prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none
                 prose-hr:border-zinc-200 dark:prose-hr:border-zinc-800 prose-hr:my-8">
       <Content />
@@ -95,17 +95,43 @@ const displayTitle = h1 ? h1.text : 'Untitled Post';
             const remainingHtml = html.substring(firstLineEnd).replace(/^(<br>|\n)/, '').trim();
 
             // Inject the styled component
-            firstP.innerHTML = `<strong class="block text-blue-violet-600 dark:text-blue-violet-400 mb-3 font-bold uppercase tracking-widest text-xs flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            firstP.innerHTML = `<strong class="block text-blue-violet-600 dark:text-blue-violet-400 mb-2 font-bold uppercase tracking-widest text-sm flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                 </svg>
                 ${title}
               </strong>${remainingHtml}`;
-            
-            quote.classList.add('!py-2');
           }
         }
       });
+      // Auto-format external links with an icon and (domain)
+    document.querySelectorAll('.prose a').forEach(link => {
+      // Check if the link points to an external domain
+      if (link.hostname && link.hostname !== window.location.hostname) {
+        // Strip 'www.' for a cleaner display
+        const domain = link.hostname.replace(/^www\./, '');
+        
+        // Prevent double-applying if the script runs multiple times
+        if (!link.hasAttribute('data-formatted')) {
+          link.setAttribute('data-formatted', 'true');
+          
+          // Improve UX by automatically opening external links in a new tab
+          link.setAttribute('target', '_blank');
+          link.setAttribute('rel', 'noopener noreferrer');
+          
+          // Using 'afterend' places this span OUTSIDE the <a> tag, 
+          // keeping it completely isolated from the purple hover/underline styles.
+          link.insertAdjacentHTML('afterend', `
+            <span class="inline-flex items-center gap-0.5 mr-0.5 text-zinc-500 dark:text-zinc-500 text-[0.85em] font-normal tracking-normal whitespace-nowrap">
+              <svg class="w-3 h-3 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              <span>(${domain})</span>
+            </span>
+          `);
+        }
+      }
+    });
     });
   </script>
 </Layout>
