@@ -1,0 +1,31 @@
+{
+  "enabledPlugins": {
+    "ponytail@ponytail": true,
+    "security-audit@security-audit": true
+  },
+  "extraKnownMarketplaces": {
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      },
+      "autoUpdate": true
+    },
+    "security-audit": {
+      "source": {
+        "source": "settings",
+        "name": "security-audit",
+        "plugins": [
+          {
+            "name": "security-audit",
+            "source": {
+              "source": "github",
+              "repo": "cloudflare/security-audit-skill"
+            }
+          }
+        ]
+      },
+      "autoUpdate": true
+    }
+  }
+}
