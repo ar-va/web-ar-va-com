@@ -1,7 +1,13 @@
 {
   "enabledPlugins": {
     "ponytail@ponytail": true,
-    "security-audit@security-audit": true
+    "security-audit@security-audit": true,
+    "superpowers@superpowers-marketplace": true,
+    "impeccable@impeccable": true,
+    "claude-mem@thedotmack": true,
+    "task-observer@one-skill-to-rule-them-all": true,
+    "find-skills@find-skills": true,
+    "ai-design-skills@ai-design-skills": true
   },
   "extraKnownMarketplaces": {
     "ponytail": {
@@ -21,6 +27,66 @@
             "source": {
               "source": "github",
               "repo": "cloudflare/security-audit-skill"
+            }
+          }
+        ]
+      },
+      "autoUpdate": true
+    },
+    "superpowers-marketplace": {
+      "source": {
+        "source": "github",
+        "repo": "obra/superpowers-marketplace"
+      },
+      "autoUpdate": true
+    },
+    "impeccable": {
+      "source": {
+        "source": "github",
+        "repo": "pbakaus/impeccable"
+      },
+      "autoUpdate": true
+    },
+    "thedotmack": {
+      "source": {
+        "source": "github",
+        "repo": "thedotmack/claude-mem"
+      },
+      "autoUpdate": true
+    },
+    "one-skill-to-rule-them-all": {
+      "source": {
+        "source": "github",
+        "repo": "rebelytics/one-skill-to-rule-them-all"
+      },
+      "autoUpdate": true
+    },
+    "find-skills": {
+      "source": {
+        "source": "settings",
+        "name": "find-skills",
+        "plugins": [
+          {
+            "name": "find-skills",
+            "source": {
+              "source": "github",
+              "repo": "vercel-labs/skills"
+            }
+          }
+        ]
+      },
+      "autoUpdate": true
+    },
+    "ai-design-skills": {
+      "source": {
+        "source": "settings",
+        "name": "ai-design-skills",
+        "plugins": [
+          {
+            "name": "ai-design-skills",
+            "source": {
+              "source": "github",
+              "repo": "elayadesign/ai-design-skills"
             }
           }
         ]
