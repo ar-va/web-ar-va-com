@@ -1,7 +1,7 @@
 // D1: users, sessions, invites, synced records, cached release details, comments.
 import { env } from 'cloudflare:workers';
 import type { AstroCookies } from 'astro';
-import { randomToken, sha256, siteDomain, type ShelfRecord } from './lib';
+import { randomToken, sha256, siteDomain, type Overrides, type ShelfRecord } from './lib';
 
 // Tables are created lazily (no migration step in the deploy).
 const SCHEMA = [
@@ -19,6 +19,7 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS post_comments (id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL, author_id INTEGER NOT NULL,
     body TEXT NOT NULL, created_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS post_comments_by_slug ON post_comments (slug)`,
+  `CREATE TABLE IF NOT EXISTS overrides (user_id INTEGER NOT NULL, instance_id INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY (user_id, instance_id))`,
 ];
 
 let ready: Promise<unknown> | null = null;
@@ -150,6 +151,33 @@ export async function shelfRecords(userId: number) {
 export async function shelfRecord(userId: number, instanceId: number) {
   const row = await (await db()).prepare('SELECT data FROM records WHERE user_id = ? AND instance_id = ?').bind(userId, instanceId).first<{ data: string }>();
   return row ? (JSON.parse(row.data) as ShelfRecord) : null;
+}
+
+// ---- Owner edits: only the changed values are stored; Discogs' own data stays untouched underneath ----
+
+export async function shelfOverrides(userId: number) {
+  const { results } = await (await db()).prepare('SELECT instance_id, data FROM overrides WHERE user_id = ?').bind(userId).all<{ instance_id: number; data: string }>();
+  return new Map(results.map((r) => [r.instance_id, JSON.parse(r.data) as Overrides]));
+}
+
+export async function recordOverrides(userId: number, instanceId: number): Promise<Overrides> {
+  const row = await (await db()).prepare('SELECT data FROM overrides WHERE user_id = ? AND instance_id = ?').bind(userId, instanceId).first<{ data: string }>();
+  return row ? JSON.parse(row.data) : {};
+}
+
+export async function saveOverrides(userId: number, instanceId: number, data: Overrides) {
+  const d = await db();
+  await (Object.keys(data).length
+    ? d.prepare('INSERT OR REPLACE INTO overrides (user_id, instance_id, data) VALUES (?, ?, ?)').bind(userId, instanceId, JSON.stringify(data))
+    : d.prepare('DELETE FROM overrides WHERE user_id = ? AND instance_id = ?').bind(userId, instanceId)).run();
+}
+
+/** Cached release details for a whole shelf (release id → details). */
+export async function shelfReleases(userId: number) {
+  const { results } = await (await db()).prepare(
+    `SELECT releases.id, releases.data FROM releases WHERE releases.id IN (SELECT json_extract(data, '$.releaseId') FROM records WHERE user_id = ?)`,
+  ).bind(userId).all<{ id: number; data: string }>();
+  return new Map(results.map((r) => [r.id, JSON.parse(r.data) as import('./lib').ReleaseDetail]));
 }
 
 // ---- Comments ----

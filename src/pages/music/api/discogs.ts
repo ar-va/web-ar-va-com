@@ -2,7 +2,7 @@
 import type { APIRoute } from 'astro';
 import { canCollect, currentUser } from '../../../music/store';
 import {
-  accessTokenRequest, requestTokenRequest, saveCollection, savePending, saveRelease, saveToken, setUsername, signFor,
+  accessTokenRequest, missingReleases, requestTokenRequest, saveCollection, savePending, saveRelease, saveToken, setUsername, signFor,
 } from '../../../music/discogs';
 
 export const prerender = false;
@@ -21,6 +21,8 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
     switch (body.action) {
       case 'status':
         return json({ username: user.discogs_token ? user.discogs_username : null, syncedAt: user.synced_at });
+      case 'missing':
+        return json({ missing: user.discogs_username ? await missingReleases(user) : [] });
       case 'request_token':
         return json(await requestTokenRequest(`${url.origin}/auth/discogs`));
       case 'pending':
@@ -46,7 +48,7 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
       case 'collection':
         return json(await saveCollection(user, body.fields, body.releases));
       case 'release':
-        return (await saveRelease(user, body.release, body.masterYear)) ? json({ ok: true }) : json({ error: 'Not on your shelf.' }, 400);
+        return (await saveRelease(user, body.release, body.masterYear, body.firstReleased)) ? json({ ok: true }) : json({ error: 'Not on your shelf.' }, 400);
     }
   } catch (e) {
     console.error(`api/discogs ${body.action} failed: ${e instanceof Error ? e.message : e}`);

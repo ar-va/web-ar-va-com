@@ -114,6 +114,8 @@ export interface ShelfRecord {
   added: string;
   rating: number;
   fields: Field[];
+  /** CSS color of the disc when the pressing isn't plain black (from Discogs' free-text format note). */
+  vinyl?: string | null;
 }
 
 export interface CollectionField { id: number; name: string; position: number; public: boolean }
@@ -138,7 +140,8 @@ export function toShelfRecord(item: any, fields: CollectionField[]): ShelfRecord
     // Collection data arrives through the collector's browser: only Discogs' own https image host is trusted.
     cover: typeof b.cover_image === 'string' && b.cover_image.startsWith('https://i.discogs.com/') ? b.cover_image : null,
     labels: [...new Set((b.labels ?? []).map((l: any) => cleanName(l.name)))].join(', '),
-    format: (b.formats ?? []).map((f: any) => [f.qty > 1 ? `${f.qty}×${f.name}` : f.name, ...(f.descriptions ?? [])].join(', ')).join(' + '),
+    format: (b.formats ?? []).map((f: any) => [f.qty > 1 ? `${f.qty}×${f.name}` : f.name, ...(f.descriptions ?? []), ...(f.text ? [f.text] : [])].join(', ')).join(' + '),
+    vinyl: vinylColor((b.formats ?? []).map((f: any) => f.text ?? '').join(', ')),
     genres: b.genres ?? [],
     styles: b.styles ?? [],
     added: item.date_added,
@@ -153,16 +156,19 @@ export function toShelfRecord(item: any, fields: CollectionField[]): ShelfRecord
 export interface ReleaseDetail {
   released: string | null;
   originalYear: number | null;
+  /** Release date of the master's main release ("2016-01-08"); missing on details cached before 2026-10-28. */
+  firstReleased?: string | null;
   country: string | null;
   tracklist: { position: string; title: string; duration: string; heading: boolean }[];
   uri: string;
 }
 
 /** GET /releases/{id} (+ the master's year) → what the record page shows. */
-export function toReleaseDetail(release: any, masterYear: number | null): ReleaseDetail {
+export function toReleaseDetail(release: any, masterYear: number | null, firstReleased: string | null = null): ReleaseDetail {
   return {
-    released: release.released || null,
+    released: typeof release.released === 'string' ? release.released : null,
     originalYear: masterYear || release.year || null,
+    firstReleased: typeof firstReleased === 'string' && /^\d{4}(-\d{2}){0,2}$/.test(firstReleased) ? firstReleased : null,
     country: release.country || null,
     tracklist: (release.tracklist ?? []).map((t: any) => ({ position: t.position, title: t.title, duration: t.duration, heading: t.type_ === 'heading' })),
     uri: typeof release.uri === 'string' && release.uri.startsWith('https://www.discogs.com/') ? release.uri : `https://www.discogs.com/release/${Number(release.id)}`,
@@ -198,3 +204,67 @@ export const musicPath = (url: URL) => url.pathname.replace(/^\/music(?=\/|$)/, 
 /** The login page lives on the main site (ar-va.com/login); `back` is where to return, by default the current page. */
 export const loginHref = (url: URL, back = url.origin + musicPath(url) + url.search) =>
   `${url.protocol}//${siteDomain(url.host)}/login?return=${encodeURIComponent(back)}`;
+
+// ---- Vinyl colour ----
+
+const COLORS: [RegExp, string][] = [
+  [/\b(forest|bottle|dark) green\b/, '#1f5f3a'], [/\bgreen\b/, '#2f9e5b'], [/\b(sky|light) blue\b/, '#6bb3e8'], [/\bnavy\b/, '#1e2f6b'], [/\bblue\b/, '#2f5fd0'],
+  [/\bred\b|\bcrimson\b|\bburgundy\b/, '#c62f34'], [/\bpink\b|\brose\b/, '#ec74a8'], [/\bpurple\b|\bviolet\b|\bmagenta\b/, '#7f4bc4'],
+  [/\borange\b/, '#ec7a2c'], [/\byellow\b|\bmustard\b/, '#efc531'], [/\bgold\b/, '#c9a43c'], [/\bsilver\b|\bgr[ae]y\b/, '#a3a3ad'],
+  [/\bbrown\b|\bcoffee\b/, '#7a4e2d'], [/\bwhite\b|\bbone\b|\bcream\b|\bmilky\b/, '#ece9e2'],
+];
+
+/**
+ * The disc colour from Discogs' format note ("Red [Opaque Apple], 10th Anniversary Edition", "Pink Translucent").
+ * Parts about labels, sleeves or covers are skipped ("Blue Sunset Labels" is the label, not the vinyl).
+ * Null means plain black. Clear/translucent pressings come back semi-transparent.
+ */
+export function vinylColor(text: string): string | null {
+  for (const part of text.toLowerCase().split(',')) {
+    if (/label|sleeve|cover|jacket|insert|print|obi|sticker|booklet/.test(part)) continue;
+    const clear = /\b(clear|transparent|translucent|crystal)\b/.test(part);
+    const hit = COLORS.find(([re]) => re.test(part));
+    if (hit) return clear ? `${hit[1]}a6` : hit[1];
+    if (clear) return '#d8dde6' + '73';
+  }
+  return null;
+}
+
+// ---- Owner edits (overrides of the Discogs data) ----
+
+export type Overrides = Record<string, string>;
+export interface Track { position: string; title: string; duration: string; heading: boolean }
+
+/** One track per line, "A1 | Title | 4:52"; a line starting with "## " is a heading (e.g. "## Side B"). */
+export const tracklistToText = (tracks: Track[]) =>
+  tracks.map((t) => (t.heading ? `## ${t.title}` : [t.position, t.title, t.duration].filter((x, i) => x || i === 1).join(' | '))).join('\n');
+
+export function textToTracklist(text: string): Track[] {
+  return text.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
+    if (l.startsWith('## ')) return { position: '', title: l.slice(3).trim(), duration: '', heading: true };
+    const parts = l.split('|').map((p) => p.trim());
+    if (parts.length === 1) return { position: '', title: parts[0], duration: '', heading: false };
+    if (parts.length === 2) return /^\d{1,2}:\d{2}(:\d{2})?$/.test(parts[1])
+      ? { position: '', title: parts[0], duration: parts[1], heading: false }
+      : { position: parts[0], title: parts[1], duration: '', heading: false };
+    return { position: parts[0], title: parts.slice(1, -1).join(' | '), duration: parts.at(-1)!, heading: false };
+  });
+}
+
+/** Only Spotify / Apple Music / YouTube (Music) pages are accepted as album links. */
+export function safeStreamingUrl(value: string, service: 'spotify' | 'apple' | 'youtube') {
+  try {
+    const u = new URL(value.trim());
+    const hosts = { spotify: ['open.spotify.com'], apple: ['music.apple.com'], youtube: ['music.youtube.com', 'www.youtube.com', 'youtube.com', 'youtu.be'] }[service];
+    return u.protocol === 'https:' && hosts.includes(u.hostname) ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Search pages on each service, used when the owner hasn't pasted an exact album link. */
+export const streamingSearch = (query: string) => ({
+  spotify: `https://open.spotify.com/search/${encodeURIComponent(query)}`,
+  apple: `https://music.apple.com/search?term=${encodeURIComponent(query)}`,
+  youtube: `https://music.youtube.com/search?q=${encodeURIComponent(query)}`,
+});

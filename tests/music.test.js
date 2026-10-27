@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import {
-  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref,
+  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref, vinylColor, tracklistToText, textToTracklist, safeStreamingUrl,
 } from '../src/music/lib.ts';
 
 const BOT = '123:test-bot-token';
@@ -122,4 +122,32 @@ test('return paths and music paths', () => {
   assert.equal(loginHref(new URL('https://music.ar-va.com/music/arabor/1?x=1')), 'https://ar-va.com/login?return=' + encodeURIComponent('https://music.ar-va.com/arabor/1?x=1'));
   assert.equal(loginHref(new URL('http://music.localhost:4321/music/settings')), 'http://localhost:4321/login?return=' + encodeURIComponent('http://music.localhost:4321/settings'));
   assert.equal(loginHref(new URL('https://ar-va.com/_server-islands/x'), 'https://ar-va.com/blog/a#comments'), 'https://ar-va.com/login?return=' + encodeURIComponent('https://ar-va.com/blog/a#comments'));
+});
+
+test('vinyl colour from the format note', () => {
+  assert.equal(vinylColor('180 Gram'), null);
+  assert.equal(vinylColor('Red [Opaque Apple], 10th Anniversary Edition'), '#c62f34');
+  assert.equal(vinylColor('Forest Green, Alternate Cover'), '#1f5f3a');
+  assert.equal(vinylColor('White'), '#ece9e2');
+  assert.equal(vinylColor('Milky Clear, Art Card'), '#ece9e2a6');
+  assert.equal(vinylColor('Clear'), '#d8dde673');
+  assert.equal(vinylColor('Pink Translucent [Vodka Sauce]'), '#ec74a8a6');
+  assert.equal(vinylColor('Blue Sunset Labels, Gatefold'), null);
+  assert.equal(vinylColor(''), null);
+});
+
+test('tracklist text round trip and streaming links', () => {
+  const tracks = [{ position: '', title: 'Side A', duration: '', heading: true }, { position: 'A1', title: 'Lazarus', duration: '6:22', heading: false }, { position: 'A2', title: 'Untimed', duration: '', heading: false }];
+  assert.equal(tracklistToText(tracks), '## Side A\nA1 | Lazarus | 6:22\nA2 | Untimed');
+  assert.deepEqual(textToTracklist(tracklistToText(tracks)), tracks);
+  assert.deepEqual(textToTracklist('Intro | 1:05\nJust a title\n\nB1 | A | B | 3:00'), [
+    { position: '', title: 'Intro', duration: '1:05', heading: false },
+    { position: '', title: 'Just a title', duration: '', heading: false },
+    { position: 'B1', title: 'A | B', duration: '3:00', heading: false },
+  ]);
+  assert.equal(safeStreamingUrl(' https://open.spotify.com/album/abc ', 'spotify'), 'https://open.spotify.com/album/abc');
+  assert.equal(safeStreamingUrl('https://evil.example/album', 'spotify'), null);
+  assert.equal(safeStreamingUrl('javascript:alert(1)', 'apple'), null);
+  assert.equal(safeStreamingUrl('http://music.apple.com/x', 'apple'), null);
+  assert.ok(safeStreamingUrl('https://music.youtube.com/playlist?list=x', 'youtube'));
 });

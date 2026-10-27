@@ -82,19 +82,27 @@ export async function saveCollection(user: User, fields: CollectionField[], item
     ...inserts,
     d.prepare('UPDATE users SET synced_at = ?, sync_error = NULL WHERE id = ?').bind(now(), user.id),
   ]);
-  const { results } = await d.prepare('SELECT id FROM releases WHERE fetched_at > ?').bind(now() - RELEASE_MAX_AGE).all<{ id: number }>();
-  const fresh = new Set(results.map((r) => r.id));
-  const missing = new Map(records.filter((r) => !fresh.has(r.releaseId)).map((r) => [r.releaseId, { releaseId: r.releaseId, masterId: r.masterId }]));
-  return { count: records.length, missing: [...missing.values()] };
+  return { count: records.length, missing: await missingReleases(user) };
+}
+
+/** Releases on the user's shelf without fresh details (or cached before the first-release date was added). */
+export async function missingReleases(user: User) {
+  const d = await db();
+  const { results } = await d.prepare(
+    `SELECT DISTINCT json_extract(r.data, '$.releaseId') AS releaseId, json_extract(r.data, '$.masterId') AS masterId FROM records r
+     LEFT JOIN releases rel ON rel.id = json_extract(r.data, '$.releaseId') AND rel.fetched_at > ? AND json_type(rel.data, '$.firstReleased') IS NOT NULL
+     WHERE r.user_id = ? AND rel.id IS NULL`,
+  ).bind(now() - RELEASE_MAX_AGE, user.id).all<{ releaseId: number; masterId: number }>();
+  return results;
 }
 
 /** Caches a release's details, only for releases on the uploader's own shelf. */
-export async function saveRelease(user: User, release: any, masterYear: unknown) {
+export async function saveRelease(user: User, release: any, masterYear: unknown, firstReleased: unknown) {
   const id = Number(release?.id);
   const d = await db();
   const owned = Number.isSafeInteger(id) && await d.prepare(`SELECT 1 FROM records WHERE user_id = ? AND json_extract(data, '$.releaseId') = ? LIMIT 1`).bind(user.id, id).first();
   if (!owned) return false;
-  const detail = toReleaseDetail(release, Number.isSafeInteger(masterYear) ? (masterYear as number) : null);
+  const detail = toReleaseDetail(release, Number.isSafeInteger(masterYear) ? (masterYear as number) : null, typeof firstReleased === 'string' ? firstReleased : null);
   await d.prepare('INSERT OR REPLACE INTO releases (id, data, fetched_at) VALUES (?, ?, ?)').bind(id, JSON.stringify(detail), now()).run();
   return true;
 }
