@@ -16,7 +16,8 @@
   ],
   // No database_id: Wrangler creates the database on the first deploy.
   "d1_databases": [{ "binding": "DB", "database_name": "ar-va-music" }],
-  "triggers": { "crons": ["*/15 * * * *"] },
+  // No cron: the server can't reach Discogs (shared Cloudflare address over its limit); collectors' browsers sync.
+  "triggers": { "crons": [] },
   "vars": {
     "TELEGRAM_BOT_NAME": "arvasitebot",
     "ADMIN_TELEGRAM_ID": "284024981"

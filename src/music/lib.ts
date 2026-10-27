@@ -39,19 +39,44 @@ export async function verifyTelegramLogin(params: URLSearchParams, botToken: str
   return { id, name: name || params.get('username') || 'Telegram user', username: params.get('username'), photoUrl: photo?.startsWith('https://') ? photo : null };
 }
 
-/** OAuth 1.0a header with the PLAINTEXT signature Discogs accepts over HTTPS. */
-export function oauthHeader(consumerKey: string, consumerSecret: string, token?: { key: string; secret: string }, extra: Record<string, string> = {}) {
-  const params: Record<string, string> = {
-    oauth_consumer_key: consumerKey,
-    oauth_nonce: randomToken(),
-    oauth_signature_method: 'PLAINTEXT',
-    oauth_timestamp: String(Math.floor(Date.now() / 1000)),
+// RFC 3986 encoding, as OAuth 1.0 requires (encodeURIComponent leaves !'()* alone).
+const pct = (v: string) => encodeURIComponent(v).replace(/[!'()*]/g, (c) => '%' + c.charCodeAt(0).toString(16).toUpperCase());
+
+/**
+ * OAuth 1.0a header signed with HMAC-SHA1 for one exact request. The browser sends it to Discogs (the server
+ * can't: Cloudflare's shared address is over Discogs' per-address limit), so it must never contain a secret,
+ * which rules out the PLAINTEXT method.
+ */
+export async function oauthHeader(
+  method: string, url: string, consumer: { key: string; secret: string }, token?: { key: string; secret: string },
+  extra: Record<string, string> = {}, now = Math.floor(Date.now() / 1000), nonce = randomToken(),
+) {
+  const u = new URL(url);
+  const oauth: Record<string, string> = {
+    oauth_consumer_key: consumer.key,
+    oauth_nonce: nonce,
+    oauth_signature_method: 'HMAC-SHA1',
+    oauth_timestamp: String(now),
     oauth_version: '1.0',
     ...(token && { oauth_token: token.key }),
     ...extra,
-    oauth_signature: `${encodeURIComponent(consumerSecret)}&${encodeURIComponent(token?.secret ?? '')}`,
   };
-  return 'OAuth ' + Object.entries(params).map(([k, v]) => `${k}="${encodeURIComponent(v)}"`).join(', ');
+  const params = [...Object.entries(oauth), ...u.searchParams].map(([k, v]) => [pct(k), pct(v)]).sort(([a, x], [b, y]) => (a === b ? (x < y ? -1 : 1) : a < b ? -1 : 1));
+  const base = [method.toUpperCase(), pct(`${u.protocol}//${u.host}${u.pathname}`), pct(params.map(([k, v]) => `${k}=${v}`).join('&'))].join('&');
+  const key = await crypto.subtle.importKey('raw', enc.encode(`${pct(consumer.secret)}&${pct(token?.secret ?? '')}`), { name: 'HMAC', hash: 'SHA-1' }, false, ['sign']);
+  oauth.oauth_signature = b64(new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(base))));
+  return 'OAuth ' + Object.entries(oauth).map(([k, v]) => `${pct(k)}="${pct(v)}"`).join(', ');
+}
+
+/** Discogs URLs the server will sign for a collector: their own collection, identity, and public release/master data. */
+export function signablePath(path: string, discogsUsername: string | null) {
+  const u = new URL(path, 'https://api.discogs.com');
+  if (u.origin !== 'https://api.discogs.com') return null;
+  const own = discogsUsername ? `/users/${encodeURIComponent(discogsUsername)}/collection/` : null;
+  const ok = u.pathname === '/oauth/identity'
+    || /^\/(releases|masters)\/\d+$/.test(u.pathname)
+    || (own !== null && (u.pathname === `${own}fields` || u.pathname === `${own}folders/0/releases`));
+  return ok ? u.href : null;
 }
 
 async function aesKey(secret: string) {
@@ -110,7 +135,8 @@ export function toShelfRecord(item: any, fields: CollectionField[]): ShelfRecord
     artist: artistLine(b.artists),
     title: b.title,
     year: b.year || null,
-    cover: b.cover_image && !b.cover_image.includes('spacer.gif') ? b.cover_image : null,
+    // Collection data arrives through the collector's browser: only Discogs' own https image host is trusted.
+    cover: typeof b.cover_image === 'string' && b.cover_image.startsWith('https://i.discogs.com/') ? b.cover_image : null,
     labels: [...new Set((b.labels ?? []).map((l: any) => cleanName(l.name)))].join(', '),
     format: (b.formats ?? []).map((f: any) => [f.qty > 1 ? `${f.qty}×${f.name}` : f.name, ...(f.descriptions ?? [])].join(', ')).join(' + '),
     genres: b.genres ?? [],
@@ -139,7 +165,7 @@ export function toReleaseDetail(release: any, masterYear: number | null): Releas
     originalYear: masterYear || release.year || null,
     country: release.country || null,
     tracklist: (release.tracklist ?? []).map((t: any) => ({ position: t.position, title: t.title, duration: t.duration, heading: t.type_ === 'heading' })),
-    uri: release.uri || `https://www.discogs.com/release/${release.id}`,
+    uri: typeof release.uri === 'string' && release.uri.startsWith('https://www.discogs.com/') ? release.uri : `https://www.discogs.com/release/${Number(release.id)}`,
   };
 }
 

@@ -1,9 +1,8 @@
 ---
-// Your account: Discogs connection and sync for collectors; invites and collector list for the admin.
+// Your account: what Telegram shared + log out; Discogs connection and sync for collectors; invites for the admin.
 export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
 import { loginHref } from '../../music/lib';
-import { syncShelf } from '../../music/discogs';
 import { canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, removeShelf } from '../../music/store';
 
 const user = await currentUser(Astro.cookies);
@@ -11,7 +10,6 @@ if (!user) return Astro.redirect(loginHref(Astro.url));
 
 let inviteUrl: string | null = null;
 let notice: string | null = Astro.url.searchParams.get('error');
-if (Astro.url.searchParams.has('connected')) notice = 'Discogs is connected. Your records are on their way to the shelf.';
 if (Astro.url.searchParams.has('welcome')) notice = 'Welcome! Connect your Discogs account to fill your shelf.';
 
 if (Astro.request.method === 'POST') {
@@ -19,12 +17,7 @@ if (Astro.request.method === 'POST') {
   const action = form.get('action');
   if (action === 'logout') {
     await endSession(Astro.cookies, Astro.url.hostname);
-    return Astro.redirect('/', 303);
-  }
-  if (action === 'sync' && canCollect(user) && user.discogs_token) {
-    // Once a minute is plenty; the cron syncs every 15 minutes anyway.
-    if (!user.synced_at || Date.now() / 1000 - user.synced_at > 60) await syncShelf(user);
-    return Astro.redirect('/settings', 303);
+    return Astro.redirect(`${Astro.url.protocol}//${Astro.url.host.replace(/^music\./, '')}/`, 303);
   }
   if (action === 'disconnect' && user.discogs_username) {
     await removeShelf(user.id, false);
@@ -41,64 +34,107 @@ if (Astro.request.method === 'POST') {
 }
 
 const collectors = isAdmin(user) ? await listCollectors() : [];
+const connected = !!(user.discogs_username && user.discogs_token);
 const ago = (s: number | null) => {
   if (!s) return 'not yet';
   const min = Math.round((Date.now() / 1000 - s) / 60);
   return min < 1 ? 'just now' : min < 60 ? `${min} min ago` : min < 1440 ? `${Math.round(min / 60)} h ago` : `${Math.round(min / 1440)} days ago`;
 };
-const pill = 'inline-block bg-blue-violet-500 text-white text-sm font-medium px-5 py-2 rounded-full hover:bg-blue-violet-600 transition-colors';
+const since = new Date(user.created_at * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+const shared: [string, string][] = [
+  ['Name', user.name],
+  ['Username', user.username ? `@${user.username}` : 'none set in Telegram'],
+  ['Profile photo', user.photo_url ? 'yes, shown next to your comments' : 'none set in Telegram'],
+  ['Telegram ID', String(user.id)],
+];
+const pill = 'inline-block bg-blue-violet-500 text-white text-sm font-medium px-5 py-2 rounded-full hover:bg-blue-violet-600 transition-colors disabled:opacity-60 disabled:cursor-wait';
 const quiet = 'text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 px-4 py-2 rounded-full transition-colors';
-const h2 = 'text-zinc-500 text-sm mb-2';
+const card = 'rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] p-6 shadow-sm dark:shadow-none';
+const h2 = 'flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-5';
 ---
 <Layout title="Settings - ARVA">
-  <div class="max-w-3xl mx-auto px-6 w-full flex-grow py-24 flex flex-col gap-10">
-    <div class="flex justify-between items-center gap-4">
-      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Hi, {user.name}<span class="text-blue-violet-500">.</span></h1>
-      <form method="post"><input type="hidden" name="action" value="logout" /><button class={quiet}>Log out</button></form>
-    </div>
+  <div class="max-w-3xl mx-auto px-6 w-full flex-grow py-24 flex flex-col gap-8">
+    <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Settings<span class="text-blue-violet-500">.</span></h1>
 
     {notice && <p class="rounded-xl border border-blue-violet-200 dark:border-blue-violet-900 bg-blue-violet-50 dark:bg-blue-violet-500/10 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300" role="status">{notice}</p>}
 
+    <section class={card} aria-labelledby="tg-heading">
+      <h2 id="tg-heading" class={h2}>
+        <svg class="w-4 h-4 text-[#2aabee]" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
+        Your Telegram account
+      </h2>
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-5 mb-6">
+        <div class="flex items-center gap-4 min-w-0">
+          {user.photo_url
+            ? <img src={user.photo_url} alt="" width="56" height="56" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover shrink-0" />
+            : <span class="w-14 h-14 rounded-full bg-blue-violet-500 text-white text-xl grid place-items-center shrink-0" aria-hidden="true">{user.name.charAt(0)}</span>}
+          <div class="min-w-0">
+            <p class="text-lg font-bold text-zinc-900 dark:text-white truncate">{user.name}</p>
+            <p class="text-sm text-zinc-500 truncate">
+              {user.username ? <a href={`https://t.me/${user.username}`} class="hover:text-blue-violet-500 transition-colors">@{user.username}</a> : 'Telegram user'}
+              <span class="mx-1">·</span>joined {since}
+            </p>
+          </div>
+        </div>
+        <form method="post" class="shrink-0">
+          <input type="hidden" name="action" value="logout" />
+          <button class="text-sm font-medium px-5 py-2 rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:border-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors">Log out</button>
+        </form>
+      </div>
+      <dl class="grid grid-cols-1 sm:grid-cols-[9rem_1fr] gap-x-6 gap-y-1 sm:gap-y-2.5 text-sm border-t border-zinc-100 dark:border-zinc-800 pt-5">
+        {shared.map(([k, v]) => (
+          <>
+            <dt class="text-zinc-500 mt-2 sm:mt-0">{k}</dt>
+            <dd class="text-zinc-800 dark:text-zinc-200 break-words">{v}</dd>
+          </>
+        ))}
+        <dt class="text-zinc-500 mt-2 sm:mt-0">Not shared</dt>
+        <dd class="text-zinc-800 dark:text-zinc-200">Your phone number, contacts and chats. Telegram never gives those to sites.</dd>
+      </dl>
+      <p class="mt-5 text-xs text-zinc-500 leading-relaxed">This login works on ar-va.com and music.ar-va.com. Your name and photo update each time you log in. Logging out ends it on both sites.</p>
+    </section>
+
     {canCollect(user) ? (
-      <section>
-        <h2 class={h2}>Your shelf</h2>
-        {user.discogs_username ? (
+      <section class={card} aria-labelledby="shelf-heading">
+        <h2 id="shelf-heading" class={h2}><span class="w-2 h-2 rounded-full bg-blue-violet-500"></span>Your shelf</h2>
+        {connected ? (
           <div class="flex flex-col gap-4">
             <p class="text-zinc-700 dark:text-zinc-300">
-              Connected to Discogs as <a href={`/${encodeURIComponent(user.discogs_username)}`} class="text-blue-violet-600 dark:text-blue-violet-400 underline underline-offset-4">{user.discogs_username}</a>.
-              Last synced {ago(user.synced_at)}.
+              Connected to Discogs as <a href={`/${encodeURIComponent(user.discogs_username!)}`} class="text-blue-violet-600 dark:text-blue-violet-400 underline underline-offset-4">{user.discogs_username}</a>.
+              Last synced <span id="synced-ago">{ago(user.synced_at)}</span>.
             </p>
-            {user.sync_error && <p class="text-sm text-red-600 dark:text-red-400">Last sync failed: {user.sync_error}</p>}
             <div class="flex flex-wrap items-center gap-3">
-              <form method="post"><input type="hidden" name="action" value="sync" /><button class={pill}>Sync now</button></form>
-              {user.sync_error?.includes('reconnect') && <a href="/auth/discogs" class={quiet}>Reconnect Discogs</a>}
+              <button id="sync-now" type="button" class={pill}>Sync now</button>
+              <button type="button" data-connect class={quiet}>Reconnect Discogs</button>
               <form method="post"><input type="hidden" name="action" value="disconnect" /><button class={quiet} onclick="return confirm('Disconnect Discogs and empty your shelf here? Your Discogs collection is not touched.')">Disconnect</button></form>
             </div>
-            <div class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-xl">
-              <p class="mb-2">To add a record, add it to your collection on Discogs (the app can scan the barcode). It shows up here within 15 minutes, or right away with “Sync now”.</p>
+            <p id="sync-status" class="text-sm text-zinc-600 dark:text-zinc-400 min-h-5" role="status" aria-live="polite"></p>
+            <div class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+              <p class="mb-2">To add a record, add it to your collection on Discogs (the app can scan the barcode). Your shelf catches up when you next open music.ar-va.com while logged in, or right away with “Sync now”.</p>
               <p>Your Discogs collection fields (Discogs → Collection → Settings → custom fields) show on each record page <strong class="font-medium text-zinc-800 dark:text-zinc-200">only when the field is set to public</strong>. Fields like “Gifted by”, “Purchased”, “Note” or “Comment” work well.</p>
             </div>
           </div>
         ) : (
           <div class="flex flex-col gap-3 items-start">
             <p class="text-zinc-700 dark:text-zinc-300">Connect your Discogs account and your collection appears on your own shelf.</p>
-            <a href="/auth/discogs" class={pill}>Connect Discogs</a>
+            <button type="button" data-connect class={pill}>Connect Discogs</button>
+            <p id="sync-status" class="text-sm text-zinc-600 dark:text-zinc-400 min-h-5" role="status" aria-live="polite"></p>
           </div>
         )}
       </section>
     ) : (
-      <p class="text-zinc-600 dark:text-zinc-400">You can comment on any record. Shelves of your own are by invitation.</p>
+      <p class="text-sm text-zinc-600 dark:text-zinc-400">You can comment on every article and record. Shelves of your own are by invitation.</p>
     )}
 
     {isAdmin(user) && (
-      <section>
-        <h2 class={h2}>Collectors</h2>
+      <section class={card} aria-labelledby="collectors-heading">
+        <h2 id="collectors-heading" class={h2}><span class="w-2 h-2 rounded-full bg-blue-violet-500"></span>Collectors</h2>
         <ul class="flex flex-col mb-6">
           {collectors.map((c) => (
             <li class="flex items-center justify-between gap-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/40 last:border-none">
               <span class="min-w-0 truncate text-zinc-800 dark:text-zinc-200">
                 {c.name}{c.username && <span class="text-zinc-500"> @{c.username}</span>}
-                <span class="text-sm text-zinc-500"> · {c.discogs_username ? `Discogs: ${c.discogs_username}, synced ${ago(c.synced_at)}` : 'Discogs not connected'}{c.sync_error && ' · sync failing'}</span>
+                <span class="text-sm text-zinc-500"> · {c.discogs_username ? `Discogs: ${c.discogs_username}, synced ${ago(c.synced_at)}` : 'Discogs not connected'}</span>
               </span>
               {c.id !== user.id && (
                 <form method="post">
@@ -122,3 +158,34 @@ const h2 = 'text-zinc-500 text-sm mb-2';
     )}
   </div>
 </Layout>
+
+<script>
+  import { startConnect, syncShelf } from '../../music/sync';
+  const status = document.getElementById('sync-status');
+  const say = (message: string) => { if (status) status.textContent = message; };
+
+  document.querySelectorAll<HTMLButtonElement>('[data-connect]').forEach((b) => b.addEventListener('click', () => {
+    b.disabled = true;
+    say('Opening Discogs…');
+    startConnect().catch((e) => { say(`Couldn’t reach Discogs: ${e.message}`); b.disabled = false; });
+  }));
+
+  const syncButton = document.getElementById('sync-now') as HTMLButtonElement | null;
+  async function sync() {
+    if (!syncButton) return;
+    syncButton.disabled = true;
+    try {
+      await syncShelf(say);
+      document.getElementById('synced-ago')!.textContent = 'just now';
+    } catch (e) {
+      say(`Sync stopped: ${(e as Error).message} If it says 401, try “Reconnect Discogs”.`);
+    } finally {
+      syncButton.disabled = false;
+    }
+  }
+  syncButton?.addEventListener('click', sync);
+  if (new URLSearchParams(location.search).has('connected')) {
+    history.replaceState(null, '', '/settings');
+    sync();
+  }
+</script>

@@ -121,6 +121,9 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
 </div>
 
 <script>
+  import { autoSync } from '../../music/sync';
+  autoSync();
+
   const slots = [...document.querySelectorAll<HTMLElement>('.shelf-slot')];
   const search = document.getElementById('record-search') as HTMLInputElement | null;
   const info = document.getElementById('filter-info')!;

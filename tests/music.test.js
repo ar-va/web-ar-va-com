@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import {
-  verifyTelegramLogin, oauthHeader, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref,
+  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref,
 } from '../src/music/lib.ts';
 
 const BOT = '123:test-bot-token';
@@ -30,13 +30,25 @@ test('Telegram login: valid, tampered, stale, wrong bot', async () => {
   assert.deepEqual(noPhoto, { id: 7, name: 'x', username: 'x', photoUrl: null });
 });
 
-test('OAuth header uses PLAINTEXT secret&tokenSecret', () => {
-  const h = oauthHeader('ck', 'c&s', { key: 'tk', secret: 'ts' }, { oauth_verifier: 'v' });
-  assert.match(h, /^OAuth /);
-  assert.match(h, /oauth_signature="c%2526s%26ts"/);
-  assert.match(h, /oauth_token="tk"/);
-  assert.match(h, /oauth_verifier="v"/);
-  assert.match(oauthHeader('ck', 'cs'), /oauth_signature="cs%26"/);
+test('OAuth HMAC-SHA1 matches the OAuth 1.0 spec example', async () => {
+  // https://oauth.net/core/1.0/#sig_base_example
+  const h = await oauthHeader('GET', 'http://photos.example.net/photos?file=vacation.jpg&size=original',
+    { key: 'dpf43f3p2l4k3l03', secret: 'kd94hf93k423kf44' }, { key: 'nnch734d00sl2jdk', secret: 'pfkkdhi9sl3r4s00' }, {}, 1191242096, 'kllo9940pd9333jh');
+  assert.match(h, /oauth_signature="tR3%2BTy81lMeYAr%2FFid0kMTYa%2FWM%3D"/);
+  assert.match(h, /oauth_signature_method="HMAC-SHA1"/);
+  assert.doesNotMatch(h, /kd94hf93k423kf44|pfkkdhi9sl3r4s00/); // no secret leaves the server
+});
+
+test('only own collection, identity and public release data can be signed', () => {
+  assert.equal(signablePath('/users/arabor/collection/folders/0/releases?per_page=100&page=2', 'arabor'), 'https://api.discogs.com/users/arabor/collection/folders/0/releases?per_page=100&page=2');
+  assert.ok(signablePath('/users/arabor/collection/fields', 'arabor'));
+  assert.ok(signablePath('/oauth/identity', null));
+  assert.ok(signablePath('/releases/37956252', null));
+  for (const bad of ['/users/someone/collection/fields', '/users/arabor/collection/folders/0/releases/1/instances/2', '/marketplace/orders',
+    'https://evil.example/releases/1', '//evil.example/releases/1', '/users/arabor/wants', '/releases/1/rating/x']) {
+    assert.equal(signablePath(bad, 'arabor'), null, bad);
+  }
+  assert.equal(signablePath('/users/arabor/collection/fields', null), null);
 });
 
 test('seal/unseal round trip; another key cannot open it', async () => {
@@ -76,6 +88,7 @@ test('collection item → shelf record keeps only public fields, in Discogs orde
     { name: 'Notes', value: 'Bought used.' },
   ]);
   assert.equal(toShelfRecord({ ...item, basic_information: { ...item.basic_information, cover_image: 'https://s.discogs.com/images/spacer.gif' } }, []).cover, null);
+  assert.equal(toShelfRecord({ ...item, basic_information: { ...item.basic_information, cover_image: 'javascript:alert(1)' } }, []).cover, null);
 });
 
 test('release detail and dates', () => {
@@ -83,6 +96,8 @@ test('release detail and dates', () => {
     tracklist: [{ position: '', title: 'Side A', duration: '', type_: 'heading' }, { position: 'A1', title: '★', duration: '9:57', type_: 'track' }] }, 2016);
   assert.equal(d.originalYear, 2016);
   assert.equal(d.uri, 'https://www.discogs.com/release/1');
+  assert.equal(toReleaseDetail({ id: 2, uri: 'javascript:alert(1)' }, null).uri, 'https://www.discogs.com/release/2');
+  assert.equal(toReleaseDetail({ id: 3, uri: 'https://www.discogs.com/release/3-X' }, null).uri, 'https://www.discogs.com/release/3-X');
   assert.deepEqual(d.tracklist.map((t) => t.heading), [true, false]);
   assert.equal(formatReleased('2026-07-24'), 'July 24, 2026');
   assert.equal(formatReleased('1977-00-00'), '1977');

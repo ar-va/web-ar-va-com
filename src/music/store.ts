@@ -40,6 +40,7 @@ export interface User {
   discogs_token: string | null;
   synced_at: number | null;
   sync_error: string | null;
+  created_at: number;
 }
 
 export const isAdmin = (u: User | null) => !!u && !!env.ADMIN_TELEGRAM_ID && String(u.id) === env.ADMIN_TELEGRAM_ID;

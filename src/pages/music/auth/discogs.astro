@@ -1,0 +1,35 @@
+---
+// Discogs sends the collector back here after "Authorize"; the browser finishes the sign-in (see src/music/sync.ts).
+export const prerender = false;
+import Layout from '../../../layouts/Layout.astro';
+import { loginHref } from '../../../music/lib';
+import { canCollect, currentUser } from '../../../music/store';
+
+const user = await currentUser(Astro.cookies);
+if (!user) return Astro.redirect(loginHref(Astro.url, `${Astro.url.origin}/settings`));
+if (!canCollect(user)) return Astro.redirect('/settings');
+---
+<Layout title="Connecting Discogs - ARVA">
+  <div class="max-w-3xl mx-auto px-6 w-full flex-grow py-24">
+    <h1 class="text-2xl font-bold text-zinc-900 dark:text-white mb-2">Connecting Discogs<span class="text-blue-violet-500">.</span></h1>
+    <p id="connect-status" class="text-zinc-600 dark:text-zinc-400" role="status">One moment…</p>
+    <a id="connect-back" href="/settings" class="hidden mt-6 text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 underline underline-offset-4">Back to settings</a>
+  </div>
+</Layout>
+
+<script>
+  import { finishConnect } from '../../../music/sync';
+  const status = document.getElementById('connect-status')!;
+  const q = new URLSearchParams(location.search);
+  const token = q.get('oauth_token'), verifier = q.get('oauth_verifier');
+  if (q.has('denied') || !token || !verifier) {
+    location.replace('/settings');
+  } else {
+    finishConnect(token, verifier)
+      .then(() => location.replace('/settings?connected'))
+      .catch((e) => {
+        status.textContent = `Discogs didn’t finish the connection: ${e.message}`;
+        document.getElementById('connect-back')!.classList.remove('hidden');
+      });
+  }
+</script>
