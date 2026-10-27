@@ -1,6 +1,4 @@
 // src/utils/helpers.ts
-import fs from 'node:fs';
-import path from 'node:path';
 
 export function transliterateSlug(slug: string): string {
   const cyrillicMap: Record<string, string> = {
@@ -27,15 +25,8 @@ export function createCleanSlug(id: string): string {
     .replace(/\s+/g, '-');
 }
 
-export function getReadingTime(id: string): string {
-  try {
-    const filePath = path.join(process.cwd(), 'src/content/blog', id);
-    const content = fs.readFileSync(filePath, 'utf-8');
-    const textContent = content.replace(/---[\s\S]*?---/, '');
-    const words = textContent.split(/\s+/).filter(word => word.length > 0).length;
-    const minutes = Math.ceil(words / 200);
-    return `${minutes} minute${minutes > 1 ? 's' : ''} read`;
-  } catch (e) {
-    return '1 minute read';
-  }
+export function getReadingTime(body: string = ''): string {
+  const words = body.split(/\s+/).filter(Boolean).length;
+  const minutes = Math.max(1, Math.ceil(words / 200));
+  return `${minutes} minute${minutes > 1 ? 's' : ''} read`;
 }

@@ -1,7 +1,7 @@
 // D1: users, sessions, invites, synced records, cached release details, comments.
 import { env } from 'cloudflare:workers';
 import type { AstroCookies } from 'astro';
-import { randomToken, sha256, type ShelfRecord } from './lib';
+import { randomToken, sha256, siteDomain, type ShelfRecord } from './lib';
 
 // Tables are created lazily (no migration step in the deploy).
 const SCHEMA = [
@@ -16,6 +16,9 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, shelf_id INTEGER NOT NULL, instance_id INTEGER NOT NULL,
     author_id INTEGER NOT NULL, body TEXT NOT NULL, created_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS comments_by_record ON comments (shelf_id, instance_id)`,
+  `CREATE TABLE IF NOT EXISTS post_comments (id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL, author_id INTEGER NOT NULL,
+    body TEXT NOT NULL, created_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS post_comments_by_slug ON post_comments (slug)`,
 ];
 
 let ready: Promise<unknown> | null = null;
@@ -51,14 +54,17 @@ export async function saveTelegramUser(u: { id: number; name: string; username: 
 
 // ---- Sessions (the cookie holds a random token; D1 holds only its hash) ----
 
-const COOKIE = '__Host-session';
+// One cookie for ar-va.com and music.ar-va.com, so a login on either counts on both.
+const COOKIE = '__Secure-session';
 const SESSION_DAYS = 30;
+// Browsers refuse Domain=localhost, so locally each host keeps its own cookie.
+const cookieDomain = (hostname: string) => (siteDomain(hostname) === 'localhost' ? undefined : siteDomain(hostname));
 
-export async function startSession(cookies: AstroCookies, userId: number) {
+export async function startSession(cookies: AstroCookies, userId: number, hostname: string) {
   const token = randomToken();
   await (await db()).prepare('INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)')
     .bind(await sha256(token), userId, now() + SESSION_DAYS * 86400).run();
-  cookies.set(COOKIE, token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: SESSION_DAYS * 86400 });
+  cookies.set(COOKIE, token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: SESSION_DAYS * 86400, domain: cookieDomain(hostname) });
 }
 
 export async function currentUser(cookies: AstroCookies): Promise<User | null> {
@@ -68,10 +74,10 @@ export async function currentUser(cookies: AstroCookies): Promise<User | null> {
     .bind(await sha256(token), now()).first<User>();
 }
 
-export async function endSession(cookies: AstroCookies) {
+export async function endSession(cookies: AstroCookies, hostname: string) {
   const token = cookies.get(COOKIE)?.value;
   if (token) await (await db()).prepare('DELETE FROM sessions WHERE id = ?').bind(await sha256(token)).run();
-  cookies.delete(COOKIE, { path: '/' });
+  cookies.delete(COOKIE, { path: '/', domain: cookieDomain(hostname) });
 }
 
 // ---- Invites ----
@@ -146,29 +152,45 @@ const COMMENTS_PER_10_MIN = 10;
 
 export interface Comment { id: number; body: string; created_at: number; author_id: number; name: string; username: string | null; photo_url: string | null }
 
-export async function listComments(shelfId: number, instanceId: number) {
+/** A comment thread: a record on a shelf, or a blog post. */
+export type Thread = { shelfId: number; instanceId: number } | { slug: string };
+
+const threadSql = (t: Thread) => 'slug' in t
+  ? { table: 'post_comments', cols: ['slug'], where: 'slug = ?', args: [t.slug] }
+  : { table: 'comments', cols: ['shelf_id', 'instance_id'], where: 'shelf_id = ? AND instance_id = ?', args: [t.shelfId, t.instanceId] };
+
+export async function listComments(t: Thread) {
+  const { table, where, args } = threadSql(t);
   const { results } = await (await db()).prepare(
-    `SELECT comments.id, body, comments.created_at, author_id, users.name, users.username, users.photo_url FROM comments
-     JOIN users ON users.id = comments.author_id WHERE shelf_id = ? AND instance_id = ? ORDER BY comments.id`,
-  ).bind(shelfId, instanceId).all<Comment>();
+    `SELECT c.id, body, c.created_at, author_id, users.name, users.username, users.photo_url FROM ${table} c
+     JOIN users ON users.id = c.author_id WHERE ${where} ORDER BY c.id`,
+  ).bind(...args).all<Comment>();
   return results;
 }
 
 /** Returns an error message, or null when the comment was saved. */
-export async function addComment(shelfId: number, instanceId: number, author: User, body: string) {
+export async function addComment(t: Thread, author: User, body: string) {
   const text = body.replace(/\r\n/g, '\n').trim();
   if (!text) return 'Write something first.';
   if (text.length > COMMENT_MAX) return `Comments can be up to ${COMMENT_MAX} characters.`;
   const d = await db();
-  const recent = await d.prepare('SELECT COUNT(*) AS n FROM comments WHERE author_id = ? AND created_at > ?').bind(author.id, now() - 600).first<number>('n');
+  const recent = await d.prepare(
+    `SELECT (SELECT COUNT(*) FROM comments WHERE author_id = ?1 AND created_at > ?2)
+          + (SELECT COUNT(*) FROM post_comments WHERE author_id = ?1 AND created_at > ?2) AS n`,
+  ).bind(author.id, now() - 600).first<number>('n');
   if ((recent ?? 0) >= COMMENTS_PER_10_MIN) return 'That’s a lot of comments at once. Try again in a few minutes.';
-  await d.prepare('INSERT INTO comments (shelf_id, instance_id, author_id, body, created_at) VALUES (?, ?, ?, ?, ?)')
-    .bind(shelfId, instanceId, author.id, text, now()).run();
+  const { table, cols, args } = threadSql(t);
+  await d.prepare(`INSERT INTO ${table} (${cols.join(', ')}, author_id, body, created_at) VALUES (${cols.map(() => '?').join(', ')}, ?, ?, ?)`)
+    .bind(...args, author.id, text, now()).run();
   return null;
 }
 
-/** The author, the shelf's owner and the admin may delete a comment. */
-export async function deleteComment(commentId: number, shelfId: number, user: User) {
-  await (await db()).prepare('DELETE FROM comments WHERE id = ? AND shelf_id = ? AND (author_id = ? OR shelf_id = ? OR ?)')
-    .bind(commentId, shelfId, user.id, user.id, isAdmin(user) ? 1 : 0).run();
+/** Who may delete: the author and the admin; on a record also the shelf's owner. */
+export const canDeleteComment = (t: Thread, authorId: number, user: User | null) =>
+  !!user && (user.id === authorId || isAdmin(user) || (!('slug' in t) && t.shelfId === user.id));
+
+export async function deleteComment(t: Thread, commentId: number, user: User) {
+  const { table, where, args } = threadSql(t);
+  const comment = await (await db()).prepare(`SELECT author_id FROM ${table} WHERE id = ? AND ${where}`).bind(commentId, ...args).first<{ author_id: number }>();
+  if (comment && canDeleteComment(t, comment.author_id, user)) await (await db()).prepare(`DELETE FROM ${table} WHERE id = ?`).bind(commentId).run();
 }

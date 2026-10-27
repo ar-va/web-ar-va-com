@@ -18,7 +18,7 @@ if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
   const action = form.get('action');
   if (action === 'logout') {
-    await endSession(Astro.cookies);
+    await endSession(Astro.cookies, Astro.url.hostname);
     return Astro.redirect('/', 303);
   }
   if (action === 'sync' && canCollect(user) && user.discogs_token) {

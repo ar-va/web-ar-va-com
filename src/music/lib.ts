@@ -152,8 +152,20 @@ export function formatReleased(value: string | null) {
   return new Date(Date.UTC(y, m - 1, d || 1)).toLocaleDateString('en-US', opts);
 }
 
-/** Only same-site paths are allowed as a post-login destination. */
-export const safeReturnPath = (path: string | null | undefined) => (path && /^\/(?![/\\])/.test(path) ? path : '/');
+/** The site both hosts share: "ar-va.com" for music.ar-va.com and ar-va.com (locally "localhost"). */
+export const siteDomain = (hostname: string) => hostname.replace(/^music\./, '');
+
+/** Post-login destination: a path on this host, or a page on the site or one of its subdomains. */
+export function safeReturnPath(target: string | null | undefined, hostname: string) {
+  if (!target) return '/';
+  if (/^\/(?![/\\])/.test(target)) return target;
+  try {
+    const u = new URL(target);
+    const site = siteDomain(hostname);
+    if (/^https?:$/.test(u.protocol) && (u.hostname === site || u.hostname.endsWith(`.${site}`))) return u.href;
+  } catch {}
+  return '/';
+}
 
 /** Path as the visitor sees it on music.ar-va.com (the Worker serves it from /music/…). */
 export const musicPath = (url: URL) => url.pathname.replace(/^\/music(?=\/|$)/, '') || '/';

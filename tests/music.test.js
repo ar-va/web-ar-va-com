@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import {
-  verifyTelegramLogin, oauthHeader, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, musicPath,
+  verifyTelegramLogin, oauthHeader, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath,
 } from '../src/music/lib.ts';
 
 const BOT = '123:test-bot-token';
@@ -91,8 +91,15 @@ test('release detail and dates', () => {
 });
 
 test('return paths and music paths', () => {
-  assert.equal(safeReturnPath('/arabor/1#comments'), '/arabor/1#comments');
-  for (const bad of ['//evil.com', '/\\evil.com', 'https://evil.com', 'javascript:x', '', null]) assert.equal(safeReturnPath(bad), '/');
+  const h = 'music.ar-va.com';
+  assert.equal(safeReturnPath('/arabor/1#comments', h), '/arabor/1#comments');
+  assert.equal(safeReturnPath('https://ar-va.com/blog/x#comments', h), 'https://ar-va.com/blog/x#comments');
+  assert.equal(safeReturnPath('https://music.ar-va.com/arabor', 'ar-va.com'), 'https://music.ar-va.com/arabor');
+  for (const bad of ['//evil.com', '/\\evil.com', 'https://evil.com', 'https://ar-va.com.evil.com/', 'https://evilar-va.com/', 'javascript:alert(1)', '', null]) {
+    assert.equal(safeReturnPath(bad, h), '/', String(bad));
+  }
+  assert.equal(siteDomain('music.ar-va.com'), 'ar-va.com');
+  assert.equal(siteDomain('ar-va.com'), 'ar-va.com');
   assert.equal(musicPath(new URL('https://music.ar-va.com/music/arabor/1')), '/arabor/1');
   assert.equal(musicPath(new URL('https://music.ar-va.com/music')), '/');
   assert.equal(musicPath(new URL('https://music.ar-va.com/musicals')), '/musicals');

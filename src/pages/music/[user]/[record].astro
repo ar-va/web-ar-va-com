@@ -5,14 +5,16 @@ import Layout from '../../../layouts/Layout.astro';
 import Cover from '../../../components/music/Cover.astro';
 import AccountLink from '../../../components/music/AccountLink.astro';
 import TelegramLogin from '../../../components/music/TelegramLogin.astro';
+import CommentThread from '../../../components/CommentThread.astro';
 import { formatReleased, loginHref, musicPath } from '../../../music/lib';
 import { releaseDetail } from '../../../music/discogs';
-import { COMMENT_MAX, addComment, currentUser, deleteComment, isAdmin, listComments, shelfOwner, shelfRecord } from '../../../music/store';
+import { addComment, canDeleteComment, currentUser, deleteComment, listComments, shelfOwner, shelfRecord } from '../../../music/store';
 
 const instanceId = Number(Astro.params.record);
 const [user, owner] = await Promise.all([currentUser(Astro.cookies), shelfOwner(Astro.params.user!)]);
 const record = owner && Number.isSafeInteger(instanceId) ? await shelfRecord(owner.id, instanceId) : null;
 const path = musicPath(Astro.url);
+const thread = { shelfId: owner?.id ?? 0, instanceId };
 
 let error: string | null = null;
 let draft = '';
@@ -20,22 +22,20 @@ if (owner && record && Astro.request.method === 'POST') {
   if (!user) return Astro.redirect(loginHref(Astro.url), 303);
   const form = await Astro.request.formData();
   if (form.get('action') === 'delete') {
-    await deleteComment(Number(form.get('id')), owner.id, user);
+    await deleteComment(thread, Number(form.get('id')), user);
     return Astro.redirect(`${path}#comments`, 303);
   }
   draft = String(form.get('body') ?? '');
-  error = await addComment(owner.id, instanceId, user, draft);
+  error = await addComment(thread, user, draft);
   if (!error) return Astro.redirect(`${path}#comments`, 303);
 }
 
 if (!owner || !record) Astro.response.status = 404;
 const [detail, comments] = owner && record
-  ? await Promise.all([releaseDetail(owner, record.releaseId, record.masterId), listComments(owner.id, instanceId)])
+  ? await Promise.all([releaseDetail(owner, record.releaseId, record.masterId), listComments(thread)])
   : [null, []];
 
 const shelfPath = owner ? `/${encodeURIComponent(owner.discogs_username!)}` : '/';
-const date = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-const canDelete = (authorId: number) => !!user && (user.id === authorId || user.id === owner?.id || isAdmin(user));
 
 const rows: [string, string | null | undefined][] = record ? [
   ['Artist', record.artist],
@@ -107,51 +107,9 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
       <hr class="border-zinc-200 dark:border-zinc-800/80 my-10" />
 
       <section id="comments" class="scroll-mt-24">
-        <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6">Comments{comments.length > 0 && <span class="text-zinc-500 font-normal"> ({comments.length})</span>}</h2>
-
-        {comments.length > 0 && (
-          <ul class="flex flex-col gap-6 mb-10">
-            {comments.map((c) => (
-              <li class="flex gap-3">
-                {c.photo_url
-                  ? <img src={c.photo_url} alt="" width="36" height="36" loading="lazy" referrerpolicy="no-referrer" class="w-9 h-9 rounded-full object-cover shrink-0" />
-                  : <span class="w-9 h-9 rounded-full bg-blue-violet-500 text-white grid place-items-center shrink-0" aria-hidden="true">{c.name.charAt(0)}</span>}
-                <div class="min-w-0 flex-grow">
-                  <div class="text-sm flex flex-wrap items-baseline gap-x-2">
-                    {c.username
-                      ? <a href={`https://t.me/${c.username}`} class="font-medium text-zinc-900 dark:text-white hover:text-blue-violet-500 transition-colors">{c.name}</a>
-                      : <span class="font-medium text-zinc-900 dark:text-white">{c.name}</span>}
-                    <time class="text-zinc-500" datetime={new Date(c.created_at * 1000).toISOString()}>{date(new Date(c.created_at * 1000))}</time>
-                    {canDelete(c.author_id) && (
-                      <form method="post" class="inline">
-                        <input type="hidden" name="action" value="delete" />
-                        <input type="hidden" name="id" value={c.id} />
-                        <button class="text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" onclick="return confirm('Delete this comment?')">Delete</button>
-                      </form>
-                    )}
-                  </div>
-                  <p class="mt-1 text-zinc-700 dark:text-zinc-300 whitespace-pre-line break-words">{c.body}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {user ? (
-          <form method="post" class="flex flex-col gap-3">
-            <label for="comment-body" class="text-sm text-zinc-500">Comment as {user.name}</label>
-            <textarea id="comment-body" name="body" rows="3" required maxlength={COMMENT_MAX}
-              class="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-4 py-3 text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 transition-colors"
-              aria-describedby={error ? 'comment-error' : undefined}>{draft}</textarea>
-            {error && <p id="comment-error" class="text-sm text-red-600 dark:text-red-400">{error}</p>}
-            <div><button class="bg-blue-violet-500 text-white text-sm font-medium px-6 py-2.5 rounded-full hover:bg-blue-violet-600 transition-colors">Post comment</button></div>
-          </form>
-        ) : (
-          <div class="flex flex-col gap-3">
-            <p class="text-sm text-zinc-500">Log in with Telegram to leave a comment.</p>
-            <TelegramLogin returnTo={`${path}#comments`} />
-          </div>
-        )}
+        <CommentThread comments={comments} user={user} canDelete={(id) => canDeleteComment(thread, id, user)} error={error} draft={draft}>
+          <TelegramLogin slot="login" returnTo={`${path}#comments`} />
+        </CommentThread>
       </section>
     </article>
   )}

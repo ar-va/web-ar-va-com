@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Layout from '../../layouts/Layout.astro';
+import BlogComments from '../../components/BlogComments.astro';
 import { createCleanSlug } from '../../utils/helpers';
 
 export async function getStaticPaths() {
@@ -63,6 +64,13 @@ const displayTitle = h1 ? h1.text : 'Untitled Post';
                 prose-hr:border-zinc-200 dark:prose-hr:border-zinc-800 prose-hr:my-8">
       <Content />
     </div>
+
+    <hr class="border-zinc-200 dark:border-zinc-800/80 my-12" />
+    <section id="comments" class="scroll-mt-24">
+      <BlogComments server:defer slug={Astro.params.slug!}>
+        <p slot="fallback" class="text-sm text-zinc-500">Loading comments…</p>
+      </BlogComments>
+    </section>
   </article>
 
   <script>
