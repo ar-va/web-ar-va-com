@@ -18,7 +18,7 @@
   "d1_databases": [{ "binding": "DB", "database_name": "ar-va-music" }],
   "triggers": { "crons": ["*/15 * * * *"] },
   "vars": {
-    "TELEGRAM_BOT_NAME": "",
+    "TELEGRAM_BOT_NAME": "music_arva_bot",
     "ADMIN_TELEGRAM_ID": ""
   },
   "observability": { "enabled": true }
