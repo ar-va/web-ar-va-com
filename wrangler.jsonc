@@ -1,7 +1,27 @@
 {
   "name": "ar-va-com",
+  "account_id": "5381dc39fbfcb930bb82b729520f7102",
+  "main": "./src/worker.ts",
   "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
   "assets": {
-    "directory": "./dist"
-  }
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // Every request goes through the Worker so music.ar-va.com/ isn't answered with the blog's index.html.
+    "run_worker_first": true
+  },
+  "routes": [
+    { "pattern": "ar-va.com", "custom_domain": true },
+    { "pattern": "music.ar-va.com", "custom_domain": true }
+  ],
+  // No database_id: Wrangler creates the database on the first deploy.
+  "d1_databases": [{ "binding": "DB", "database_name": "ar-va-music" }],
+  "triggers": { "crons": ["*/15 * * * *"] },
+  "vars": {
+    "TELEGRAM_BOT_NAME": "",
+    "ADMIN_TELEGRAM_ID": ""
+  },
+  "observability": { "enabled": true }
+  // Secrets (wrangler secret put / .dev.vars): TELEGRAM_BOT_TOKEN, DISCOGS_CONSUMER_KEY,
+  // DISCOGS_CONSUMER_SECRET, TOKEN_KEY.
 }

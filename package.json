@@ -10,7 +10,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "generate-types": "wrangler types"
+    "generate-types": "wrangler types --strict-vars=false",
+    "test": "node --test 'tests/*.test.js'"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.3.0",

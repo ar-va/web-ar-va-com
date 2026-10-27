@@ -18,3 +18,67 @@
   --color-blue-violet-900: #2b2b84;
   --color-blue-violet-950: #1b1a4c;
 }
+/* ---- Music shelf (music.ar-va.com) ---- */
+:root {
+  --plank-top: #fafafa;
+  --plank: #e4e4e7;
+  --plank-edge: #a1a1aa;
+}
+.dark {
+  --plank-top: #3f3f46;
+  --plank: #27272a;
+  --plank-edge: #0a0a0a;
+}
+
+.shelf {
+  --gap: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  column-gap: var(--gap);
+  row-gap: 3.5rem;
+  padding: 0 calc(var(--gap) / 2) 1rem;
+}
+@media (min-width: 640px) {
+  .shelf { grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); }
+}
+.shelf-slot { position: relative; }
+/* Each slot draws its piece of the plank, reaching half a gap to both sides, so a row reads as one board. */
+.shelf-slot::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: calc(var(--gap) / -2);
+  right: calc(var(--gap) / -2);
+  height: 0.75rem;
+  background: linear-gradient(to bottom, var(--plank-top) 0 2px, var(--plank) 2px, var(--plank-edge));
+  box-shadow: 0 12px 14px -10px rgb(0 0 0 / 0.45);
+}
+
+.sleeve { isolation: isolate; }
+.sleeve-face {
+  z-index: 1;
+  box-shadow: 0 1px 1px rgb(0 0 0 / 0.08), 8px -2px 16px -8px rgb(0 0 0 / 0.4);
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.disc {
+  position: absolute;
+  inset: 3%;
+  z-index: 0;
+  border-radius: 9999px;
+  background:
+    radial-gradient(circle, #111 0 2%, var(--color-blue-violet-500) 2.5% 16%, #0b0b0b 16.5% 18%, transparent 18.5%),
+    repeating-radial-gradient(circle, #141414 0 1px, #232323 1px 3px);
+  transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+/* Pulled up out of the sleeve, as you would from a real shelf. */
+.shelf-record:hover .disc,
+.shelf-record:focus-visible .disc { transform: translateY(-26%); }
+.shelf-record:hover .sleeve-face,
+.shelf-record:focus-visible .sleeve-face { transform: translateY(-3px); }
+.shelf-record:focus-visible { outline: 2px solid var(--color-blue-violet-500); outline-offset: 4px; }
+/* Record page: the disc rests half out of the sleeve. */
+.sleeve-open .disc { transform: translateX(34%) rotate(20deg); }
+
+@media (prefers-reduced-motion: reduce) {
+  .disc, .sleeve-face { transition: none; }
+}

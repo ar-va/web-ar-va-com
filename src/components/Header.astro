@@ -1,15 +1,22 @@
 ---
 import ThemeToggle from './ThemeToggle.astro';
+
+// On music.ar-va.com the main site's links must leave the subdomain.
+const onMusic = Astro.url.hostname.startsWith('music.');
+const main = onMusic ? 'https://ar-va.com' : '';
+const link = 'text-zinc-500 hover:text-blue-violet-500 transition-colors dark:text-zinc-400 dark:hover:text-blue-violet-400';
 ---
 
 <nav id="site-header" class="sticky top-0 z-50 w-full bg-transparent transition-all duration-300">
   <div class="max-w-6xl mx-auto px-6 w-full flex justify-between items-center py-2">
-    <a href="/" class="font-bold text-xl tracking-tight text-zinc-900 dark:text-white">
+    <a href={`${main}/`} class="font-bold text-xl tracking-tight text-zinc-900 dark:text-white">
       ARVA<span class="text-blue-violet-500">.</span>
     </a>
-    <div class="flex items-center gap-6 text-sm font-medium">
-      <a href="/" class="text-zinc-500 hover:text-blue-violet-500 transition-colors dark:text-zinc-400 dark:hover:text-blue-violet-400">Home</a>
-      <a href="/blog" class="text-zinc-500 hover:text-blue-violet-500 transition-colors dark:text-zinc-400 dark:hover:text-blue-violet-400">Blog</a>
+    <div class="flex items-center gap-4 sm:gap-6 text-sm font-medium">
+      <a href={`${main}/`} class={link}>Home</a>
+      <a href={`${main}/blog`} class={link}>Blog</a>
+      <a href={onMusic ? '/' : 'https://music.ar-va.com/'} class={link} aria-current={onMusic ? 'page' : undefined}>Music</a>
+      <slot />
       <ThemeToggle />
     </div>
   </div>

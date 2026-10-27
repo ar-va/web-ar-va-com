@@ -1,0 +1,6 @@
+# Copy to .dev.vars for `astro dev`. Production: npx wrangler secret put <NAME>
+TELEGRAM_BOT_TOKEN=123456:bot-token-from-botfather
+DISCOGS_CONSUMER_KEY=from-discogs-settings-developers
+DISCOGS_CONSUMER_SECRET=from-discogs-settings-developers
+# Any long random string; encrypts stored Discogs tokens. Changing it disconnects every shelf.
+TOKEN_KEY=change-me

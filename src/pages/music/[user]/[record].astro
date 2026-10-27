@@ -1,0 +1,158 @@
+---
+// One record: Discogs details, the collector's public Discogs fields, tracklist, and comments (Telegram login).
+export const prerender = false;
+import Layout from '../../../layouts/Layout.astro';
+import Cover from '../../../components/music/Cover.astro';
+import AccountLink from '../../../components/music/AccountLink.astro';
+import TelegramLogin from '../../../components/music/TelegramLogin.astro';
+import { formatReleased, loginHref, musicPath } from '../../../music/lib';
+import { releaseDetail } from '../../../music/discogs';
+import { COMMENT_MAX, addComment, currentUser, deleteComment, isAdmin, listComments, shelfOwner, shelfRecord } from '../../../music/store';
+
+const instanceId = Number(Astro.params.record);
+const [user, owner] = await Promise.all([currentUser(Astro.cookies), shelfOwner(Astro.params.user!)]);
+const record = owner && Number.isSafeInteger(instanceId) ? await shelfRecord(owner.id, instanceId) : null;
+const path = musicPath(Astro.url);
+
+let error: string | null = null;
+let draft = '';
+if (owner && record && Astro.request.method === 'POST') {
+  if (!user) return Astro.redirect(loginHref(Astro.url), 303);
+  const form = await Astro.request.formData();
+  if (form.get('action') === 'delete') {
+    await deleteComment(Number(form.get('id')), owner.id, user);
+    return Astro.redirect(`${path}#comments`, 303);
+  }
+  draft = String(form.get('body') ?? '');
+  error = await addComment(owner.id, instanceId, user, draft);
+  if (!error) return Astro.redirect(`${path}#comments`, 303);
+}
+
+if (!owner || !record) Astro.response.status = 404;
+const [detail, comments] = owner && record
+  ? await Promise.all([releaseDetail(owner, record.releaseId, record.masterId), listComments(owner.id, instanceId)])
+  : [null, []];
+
+const shelfPath = owner ? `/${encodeURIComponent(owner.discogs_username!)}` : '/';
+const date = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+const canDelete = (authorId: number) => !!user && (user.id === authorId || user.id === owner?.id || isAdmin(user));
+
+const rows: [string, string | null | undefined][] = record ? [
+  ['Artist', record.artist],
+  ['Album', record.title],
+  ['Released', detail?.originalYear ? String(detail.originalYear) : null],
+  ['Vinyl release', formatReleased(detail?.released ?? null) ?? (record.year ? String(record.year) : null)],
+  ['Genre', record.genres.join(', ')],
+  ['Style', (record.styles ?? []).join(', ')],
+  ['Label', record.labels],
+  ['Format', record.format],
+  ['Country', detail?.country],
+  ['Added to collection', formatReleased(record.added.slice(0, 10))],
+  ...record.fields.map((f) => [f.name, f.value] as [string, string]),
+] : [];
+const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoration-blue-violet-500/30 hover:decoration-blue-violet-500 underline-offset-4 transition-colors';
+---
+<Layout title={record ? `${record.title} by ${record.artist} - ARVA` : 'Not found - ARVA'} description={record ? `${record.artist} – ${record.title}, on ${owner!.name}’s shelf.` : undefined}>
+  <AccountLink slot="nav" user={user} />
+  {!record || !owner ? (
+    <div class="max-w-3xl mx-auto px-6 w-full flex-grow py-24">
+      <p class="text-zinc-500">This record isn’t on the shelf (any more). <a href={shelfPath} class={link}>Back to the shelf →</a></p>
+    </div>
+  ) : (
+    <article class="max-w-3xl mx-auto px-6 w-full flex-grow py-24">
+      <a href={shelfPath} class="text-sm text-zinc-500 hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors">← {owner.name}’s records</a>
+
+      <header class="mt-8 mb-12 border-b border-zinc-200 dark:border-zinc-800 pb-10 flex flex-col sm:flex-row sm:items-end gap-8 sm:gap-24">
+        <Cover record={record} eager class="sleeve-open w-48 sm:w-44 shrink-0" />
+        <div class="min-w-0">
+          <div class="flex items-center gap-4 mb-3">
+            <div class="w-6 h-[2px] bg-blue-violet-500 shrink-0"></div>
+            <span class="text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400">{record.artist}</span>
+          </div>
+          <h1 class="text-4xl font-bold text-zinc-900 dark:text-white leading-tight">{record.title}</h1>
+        </div>
+      </header>
+
+      <dl class="grid grid-cols-1 sm:grid-cols-[11rem_1fr] gap-x-8 gap-y-1 sm:gap-y-3">
+        {rows.filter(([, v]) => v).map(([k, v]) => (
+          <>
+            <dt class="text-sm text-zinc-500 sm:pt-0.5 mt-2 sm:mt-0">{k}</dt>
+            <dd class="text-zinc-800 dark:text-zinc-200 whitespace-pre-line break-words">{v}</dd>
+          </>
+        ))}
+      </dl>
+
+      {detail && detail.tracklist.length > 0 && (
+        <section class="mt-12">
+          <h2 class="text-zinc-500 text-sm mb-2">Tracklist</h2>
+          <ol>
+            {detail.tracklist.map((t) => t.heading ? (
+              <li class="pt-5 pb-1 text-xs font-bold tracking-widest uppercase text-zinc-500">{t.title}</li>
+            ) : (
+              <li class="flex gap-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/40 last:border-none">
+                <span class="w-8 shrink-0 text-sm text-zinc-500 tabular-nums pt-0.5">{t.position}</span>
+                <span class="flex-grow text-zinc-800 dark:text-zinc-200">{t.title}</span>
+                {t.duration && <span class="text-sm text-zinc-500 tabular-nums pt-0.5">{t.duration}</span>}
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
+
+      <p class="mt-8 text-sm text-zinc-500">
+        <a href={detail?.uri ?? `https://www.discogs.com/release/${record.releaseId}`} class={link}>View this release on Discogs</a>
+        <span class="mx-1">·</span>Data from Discogs.
+      </p>
+
+      <hr class="border-zinc-200 dark:border-zinc-800/80 my-10" />
+
+      <section id="comments" class="scroll-mt-24">
+        <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6">Comments{comments.length > 0 && <span class="text-zinc-500 font-normal"> ({comments.length})</span>}</h2>
+
+        {comments.length > 0 && (
+          <ul class="flex flex-col gap-6 mb-10">
+            {comments.map((c) => (
+              <li class="flex gap-3">
+                {c.photo_url
+                  ? <img src={c.photo_url} alt="" width="36" height="36" loading="lazy" referrerpolicy="no-referrer" class="w-9 h-9 rounded-full object-cover shrink-0" />
+                  : <span class="w-9 h-9 rounded-full bg-blue-violet-500 text-white grid place-items-center shrink-0" aria-hidden="true">{c.name.charAt(0)}</span>}
+                <div class="min-w-0 flex-grow">
+                  <div class="text-sm flex flex-wrap items-baseline gap-x-2">
+                    {c.username
+                      ? <a href={`https://t.me/${c.username}`} class="font-medium text-zinc-900 dark:text-white hover:text-blue-violet-500 transition-colors">{c.name}</a>
+                      : <span class="font-medium text-zinc-900 dark:text-white">{c.name}</span>}
+                    <time class="text-zinc-500" datetime={new Date(c.created_at * 1000).toISOString()}>{date(new Date(c.created_at * 1000))}</time>
+                    {canDelete(c.author_id) && (
+                      <form method="post" class="inline">
+                        <input type="hidden" name="action" value="delete" />
+                        <input type="hidden" name="id" value={c.id} />
+                        <button class="text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" onclick="return confirm('Delete this comment?')">Delete</button>
+                      </form>
+                    )}
+                  </div>
+                  <p class="mt-1 text-zinc-700 dark:text-zinc-300 whitespace-pre-line break-words">{c.body}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {user ? (
+          <form method="post" class="flex flex-col gap-3">
+            <label for="comment-body" class="text-sm text-zinc-500">Comment as {user.name}</label>
+            <textarea id="comment-body" name="body" rows="3" required maxlength={COMMENT_MAX}
+              class="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-4 py-3 text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 transition-colors"
+              aria-describedby={error ? 'comment-error' : undefined}>{draft}</textarea>
+            {error && <p id="comment-error" class="text-sm text-red-600 dark:text-red-400">{error}</p>}
+            <div><button class="bg-blue-violet-500 text-white text-sm font-medium px-6 py-2.5 rounded-full hover:bg-blue-violet-600 transition-colors">Post comment</button></div>
+          </form>
+        ) : (
+          <div class="flex flex-col gap-3">
+            <p class="text-sm text-zinc-500">Log in with Telegram to leave a comment.</p>
+            <TelegramLogin returnTo={`${path}#comments`} />
+          </div>
+        )}
+      </section>
+    </article>
+  )}
+</Layout>

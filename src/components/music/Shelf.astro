@@ -1,0 +1,169 @@
+---
+// A collector's shelf: latest addition, year/genre filters and search (same look as Writing.astro), then the covers on shelves.
+import Cover from './Cover.astro';
+import { formatReleased, type ShelfRecord } from '../../music/lib';
+
+interface Props {
+  owner: { name: string; discogs_username: string };
+  records: ShelfRecord[];
+  shelves: { name: string; discogs_username: string; count: number }[];
+}
+const { owner, records, shelves } = Astro.props;
+const base = `/${encodeURIComponent(owner.discogs_username)}`;
+const latest = records[0];
+// Discogs dates are in the collector's (Discogs') local time; show that day, not the UTC one.
+const addedOn = (iso: string) => formatReleased(iso.slice(0, 10));
+
+const count = <T extends string>(values: T[]) => {
+  const m = new Map<T, number>();
+  values.forEach((v) => m.set(v, (m.get(v) ?? 0) + 1));
+  return m;
+};
+const years = [...count(records.map((r) => r.added.slice(0, 4)))].sort(([a], [b]) => b.localeCompare(a));
+const genres = [...count(records.flatMap((r) => r.genres.map((g) => g.toLowerCase())))].sort(([a], [b]) => a.localeCompare(b));
+const others = shelves.filter((s) => s.discogs_username !== owner.discogs_username);
+
+// Filter buttons: the exact classes Writing.astro uses for tags and years.
+const btn = 'group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white';
+const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors';
+---
+
+<div id="shelf" class="font-normal">
+  <div class="flex justify-between items-center mb-2 gap-4">
+    <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">{owner.name}’s records<span class="text-blue-violet-500">.</span></h1>
+    <a href={`https://www.discogs.com/user/${encodeURIComponent(owner.discogs_username)}/collection`} class="shrink-0 text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 px-4 py-2 rounded-full transition-colors">On Discogs →</a>
+  </div>
+
+  {records.length === 0 ? (
+    <p class="text-zinc-500 py-12">The shelf is still empty. Records appear here a few minutes after they’re added on Discogs.</p>
+  ) : (
+    <>
+      {latest && (
+        <section>
+          <h2 class="text-zinc-500 text-sm">Latest</h2>
+          <a href={`${base}/${latest.instanceId}`} class="group flex items-center gap-4 mt-1">
+            <Cover record={latest} eager class="w-16 shrink-0 shadow-sm" />
+            <span class="min-w-0">
+              <span class="block text-2xl text-zinc-900 dark:text-zinc-200 group-hover:text-blue-violet-600 dark:group-hover:text-white transition-colors truncate">{latest.title}</span>
+              <span class="block text-zinc-500 text-sm truncate">{latest.artist} · added {addedOn(latest.added)}</span>
+            </span>
+          </a>
+        </section>
+      )}
+
+      <hr class="border-zinc-200 dark:border-zinc-800/80 my-6" />
+
+      <section class="mb-2">
+        <h2 class="text-zinc-500 text-sm">Added</h2>
+        <div class="leading-8 text-base">
+          {years.map(([year, n], i) => (
+            <span class="inline whitespace-nowrap"><button type="button" data-year={year} class={`year-btn ${btn}`}><span class={btnLabel}>{year}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button>{i < years.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mx-1.5">·</span>}</span>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 class="text-zinc-500 text-sm">Genres</h2>
+        <div class="leading-8 text-base">
+          {genres.map(([genre, n], i) => (
+            <span class="inline whitespace-nowrap"><button type="button" data-genre={genre} class={`genre-btn ${btn}`}><span class={btnLabel}>{genre}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button>{i < genres.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
+          ))}
+        </div>
+      </section>
+
+      <hr class="border-zinc-200 dark:border-zinc-800/80 my-6" />
+
+      <section>
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <h2 class="text-zinc-500 text-sm m-0 shrink-0">All records ({records.length})</h2>
+          <div class="relative w-full sm:w-64">
+            <input type="search" id="record-search" placeholder="Search" aria-label="Search records"
+              class="w-full bg-transparent border-b border-zinc-300 dark:border-zinc-700 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600 [&::-webkit-search-cancel-button]:hidden" />
+            <svg class="w-4 h-4 absolute right-0 bottom-1 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </div>
+        </div>
+
+        <ul class="shelf mt-8" role="list">
+          {records.map((r, i) => (
+            <li class="shelf-slot"
+              data-year={r.added.slice(0, 4)}
+              data-genres={r.genres.map((g) => g.toLowerCase()).join('|')}
+              data-search={[r.artist, r.title, r.labels, r.year, ...r.genres, ...(r.styles ?? []), ...r.fields.map((f) => f.value)].join(' ').toLowerCase()}>
+              <a href={`${base}/${r.instanceId}`} class="shelf-record block" title={`${r.artist} – ${r.title}`}>
+                <Cover record={r} eager={i < 12} />
+                <span class="sr-only">{r.artist} – {r.title}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+
+        <div id="filter-info" class="hidden mt-6 text-sm text-zinc-500 items-baseline">
+          <span id="filter-info-text"></span>
+          <button type="button" id="clear-filters" class="ml-1 text-blue-violet-600 dark:text-blue-violet-400 hover:text-zinc-900 dark:hover:text-white transition-colors underline decoration-blue-violet-500/50 hover:decoration-blue-violet-500 underline-offset-4">Clear all</button>
+        </div>
+      </section>
+    </>
+  )}
+
+  {others.length > 0 && (
+    <>
+      <hr class="border-zinc-200 dark:border-zinc-800/80 my-6" />
+      <section>
+        <h2 class="text-zinc-500 text-sm">Other shelves</h2>
+        <p class="leading-8">
+          {others.map((s, i) => (
+            <span class="whitespace-nowrap"><a href={`/${encodeURIComponent(s.discogs_username)}`} class="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white underline decoration-zinc-300 dark:decoration-zinc-700 hover:decoration-zinc-500 underline-offset-4 transition-colors">{s.name}</a><span class="text-zinc-500"> ({s.count})</span>{i < others.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
+          ))}
+        </p>
+      </section>
+    </>
+  )}
+</div>
+
+<script>
+  const slots = [...document.querySelectorAll<HTMLElement>('.shelf-slot')];
+  const search = document.getElementById('record-search') as HTMLInputElement | null;
+  const info = document.getElementById('filter-info')!;
+  const infoText = document.getElementById('filter-info-text')!;
+  const years = new Set<string>();
+  const genres = new Set<string>();
+
+  function apply() {
+    const words = (search?.value ?? '').toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    for (const slot of slots) {
+      const d = slot.dataset;
+      const own = (d.genres ?? '').split('|');
+      const ok = (years.size === 0 || years.has(d.year!))
+        && [...genres].every((g) => own.includes(g))
+        && words.every((w) => d.search!.includes(w));
+      slot.hidden = !ok;
+      if (ok) shown++;
+    }
+    const filtering = words.length > 0 || years.size > 0 || genres.size > 0;
+    info.classList.toggle('hidden', !filtering);
+    info.classList.toggle('flex', filtering);
+    infoText.textContent = shown === 0 ? 'No matching records.' : `Showing ${shown} of ${slots.length}.`;
+  }
+
+  function toggle(set: Set<string>, attr: 'year' | 'genre') {
+    return (e: Event) => {
+      const btn = e.currentTarget as HTMLElement;
+      const value = btn.dataset[attr]!;
+      set.has(value) ? set.delete(value) : set.add(value);
+      document.querySelectorAll<HTMLElement>(`.${attr}-btn[data-${attr}="${CSS.escape(value)}"]`).forEach((b) => b.classList.toggle('active-tag', set.has(value)));
+      apply();
+    };
+  }
+
+  document.querySelectorAll('.year-btn').forEach((b) => b.addEventListener('click', toggle(years, 'year')));
+  document.querySelectorAll('.genre-btn').forEach((b) => b.addEventListener('click', toggle(genres, 'genre')));
+  search?.addEventListener('input', apply);
+  document.getElementById('clear-filters')?.addEventListener('click', () => {
+    years.clear();
+    genres.clear();
+    if (search) search.value = '';
+    document.querySelectorAll('.active-tag').forEach((b) => b.classList.remove('active-tag'));
+    apply();
+  });
+</script>

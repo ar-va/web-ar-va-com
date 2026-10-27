@@ -1,0 +1,24 @@
+---
+// music.ar-va.com/ shows the admin's shelf; until that is connected, a list of shelves.
+export const prerender = false;
+import Layout from '../../layouts/Layout.astro';
+import AccountLink from '../../components/music/AccountLink.astro';
+import { adminShelfOwner, currentUser, listShelves } from '../../music/store';
+
+const owner = await adminShelfOwner();
+if (owner) return Astro.rewrite(`/music/${encodeURIComponent(owner.discogs_username!)}`);
+const [user, shelves] = await Promise.all([currentUser(Astro.cookies), listShelves()]);
+---
+<Layout title="Music - ARVA">
+  <AccountLink slot="nav" user={user} />
+  <div class="max-w-3xl mx-auto px-6 w-full flex-grow py-24">
+    <h1 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Records<span class="text-blue-violet-500">.</span></h1>
+    {shelves.length === 0 ? (
+      <p class="text-zinc-500">No shelves yet.</p>
+    ) : (
+      <ul class="leading-8">
+        {shelves.map((s) => <li><a href={`/${encodeURIComponent(s.discogs_username)}`} class="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white underline decoration-zinc-300 dark:decoration-zinc-700 underline-offset-4">{s.name}</a> <span class="text-zinc-500">({s.count})</span></li>)}
+      </ul>
+    )}
+  </div>
+</Layout>

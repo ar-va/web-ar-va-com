@@ -1,0 +1,174 @@
+// D1: users, sessions, invites, synced records, cached release details, comments.
+import { env } from 'cloudflare:workers';
+import type { AstroCookies } from 'astro';
+import { randomToken, sha256, type ShelfRecord } from './lib';
+
+// Tables are created lazily (no migration step in the deploy).
+const SCHEMA = [
+  `CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, username TEXT, photo_url TEXT,
+    is_collector INTEGER NOT NULL DEFAULT 0, discogs_username TEXT UNIQUE COLLATE NOCASE, discogs_token TEXT,
+    synced_at INTEGER, sync_error TEXT, created_at INTEGER NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires_at INTEGER NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS invites (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, used_by INTEGER)`,
+  `CREATE TABLE IF NOT EXISTS oauth_pending (token TEXT PRIMARY KEY, secret TEXT NOT NULL, user_id INTEGER NOT NULL, created_at INTEGER NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS records (user_id INTEGER NOT NULL, instance_id INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY (user_id, instance_id))`,
+  `CREATE TABLE IF NOT EXISTS releases (id INTEGER PRIMARY KEY, data TEXT NOT NULL, fetched_at INTEGER NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, shelf_id INTEGER NOT NULL, instance_id INTEGER NOT NULL,
+    author_id INTEGER NOT NULL, body TEXT NOT NULL, created_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS comments_by_record ON comments (shelf_id, instance_id)`,
+];
+
+let ready: Promise<unknown> | null = null;
+export async function db() {
+  ready ??= env.DB.batch(SCHEMA.map((s) => env.DB.prepare(s))).catch((e) => { ready = null; throw e; });
+  await ready;
+  return env.DB;
+}
+
+const now = () => Math.floor(Date.now() / 1000);
+
+export interface User {
+  id: number;
+  name: string;
+  username: string | null;
+  photo_url: string | null;
+  is_collector: number;
+  discogs_username: string | null;
+  discogs_token: string | null;
+  synced_at: number | null;
+  sync_error: string | null;
+}
+
+export const isAdmin = (u: User | null) => !!u && !!env.ADMIN_TELEGRAM_ID && String(u.id) === env.ADMIN_TELEGRAM_ID;
+export const canCollect = (u: User | null) => !!u && (u.is_collector === 1 || isAdmin(u));
+
+export async function saveTelegramUser(u: { id: number; name: string; username: string | null; photoUrl: string | null }) {
+  await (await db()).prepare(
+    `INSERT INTO users (id, name, username, photo_url, created_at) VALUES (?1, ?2, ?3, ?4, ?5)
+     ON CONFLICT (id) DO UPDATE SET name = ?2, username = ?3, photo_url = ?4`,
+  ).bind(u.id, u.name, u.username, u.photoUrl, now()).run();
+}
+
+// ---- Sessions (the cookie holds a random token; D1 holds only its hash) ----
+
+const COOKIE = '__Host-session';
+const SESSION_DAYS = 30;
+
+export async function startSession(cookies: AstroCookies, userId: number) {
+  const token = randomToken();
+  await (await db()).prepare('INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)')
+    .bind(await sha256(token), userId, now() + SESSION_DAYS * 86400).run();
+  cookies.set(COOKIE, token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: SESSION_DAYS * 86400 });
+}
+
+export async function currentUser(cookies: AstroCookies): Promise<User | null> {
+  const token = cookies.get(COOKIE)?.value;
+  if (!token) return null;
+  return (await db()).prepare('SELECT users.* FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.id = ? AND expires_at > ?')
+    .bind(await sha256(token), now()).first<User>();
+}
+
+export async function endSession(cookies: AstroCookies) {
+  const token = cookies.get(COOKIE)?.value;
+  if (token) await (await db()).prepare('DELETE FROM sessions WHERE id = ?').bind(await sha256(token)).run();
+  cookies.delete(COOKIE, { path: '/' });
+}
+
+// ---- Invites ----
+
+const INVITE_DAYS = 7;
+
+export async function createInvite() {
+  const code = randomToken();
+  await (await db()).prepare('INSERT INTO invites (id, created_at) VALUES (?, ?)').bind(await sha256(code), now()).run();
+  return code;
+}
+
+/** Makes the user a collector if the code is unused and fresh. Returns false otherwise. */
+export async function acceptInvite(code: string, user: User) {
+  const d = await db();
+  const res = await d.prepare('UPDATE invites SET used_by = ? WHERE id = ? AND used_by IS NULL AND created_at > ?')
+    .bind(user.id, await sha256(code), now() - INVITE_DAYS * 86400).run();
+  if (!res.meta.changes) return false;
+  await d.prepare('UPDATE users SET is_collector = 1 WHERE id = ?').bind(user.id).run();
+  return true;
+}
+
+/** Disconnects Discogs and removes the shelf; `revoke` also takes away collector access (admin only). */
+export async function removeShelf(userId: number, revoke: boolean) {
+  const d = await db();
+  await d.batch([
+    d.prepare('DELETE FROM records WHERE user_id = ?').bind(userId),
+    d.prepare(`UPDATE users SET discogs_username = NULL, discogs_token = NULL, synced_at = NULL, sync_error = NULL${revoke ? ', is_collector = 0' : ''} WHERE id = ?`).bind(userId),
+  ]);
+}
+
+// ---- Shelves ----
+
+const collectorSql = () => `(is_collector = 1 OR id = ${Number(env.ADMIN_TELEGRAM_ID) || 0})`;
+
+export async function shelfOwner(discogsUsername: string) {
+  return (await db()).prepare(`SELECT * FROM users WHERE discogs_username = ? AND ${collectorSql()}`).bind(discogsUsername).first<User>();
+}
+
+export async function adminShelfOwner() {
+  return (await db()).prepare('SELECT * FROM users WHERE id = ? AND discogs_username IS NOT NULL').bind(Number(env.ADMIN_TELEGRAM_ID) || 0).first<User>();
+}
+
+export async function listShelves() {
+  const { results } = await (await db()).prepare(
+    `SELECT users.id, users.name, users.discogs_username, COUNT(records.instance_id) AS count FROM users
+     LEFT JOIN records ON records.user_id = users.id
+     WHERE discogs_username IS NOT NULL AND ${collectorSql()} GROUP BY users.id ORDER BY users.name`,
+  ).all<{ id: number; name: string; discogs_username: string; count: number }>();
+  return results;
+}
+
+export async function listCollectors() {
+  const { results } = await (await db()).prepare(`SELECT * FROM users WHERE ${collectorSql()} ORDER BY name`).all<User>();
+  return results;
+}
+
+export async function shelfRecords(userId: number) {
+  const { results } = await (await db()).prepare('SELECT data FROM records WHERE user_id = ?').bind(userId).all<{ data: string }>();
+  return results.map((r) => JSON.parse(r.data) as ShelfRecord).sort((a, b) => b.added.localeCompare(a.added));
+}
+
+export async function shelfRecord(userId: number, instanceId: number) {
+  const row = await (await db()).prepare('SELECT data FROM records WHERE user_id = ? AND instance_id = ?').bind(userId, instanceId).first<{ data: string }>();
+  return row ? (JSON.parse(row.data) as ShelfRecord) : null;
+}
+
+// ---- Comments ----
+
+export const COMMENT_MAX = 2000;
+const COMMENTS_PER_10_MIN = 10;
+
+export interface Comment { id: number; body: string; created_at: number; author_id: number; name: string; username: string | null; photo_url: string | null }
+
+export async function listComments(shelfId: number, instanceId: number) {
+  const { results } = await (await db()).prepare(
+    `SELECT comments.id, body, comments.created_at, author_id, users.name, users.username, users.photo_url FROM comments
+     JOIN users ON users.id = comments.author_id WHERE shelf_id = ? AND instance_id = ? ORDER BY comments.id`,
+  ).bind(shelfId, instanceId).all<Comment>();
+  return results;
+}
+
+/** Returns an error message, or null when the comment was saved. */
+export async function addComment(shelfId: number, instanceId: number, author: User, body: string) {
+  const text = body.replace(/\r\n/g, '\n').trim();
+  if (!text) return 'Write something first.';
+  if (text.length > COMMENT_MAX) return `Comments can be up to ${COMMENT_MAX} characters.`;
+  const d = await db();
+  const recent = await d.prepare('SELECT COUNT(*) AS n FROM comments WHERE author_id = ? AND created_at > ?').bind(author.id, now() - 600).first<number>('n');
+  if ((recent ?? 0) >= COMMENTS_PER_10_MIN) return 'That’s a lot of comments at once. Try again in a few minutes.';
+  await d.prepare('INSERT INTO comments (shelf_id, instance_id, author_id, body, created_at) VALUES (?, ?, ?, ?, ?)')
+    .bind(shelfId, instanceId, author.id, text, now()).run();
+  return null;
+}
+
+/** The author, the shelf's owner and the admin may delete a comment. */
+export async function deleteComment(commentId: number, shelfId: number, user: User) {
+  await (await db()).prepare('DELETE FROM comments WHERE id = ? AND shelf_id = ? AND (author_id = ? OR shelf_id = ? OR ?)')
+    .bind(commentId, shelfId, user.id, user.id, isAdmin(user) ? 1 : 0).run();
+}

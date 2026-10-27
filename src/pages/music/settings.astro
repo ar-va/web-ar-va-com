@@ -1,0 +1,125 @@
+---
+// Your account: Discogs connection and sync for collectors; invites and collector list for the admin.
+export const prerender = false;
+import Layout from '../../layouts/Layout.astro';
+import AccountLink from '../../components/music/AccountLink.astro';
+import { syncShelf } from '../../music/discogs';
+import { canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, removeShelf } from '../../music/store';
+
+const user = await currentUser(Astro.cookies);
+if (!user) return Astro.redirect('/login?return=%2Fsettings');
+
+let inviteUrl: string | null = null;
+let notice: string | null = Astro.url.searchParams.get('error');
+if (Astro.url.searchParams.has('connected')) notice = 'Discogs is connected. Your records are on their way to the shelf.';
+if (Astro.url.searchParams.has('welcome')) notice = 'Welcome! Connect your Discogs account to fill your shelf.';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = form.get('action');
+  if (action === 'logout') {
+    await endSession(Astro.cookies);
+    return Astro.redirect('/', 303);
+  }
+  if (action === 'sync' && canCollect(user) && user.discogs_token) {
+    // Once a minute is plenty; the cron syncs every 15 minutes anyway.
+    if (!user.synced_at || Date.now() / 1000 - user.synced_at > 60) await syncShelf(user);
+    return Astro.redirect('/settings', 303);
+  }
+  if (action === 'disconnect' && user.discogs_username) {
+    await removeShelf(user.id, false);
+    return Astro.redirect('/settings', 303);
+  }
+  if (isAdmin(user) && action === 'invite') {
+    inviteUrl = `https://${Astro.url.host}/invite/${await createInvite()}`;
+  }
+  if (isAdmin(user) && action === 'revoke') {
+    const id = Number(form.get('id'));
+    if (id !== user.id) await removeShelf(id, true);
+    return Astro.redirect('/settings', 303);
+  }
+}
+
+const collectors = isAdmin(user) ? await listCollectors() : [];
+const ago = (s: number | null) => {
+  if (!s) return 'not yet';
+  const min = Math.round((Date.now() / 1000 - s) / 60);
+  return min < 1 ? 'just now' : min < 60 ? `${min} min ago` : min < 1440 ? `${Math.round(min / 60)} h ago` : `${Math.round(min / 1440)} days ago`;
+};
+const pill = 'inline-block bg-blue-violet-500 text-white text-sm font-medium px-5 py-2 rounded-full hover:bg-blue-violet-600 transition-colors';
+const quiet = 'text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 px-4 py-2 rounded-full transition-colors';
+const h2 = 'text-zinc-500 text-sm mb-2';
+---
+<Layout title="Settings - ARVA">
+  <AccountLink slot="nav" user={user} />
+  <div class="max-w-3xl mx-auto px-6 w-full flex-grow py-24 flex flex-col gap-10">
+    <div class="flex justify-between items-center gap-4">
+      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Hi, {user.name}<span class="text-blue-violet-500">.</span></h1>
+      <form method="post"><input type="hidden" name="action" value="logout" /><button class={quiet}>Log out</button></form>
+    </div>
+
+    {notice && <p class="rounded-xl border border-blue-violet-200 dark:border-blue-violet-900 bg-blue-violet-50 dark:bg-blue-violet-500/10 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300" role="status">{notice}</p>}
+
+    {canCollect(user) ? (
+      <section>
+        <h2 class={h2}>Your shelf</h2>
+        {user.discogs_username ? (
+          <div class="flex flex-col gap-4">
+            <p class="text-zinc-700 dark:text-zinc-300">
+              Connected to Discogs as <a href={`/${encodeURIComponent(user.discogs_username)}`} class="text-blue-violet-600 dark:text-blue-violet-400 underline underline-offset-4">{user.discogs_username}</a>.
+              Last synced {ago(user.synced_at)}.
+            </p>
+            {user.sync_error && <p class="text-sm text-red-600 dark:text-red-400">Last sync failed: {user.sync_error}</p>}
+            <div class="flex flex-wrap items-center gap-3">
+              <form method="post"><input type="hidden" name="action" value="sync" /><button class={pill}>Sync now</button></form>
+              {user.sync_error?.includes('reconnect') && <a href="/auth/discogs" class={quiet}>Reconnect Discogs</a>}
+              <form method="post"><input type="hidden" name="action" value="disconnect" /><button class={quiet} onclick="return confirm('Disconnect Discogs and empty your shelf here? Your Discogs collection is not touched.')">Disconnect</button></form>
+            </div>
+            <div class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed max-w-xl">
+              <p class="mb-2">To add a record, add it to your collection on Discogs (the app can scan the barcode). It shows up here within 15 minutes, or right away with “Sync now”.</p>
+              <p>Your Discogs collection fields (Discogs → Collection → Settings → custom fields) show on each record page <strong class="font-medium text-zinc-800 dark:text-zinc-200">only when the field is set to public</strong>. Fields like “Gifted by”, “Purchased”, “Note” or “Comment” work well.</p>
+            </div>
+          </div>
+        ) : (
+          <div class="flex flex-col gap-3 items-start">
+            <p class="text-zinc-700 dark:text-zinc-300">Connect your Discogs account and your collection appears on your own shelf.</p>
+            <a href="/auth/discogs" class={pill}>Connect Discogs</a>
+          </div>
+        )}
+      </section>
+    ) : (
+      <p class="text-zinc-600 dark:text-zinc-400">You can comment on any record. Shelves of your own are by invitation.</p>
+    )}
+
+    {isAdmin(user) && (
+      <section>
+        <h2 class={h2}>Collectors</h2>
+        <ul class="flex flex-col mb-6">
+          {collectors.map((c) => (
+            <li class="flex items-center justify-between gap-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/40 last:border-none">
+              <span class="min-w-0 truncate text-zinc-800 dark:text-zinc-200">
+                {c.name}{c.username && <span class="text-zinc-500"> @{c.username}</span>}
+                <span class="text-sm text-zinc-500"> · {c.discogs_username ? `Discogs: ${c.discogs_username}, synced ${ago(c.synced_at)}` : 'Discogs not connected'}{c.sync_error && ' · sync failing'}</span>
+              </span>
+              {c.id !== user.id && (
+                <form method="post">
+                  <input type="hidden" name="action" value="revoke" /><input type="hidden" name="id" value={c.id} />
+                  <button class="text-sm text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" onclick="return confirm('Remove this collector and their shelf?')">Remove</button>
+                </form>
+              )}
+            </li>
+          ))}
+        </ul>
+        {inviteUrl ? (
+          <div class="flex flex-col gap-2">
+            <label for="invite-url" class="text-sm text-zinc-500">Invite link (works once, for 7 days; it’s only shown now):</label>
+            <input id="invite-url" readonly value={inviteUrl} onfocus="this.select()"
+              class="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-4 py-2.5 text-sm text-zinc-900 dark:text-white" />
+          </div>
+        ) : (
+          <form method="post"><input type="hidden" name="action" value="invite" /><button class={pill}>Create invite link</button></form>
+        )}
+      </section>
+    )}
+  </div>
+</Layout>

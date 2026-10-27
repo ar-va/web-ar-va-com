@@ -1,0 +1,21 @@
+---
+export const prerender = false;
+import Layout from '../../../layouts/Layout.astro';
+import Shelf from '../../../components/music/Shelf.astro';
+import AccountLink from '../../../components/music/AccountLink.astro';
+import { currentUser, listShelves, shelfOwner, shelfRecords } from '../../../music/store';
+
+const [user, owner, shelves] = await Promise.all([currentUser(Astro.cookies), shelfOwner(Astro.params.user!), listShelves()]);
+const records = owner ? await shelfRecords(owner.id) : [];
+if (!owner) Astro.response.status = 404;
+---
+<Layout title={owner ? `${owner.name}’s records - ARVA` : 'Not found - ARVA'} description={owner ? `${records.length} vinyl records on ${owner.name}’s shelf.` : undefined}>
+  <AccountLink slot="nav" user={user} />
+  <div class="max-w-6xl mx-auto px-6 w-full flex-grow py-24">
+    {owner ? (
+      <Shelf owner={{ name: owner.name, discogs_username: owner.discogs_username! }} records={records} shelves={shelves} />
+    ) : (
+      <p class="text-zinc-500">There’s no shelf here. <a href="/" class="text-blue-violet-600 dark:text-blue-violet-400 underline underline-offset-4">See all records →</a></p>
+    )}
+  </div>
+</Layout>
