@@ -19,7 +19,7 @@
   "triggers": { "crons": ["*/15 * * * *"] },
   "vars": {
     "TELEGRAM_BOT_NAME": "music_arva_bot",
-    "ADMIN_TELEGRAM_ID": ""
+    "ADMIN_TELEGRAM_ID": "284024981"
   },
   "observability": { "enabled": true }
   // Secrets (wrangler secret put / .dev.vars): TELEGRAM_BOT_TOKEN, DISCOGS_CONSUMER_KEY,
