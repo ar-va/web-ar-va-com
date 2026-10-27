@@ -31,6 +31,7 @@ const admin = await adminShelfOwner();
 const latest = admin ? await shelfRecords(admin.id) : [];
 const shelf = [...(fromRecord ? [fromRecord] : []), ...latest.filter((r) => r.instanceId !== fromRecord?.instanceId)].slice(0, 4);
 const shelfOwnerName = (fromRecord ? recordOwner! : admin)?.discogs_username;
+const showShelf = shelf.length > 0 && !!shelfOwnerName;
 
 const about = fromRecord ? `${fromRecord.title} by ${fromRecord.artist}` : fromPost ? titleOf(fromPost.body) : null;
 const promptTitle = fromRecord?.title ?? titleOf(post?.body) ?? 'this';
@@ -86,7 +87,7 @@ const perks = [
     </section>
 
     <!-- What logging in unlocks, drawn from the real site. Decorative: nothing in it is a working form. -->
-    <section aria-label="What you can do after logging in" class="md:col-start-1 md:row-start-2 grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+    <section aria-label="What you can do after logging in" class:list={["md:col-start-1 md:row-start-2 grid grid-cols-1 gap-5 items-start", { "lg:grid-cols-2": showShelf }]}>
       <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-[#161616] p-6">
         <div class="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-3">
           <div class="w-2 h-2 rounded-full bg-blue-violet-500"></div>
@@ -106,7 +107,7 @@ const perks = [
         </div>
       </div>
 
-      {shelf.length > 0 && shelfOwnerName && (
+      {showShelf && (
         <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-[#161616] p-6 pb-7">
           <div class="flex items-center justify-between gap-3 mb-4">
             <div class="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400">
