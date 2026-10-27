@@ -3,7 +3,6 @@
 export const prerender = false;
 import Layout from '../../../layouts/Layout.astro';
 import Cover from '../../../components/music/Cover.astro';
-import AccountLink from '../../../components/music/AccountLink.astro';
 import LoginButton from '../../../components/LoginButton.astro';
 import CommentThread from '../../../components/CommentThread.astro';
 import { formatReleased, loginHref, musicPath } from '../../../music/lib';
@@ -53,7 +52,6 @@ const rows: [string, string | null | undefined][] = record ? [
 const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoration-blue-violet-500/30 hover:decoration-blue-violet-500 underline-offset-4 transition-colors';
 ---
 <Layout title={record ? `${record.title} by ${record.artist} - ARVA` : 'Not found - ARVA'} description={record ? `${record.artist} – ${record.title}, on ${owner!.name}’s shelf.` : undefined}>
-  <AccountLink slot="nav" user={user} />
   {!record || !owner ? (
     <div class="max-w-3xl mx-auto px-6 w-full flex-grow py-24">
       <p class="text-zinc-500">This record isn’t on the shelf (any more). <a href={shelfPath} class={link}>Back to the shelf →</a></p>

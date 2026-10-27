@@ -11,6 +11,6 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
   const tg = await verifyTelegramLogin(url.searchParams, env.TELEGRAM_BOT_TOKEN);
   if (!tg) return redirect(`/login?failed&return=${encodeURIComponent(returnTo)}`);
   await saveTelegramUser(tg);
-  await startSession(cookies, tg.id, url.hostname);
+  await startSession(cookies, tg, url.hostname);
   return redirect(returnTo);
 };

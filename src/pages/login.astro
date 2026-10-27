@@ -1,19 +1,125 @@
 ---
+// The one login page (ar-va.com/login). It shows what logging in is for, using the page the visitor came from when it can.
 export const prerender = false;
+import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import TelegramLogin from '../components/TelegramLogin.astro';
+import Cover from '../components/music/Cover.astro';
+import { createCleanSlug } from '../utils/helpers';
 import { safeReturnPath } from '../music/lib';
-import { currentUser } from '../music/store';
+import { adminShelfOwner, currentUser, shelfOwner, shelfRecord, shelfRecords } from '../music/store';
 
 const returnTo = safeReturnPath(Astro.url.searchParams.get('return'), Astro.url.hostname);
 if (await currentUser(Astro.cookies)) return Astro.redirect(returnTo);
 const failed = Astro.url.searchParams.has('failed');
+
+const musicOrigin = `${Astro.url.protocol}//music.${Astro.url.host}`;
+const back = new URL(returnTo, Astro.url);
+const titleOf = (body = '') => body.match(/^#\s+(.+)$/m)?.[1].trim();
+
+// Where they came from: a blog post or a record gets named in the headline.
+const posts = (await getCollection('blog')).filter((p) => p.data.created).sort((a, b) => b.data.created!.valueOf() - a.data.created!.valueOf());
+const fromSlug = back.hostname === Astro.url.hostname && back.pathname.match(/^\/blog\/([^/]+)/)?.[1];
+const fromPost = fromSlug ? posts.find((p) => (p.data.slug || createCleanSlug(p.id)) === decodeURIComponent(fromSlug)) : undefined;
+const post = fromPost ?? posts[0];
+const [, shelfUser, instance] = back.hostname.startsWith('music.') ? back.pathname.match(/^\/([^/]+)\/(\d+)/) ?? [] : [];
+const recordOwner = shelfUser ? await shelfOwner(decodeURIComponent(shelfUser)) : null;
+const fromRecord = recordOwner ? await shelfRecord(recordOwner.id, Number(instance)) : null;
+
+// A small shelf to show what music.ar-va.com is: the record they came from first, then the latest additions.
+const admin = await adminShelfOwner();
+const latest = admin ? await shelfRecords(admin.id) : [];
+const shelf = [...(fromRecord ? [fromRecord] : []), ...latest.filter((r) => r.instanceId !== fromRecord?.instanceId)].slice(0, 4);
+const shelfOwnerName = (fromRecord ? recordOwner! : admin)?.discogs_username;
+
+const about = fromRecord ? `${fromRecord.title} by ${fromRecord.artist}` : fromPost ? titleOf(fromPost.body) : null;
+const promptTitle = fromRecord?.title ?? titleOf(post?.body) ?? 'this';
+
+const perks = [
+  { icon: 'M13 10V3L4 14h7v7l9-11h-7z', text: 'One tap in Telegram. No password, no email, no new account.' },
+  { icon: 'M9 12.75 11.25 15 15 9.75M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z', text: 'Telegram shares your name, @username and photo. Never your phone number.' },
+  { icon: 'M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244', text: 'One login for ar-va.com and music.ar-va.com. Log out any time.' },
+];
 ---
-<Layout title="Log in - ARVA">
-  <div class="max-w-3xl mx-auto px-6 w-full flex-grow py-24">
-    <h1 class="text-2xl font-bold text-zinc-900 dark:text-white mb-2">Log in<span class="text-blue-violet-500">.</span></h1>
-    <p class="text-zinc-600 dark:text-zinc-400 mb-6 max-w-md">Log in with Telegram to comment on the blog and on records at music.ar-va.com. One login works on both. Telegram shares your name, username and photo with this site, never your phone number.</p>
-    {failed && <p class="text-sm text-red-600 dark:text-red-400 mb-4">That login didn’t work. Please try again.</p>}
-    <TelegramLogin returnTo={returnTo} />
+<Layout title="Log in - ARVA" description="Log in with Telegram to comment on articles and records at ar-va.com.">
+  <div class="max-w-6xl mx-auto px-6 w-full flex-grow py-16 md:py-24 grid grid-cols-1 md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] gap-14 md:gap-16 items-center md:content-center">
+
+    <section>
+      <div class="flex items-center gap-4 mb-4">
+        <div class="w-6 h-[2px] bg-blue-violet-500"></div>
+        <span class="text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400">Log in with Telegram</span>
+      </div>
+      <h1 class="text-5xl sm:text-6xl font-bold mb-5 tracking-tight text-zinc-900 dark:text-white leading-[1.05]">
+        Join the conversation<span class="text-blue-violet-500">.</span>
+      </h1>
+      <p class="text-lg leading-relaxed max-w-md text-zinc-600 dark:text-zinc-300 mb-8">
+        {about
+          ? <>Say what you think about <span class="text-zinc-900 dark:text-white font-medium">{about}</span>, and comment on every other article and record here.</>
+          : <>Comment on the articles here and on the records in my collection, with the Telegram account you already have.</>}
+      </p>
+
+      {failed && <p class="text-sm text-red-600 dark:text-red-400 mb-4" role="alert">That login didn’t work. Please try again.</p>}
+      <div class="min-h-[46px]"><TelegramLogin returnTo={returnTo} /></div>
+
+      <ul class="mt-10 flex flex-col gap-3.5 max-w-md">
+        {perks.map((p) => (
+          <li class="flex gap-3 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+            <svg class="w-5 h-5 shrink-0 text-blue-violet-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d={p.icon} /></svg>
+            {p.text}
+          </li>
+        ))}
+      </ul>
+
+      <p class="mt-10 text-sm text-zinc-500">
+        <a href={returnTo} class="hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors">← Back without logging in</a>
+      </p>
+    </section>
+
+    <!-- What logging in unlocks, drawn from the real site. Decorative: nothing in it is a working form. -->
+    <section aria-label="What you can do after logging in" class="flex flex-col gap-5">
+      <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] p-6 shadow-sm dark:shadow-none">
+        <div class="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-3">
+          <div class="w-2 h-2 rounded-full bg-blue-violet-500"></div>
+          {fromRecord ? 'On the shelf' : 'On the blog'}
+        </div>
+        {fromRecord ? (
+          <p class="text-lg font-bold text-zinc-900 dark:text-white leading-snug mb-5">{fromRecord.title}<span class="block text-sm font-normal text-zinc-500">{fromRecord.artist}</span></p>
+        ) : post && (
+          <a href={`/blog/${post.data.slug || createCleanSlug(post.id)}`} class="block text-lg font-bold text-zinc-900 dark:text-white leading-snug mb-5 hover:text-blue-violet-500 transition-colors">{titleOf(post.body)}</a>
+        )}
+        <div class="flex gap-3" aria-hidden="true">
+          <span class="w-9 h-9 rounded-full bg-linear-to-br from-[#2aabee] to-blue-violet-500 text-white text-xs font-bold grid place-items-center shrink-0">You</span>
+          <div class="flex-grow min-w-0">
+            <div class="rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-3 text-zinc-400 dark:text-zinc-500 text-sm truncate">Your thoughts on “{promptTitle}”…</div>
+            <div class="mt-3 flex items-center justify-between gap-3">
+              <span class="text-xs text-zinc-400 dark:text-zinc-500">Shown with your Telegram name and photo</span>
+              <span class="bg-blue-violet-500/90 text-white text-xs font-medium px-4 py-1.5 rounded-full">Post</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {shelf.length > 0 && shelfOwnerName && (
+        <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] p-6 pb-8 shadow-sm dark:shadow-none">
+          <div class="flex items-center justify-between gap-3 mb-5">
+            <div class="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400">
+              <div class="w-2 h-2 rounded-full bg-blue-violet-500"></div>
+              And on every record
+            </div>
+            <a href={`${musicOrigin}/${encodeURIComponent(shelfOwnerName)}`} class="text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">music.ar-va.com →</a>
+          </div>
+          <ul class="shelf" style="--gap: 0.75rem; grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 0; padding-bottom: 0.5rem" role="list">
+            {shelf.map((r) => (
+              <li class="shelf-slot">
+                <a href={`${musicOrigin}/${encodeURIComponent(shelfOwnerName)}/${r.instanceId}`} class="shelf-record block" title={`${r.artist} – ${r.title}`}>
+                  <Cover record={r} />
+                  <span class="sr-only">{r.artist} – {r.title}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
   </div>
 </Layout>

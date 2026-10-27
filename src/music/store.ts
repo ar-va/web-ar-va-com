@@ -60,11 +60,16 @@ const SESSION_DAYS = 30;
 // Browsers refuse Domain=localhost, so locally each host keeps its own cookie.
 const cookieDomain = (hostname: string) => (siteDomain(hostname) === 'localhost' ? undefined : siteDomain(hostname));
 
-export async function startSession(cookies: AstroCookies, userId: number, hostname: string) {
+// Readable by the header script on every page (pre-rendered ones too): first name and photo only, it grants nothing.
+const WHO_COOKIE = 'who';
+
+export async function startSession(cookies: AstroCookies, user: { id: number; name: string; photoUrl: string | null }, hostname: string) {
   const token = randomToken();
   await (await db()).prepare('INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)')
-    .bind(await sha256(token), userId, now() + SESSION_DAYS * 86400).run();
-  cookies.set(COOKIE, token, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: SESSION_DAYS * 86400, domain: cookieDomain(hostname) });
+    .bind(await sha256(token), user.id, now() + SESSION_DAYS * 86400).run();
+  const opts = { secure: true, sameSite: 'lax', path: '/', maxAge: SESSION_DAYS * 86400, domain: cookieDomain(hostname) } as const;
+  cookies.set(COOKIE, token, { ...opts, httpOnly: true });
+  cookies.set(WHO_COOKIE, JSON.stringify({ n: user.name.split(' ')[0], p: user.photoUrl }), opts);
 }
 
 export async function currentUser(cookies: AstroCookies): Promise<User | null> {
@@ -78,6 +83,7 @@ export async function endSession(cookies: AstroCookies, hostname: string) {
   const token = cookies.get(COOKIE)?.value;
   if (token) await (await db()).prepare('DELETE FROM sessions WHERE id = ?').bind(await sha256(token)).run();
   cookies.delete(COOKIE, { path: '/', domain: cookieDomain(hostname) });
+  cookies.delete(WHO_COOKIE, { path: '/', domain: cookieDomain(hostname) });
 }
 
 // ---- Invites ----

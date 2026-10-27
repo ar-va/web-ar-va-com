@@ -2,7 +2,6 @@
 // Your account: Discogs connection and sync for collectors; invites and collector list for the admin.
 export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
-import AccountLink from '../../components/music/AccountLink.astro';
 import { loginHref } from '../../music/lib';
 import { syncShelf } from '../../music/discogs';
 import { canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, removeShelf } from '../../music/store';
@@ -52,7 +51,6 @@ const quiet = 'text-sm font-medium text-blue-violet-600 dark:text-blue-violet-40
 const h2 = 'text-zinc-500 text-sm mb-2';
 ---
 <Layout title="Settings - ARVA">
-  <AccountLink slot="nav" user={user} />
   <div class="max-w-3xl mx-auto px-6 w-full flex-grow py-24 flex flex-col gap-10">
     <div class="flex justify-between items-center gap-4">
       <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Hi, {user.name}<span class="text-blue-violet-500">.</span></h1>
