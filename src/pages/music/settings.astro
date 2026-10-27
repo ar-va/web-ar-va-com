@@ -3,11 +3,12 @@
 export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
 import AccountLink from '../../components/music/AccountLink.astro';
+import { loginHref } from '../../music/lib';
 import { syncShelf } from '../../music/discogs';
 import { canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, removeShelf } from '../../music/store';
 
 const user = await currentUser(Astro.cookies);
-if (!user) return Astro.redirect('/login?return=%2Fsettings');
+if (!user) return Astro.redirect(loginHref(Astro.url));
 
 let inviteUrl: string | null = null;
 let notice: string | null = Astro.url.searchParams.get('error');

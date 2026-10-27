@@ -2,9 +2,9 @@
 // An invite link from the admin: logging in here makes you a collector.
 export const prerender = false;
 import Layout from '../../../layouts/Layout.astro';
-import TelegramLogin from '../../../components/music/TelegramLogin.astro';
+import LoginButton from '../../../components/LoginButton.astro';
 import { acceptInvite, canCollect, currentUser } from '../../../music/store';
-import { musicPath } from '../../../music/lib';
+import { loginHref } from '../../../music/lib';
 
 const user = await currentUser(Astro.cookies);
 if (user && canCollect(user)) return Astro.redirect('/settings');
@@ -18,7 +18,7 @@ if (user && (await acceptInvite(Astro.params.code!, user))) return Astro.redirec
     ) : (
       <>
         <p class="text-zinc-600 dark:text-zinc-400 mb-6 max-w-md">You’ve been invited to show your record collection here. Log in with Telegram, then connect your Discogs account.</p>
-        <TelegramLogin returnTo={musicPath(Astro.url)} />
+        <LoginButton href={loginHref(Astro.url)} />
       </>
     )}
   </div>

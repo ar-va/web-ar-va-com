@@ -2,12 +2,13 @@
 import type { APIRoute } from 'astro';
 import { finishConnect, startConnect, syncShelf } from '../../../music/discogs';
 import { canCollect, currentUser } from '../../../music/store';
+import { loginHref } from '../../../music/lib';
 
 export const prerender = false;
 
 export const GET: APIRoute = async ({ url, cookies, redirect, locals }) => {
   const user = await currentUser(cookies);
-  if (!user) return redirect('/login?return=%2Fsettings');
+  if (!user) return redirect(loginHref(url, `${url.origin}/settings`));
   if (!canCollect(user)) return redirect('/settings');
 
   const token = url.searchParams.get('oauth_token');
@@ -18,8 +19,9 @@ export const GET: APIRoute = async ({ url, cookies, redirect, locals }) => {
     const error = await finishConnect(user, token, verifier);
     if (error) return redirect(`/settings?error=${encodeURIComponent(error)}`);
   } catch (e) {
-    console.error('discogs connect failed', e);
-    return redirect(`/settings?error=${encodeURIComponent('Discogs didn’t answer as expected. Please try again in a minute.')}`);
+    const detail = e instanceof Error ? e.message : String(e);
+    console.error(`discogs connect failed: ${detail}`);
+    return redirect(`/settings?error=${encodeURIComponent(`Discogs didn’t accept the connection (${detail}). Please try again in a minute.`)}`);
   }
   const connected = await currentUser(cookies);
   if (connected) locals.cfContext.waitUntil(syncShelf(connected));

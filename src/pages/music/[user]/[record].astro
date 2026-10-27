@@ -4,7 +4,7 @@ export const prerender = false;
 import Layout from '../../../layouts/Layout.astro';
 import Cover from '../../../components/music/Cover.astro';
 import AccountLink from '../../../components/music/AccountLink.astro';
-import TelegramLogin from '../../../components/music/TelegramLogin.astro';
+import LoginButton from '../../../components/LoginButton.astro';
 import CommentThread from '../../../components/CommentThread.astro';
 import { formatReleased, loginHref, musicPath } from '../../../music/lib';
 import { releaseDetail } from '../../../music/discogs';
@@ -108,7 +108,7 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
 
       <section id="comments" class="scroll-mt-24">
         <CommentThread comments={comments} user={user} canDelete={(id) => canDeleteComment(thread, id, user)} error={error} draft={draft}>
-          <TelegramLogin slot="login" returnTo={`${path}#comments`} />
+          <LoginButton slot="login" href={loginHref(Astro.url, `${Astro.url.origin}${path}#comments`)} />
         </CommentThread>
       </section>
     </article>

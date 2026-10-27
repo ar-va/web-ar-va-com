@@ -3,6 +3,7 @@ import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import { createCleanSlug } from '../../utils/helpers';
 import { addComment, currentUser, deleteComment } from '../../music/store';
+import { loginHref } from '../../music/lib';
 
 export const prerender = false;
 
@@ -14,7 +15,7 @@ export const POST: APIRoute = async ({ request, cookies, url, redirect }) => {
 
   const back = `/blog/${encodeURIComponent(slug)}#comments`;
   const user = await currentUser(cookies);
-  if (!user) return redirect(`${url.protocol}//music.${url.host}/login?return=${encodeURIComponent(url.origin + back)}`, 303);
+  if (!user) return redirect(loginHref(url, url.origin + back), 303);
 
   if (form.get('action') === 'delete') {
     await deleteComment({ slug }, Number(form.get('id')), user);

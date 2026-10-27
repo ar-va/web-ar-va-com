@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import {
-  verifyTelegramLogin, oauthHeader, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath,
+  verifyTelegramLogin, oauthHeader, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref,
 } from '../src/music/lib.ts';
 
 const BOT = '123:test-bot-token';
@@ -103,4 +103,8 @@ test('return paths and music paths', () => {
   assert.equal(musicPath(new URL('https://music.ar-va.com/music/arabor/1')), '/arabor/1');
   assert.equal(musicPath(new URL('https://music.ar-va.com/music')), '/');
   assert.equal(musicPath(new URL('https://music.ar-va.com/musicals')), '/musicals');
+  // login always on the main site, returning to the visitor's page (without the internal /music prefix)
+  assert.equal(loginHref(new URL('https://music.ar-va.com/music/arabor/1?x=1')), 'https://ar-va.com/login?return=' + encodeURIComponent('https://music.ar-va.com/arabor/1?x=1'));
+  assert.equal(loginHref(new URL('http://music.localhost:4321/music/settings')), 'http://localhost:4321/login?return=' + encodeURIComponent('http://music.localhost:4321/settings'));
+  assert.equal(loginHref(new URL('https://ar-va.com/_server-islands/x'), 'https://ar-va.com/blog/a#comments'), 'https://ar-va.com/login?return=' + encodeURIComponent('https://ar-va.com/blog/a#comments'));
 });

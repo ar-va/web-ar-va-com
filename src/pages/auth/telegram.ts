@@ -1,8 +1,8 @@
-// Telegram Login Widget redirects here with the signed user data.
+// Telegram Login Widget redirects here (ar-va.com/auth/telegram) with the signed user data.
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { safeReturnPath, verifyTelegramLogin } from '../../../music/lib';
-import { saveTelegramUser, startSession } from '../../../music/store';
+import { safeReturnPath, verifyTelegramLogin } from '../../music/lib';
+import { saveTelegramUser, startSession } from '../../music/store';
 
 export const prerender = false;
 

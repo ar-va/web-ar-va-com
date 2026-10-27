@@ -1,10 +1,8 @@
 ---
-// Official Telegram Login Widget. The bot's domain must be set to music.ar-va.com with @BotFather (/setdomain).
+// Official Telegram Login Widget, used only on ar-va.com/login. The bot's domain must be ar-va.com (@BotFather /setdomain).
 import { env } from 'cloudflare:workers';
-import { musicPath } from '../../music/lib';
-
-interface Props { returnTo?: string }
-const returnTo = Astro.props.returnTo ?? musicPath(Astro.url) + Astro.url.search;
+interface Props { returnTo: string }
+const { returnTo } = Astro.props;
 const authUrl = `https://${Astro.url.host}/auth/telegram?return=${encodeURIComponent(returnTo)}`;
 ---
 {env.TELEGRAM_BOT_NAME ? (

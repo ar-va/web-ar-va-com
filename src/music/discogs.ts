@@ -21,7 +21,11 @@ async function discogs(path: string, token?: Token, init: RequestInit & { oauth?
     },
     signal: AbortSignal.timeout(10_000),
   });
-  if (!res.ok) throw new DiscogsError(res.status, `Discogs ${init.method ?? 'GET'} ${path.split('?')[0]}: ${res.status}`);
+  if (!res.ok) {
+    // Discogs explains refusals in plain text ("Invalid consumer."); keep it for the logs and the settings page.
+    const why = (await res.text()).replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+    throw new DiscogsError(res.status, `Discogs ${init.method ?? 'GET'} ${path.split('?')[0]}: ${res.status} ${why}`);
+  }
   return res;
 }
 
@@ -99,7 +103,7 @@ export async function syncShelf(user: User, budget = newBudget()) {
     ]);
     return records.length;
   } catch (e) {
-    console.error('sync failed', user.discogs_username, e);
+    console.error(`sync failed for ${user.discogs_username}: ${e instanceof Error ? e.message : e}`);
     const message = e instanceof DiscogsError && e.status === 401 ? 'Discogs refused the connection. Please reconnect Discogs.' : String((e as Error).message ?? e);
     await d.prepare('UPDATE users SET synced_at = ?, sync_error = ? WHERE id = ?').bind(now(), message, user.id).run();
     return null;
@@ -134,7 +138,7 @@ export async function releaseDetail(owner: User, releaseId: number, masterId: nu
     await d.prepare('INSERT OR REPLACE INTO releases (id, data, fetched_at) VALUES (?, ?, ?)').bind(releaseId, JSON.stringify(detail), now()).run();
     return detail;
   } catch (e) {
-    console.error('release fetch failed', releaseId, e);
+    console.error(`release fetch failed for ${releaseId}: ${e instanceof Error ? e.message : e}`);
     return cached ? JSON.parse(cached.data) : null;
   }
 }

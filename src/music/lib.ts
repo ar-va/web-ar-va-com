@@ -169,4 +169,6 @@ export function safeReturnPath(target: string | null | undefined, hostname: stri
 
 /** Path as the visitor sees it on music.ar-va.com (the Worker serves it from /music/…). */
 export const musicPath = (url: URL) => url.pathname.replace(/^\/music(?=\/|$)/, '') || '/';
-export const loginHref = (url: URL) => `/login?return=${encodeURIComponent(musicPath(url) + url.search)}`;
+/** The login page lives on the main site (ar-va.com/login); `back` is where to return, by default the current page. */
+export const loginHref = (url: URL, back = url.origin + musicPath(url) + url.search) =>
+  `${url.protocol}//${siteDomain(url.host)}/login?return=${encodeURIComponent(back)}`;
