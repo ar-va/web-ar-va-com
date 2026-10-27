@@ -11,11 +11,18 @@ async function site(body: Record<string, unknown>) {
   return data;
 }
 
-async function send(s: Signed) {
-  const res = await fetch(s.url, {
-    method: s.method,
-    headers: { Authorization: s.authorization, ...(s.method === 'POST' && { 'Content-Type': 'application/x-www-form-urlencoded' }) },
-  });
+/** The same OAuth parameters in the URL instead of a header: a plain request with no CORS preflight. */
+function inUrl(s: Signed) {
+  const u = new URL(s.url);
+  for (const [, k, v] of s.authorization.matchAll(/(\w+)="([^"]*)"/g)) u.searchParams.append(k, decodeURIComponent(v));
+  return u.href;
+}
+
+// Discogs' OAuth endpoints answer the browser's CORS preflight with a 500, so a header signature is blocked
+// ("Failed to fetch"); with the signature in the URL they answer normally (both checked in Chrome 2026-10-27).
+// Those go via the URL; other endpoints pass the preflight and keep the header.
+async function send(s: Signed, viaUrl = false): Promise<Response> {
+  const res = viaUrl ? await fetch(inUrl(s), { method: s.method }) : await fetch(s.url, { method: s.method, headers: { Authorization: s.authorization } });
   if (!res.ok) throw Object.assign(new Error(`Discogs answered ${res.status}: ${(await res.text()).slice(0, 120)}`), { status: res.status });
   return res;
 }
@@ -24,7 +31,13 @@ async function send(s: Signed) {
 async function signedGet(path: string, onWait?: () => void): Promise<any> {
   for (let attempt = 0; ; attempt++) {
     try {
-      return await (await send(await site({ action: 'sign', path }))).json();
+      try {
+        return await (await send(await site({ action: 'sign', path }))).json();
+      } catch (e) {
+        // The browser refused the header form (TypeError): sign again (new nonce) and send it in the URL.
+        if (!(e instanceof TypeError)) throw e;
+        return await (await send(await site({ action: 'sign', path }), true)).json();
+      }
     } catch (e) {
       if ((e as { status?: number }).status !== 429 || attempt === 3) throw e;
       onWait?.();
@@ -34,13 +47,13 @@ async function signedGet(path: string, onWait?: () => void): Promise<any> {
 }
 
 export async function startConnect() {
-  const reply = new URLSearchParams(await (await send(await site({ action: 'request_token' }))).text());
+  const reply = new URLSearchParams(await (await send(await site({ action: 'request_token' }), true)).text());
   const { authorize } = await site({ action: 'pending', token: reply.get('oauth_token'), secret: reply.get('oauth_token_secret') });
   location.href = authorize;
 }
 
 export async function finishConnect(token: string, verifier: string) {
-  const reply = new URLSearchParams(await (await send(await site({ action: 'access_token', token, verifier }))).text());
+  const reply = new URLSearchParams(await (await send(await site({ action: 'access_token', token, verifier }), true)).text());
   await site({ action: 'token', key: reply.get('oauth_token'), secret: reply.get('oauth_token_secret') });
   const { username } = await signedGet('/oauth/identity');
   await site({ action: 'username', username });
