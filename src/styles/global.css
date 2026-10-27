@@ -82,3 +82,8 @@
 @media (prefers-reduced-motion: reduce) {
   .disc, .sleeve-face { transition: none; }
 }
+
+/* Telegram's login button page says `color-scheme: light dark` (follows the OS). This site switches theme with a
+   class, so on a dark OS with the light theme the browser painted the frame's background opaque (black corners
+   around the rounded button). Giving the frame the same setting keeps it transparent. */
+iframe[id^="telegram-login"] { color-scheme: light dark; }
