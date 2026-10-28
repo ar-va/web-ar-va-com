@@ -278,3 +278,23 @@ html { scroll-padding-top: 5.5rem; }
 /* The filters panel is mostly text: a denser glass, so covers behind it don't show through the words. */
 #filters-panel { background: rgb(255 255 255 / 0.9); }
 .dark #filters-panel { background: rgb(30 30 34 / 0.9); }
+
+/* An open decade (shelf) or year (blog) and its years / months share one tinted pill; the open one and any
+   picked year or month inside sit on a stronger pill of their own (in place of the underline). */
+.filter-group.open {
+  background: color-mix(in srgb, var(--color-blue-violet-500) 10%, transparent);
+  border-radius: 9999px;
+  padding: 3px 10px 3px 2px;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.filter-group.open .active-tag {
+  background: color-mix(in srgb, var(--color-blue-violet-500) 20%, transparent);
+  border-radius: 9999px;
+  padding: 1px 9px;
+  /* The buttons are as tall as the 2rem line; the group's inline background only wraps the text: match them. */
+  line-height: 1.5;
+}
+.filter-group.open .active-tag span { text-decoration-line: none; }
+.dark .filter-group.open { background: color-mix(in srgb, var(--color-blue-violet-400) 13%, transparent); }
+.dark .filter-group.open .active-tag { background: color-mix(in srgb, var(--color-blue-violet-400) 24%, transparent); }

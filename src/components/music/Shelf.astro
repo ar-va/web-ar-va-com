@@ -117,9 +117,9 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
                 <h2 class="text-zinc-500 text-sm">Released</h2>
                 <div class="leading-8 text-base">
                   {decades.map(([decade, n], i) => (
-                    <span class="decade-block inline"><button type="button" data-decade={decade} class={`decade-btn ${btn}`}><span class={btnLabel}>{decade}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button><span class="decade-years hidden ml-1.5 rounded-full bg-blue-violet-500/10 dark:bg-blue-violet-400/15 px-2.5 py-0.5 box-decoration-clone">{releasedYears(decade).map(([y, m], j, all) => (
+                    <span class="decade-block inline"><span class="filter-group"><button type="button" data-decade={decade} class={`decade-btn ${btn}`}><span class={btnLabel}>{decade}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button><span class="decade-years hidden ml-1.5">{releasedYears(decade).map(([y, m], j, all) => (
                       <span class="inline whitespace-nowrap"><button type="button" data-released={y} class={`released-btn ${btn}`}><span class={btnLabel}>{y}</span><span class="text-zinc-500 dark:text-zinc-400"> ({m})</span></button>{j < all.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
-                    ))}</span>{i < decades.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mx-1.5">·</span>}</span>
+                    ))}</span></span>{i < decades.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mx-1.5">·</span>}</span>
                   ))}
                 </div>
               </section>
@@ -199,6 +199,7 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
 <script>
   import { autoSync } from '../../music/sync';
   import { notesOnHover } from '../../scripts/notes';
+  import { filtersCount, filtersPanel } from '../../scripts/filters-panel';
   notesOnHover('#records-shelf .shelf-record');
 
   // Records rise onto their shelf the first time they scroll into view (left to right along a row); whatever is
@@ -279,10 +280,7 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
     const filtering = words.length > 0 || years.size > 0 || genres.size > 0 || decades.size > 0;
     info?.classList.toggle('hidden', !filtering);
     info?.classList.toggle('flex', filtering);
-    // How many filters are on, next to "All records", so it shows while the panel is closed.
-    const picked = years.size + decades.size + released.size + genres.size;
-    const badge = document.getElementById('filters-count');
-    if (badge) { badge.textContent = String(picked); badge.hidden = picked === 0; }
+    filtersCount(years.size + decades.size + released.size + genres.size);
     if (infoText) infoText.textContent = shown === 0 ? 'No matching records.' : `Showing ${shown} of ${slots.length}.`;
   }
 
@@ -293,6 +291,7 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
       set.has(value) ? set.delete(value) : set.add(value);
       if (attr === 'decade') {
         button.closest('.decade-block')!.querySelector('.decade-years')!.classList.toggle('hidden', !set.has(value));
+        button.closest('.filter-group')!.classList.toggle('open', set.has(value));
         if (!set.has(value)) [...released].filter((y) => decadeOf(y) === value).forEach((y) => {
           released.delete(y);
           document.querySelector(`.released-btn[data-released="${y}"]`)?.classList.remove('active-tag');
@@ -317,20 +316,7 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
 
   // Shelf or list; the choice is remembered in this browser. (The `hidden` attribute, not the class: .shelf's own
   // display: grid outranks Tailwind's `hidden` class.)
-  // "All records" opens the filters panel; outside clicks and Esc close it.
-  const filtersToggle = document.getElementById('filters-toggle');
-  const filtersPanel = document.getElementById('filters-panel');
-  const showFilters = (open: boolean) => {
-    filtersPanel!.hidden = !open;
-    filtersToggle!.setAttribute('aria-expanded', String(open));
-  };
-  filtersToggle?.addEventListener('click', () => showFilters(filtersPanel!.hidden));
-  document.addEventListener('click', (e) => {
-    if (filtersPanel && !filtersPanel.hidden && !filtersPanel.contains(e.target as Node) && !filtersToggle!.contains(e.target as Node)) showFilters(false);
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && filtersPanel && !filtersPanel.hidden) { showFilters(false); filtersToggle!.focus(); }
-  });
+  filtersPanel();
 
   function setView(view: string) {
     if (grid) grid.hidden = view === 'list';
@@ -355,6 +341,7 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
     released.clear();
     if (search) search.value = '';
     document.querySelectorAll('.decade-years').forEach((y) => y.classList.add('hidden'));
+    document.querySelectorAll('.filter-group').forEach((g) => g.classList.remove('open'));
     document.querySelectorAll('.year-btn, .genre-btn, .decade-btn, .released-btn').forEach((b) => b.classList.remove('active-tag'));
     apply();
   });

@@ -110,42 +110,20 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
 
   <hr class="border-zinc-200 dark:border-zinc-800/80 my-6" />
 
-  <!-- Publishing Date Filters -->
-  <section class="mb-2">
-    <h2 class="text-zinc-500 dark:text-zinc-500 text-sm">Date published</h2>
-    <div class="leading-8 text-base" id="date-filters">
-      {years.map((year, yearIndex) => (
-        <span class="year-block inline" data-year-group={year}><button data-year={year} class="year-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{year}</span><span class="no-underline text-zinc-500 dark:text-zinc-400"> ({yearTotals[year]})</span></button><span class="colon hidden text-zinc-500 dark:text-zinc-400 mr-1.5">:</span><span class="month-group hidden" data-year-group={year}>{Object.entries(yearsMap.get(year)!).sort(([a],[b])=>parseInt(a)-parseInt(b)).map(([month, count], monthIndex, arr) => {
-            const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('en-US', { month: 'long' }).toLowerCase();
-            return (
-              <span class="inline"><button data-month={`${year}-${month}`} class="month-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{monthName}</span><span class="no-underline text-zinc-500 dark:text-zinc-400"> ({count})</span></button>{monthIndex < arr.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
-            );
-          })}</span>{yearIndex < years.length - 1 && <span class="year-separator text-zinc-500 dark:text-zinc-600 mx-1.5">·</span>}</span>
-      ))}
-    </div>
-  </section>
-
-  <!-- Topics Section -->
-  <section>
-    <h2 class="text-zinc-500 dark:text-zinc-500 text-sm ">Topics</h2>
-    <div class="leading-8 text-base" id="topics-container">
-      {topics.length > 0 ? topics.map((topic, index) => (
-        <span class="topic-item inline"><button data-tag={topic.tag} class="tag-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{topic.tag}</span><span class="no-underline text-zinc-500 dark:text-zinc-400 transition-colors"> ({topic.count})</span></button><span class={`topic-comma text-zinc-500 dark:text-zinc-600 mr-1.5 ${index < topics.length - 1 ? '' : 'hidden'}`}>,</span></span>
-      )) : null}
-      
-      <span id="no-topics-message" class="text-zinc-500 text-sm hidden">No relevant topics found.</span>
-      {topics.length === 0 && <span class="text-zinc-500 text-sm">No topics found.</span>}
-    </div>
-  </section>
-
-  <hr class="border-zinc-200 dark:border-zinc-800/80 my-6" />
-
   <!-- All Writing Section -->
   <section id="all-writing">
     <!-- Stays under the header (frosted) while scrolling through the posts; lets go where the section ends. -->
     <div class="glass-under sticky top-16 z-40 rounded-3xl sm:rounded-full flex flex-wrap items-center justify-between gap-2 sm:gap-4 p-1.5 pl-4">
       <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
-        <h2 class="text-zinc-500 dark:text-zinc-500 text-sm m-0 shrink-0">All writing</h2>
+        <h2 class="m-0 shrink-0">
+          <button type="button" id="filters-toggle" aria-expanded="false" aria-controls="filters-panel" title="Filter by date and topic"
+            class="group inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white aria-expanded:text-zinc-900 dark:aria-expanded:text-white transition-colors">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></svg>
+            All writing
+            <span id="filters-count" hidden class="min-w-5 h-5 px-1.5 rounded-full bg-blue-violet-500 text-white text-[11px] font-semibold leading-5 text-center"></span>
+            <svg class="w-3.5 h-3.5 transition-transform group-aria-expanded:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
+          </button>
+        </h2>
         <SortMenu id="posts-sort" />
       </div>
       
@@ -160,6 +138,37 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
         <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
+      </div>
+
+      <!-- Filters drop down from "All writing" (and travel with the bar); several can be picked before closing. -->
+      <div id="filters-panel" hidden class="glass absolute left-0 right-0 top-full mt-2 rounded-3xl px-5 py-4 max-h-[70vh] overflow-y-auto space-y-1">
+        <!-- Publishing Date Filters -->
+        <section class="mb-2">
+          <h2 class="text-zinc-500 dark:text-zinc-500 text-sm">Date published</h2>
+          <div class="leading-8 text-base" id="date-filters">
+            {years.map((year, yearIndex) => (
+              <span class="year-block inline" data-year-group={year}><span class="filter-group"><button data-year={year} class="year-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{year}</span><span class="no-underline text-zinc-500 dark:text-zinc-400"> ({yearTotals[year]})</span></button><span class="month-group hidden ml-1.5" data-year-group={year}>{Object.entries(yearsMap.get(year)!).sort(([a],[b])=>parseInt(a)-parseInt(b)).map(([month, count], monthIndex, arr) => {
+                  const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('en-US', { month: 'long' }).toLowerCase();
+                  return (
+                    <span class="inline"><button data-month={`${year}-${month}`} class="month-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{monthName}</span><span class="no-underline text-zinc-500 dark:text-zinc-400"> ({count})</span></button>{monthIndex < arr.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
+                  );
+                })}</span></span>{yearIndex < years.length - 1 && <span class="year-separator text-zinc-500 dark:text-zinc-600 mx-1.5">·</span>}</span>
+            ))}
+          </div>
+        </section>
+
+        <!-- Topics Section -->
+        <section>
+          <h2 class="text-zinc-500 dark:text-zinc-500 text-sm ">Topics</h2>
+          <div class="leading-8 text-base" id="topics-container">
+            {topics.length > 0 ? topics.map((topic, index) => (
+              <span class="topic-item inline"><button data-tag={topic.tag} class="tag-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{topic.tag}</span><span class="no-underline text-zinc-500 dark:text-zinc-400 transition-colors"> ({topic.count})</span></button><span class={`topic-comma text-zinc-500 dark:text-zinc-600 mr-1.5 ${index < topics.length - 1 ? '' : 'hidden'}`}>,</span></span>
+            )) : null}
+      
+            <span id="no-topics-message" class="text-zinc-500 text-sm hidden">No relevant topics found.</span>
+            {topics.length === 0 && <span class="text-zinc-500 text-sm">No topics found.</span>}
+          </div>
+        </section>
       </div>
     </div>
 
@@ -213,6 +222,9 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
 </div>
 
 <script>
+  import { filtersCount, filtersPanel } from '../scripts/filters-panel';
+  filtersPanel();
+
   document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('search-input');
     const allTagBtns = document.querySelectorAll('.tag-btn');
@@ -332,6 +344,7 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
         noTopicsMessage.classList.remove('inline');
       }
 
+      filtersCount(activeTags.size + activeYears.size + activeMonths.size);
       const isFilterActive = currentSearch !== '' || activeTags.size > 0 || activeYears.size > 0 || activeMonths.size > 0;
       if (isFilterActive && filterInfoContainer && filterInfoText) {
         const hiddenPosts = posts.length - visibleCount;
@@ -367,17 +380,15 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
       yearBlocks.forEach((block) => {
         const year = block.getAttribute('data-year-group');
         const yearBtn = block.querySelector('.year-btn');
-        const colon = block.querySelector('.colon');
         const monthGroup = block.querySelector('.month-group');
+        block.querySelector('.filter-group')?.classList.toggle('open', !!year && activeYears.has(year));
         
         if (year && activeYears.has(year)) {
           yearBtn?.classList.add('active-tag');
-          colon?.classList.remove('hidden');
           monthGroup?.classList.remove('hidden');
           monthGroup?.classList.add('inline');
         } else {
           yearBtn?.classList.remove('active-tag');
-          colon?.classList.add('hidden');
           monthGroup?.classList.add('hidden');
           monthGroup?.classList.remove('inline');
         }
