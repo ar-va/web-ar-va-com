@@ -3,7 +3,8 @@
 // sorting, and two views of the records: on shelves, or listed like blog articles.
 import Cover from './Cover.astro';
 import SortMenu from '../SortMenu.astro';
-import { formatReleased, type shelfView } from '../../music/lib';
+import RecordHero from './RecordHero.astro';
+import type { shelfView } from '../../music/lib';
 
 interface Props {
   owner: { name: string; slug: string; discogs_username: string; telegram: string | null };
@@ -13,8 +14,6 @@ interface Props {
 const { owner, records, shelves } = Astro.props;
 const base = `/${encodeURIComponent(owner.slug)}`;
 const latest = records[0];
-// Discogs dates are in the collector's (Discogs') local time; show that day, not the UTC one.
-const addedOn = (iso: string) => formatReleased(iso.slice(0, 10));
 
 const count = <T extends string>(values: T[]) => {
   const m = new Map<T, number>();
@@ -58,17 +57,9 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
     <>
       {latest && (
         <section class="mt-6">
-          <h2 class="text-zinc-500 text-sm mb-3">Latest</h2>
-          <a href={`${base}/${latest.instanceId}`} class="shelf-record group flex flex-col sm:flex-row sm:items-center gap-6 sm:gap-10">
-            <Cover record={latest} eager class="w-40 sm:w-48 shrink-0 mt-10 sm:mt-6" />
-            <span class="min-w-0">
-              <span class="block text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-2">{latest.artist}</span>
-              <span class="block text-3xl sm:text-4xl font-bold leading-tight text-zinc-900 dark:text-white group-hover:text-blue-violet-600 dark:group-hover:text-blue-violet-400 transition-colors">{latest.title}</span>
-              <span class="block mt-2 text-zinc-500">
-                Added {addedOn(latest.added)}{latest.releasedYear && <> · released {latest.releasedYear}</>}{latest.genres.length > 0 && <> · {latest.genres.join(', ')}</>}
-              </span>
-            </span>
-          </a>
+          <h2 class="text-zinc-500 text-sm mb-6">Latest</h2>
+          <RecordHero record={latest} artist={latest.artist} title={latest.title} released={latest.released} genres={latest.genres}
+            trackCount={latest.trackCount} links={latest.links} href={`${base}/${latest.instanceId}`} />
         </section>
       )}
 

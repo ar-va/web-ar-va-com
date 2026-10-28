@@ -353,5 +353,8 @@ export function shelfView(r: ShelfRecord, d: ReleaseDetail | null, overrides: Ov
     // Discogs genres can contain commas ("Folk, World, & Country"): only an owner-typed genre is split on them.
     genres: 'genre' in overrides ? v.genre.split(',').map((g) => g.trim()).filter(Boolean) : r.genres,
     releasedYear: Number(v.released.match(/\b(1[89]|20)\d{2}\b/)?.[0]) || null,
+    released: v.released,
+    trackCount: textToTracklist(v.tracklist).filter((t) => !t.heading).length,
+    links: { spotify: v.spotify, apple: v.apple, youtube: v.youtube },
   };
 }

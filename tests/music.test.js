@@ -169,6 +169,9 @@ test('owner edits override Discogs key by key', async () => {
   const s = shelfView(r, d, { genre: 'Jazz, Art Rock', released: 'January 1975' });
   assert.deepEqual(s.genres, ['Jazz', 'Art Rock']);
   assert.equal(s.releasedYear, 1975);
+  assert.equal(s.released, 'January 1975');
+  assert.equal(s.trackCount, 1);
+  assert.deepEqual(shelfView(r, d, { spotify: 'https://open.spotify.com/album/x' }).links, { spotify: 'https://open.spotify.com/album/x', apple: '', youtube: '' });
   assert.equal(shelfView(r, null, {}).releasedYear, null);
   assert.deepEqual(shelfView({ ...r, genres: ['Folk, World, & Country', 'Rock'] }, null, {}).genres, ['Folk, World, & Country', 'Rock']);
 });

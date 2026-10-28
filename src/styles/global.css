@@ -137,7 +137,7 @@
   right: -120%;
   top: -40%;
   height: 180%;
-  background: radial-gradient(ellipse 37% 40% at 45% 50%, color-mix(in srgb, var(--glow) var(--glow-strength), transparent) 42%, transparent 82%);
+  background: radial-gradient(ellipse 36% 38% at 45% 50%, color-mix(in srgb, var(--glow) calc(var(--glow-strength) * 0.8), transparent) 28%, transparent 88%);
   opacity: 1;
   animation: light-in 1.6s ease-out 0.25s both;
 }

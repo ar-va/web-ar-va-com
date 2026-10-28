@@ -2,11 +2,11 @@
 // One record: Discogs details (with the owner's edits), public Discogs fields, tracklist with listening links, comments.
 export const prerender = false;
 import Layout from '../../../layouts/Layout.astro';
-import Cover from '../../../components/music/Cover.astro';
+import RecordHero from '../../../components/music/RecordHero.astro';
 import LoginButton from '../../../components/LoginButton.astro';
 import CommentThread from '../../../components/CommentThread.astro';
 import Listen from '../../../components/music/Listen.astro';
-import { displayDate, formatReleased, loginHref, musicPath, recordDefaults, recordValues, textToTracklist, withSideHeadings } from '../../../music/lib';
+import { displayDate, formatReleased, loginHref, musicPath, recordDefaults, recordValues, shelfView, textToTracklist, withSideHeadings } from '../../../music/lib';
 import { cachedRelease } from '../../../music/discogs';
 import { addComment, canDeleteComment, currentUser, deleteComment, listComments, recordOverrides, shelfOwner, shelfRecord, shelfSlug } from '../../../music/store';
 
@@ -36,6 +36,7 @@ const [detail, comments, overrides] = owner && record
   : [null, [], {}];
 const v = record ? recordValues(recordDefaults(record, detail), overrides) : {};
 const tracks = record ? withSideHeadings(textToTracklist(v.tracklist)) : [];
+const hero = record ? shelfView(record, detail, overrides) : null;
 const isOwner = !!user && user.id === owner?.id;
 
 const shelfPath = owner ? `/${encodeURIComponent(shelfSlug(owner))}` : '/';
@@ -68,21 +69,8 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
       </div>
       {isOwner && <p id="sync-progress" class="text-xs text-zinc-500 empty:hidden mt-2" role="status" aria-live="polite"></p>}
 
-      <header class="mt-8 mb-12 border-b border-zinc-200 dark:border-zinc-800 pb-10 flex flex-col sm:flex-row sm:items-end gap-8 sm:gap-24">
-        <button type="button" id="replay" class="shrink-0 self-start sm:self-auto cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-violet-500" aria-label="Pull the record out again" title="Pull the record out again">
-          <Cover record={record} eager class="sleeve-open w-48 sm:w-44" />
-        </button>
-        <div class="min-w-0">
-          <div class="flex items-center gap-4 mb-3">
-            <div class="w-6 h-[2px] bg-blue-violet-500 shrink-0"></div>
-            <span class="text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400">{v.artist}</span>
-          </div>
-          <h1 class="text-4xl font-bold text-zinc-900 dark:text-white leading-tight">{v.title}</h1>
-          <div class="mt-4 flex items-center gap-3 text-sm text-zinc-500">
-            <span>Listen</span>
-            <Listen size="md" query={`${v.artist} ${v.title}`} label={`Listen to ${v.title}`} links={{ spotify: v.spotify, apple: v.apple, youtube: v.youtube }} />
-          </div>
-        </div>
+      <header class="mt-10 mb-12 border-b border-zinc-200 dark:border-zinc-800 pb-12">
+        <RecordHero record={record} artist={hero!.artist} title={hero!.title} released={hero!.released} genres={hero!.genres} trackCount={hero!.trackCount} links={hero!.links} />
       </header>
 
       <dl class="grid grid-cols-1 sm:grid-cols-[11rem_1fr] gap-x-8 gap-y-1 sm:gap-y-3">
@@ -136,23 +124,4 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
   const progress = document.getElementById('sync-progress');
   if (progress) autoSync((message) => (progress.textContent = message));
 
-  // Clicking the cover slides the record back into the sleeve, then rolls it out again (with the light).
-  // Taps while it moves are ignored, so it always plays to the end.
-  const replay = document.getElementById('replay');
-  const sleeve = replay?.querySelector<HTMLElement>('.sleeve');
-  const disc = sleeve?.querySelector<HTMLElement>('.disc');
-  let playing = false;
-  replay?.addEventListener('click', async () => {
-    if (!sleeve || !disc || playing || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    playing = true;
-    const out = { transform: 'translateX(38%) rotate(300deg)' }, inside = { transform: 'translateX(0) rotate(0deg)' };
-    const back = [disc.animate([out, inside], { duration: 700, easing: 'cubic-bezier(0.5, 0, 0.75, 0)', fill: 'forwards' }),
-      sleeve.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: 'forwards', pseudoElement: '::before' })];
-    await Promise.all(back.map((a) => a.finished));
-    const forth = [disc.animate([inside, out], { duration: 1600, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)', fill: 'forwards' }),
-      sleeve.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1600, easing: 'ease-out', fill: 'forwards', pseudoElement: '::before' })];
-    await Promise.all(forth.map((a) => a.finished));
-    [...back, ...forth].forEach((a) => a.cancel()); // the stylesheet holds the same resting state
-    playing = false;
-  });
 </script>

@@ -1,0 +1,71 @@
+---
+// The big record block shared by the album page and the shelf's "Latest": the sleeve with the vinyl rolled out to
+// the right, then artist, album, added / released / genre / tracks, and the streaming links.
+// On the album page (no `href`) the cover is a button that spins the record; on the shelf it links to the album.
+import Cover from './Cover.astro';
+import Listen from './Listen.astro';
+import { displayDate, formatReleased, type ShelfRecord } from '../../music/lib';
+
+interface Props {
+  record: ShelfRecord;
+  artist: string;
+  title: string;
+  released: string;
+  genres: string[];
+  trackCount: number;
+  links: { spotify?: string; apple?: string; youtube?: string };
+  href?: string;
+}
+const { record, artist, title, released, genres, trackCount, links, href } = Astro.props;
+// Discogs' added date is in the collector's local time: show that day, not the UTC one.
+const facts = [
+  `Added on ${formatReleased(record.added.slice(0, 10))}`,
+  released && `Released ${displayDate(released)}`,
+  genres.join(', '),
+  trackCount > 0 && `${trackCount} track${trackCount === 1 ? '' : 's'}`,
+].filter(Boolean);
+const Heading = href ? 'h2' : 'h1';
+---
+<div class="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-28">
+  {href ? (
+    <a href={href} class="shrink-0 self-start sm:self-auto" tabindex="-1" aria-hidden="true">
+      <Cover record={record} eager class="sleeve-open w-44 sm:w-48" />
+    </a>
+  ) : (
+    <button type="button" data-spin class="shrink-0 self-start sm:self-auto cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-violet-500" aria-label="Spin the record" title="Spin the record">
+      <Cover record={record} eager class="sleeve-open w-44 sm:w-48" />
+    </button>
+  )}
+  <div class="min-w-0">
+    <div class="flex items-center gap-4 mb-3">
+      <div class="w-6 h-[2px] bg-blue-violet-500 shrink-0"></div>
+      <span class="text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400">{artist}</span>
+    </div>
+    <Heading class="text-3xl sm:text-4xl font-bold leading-tight text-zinc-900 dark:text-white">
+      {href ? <a href={href} class="hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{title}</a> : title}
+    </Heading>
+    <p class="mt-2 text-zinc-500">{facts.join(' · ')}</p>
+    <div class="mt-4 flex items-center gap-3 text-sm text-zinc-500">
+      <span>Listen</span>
+      <Listen size="md" query={`${artist} ${title}`} label={`Listen to ${title}`} links={links} />
+    </div>
+  </div>
+</div>
+
+<script>
+  // Clicking the cover spins the record where it rests; taps while it spins are ignored.
+  document.querySelectorAll<HTMLElement>('[data-spin]').forEach((button) => {
+    const disc = button.querySelector<HTMLElement>('.disc');
+    let spinning = false;
+    button.addEventListener('click', async () => {
+      if (!disc || spinning || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      spinning = true;
+      const spin = disc.animate(
+        [{ transform: 'translateX(38%) rotate(300deg)' }, { transform: 'translateX(38%) rotate(1020deg)' }],
+        { duration: 1600, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' },
+      );
+      await spin.finished;
+      spinning = false;
+    });
+  });
+</script>
