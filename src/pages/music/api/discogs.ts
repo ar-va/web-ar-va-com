@@ -24,7 +24,7 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
       case 'missing':
         return json({ missing: user.discogs_username ? await missingReleases(user) : [], unmatched: user.discogs_username ? await unmatchedReleases(user) : [] });
       case 'match':
-        return (await saveMatch(user, Number(body.releaseId), body.apple)) ? json({ ok: true }) : json({ error: 'Not on your shelf.' }, 400);
+        return (await saveMatch(user, Number(body.releaseId), body.apple, body.artist, body.title)) ? json({ ok: true }) : json({ error: 'Not on your shelf.' }, 400);
       case 'request_token':
         return json(await requestTokenRequest(`${url.origin}/auth/discogs`));
       case 'pending':

@@ -1,48 +1,36 @@
 // D1: users, sessions, invites, synced records, cached release details, comments.
 import { env } from 'cloudflare:workers';
 import type { AstroCookies } from 'astro';
-import { randomToken, sha256, siteDomain, type Overrides, type ShelfRecord } from './lib';
+import { randomToken, sha256, shelfView, siteDomain, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
 
 // Tables are created lazily (no migration step in the deploy).
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, username TEXT, photo_url TEXT,
     is_collector INTEGER NOT NULL DEFAULT 0, discogs_username TEXT UNIQUE COLLATE NOCASE, discogs_token TEXT,
-    synced_at INTEGER, sync_error TEXT, created_at INTEGER NOT NULL)`,
+    synced_at INTEGER, sync_error TEXT, created_at INTEGER NOT NULL, shelf_name TEXT)`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS users_shelf_name ON users (shelf_name)`,
   `CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires_at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS invites (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, used_by INTEGER)`,
   `CREATE TABLE IF NOT EXISTS oauth_pending (token TEXT PRIMARY KEY, secret TEXT NOT NULL, user_id INTEGER NOT NULL, created_at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS records (user_id INTEGER NOT NULL, instance_id INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY (user_id, instance_id))`,
   `CREATE TABLE IF NOT EXISTS releases (id INTEGER PRIMARY KEY, data TEXT NOT NULL, fetched_at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, shelf_id INTEGER NOT NULL, instance_id INTEGER NOT NULL,
-    author_id INTEGER NOT NULL, body TEXT NOT NULL, created_at INTEGER NOT NULL)`,
+    author_id INTEGER NOT NULL, body TEXT NOT NULL, created_at INTEGER NOT NULL, parent_id INTEGER, edited_at INTEGER)`,
   `CREATE INDEX IF NOT EXISTS comments_by_record ON comments (shelf_id, instance_id)`,
   `CREATE TABLE IF NOT EXISTS post_comments (id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL, author_id INTEGER NOT NULL,
-    body TEXT NOT NULL, created_at INTEGER NOT NULL)`,
+    body TEXT NOT NULL, created_at INTEGER NOT NULL, parent_id INTEGER, edited_at INTEGER)`,
   `CREATE INDEX IF NOT EXISTS post_comments_by_slug ON post_comments (slug)`,
   `CREATE TABLE IF NOT EXISTS matches (release_id INTEGER PRIMARY KEY, data TEXT NOT NULL, matched_at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS overrides (user_id INTEGER NOT NULL, instance_id INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY (user_id, instance_id))`,
 ];
 
 let ready: Promise<unknown> | null = null;
-// Columns added after the tables went live (CREATE TABLE IF NOT EXISTS doesn't add them to an existing table).
-const ADDED_COLUMNS = [
-  'ALTER TABLE users ADD COLUMN shelf_name TEXT',
-  'ALTER TABLE comments ADD COLUMN parent_id INTEGER',
-  'ALTER TABLE comments ADD COLUMN edited_at INTEGER',
-  'ALTER TABLE post_comments ADD COLUMN parent_id INTEGER',
-  'ALTER TABLE post_comments ADD COLUMN edited_at INTEGER',
-];
 
-async function migrate() {
-  await env.DB.batch(SCHEMA.map((s) => env.DB.prepare(s)));
-  for (const sql of ADDED_COLUMNS) {
-    await env.DB.prepare(sql).run().catch((e) => { if (!/duplicate column/i.test(String(e))) throw e; });
-  }
-  await env.DB.prepare('CREATE UNIQUE INDEX IF NOT EXISTS users_shelf_name ON users (shelf_name)').run();
-}
-
+// One round trip per Worker instance: the database is far from most visitors (each trip ~0.3 s from North America).
+// Columns added later (shelf_name, parent_id, edited_at) are in the definitions above; production got them by
+// ALTER TABLE in October 2026. A new column for an existing table needs its own ALTER again.
 export async function db() {
-  ready ??= migrate().catch((e) => { ready = null; throw e; });
+  ready ??= env.DB.batch(SCHEMA.map((s) => env.DB.prepare(s))).catch((e) => { ready = null; throw e; });
   await ready;
   return env.DB;
 }
@@ -143,11 +131,11 @@ export async function removeShelf(userId: number, revoke: boolean) {
 // ---- Shelves ----
 
 const collectorSql = () => `(is_collector = 1 OR id = ${Number(env.ADMIN_TELEGRAM_ID) || 0})`;
+// The shelf at music.ar-va.com/<?1>: by its chosen name or its Discogs username.
+const ownerWhere = () => `(shelf_name = lower(?1) OR discogs_username = ?1) AND discogs_username IS NOT NULL AND ${collectorSql()}`;
 
-/** The shelf at music.ar-va.com/<name>: by its chosen name or its Discogs username. */
 export async function shelfOwner(name: string) {
-  return (await db()).prepare(`SELECT * FROM users WHERE (shelf_name = lower(?1) OR discogs_username = ?1) AND discogs_username IS NOT NULL AND ${collectorSql()}`)
-    .bind(name).first<User>();
+  return (await db()).prepare(`SELECT * FROM users WHERE ${ownerWhere()}`).bind(name).first<User>();
 }
 
 /** Sets (or clears, with null) the user's shelf address. Returns an error message or null. */
@@ -160,17 +148,70 @@ export async function setShelfName(user: User, name: string | null) {
   return null;
 }
 
-export async function adminShelfOwner() {
-  return (await db()).prepare('SELECT * FROM users WHERE id = ? AND discogs_username IS NOT NULL').bind(Number(env.ADMIN_TELEGRAM_ID) || 0).first<User>();
+const shelvesSql = () => `SELECT users.id, users.name, users.discogs_username, users.shelf_name, COUNT(records.instance_id) AS count FROM users
+  LEFT JOIN records ON records.user_id = users.id
+  WHERE discogs_username IS NOT NULL AND ${collectorSql()} GROUP BY users.id ORDER BY users.name`;
+
+/**
+ * Everything a shelf page shows, in one round trip: the owner (by shelf name or Discogs username; null = the admin's
+ * shelf), their records with edits, cached details and streaming matches, and the list of all shelves.
+ */
+export async function shelfData(name: string | null) {
+  const owner = name === null
+    ? `(SELECT id FROM users WHERE id = ${Number(env.ADMIN_TELEGRAM_ID) || 0} AND discogs_username IS NOT NULL)`
+    : `(SELECT id FROM users WHERE ${ownerWhere()})`;
+  const releaseIds = `(SELECT json_extract(data, '$.releaseId') FROM records WHERE user_id = ${owner})`;
+  const d = await db();
+  const q = (sql: string) => (name === null ? d.prepare(sql) : d.prepare(sql).bind(name));
+  const [users, records, overrides, releases, matches, shelves] = await d.batch([
+    q(`SELECT * FROM users WHERE id = ${owner}`),
+    q(`SELECT data FROM records WHERE user_id = ${owner}`),
+    q(`SELECT instance_id, data FROM overrides WHERE user_id = ${owner}`),
+    q(`SELECT id, data FROM releases WHERE id IN ${releaseIds}`),
+    q(`SELECT release_id, data FROM matches WHERE release_id IN ${releaseIds}`),
+    d.prepare(shelvesSql()),
+  ]);
+  const byId = <T>(rows: unknown[], key: string) => new Map((rows as Record<string, any>[]).map((r) => [r[key] as number, JSON.parse(r.data) as T]));
+  const details = byId<ReleaseDetail>(releases.results, 'id');
+  const edits = byId<Overrides>(overrides.results, 'instance_id');
+  const found = byId<Match>(matches.results, 'release_id');
+  return {
+    owner: (users.results[0] as User | undefined) ?? null,
+    records: (records.results as { data: string }[]).map((r) => JSON.parse(r.data) as ShelfRecord)
+      .sort((a, b) => b.added.localeCompare(a.added))
+      .map((r) => shelfView(r, details.get(r.releaseId) ?? null, edits.get(r.instanceId) ?? {}, found.get(r.releaseId) ?? null)),
+    shelves: shelves.results as { id: number; name: string; discogs_username: string; shelf_name: string | null; count: number }[],
+  };
 }
 
-export async function listShelves() {
-  const { results } = await (await db()).prepare(
-    `SELECT users.id, users.name, users.discogs_username, users.shelf_name, COUNT(records.instance_id) AS count FROM users
-     LEFT JOIN records ON records.user_id = users.id
-     WHERE discogs_username IS NOT NULL AND ${collectorSql()} GROUP BY users.id ORDER BY users.name`,
-  ).all<{ id: number; name: string; discogs_username: string; shelf_name: string | null; count: number }>();
-  return results;
+/** Everything a record page shows, in one round trip: owner, record, the owner's edits, cached details, match, comments. */
+export async function recordData(name: string, instanceId: number) {
+  const owner = `(SELECT id FROM users WHERE ${ownerWhere()})`;
+  const releaseId = `(SELECT json_extract(data, '$.releaseId') FROM records WHERE user_id = ${owner} AND instance_id = ?2)`;
+  const d = await db();
+  const q = (sql: string) => d.prepare(sql).bind(name, instanceId);
+  const [users, records, overrides, releases, matches, comments] = await d.batch([
+    d.prepare(`SELECT * FROM users WHERE ${ownerWhere()}`).bind(name),
+    q(`SELECT data FROM records WHERE user_id = ${owner} AND instance_id = ?2`),
+    q(`SELECT data FROM overrides WHERE user_id = ${owner} AND instance_id = ?2`),
+    q(`SELECT data FROM releases WHERE id = ${releaseId}`),
+    q(`SELECT data FROM matches WHERE release_id = ${releaseId}`),
+    q(`SELECT c.id, body, c.created_at, c.edited_at, c.parent_id, author_id, users.name, users.username, users.photo_url FROM comments c
+       JOIN users ON users.id = c.author_id WHERE shelf_id = ${owner} AND instance_id = ?2 ORDER BY c.id`),
+  ]);
+  const one = <T>(r: { results: unknown[] }) => (r.results[0] ? (JSON.parse((r.results[0] as { data: string }).data) as T) : null);
+  return {
+    owner: (users.results[0] as User | undefined) ?? null,
+    record: one<ShelfRecord>(records),
+    overrides: one<Overrides>(overrides) ?? {},
+    detail: one<ReleaseDetail>(releases),
+    match: one<Match>(matches),
+    comments: comments.results as Comment[],
+  };
+}
+
+export async function adminShelfOwner() {
+  return (await db()).prepare('SELECT * FROM users WHERE id = ? AND discogs_username IS NOT NULL').bind(Number(env.ADMIN_TELEGRAM_ID) || 0).first<User>();
 }
 
 export async function listCollectors() {
@@ -190,11 +231,6 @@ export async function shelfRecord(userId: number, instanceId: number) {
 
 // ---- Owner edits: only the changed values are stored; Discogs' own data stays untouched underneath ----
 
-export async function shelfOverrides(userId: number) {
-  const { results } = await (await db()).prepare('SELECT instance_id, data FROM overrides WHERE user_id = ?').bind(userId).all<{ instance_id: number; data: string }>();
-  return new Map(results.map((r) => [r.instance_id, JSON.parse(r.data) as Overrides]));
-}
-
 export async function recordOverrides(userId: number, instanceId: number): Promise<Overrides> {
   const row = await (await db()).prepare('SELECT data FROM overrides WHERE user_id = ? AND instance_id = ?').bind(userId, instanceId).first<{ data: string }>();
   return row ? JSON.parse(row.data) : {};
@@ -207,25 +243,9 @@ export async function saveOverrides(userId: number, instanceId: number, data: Ov
     : d.prepare('DELETE FROM overrides WHERE user_id = ? AND instance_id = ?').bind(userId, instanceId)).run();
 }
 
-/** Automatic streaming matches for a whole shelf (release id → match). */
-export async function shelfMatches(userId: number) {
-  const { results } = await (await db()).prepare(
-    `SELECT release_id, data FROM matches WHERE release_id IN (SELECT json_extract(data, '$.releaseId') FROM records WHERE user_id = ?)`,
-  ).bind(userId).all<{ release_id: number; data: string }>();
-  return new Map(results.map((r) => [r.release_id, JSON.parse(r.data) as import('./lib').Match]));
-}
-
 export async function releaseMatch(releaseId: number): Promise<import('./lib').Match | null> {
   const row = await (await db()).prepare('SELECT data FROM matches WHERE release_id = ?').bind(releaseId).first<{ data: string }>();
   return row ? JSON.parse(row.data) : null;
-}
-
-/** Cached release details for a whole shelf (release id → details). */
-export async function shelfReleases(userId: number) {
-  const { results } = await (await db()).prepare(
-    `SELECT releases.id, releases.data FROM releases WHERE releases.id IN (SELECT json_extract(data, '$.releaseId') FROM records WHERE user_id = ?)`,
-  ).bind(userId).all<{ id: number; data: string }>();
-  return new Map(results.map((r) => [r.id, JSON.parse(r.data) as import('./lib').ReleaseDetail]));
 }
 
 // ---- Comments ----

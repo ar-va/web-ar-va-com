@@ -1,7 +1,7 @@
 // Browser side of Discogs: requests go from the collector's own address (the site's server can't reach
 // Discogs, see discogs.ts), each one signed by /api/discogs; results are handed back to the site.
 
-import { normalizeName, pickAlbum } from './lib';
+import { firstArtist, normalizeName, pickAlbum } from './lib';
 
 type Signed = { method: 'GET' | 'POST'; url: string; authorization: string };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -100,25 +100,45 @@ async function itunes(path: string) {
   }
 }
 
+/** An Apple Music album with its artwork and songs, by id; `country` is the store in the album's link (default US). */
+async function appleAlbum(id: string | number, country = 'us') {
+  const found = (await itunes(`/lookup?entity=song&country=${country}&id=${id}`)).results ?? [];
+  const album = found.find((x: any) => x.wrapperType === 'collection');
+  if (!album) return null;
+  return {
+    url: appleUrl(album.collectionViewUrl),
+    // Apple serves the same artwork at any size by name; 600 px matches Discogs' images and keeps the shelf light.
+    artwork: typeof album.artworkUrl100 === 'string' ? album.artworkUrl100.replace(/\d+x\d+bb/, '600x600bb') : null,
+    tracks: found.filter((x: any) => x.wrapperType === 'track').map((x: any) => ({ title: x.trackName, url: appleUrl(x.trackViewUrl) })),
+  };
+}
+
 async function appleMatch(artist: string, title: string) {
   const albums = (found: any) => (found.results ?? []).filter((x: any) => x.wrapperType === 'collection')
-    .map((x: any) => ({ id: x.collectionId, title: x.collectionName, artist: x.artistName, url: x.collectionViewUrl, artwork: x.artworkUrl100 }));
+    .map((x: any) => ({ id: x.collectionId, title: x.collectionName, artist: x.artistName }));
   let best = pickAlbum(albums(await itunes(`/search?entity=album&limit=15&term=${encodeURIComponent(`${artist} ${title}`)}`)), artist, title);
   if (!best) {
     // Apple's search often misses an album that its artist page lists (symbols, "&", other stores' spellings).
+    // The whole credit first ("Kool & The Gang"), then only its first artist ("Louis Armstrong And Eddie Condon").
     const a = normalizeName(artist);
-    const artists = await itunes(`/search?entity=musicArtist&limit=5&term=${encodeURIComponent(artist)}`);
-    const found = (artists.results ?? []).find((x: any) => { const n = normalizeName(x.artistName ?? ''); return n && (a === n || a.includes(n)); });
-    if (found) best = pickAlbum(albums(await itunes(`/lookup?entity=album&limit=200&id=${found.artistId}`)), artist, title);
+    for (const term of new Set([artist, firstArtist(artist)])) {
+      const artists = await itunes(`/search?entity=musicArtist&limit=5&term=${encodeURIComponent(term)}`);
+      const found = (artists.results ?? []).find((x: any) => { const n = normalizeName(x.artistName ?? ''); return n && (a === n || a.includes(n)); });
+      if (found) { best = pickAlbum(albums(await itunes(`/lookup?entity=album&limit=200&id=${found.artistId}`)), artist, title); break; }
+    }
   }
-  if (!best) return null;
-  const songs = await itunes(`/lookup?entity=song&id=${best.id}`);
-  return {
-    url: appleUrl(best.url),
-    // Apple serves the same artwork at any size by name; 600 px matches Discogs' images and keeps the shelf light.
-    artwork: typeof best.artwork === 'string' ? best.artwork.replace(/\d+x\d+bb/, '600x600bb') : null,
-    tracks: (songs.results ?? []).filter((x: any) => x.wrapperType === 'track').map((x: any) => ({ title: x.trackName, url: appleUrl(x.trackViewUrl) })),
-  };
+  return best ? appleAlbum(best.id) : null;
+}
+
+/**
+ * One album again, from its edit page: the Apple Music album the owner linked (any country's store) or, without a
+ * link, a search by the artist and title as edited. The site keeps it and adds Spotify by the same artist and title.
+ */
+export async function rematch(releaseId: number, artist: string, title: string, appleLink?: string | null) {
+  const link = appleLink?.match(/music\.apple\.com\/(\w\w)\/album\/(?:[^/?#]+\/)?(\d+)/);
+  const apple = link ? await appleAlbum(link[2], link[1]) : await appleMatch(artist, title);
+  await site({ action: 'match', releaseId, apple, artist, title });
+  return apple;
 }
 
 type Unmatched = { releaseId: number; artist: string; title: string };

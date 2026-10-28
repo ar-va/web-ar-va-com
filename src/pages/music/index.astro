@@ -2,12 +2,13 @@
 // music.ar-va.com/ shows the admin's shelf; until that is connected, a list of shelves.
 export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
-import { adminShelfOwner, listShelves, shelfSlug } from '../../music/store';
+import ShelfPage from '../../components/music/ShelfPage.astro';
+import { shelfData, shelfSlug } from '../../music/store';
 
-const owner = await adminShelfOwner();
-if (owner) return Astro.rewrite(`/music/${encodeURIComponent(shelfSlug(owner))}`);
-const shelves = await listShelves();
+const data = await shelfData(null);
+const { shelves } = data;
 ---
+{data.owner ? <ShelfPage {...data} /> : (
 <Layout title="Music - ARVA">
   <div class="max-w-3xl mx-auto px-6 w-full flex-grow py-24">
     <h1 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Records</h1>
@@ -20,3 +21,4 @@ const shelves = await listShelves();
     )}
   </div>
 </Layout>
+)}

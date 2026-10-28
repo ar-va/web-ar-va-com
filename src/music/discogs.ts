@@ -129,7 +129,7 @@ export async function unmatchedReleases(user: User) {
 }
 
 /** Stores what the browser found on Apple Music (checked) plus a Spotify lookup; only for releases on the user's shelf. */
-export async function saveMatch(user: User, releaseId: number, apple: any) {
+export async function saveMatch(user: User, releaseId: number, apple: any, artist?: unknown, title?: unknown) {
   const d = await db();
   const record = Number.isSafeInteger(releaseId) && await d.prepare(
     `SELECT json_extract(data, '$.artist') AS artist, json_extract(data, '$.title') AS title FROM records WHERE user_id = ? AND json_extract(data, '$.releaseId') = ? LIMIT 1`,
@@ -147,7 +147,9 @@ export async function saveMatch(user: User, releaseId: number, apple: any) {
     };
   }
   try {
-    const spotify = await spotifyMatch(record.artist, record.title);
+    // The owner's edited artist and title when re-matching from the edit page (Discogs' spelling otherwise).
+    const name = (v: unknown, fallback: string) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 300) : fallback);
+    const spotify = await spotifyMatch(name(artist, record.artist), name(title, record.title));
     if (spotify) match.spotify = spotify;
   } catch (e) {
     console.log(`spotify match failed for ${releaseId}: ${e instanceof Error ? e.message : e}`);

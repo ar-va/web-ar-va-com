@@ -4,19 +4,20 @@
 export const prerender = false;
 import Layout from '../../../../layouts/Layout.astro';
 import { loginHref, musicPath, recordDefaults, safeCoverUrl, safeStreamingUrl, type Overrides } from '../../../../music/lib';
-import { cachedRelease } from '../../../../music/discogs';
-import { currentUser, recordOverrides, releaseMatch, saveOverrides, shelfOwner, shelfRecord } from '../../../../music/store';
+import { currentUser, recordData, saveOverrides } from '../../../../music/store';
 
 const instanceId = Number(Astro.params.record);
-const [user, owner] = await Promise.all([currentUser(Astro.cookies), shelfOwner(Astro.params.user!)]);
+const [user, data] = await Promise.all([
+  currentUser(Astro.cookies),
+  recordData(Astro.params.user!, Number.isSafeInteger(instanceId) ? instanceId : 0),
+]);
+const { owner, record, detail, match } = data;
 const recordPath = musicPath(Astro.url).replace(/\/edit$/, '');
 if (!user) return Astro.redirect(loginHref(Astro.url));
-const record = owner && user.id === owner.id && Number.isSafeInteger(instanceId) ? await shelfRecord(owner.id, instanceId) : null;
-if (!record) return Astro.redirect(recordPath);
+if (!record || user.id !== owner?.id) return Astro.redirect(recordPath);
 
-const [detail, match] = await Promise.all([cachedRelease(record.releaseId), releaseMatch(record.releaseId)]);
 const defaults = recordDefaults(record, detail, match);
-let overrides: Overrides = await recordOverrides(owner!.id, instanceId);
+let overrides: Overrides = data.overrides;
 const errors: Record<string, string> = {};
 const links = { spotify: 'Spotify', apple: 'Apple Music', youtube: 'YouTube Music' } as const;
 
@@ -56,6 +57,9 @@ const covers = [...new Map([
 const coverNote = !match
   ? 'Apple Music’s official artwork shows up here once it’s found: that happens in the background while your shelf page is open.'
   : !appleArt ? 'Apple Music doesn’t seem to have this album, so there’s no official artwork to suggest.' : null;
+// A newly saved Apple Music link that isn't the matched album yet: the page fetches that album's cover and tracks.
+const albumId = (url?: string | null) => url?.match(/\/album\/(?:[^/?#]+\/)?(\d+)/)?.[1] ?? null;
+const autoRematch = Astro.request.method === 'GET' && !!overrides.apple && albumId(overrides.apple) !== albumId(match?.apple?.url);
 const fields: { key: string; label: string; hint?: string; multiline?: boolean }[] = [
   { key: 'artist', label: 'Artist' },
   { key: 'title', label: 'Album' },
@@ -112,6 +116,21 @@ const dated = new Set(['released', 'vinylRelease']);
           </div>
         </fieldset>
       )}
+
+      <div class="rounded-2xl bg-zinc-900/[0.03] dark:bg-white/[0.04] px-4 py-3 text-sm" data-rematch data-release={record.releaseId}
+        data-artist={values.artist} data-title={values.title} data-matched={defaults.apple ?? ''} data-auto={autoRematch ? albumId(overrides.apple) : undefined}>
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p class="text-zinc-700 dark:text-zinc-300">
+            {match?.apple
+              ? <>Matched on Apple Music: <a href={match.apple.url} target="_blank" rel="noopener noreferrer" class="text-blue-violet-600 dark:text-blue-violet-400 underline decoration-blue-violet-500/40 underline-offset-4">open the album ↗</a></>
+              : match ? 'Not found on Apple Music.' : 'Not looked up on Apple Music yet.'}
+          </p>
+          <button type="button" class="shrink-0 text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 bg-blue-violet-50 dark:bg-blue-violet-500/15 hover:bg-blue-violet-100 dark:hover:bg-blue-violet-500/25 disabled:opacity-50 px-3.5 py-1.5 rounded-full transition-colors">Match again</button>
+        </div>
+        <p class="mt-1.5 text-xs text-zinc-500">Uses the Apple Music link below if there is one (any country’s store), otherwise searches by the artist and title below, so correct those first if Discogs spells them differently. The suggested cover, the Apple track links and Spotify then follow that album.</p>
+        <p data-rematch-status role="status" class="mt-1 text-xs font-medium text-zinc-700 dark:text-zinc-300 empty:hidden"></p>
+      </div>
+
       {fields.map((f) => {
         const changed = f.key in overrides;
         const original = defaults[f.key];
@@ -178,6 +197,41 @@ const dated = new Set(['released', 'vinylRelease']);
 
 <script>
   import { textToTracklist, tracklistToText, type Track } from '../../../../music/lib';
+  import { rematch } from '../../../../music/sync';
+
+  // "Match again": the album from the Apple Music link field, or a search by the artist and title fields (as typed).
+  const box = document.querySelector<HTMLElement>('[data-rematch]');
+  if (box) {
+    const button = box.querySelector('button')!;
+    const status = box.querySelector('[data-rematch-status]')!;
+    const field = (key: string) => (document.getElementById(`f-${key}`) as HTMLInputElement | null)?.value.trim() ?? '';
+    // The field shows the automatic match until the owner pastes another link; only a different link is followed.
+    const link = () => (field('apple') && field('apple') !== box.dataset.matched ? field('apple') : null);
+    const run = async () => {
+      button.disabled = true;
+      status.textContent = link() ? 'Reading the album from the Apple Music link…' : 'Searching Apple Music…';
+      try {
+        const found = await rematch(Number(box.dataset.release), field('artist') || box.dataset.artist!, field('title') || box.dataset.title!, link());
+        if (found) {
+          status.textContent = 'Found it. Reloading…';
+          location.reload();
+          return;
+        }
+        status.textContent = link()
+          ? 'That link didn’t lead to an album. Copy the link from the album page on Apple Music (Share → Copy Link).'
+          : 'Still no match. Paste the album’s Apple Music link below, save, and it will be used.';
+      } catch (e) {
+        status.textContent = `Apple Music didn’t answer (${e instanceof Error ? e.message : e}). Try again in a minute.`;
+      }
+      button.disabled = false;
+    };
+    button.addEventListener('click', run);
+    // Right after saving a new Apple Music link: once per link and tab, so a link Apple can't resolve doesn't loop.
+    const key = `rematched:${box.dataset.release}:${box.dataset.auto}`;
+    try {
+      if (box.dataset.auto && !sessionStorage.getItem(key)) { sessionStorage.setItem(key, '1'); run(); }
+    } catch {}
+  }
 
   // Calendar buttons fill the text field next to them.
   document.querySelectorAll<HTMLInputElement>('input[data-date-for]').forEach((picker) => picker.addEventListener('change', () => {

@@ -409,14 +409,21 @@ export const normalizeName = (s: string) => s.normalize('NFKD').replace(/\p{M}/g
   // "Alfredo II" on Discogs is "Alfredo 2" on Apple Music.
   .replace(/(?<=\s|^)(ii|iii|iv|vi|vii|viii|ix)(?=\s|$)/g, (n) => String(['ii', 'iii', 'iv', '', 'vi', 'vii', 'viii', 'ix'].indexOf(n) + 2));
 
+// Artists compared without the words joining them: "Denzel Curry X Kenny Beats" on Discogs is "Denzel Curry & Kenny
+// Beats" on Apple Music ("&" already drops out as punctuation).
+const artistKey = (s: string) => normalizeName(s).replace(/(?<=\s|^)(x|and|feat|ft|with)(?=\s|$)/g, ' ').replace(/\s+/g, ' ').trim();
+
+/** The first of several credited artists: "Louis Armstrong And Eddie Condon" → "Louis Armstrong". */
+export const firstArtist = (s: string) => s.split(/\s+(?:x|&|and|feat\.?|ft\.?|with|vs\.?)\s+|\s*[,•/]\s*/i)[0].trim();
+
 /**
  * The catalogue album that is this record: the artist must match, then an exact title beats a longer
  * edition ("… (Deluxe)"), which beats a shorter one; null when nothing fits well enough to link to.
  */
 export function pickAlbum<T extends { title: string; artist: string }>(candidates: T[], artist: string, title: string): T | null {
-  const a = normalizeName(artist), t = normalizeName(title);
+  const a = artistKey(artist), t = normalizeName(title);
   const score = (c: T) => {
-    const ca = normalizeName(c.artist), ct = normalizeName(c.title);
+    const ca = artistKey(c.artist), ct = normalizeName(c.title);
     if (!(ca === a || ca.includes(a) || a.includes(ca))) return 0;
     return ct === t ? 3 : ct.startsWith(t) ? 2 : t.startsWith(ct) && ct.length > 3 ? 1 : 0;
   };

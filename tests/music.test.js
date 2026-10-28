@@ -230,6 +230,12 @@ test('streaming matches, cover sources, gallery', async () => {
   assert.equal(pickAlbum([c('Alfredo', 'Freddie Gibbs & The Alchemist'), c('Alfredo 2', 'Freddie Gibbs & The Alchemist')], 'Freddie Gibbs & The Alchemist', 'Alfredo II').title, 'Alfredo 2');
   assert.equal(pickAlbum([c('★ - Single', 'David Bowie'), c('Blackstar', 'David Bowie')], 'David Bowie', '★ (Blackstar)').title, 'Blackstar');
   assert.equal(normalizeName('I Robot vi'), 'i robot 6');
+  assert.equal(pickAlbum([c('Unlocked', 'Denzel Curry & Kenny Beats')], 'Denzel Curry X Kenny Beats', 'Unlocked').title, 'Unlocked');
+  assert.equal(pickAlbum([c('At Newport', 'Louis Armstrong & Eddie Condon')], 'Louis Armstrong And Eddie Condon', 'At Newport').title, 'At Newport');
+  const { firstArtist } = await import('../src/music/lib.ts');
+  assert.equal(firstArtist('Louis Armstrong And Eddie Condon'), 'Louis Armstrong');
+  assert.equal(firstArtist('Bernstein Conducts Tchaikovsky, New York Philharmonic'), 'Bernstein Conducts Tchaikovsky');
+  assert.equal(firstArtist('Denzel Curry X Kenny Beats'), 'Denzel Curry');
 
   const m = { apple: { url: 'https://music.apple.com/us/album/1', artwork: 'https://is1-ssl.mzstatic.com/x/1200x1200bb.jpg', tracks: [{ title: 'Sherane a.k.A Master Splinter’s Daughter', url: 'https://music.apple.com/t1' }] },
     spotify: { url: 'https://open.spotify.com/album/s', tracks: [{ title: "Sherane a.k.a Master Splinter's Daughter", url: 'https://open.spotify.com/track/s1' }] } };

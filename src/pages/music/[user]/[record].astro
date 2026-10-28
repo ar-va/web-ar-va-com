@@ -8,13 +8,14 @@ import LoginButton from '../../../components/LoginButton.astro';
 import CommentThread from '../../../components/CommentThread.astro';
 import Listen from '../../../components/music/Listen.astro';
 import { commentNotices, displayDate, formatReleased, gallery, loginHref, musicPath, recordDefaults, recordValues, shelfView, textToTracklist, withSideHeadings } from '../../../music/lib';
-import { cachedRelease } from '../../../music/discogs';
-import { addComment, canDeleteComment, currentUser, deleteComment, editComment, listComments, recordOverrides, releaseMatch, shelfOwner, shelfRecord, shelfSlug } from '../../../music/store';
+import { addComment, canDeleteComment, currentUser, deleteComment, editComment, recordData, shelfSlug } from '../../../music/store';
 import { notify } from '../../../music/notify';
 
 const instanceId = Number(Astro.params.record);
-const [user, owner] = await Promise.all([currentUser(Astro.cookies), shelfOwner(Astro.params.user!)]);
-const record = owner && Number.isSafeInteger(instanceId) ? await shelfRecord(owner.id, instanceId) : null;
+const [user, { owner, record, overrides, detail, match, comments }] = await Promise.all([
+  currentUser(Astro.cookies),
+  recordData(Astro.params.user!, Number.isSafeInteger(instanceId) ? instanceId : 0),
+]);
 const path = musicPath(Astro.url);
 const thread = { shelfId: owner?.id ?? 0, instanceId };
 
@@ -38,7 +39,7 @@ if (owner && record && Astro.request.method === 'POST') {
     if ('error' in saved) {
       error = saved.error;
     } else {
-      const title = (await recordOverrides(owner.id, instanceId)).title ?? record.title;
+      const title = overrides.title ?? record.title;
       Astro.locals.cfContext.waitUntil(notify(commentNotices({
         authorId: user.id, authorName: user.name, ownerId: owner.id, parentAuthorId: saved.parentAuthorId,
         title, body: draft.trim(), url: `${Astro.url.origin}${path}#comment-${saved.id}`,
@@ -49,9 +50,6 @@ if (owner && record && Astro.request.method === 'POST') {
 }
 
 if (!owner || !record) Astro.response.status = 404;
-const [detail, comments, overrides, match] = owner && record
-  ? await Promise.all([cachedRelease(record.releaseId), listComments(thread), recordOverrides(owner.id, instanceId), releaseMatch(record.releaseId)])
-  : [null, [], {}, null];
 const v = record ? recordValues(recordDefaults(record, detail, match), overrides) : {};
 const tracks = record ? withSideHeadings(textToTracklist(v.tracklist)) : [];
 const hero = record ? shelfView(record, detail, overrides, match) : null;
