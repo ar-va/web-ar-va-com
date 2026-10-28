@@ -274,3 +274,7 @@ html { scroll-padding-top: 5.5rem; }
 .reveal-pending { opacity: 0; transform: translateY(14px); }
 .reveal-in { animation: reveal-in 0.55s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 @keyframes reveal-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+/* The filters panel is mostly text: a denser glass, so covers behind it don't show through the words. */
+#filters-panel { background: rgb(255 255 255 / 0.9); }
+.dark #filters-panel { background: rgb(30 30 34 / 0.9); }

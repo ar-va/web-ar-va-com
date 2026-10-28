@@ -70,44 +70,19 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
 
       <hr class="border-zinc-200 dark:border-zinc-800/80 my-8" />
 
-      <section class="mb-2">
-        <h2 class="text-zinc-500 text-sm">Added</h2>
-        <div class="leading-8 text-base">
-          {years.map(([year, n], i) => (
-            <span class="inline whitespace-nowrap"><button type="button" data-year={year} class={`year-btn ${btn}`}><span class={btnLabel}>{year}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button>{i < years.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mx-1.5">·</span>}</span>
-          ))}
-        </div>
-      </section>
-
-      {decades.length > 0 && (
-        <section class="mb-2">
-          <h2 class="text-zinc-500 text-sm">Released</h2>
-          <div class="leading-8 text-base">
-            {decades.map(([decade, n], i) => (
-              <span class="decade-block inline"><button type="button" data-decade={decade} class={`decade-btn ${btn}`}><span class={btnLabel}>{decade}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button><span class="decade-years hidden"><span class="text-zinc-500 dark:text-zinc-400 mr-1.5">:</span>{releasedYears(decade).map(([y, m], j, all) => (
-                <span class="inline whitespace-nowrap"><button type="button" data-released={y} class={`released-btn ${btn}`}><span class={btnLabel}>{y}</span><span class="text-zinc-500 dark:text-zinc-400"> ({m})</span></button>{j < all.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
-              ))}</span>{i < decades.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mx-1.5">·</span>}</span>
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section>
-        <h2 class="text-zinc-500 text-sm">Genres</h2>
-        <div class="leading-8 text-base">
-          {genres.map(([genre, n], i) => (
-            <span class="inline whitespace-nowrap"><button type="button" data-genre={genre} class={`genre-btn ${btn}`}><span class={btnLabel}>{genre}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button>{i < genres.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
-          ))}
-        </div>
-      </section>
-
-      <hr class="border-zinc-200 dark:border-zinc-800/80 my-6" />
-
       <section id="all-records">
         <!-- Stays under the header (frosted) while scrolling through the records; lets go where the section ends. -->
         <div class="glass-under sticky top-16 z-40 rounded-3xl sm:rounded-full flex flex-wrap items-center justify-between gap-2 sm:gap-4 p-1.5 pl-4">
           <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
-            <h2 class="text-zinc-500 text-sm m-0 shrink-0">All records ({records.length})</h2>
+            <h2 class="m-0 shrink-0">
+              <button type="button" id="filters-toggle" aria-expanded="false" aria-controls="filters-panel" title="Filter by added, released and genre"
+                class="group inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white aria-expanded:text-zinc-900 dark:aria-expanded:text-white transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></svg>
+                All records ({records.length})
+                <span id="filters-count" hidden class="min-w-5 h-5 px-1.5 rounded-full bg-blue-violet-500 text-white text-[11px] font-semibold leading-5 text-center"></span>
+                <svg class="w-3.5 h-3.5 transition-transform group-aria-expanded:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
+              </button>
+            </h2>
             <SortMenu id="records-sort" />
             <div class="flex items-center gap-1" role="group" aria-label="View">
               <button type="button" data-view="shelf" aria-pressed="true" title="Shelf" class={`view-btn ${viewBtn}`}>
@@ -124,6 +99,40 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
             <input type="search" id="record-search" placeholder="Search" aria-label="Search records"
               class="w-full h-8 rounded-full bg-zinc-900/5 dark:bg-white/10 pl-3.5 pr-9 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-violet-500/60 transition-shadow placeholder:text-zinc-500 [&::-webkit-search-cancel-button]:hidden" />
             <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+          </div>
+
+          <!-- Filters drop down from "All records" (and travel with the bar); several can be picked before closing. -->
+          <div id="filters-panel" hidden class="glass absolute left-0 right-0 top-full mt-2 rounded-3xl px-5 py-4 max-h-[70vh] overflow-y-auto space-y-1">
+            <section class="mb-2">
+              <h2 class="text-zinc-500 text-sm">Added</h2>
+              <div class="leading-8 text-base">
+                {years.map(([year, n], i) => (
+                  <span class="inline whitespace-nowrap"><button type="button" data-year={year} class={`year-btn ${btn}`}><span class={btnLabel}>{year}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button>{i < years.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mx-1.5">·</span>}</span>
+                ))}
+              </div>
+            </section>
+
+            {decades.length > 0 && (
+              <section class="mb-2">
+                <h2 class="text-zinc-500 text-sm">Released</h2>
+                <div class="leading-8 text-base">
+                  {decades.map(([decade, n], i) => (
+                    <span class="decade-block inline"><button type="button" data-decade={decade} class={`decade-btn ${btn}`}><span class={btnLabel}>{decade}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button><span class="decade-years hidden ml-1.5 rounded-full bg-blue-violet-500/10 dark:bg-blue-violet-400/15 px-2.5 py-0.5 box-decoration-clone">{releasedYears(decade).map(([y, m], j, all) => (
+                      <span class="inline whitespace-nowrap"><button type="button" data-released={y} class={`released-btn ${btn}`}><span class={btnLabel}>{y}</span><span class="text-zinc-500 dark:text-zinc-400"> ({m})</span></button>{j < all.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
+                    ))}</span>{i < decades.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mx-1.5">·</span>}</span>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            <section>
+              <h2 class="text-zinc-500 text-sm">Genres</h2>
+              <div class="leading-8 text-base">
+                {genres.map(([genre, n], i) => (
+                  <span class="inline whitespace-nowrap"><button type="button" data-genre={genre} class={`genre-btn ${btn}`}><span class={btnLabel}>{genre}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button>{i < genres.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
+                ))}
+              </div>
+            </section>
           </div>
         </div>
 
@@ -270,6 +279,10 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
     const filtering = words.length > 0 || years.size > 0 || genres.size > 0 || decades.size > 0;
     info?.classList.toggle('hidden', !filtering);
     info?.classList.toggle('flex', filtering);
+    // How many filters are on, next to "All records", so it shows while the panel is closed.
+    const picked = years.size + decades.size + released.size + genres.size;
+    const badge = document.getElementById('filters-count');
+    if (badge) { badge.textContent = String(picked); badge.hidden = picked === 0; }
     if (infoText) infoText.textContent = shown === 0 ? 'No matching records.' : `Showing ${shown} of ${slots.length}.`;
   }
 
@@ -304,6 +317,21 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
 
   // Shelf or list; the choice is remembered in this browser. (The `hidden` attribute, not the class: .shelf's own
   // display: grid outranks Tailwind's `hidden` class.)
+  // "All records" opens the filters panel; outside clicks and Esc close it.
+  const filtersToggle = document.getElementById('filters-toggle');
+  const filtersPanel = document.getElementById('filters-panel');
+  const showFilters = (open: boolean) => {
+    filtersPanel!.hidden = !open;
+    filtersToggle!.setAttribute('aria-expanded', String(open));
+  };
+  filtersToggle?.addEventListener('click', () => showFilters(filtersPanel!.hidden));
+  document.addEventListener('click', (e) => {
+    if (filtersPanel && !filtersPanel.hidden && !filtersPanel.contains(e.target as Node) && !filtersToggle!.contains(e.target as Node)) showFilters(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && filtersPanel && !filtersPanel.hidden) { showFilters(false); filtersToggle!.focus(); }
+  });
+
   function setView(view: string) {
     if (grid) grid.hidden = view === 'list';
     if (list) list.hidden = view !== 'list';
