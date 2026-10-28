@@ -4,7 +4,10 @@ import ThemeToggle from './ThemeToggle.astro';
 // On music.ar-va.com the main site's links must leave the subdomain.
 const onMusic = Astro.url.hostname.startsWith('music.');
 const main = onMusic ? 'https://ar-va.com' : '';
-const link = 'text-zinc-500 hover:text-blue-violet-500 transition-colors dark:text-zinc-400 dark:hover:text-blue-violet-400';
+const link = 'text-zinc-500 hover:text-blue-violet-500 transition-colors dark:text-zinc-400 dark:hover:text-blue-violet-400 aria-[current=page]:text-blue-violet-600 dark:aria-[current=page]:text-blue-violet-400';
+// The section the visitor is in stays highlighted: Home on /, Blog on /blog and its posts, Music on music.ar-va.com.
+const path = Astro.url.pathname;
+const current = (on: boolean) => (on ? 'page' : undefined);
 ---
 
 <!-- Three floating frosted-glass pills, centred and only as wide as their contents: logo, menu, account + theme. -->
@@ -12,9 +15,9 @@ const link = 'text-zinc-500 hover:text-blue-violet-500 transition-colors dark:te
   <a href={`${main}/`} class="glass h-11 rounded-full flex items-center px-4 sm:px-5 font-bold text-xl tracking-tight text-zinc-900 dark:text-white">ARVA</a>
   <div class="glass h-11 rounded-full flex items-center px-4 sm:px-6">
     <div class="flex items-center gap-4 sm:gap-6 text-sm font-medium">
-      <a href={`${main}/`} class={`${link} hidden sm:inline`}>Home</a>
-      <a href={`${main}/blog`} class={link}>Blog</a>
-      <a href={onMusic ? '/' : 'https://music.ar-va.com/'} class={link} aria-current={onMusic ? 'page' : undefined}>Music</a>
+      <a href={`${main}/`} class={`${link} hidden sm:inline`} aria-current={current(!onMusic && path === '/')}>Home</a>
+      <a href={`${main}/blog`} class={link} aria-current={current(!onMusic && path.startsWith('/blog'))}>Blog</a>
+      <a href={onMusic ? '/' : 'https://music.ar-va.com/'} class={link} aria-current={current(onMusic)}>Music</a>
     </div>
   </div>
   <div class="glass h-11 rounded-full flex items-center gap-1.5 p-1.5 text-sm font-medium">
