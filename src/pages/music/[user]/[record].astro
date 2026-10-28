@@ -129,7 +129,7 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
 
       <hr class="border-zinc-200 dark:border-zinc-800/80 my-10" />
 
-      <section id="comments" class="scroll-mt-24">
+      <section id="comments">
         <CommentThread comments={comments} user={user} canDelete={(id) => canDeleteComment(thread, id, user)} error={error} draft={draft}>
           <LoginButton slot="login" href={loginHref(Astro.url, `${Astro.url.origin}${path}#comments`)} />
         </CommentThread>

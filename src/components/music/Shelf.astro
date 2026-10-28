@@ -42,7 +42,7 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
         <button type="button" id="share-shelf" data-url={`${Astro.url.origin}${base}`} aria-label="Copy the link to this collection" title="Copy link"
           class="relative text-zinc-400 hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" /></svg>
-          <span id="share-done" role="status" class="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-zinc-900 dark:bg-white px-2.5 py-1 text-xs font-medium text-white dark:text-zinc-900 opacity-0 transition-opacity"></span>
+          <span id="share-done" role="status" class="glass pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium text-zinc-900 dark:text-white opacity-0 transition-opacity"></span>
         </button>
         {owner.telegram && (
           <a href={`https://t.me/${owner.telegram}`} target="_blank" rel="noopener noreferrer" aria-label={`${owner.name} on Telegram`} title={`@${owner.telegram} on Telegram`}
@@ -103,7 +103,7 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
 
       <hr class="border-zinc-200 dark:border-zinc-800/80 my-6" />
 
-      <section id="all-records" class="scroll-mt-8">
+      <section id="all-records">
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
             <h2 class="text-zinc-500 text-sm m-0 shrink-0">All records ({records.length})</h2>

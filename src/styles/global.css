@@ -255,3 +255,9 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
   30% { transform: rotate(-22deg) scale(1.15); }
   65% { transform: rotate(12deg) scale(1.1); }
 }
+
+/* Over the photo viewer's dark backdrop the glass is always the dark kind, whatever the site theme. */
+dialog[data-lightbox] .glass { background: rgb(36 36 40 / 0.5); box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.6); }
+
+/* The header stays on screen: jumps to #sections stop below it instead of under it. */
+html { scroll-padding-top: 5.5rem; }
