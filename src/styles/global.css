@@ -21,8 +21,8 @@
 /* ---- Music shelf (music.ar-va.com) ---- */
 /* Each row is a ledge: a lit top surface the sleeves stand on, a darker front edge, and a soft wall behind. */
 :root {
-  --wall-top: rgb(24 24 27 / 0.015);
-  --wall: rgb(24 24 27 / 0.06);
+  --wall-top: rgb(24 24 27 / 0);
+  --wall: rgb(24 24 27 / 0.035);
   --ledge-top: #f4f4f5;
   --ledge-top-2: #e2e2e6;
   --ledge-lip: #ffffff;
@@ -32,8 +32,8 @@
   --glow-strength: 45%;
 }
 .dark {
-  --wall-top: rgb(255 255 255 / 0.012);
-  --wall: rgb(255 255 255 / 0.05);
+  --wall-top: rgb(255 255 255 / 0);
+  --wall: rgb(255 255 255 / 0.025);
   --ledge-top: #45454c;
   --ledge-top-2: #2e2e33;
   --ledge-lip: #55555d;
@@ -49,22 +49,27 @@
   grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
   column-gap: var(--gap);
   /* room above each row for a pulled-up record and its light, without reaching the ledge of the row above */
-  row-gap: 6rem;
-  padding: 5rem calc(var(--gap) / 2) 1.5rem;
+  row-gap: 5rem;
+  padding: 3.5rem calc(var(--gap) / 2) 1.5rem;
   isolation: isolate;
 }
 @media (min-width: 640px) {
   .shelf { grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); }
 }
-.shelf-slot { position: relative; }
+.shelf-slot {
+  position: relative;
+  /* Everything a record does (light, notes, the pulled-up disc) stays inside its own shelf unit:
+     from just under the ledge above, half a gap to each side, down past its own ledge and shadow. */
+  clip-path: inset(calc(-5rem + 22px) calc(var(--gap) / -2) -48px);
+}
 /* Each slot draws its piece of wall and ledge, reaching half a gap to both sides, so a row reads as one shelf. */
 .shelf-slot::before {
   content: '';
   position: absolute;
   z-index: -1;
-  /* the back of the shelf unit, from just under the ledge above (6rem gap − 21px of ledge) down to this ledge;
+  /* the back of the shelf unit, from just under the ledge above (5rem gap − 21px of ledge) down to this ledge;
      light falls on it from above, darker towards the ledge */
-  inset: calc(-6rem + 22px) calc(var(--gap) / -2) 0;
+  inset: calc(-5rem + 22px) calc(var(--gap) / -2) 0;
   background: linear-gradient(to bottom, var(--wall-top), var(--wall));
 }
 .shelf-slot::after {
@@ -112,7 +117,7 @@
      sleeve), so all that shows is a soft halo above the record's exposed edge, no hard lines. */
   left: -10%;
   right: -10%;
-  top: max(-46%, -4rem);
+  top: max(-42%, -3.4rem);
   bottom: 90%;
   background: radial-gradient(ellipse 48% 80% at 50% 100%, color-mix(in srgb, var(--glow) calc(var(--glow-strength) * 0.8), transparent) 30%, transparent 92%);
   opacity: 0;
@@ -165,3 +170,15 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
 .comment-panel:not([hidden]) { animation: panel-in 0.18s ease-out; }
 @keyframes panel-in { from { opacity: 0; transform: translateY(-3px); } }
 @media (prefers-reduced-motion: reduce) { .comment-panel:not([hidden]) { animation: none; } }
+
+/* Notes floating out of a sleeve (src/scripts/notes.ts), tinted like the vinyl's light. */
+:root { --note-mix: #3a34ce; }
+.dark { --note-mix: #ffffff; }
+.flying-note {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  line-height: 1;
+  color: color-mix(in srgb, var(--glow) 70%, var(--note-mix));
+  will-change: transform, opacity;
+}

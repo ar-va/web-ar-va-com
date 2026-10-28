@@ -39,6 +39,11 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
     <div class="min-w-0">
       <h1 class="text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-2.5">
         <span>{owner.name}’s records<span class="text-blue-violet-500">.</span></span>
+        <button type="button" id="share-shelf" data-url={`${Astro.url.origin}${base}`} aria-label="Copy the link to this collection" title="Copy link"
+          class="relative text-zinc-400 hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" /></svg>
+          <span id="share-done" role="status" class="pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-zinc-900 dark:bg-white px-2.5 py-1 text-xs font-medium text-white dark:text-zinc-900 opacity-0 transition-opacity"></span>
+        </button>
         {owner.telegram && (
           <a href={`https://t.me/${owner.telegram}`} target="_blank" rel="noopener noreferrer" aria-label={`${owner.name} on Telegram`} title={`@${owner.telegram} on Telegram`}
             class="text-zinc-400 hover:text-[#2aabee] transition-colors">
@@ -181,6 +186,22 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
 
 <script>
   import { autoSync } from '../../music/sync';
+  import { notesOnHover } from '../../scripts/notes';
+  notesOnHover('#records-shelf .shelf-record');
+
+  // Share: copy the collection's link and say so for a moment.
+  const share = document.getElementById('share-shelf');
+  const done = document.getElementById('share-done');
+  share?.addEventListener('click', async () => {
+    const url = share.dataset.url!;
+    let ok = true;
+    try { await navigator.clipboard.writeText(url); } catch { ok = false; window.prompt('Copy this link:', url); }
+    if (ok && done) {
+      done.textContent = 'Link copied';
+      done.classList.replace('opacity-0', 'opacity-100');
+      setTimeout(() => done.classList.replace('opacity-100', 'opacity-0'), 1600);
+    }
+  });
   const progress = document.getElementById('sync-progress');
   autoSync((message) => { if (progress) progress.textContent = message; });
 

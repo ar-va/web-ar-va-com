@@ -37,7 +37,7 @@ const Heading = href ? 'h2' : 'h1';
     </button>
   )}
   <div class="min-w-0">
-    <p class="text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-3">{artist}</p>
+    <p class="text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-1">{artist}</p>
     <Heading class="text-3xl sm:text-4xl font-bold leading-tight text-zinc-900 dark:text-white">
       {href ? <a href={href} class="hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{title}</a> : title}
     </Heading>
@@ -51,6 +51,11 @@ const Heading = href ? 'h2' : 'h1';
 </div>
 
 <script>
+  import { emitBurst } from '../../scripts/notes';
+
+  // Notes drift out of the open side while the record rolls out (CSS: 0.25 s delay, 1.6 s).
+  document.querySelectorAll<HTMLElement>('.sleeve-open').forEach((sleeve) => emitBurst(sleeve, 'right', 9, 1500, 300));
+
   // Clicking the cover spins the record where it rests; taps while it spins are ignored.
   document.querySelectorAll<HTMLElement>('[data-spin]').forEach((button) => {
     const disc = button.querySelector<HTMLElement>('.disc');
@@ -58,6 +63,7 @@ const Heading = href ? 'h2' : 'h1';
     button.addEventListener('click', async () => {
       if (!disc || spinning || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       spinning = true;
+      emitBurst(disc.closest<HTMLElement>('.sleeve')!, 'right', 8, 1200);
       const spin = disc.animate(
         [{ transform: 'translateX(38%) rotate(300deg)' }, { transform: 'translateX(38%) rotate(1020deg)' }],
         { duration: 1600, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' },
