@@ -233,22 +233,69 @@ export function vinylColor(text: string): string | null {
 // ---- Owner edits (overrides of the Discogs data) ----
 
 export type Overrides = Record<string, string>;
-export interface Track { position: string; title: string; duration: string; heading: boolean }
+export type Service = 'spotify' | 'apple' | 'youtube';
+export interface Track { position: string; title: string; duration: string; heading: boolean; links?: Partial<Record<Service, string>> }
 
-/** One track per line, "A1 | Title | 4:52"; a line starting with "## " is a heading (e.g. "## Side B"). */
+/** One track per line, "A1 | Title | 4:52 | <links>"; a line starting with "## " is a heading (e.g. "## Side B"). */
 export const tracklistToText = (tracks: Track[]) =>
-  tracks.map((t) => (t.heading ? `## ${t.title}` : [t.position, t.title, t.duration].filter((x, i) => x || i === 1).join(' | '))).join('\n');
+  tracks.map((t) => (t.heading
+    ? `## ${t.title}`
+    : [t.position, t.title, t.duration, Object.values(t.links ?? {}).join(' ')].filter((x, i) => x || i === 1).join(' | '))).join('\n');
 
 export function textToTracklist(text: string): Track[] {
   return text.split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
     if (l.startsWith('## ')) return { position: '', title: l.slice(3).trim(), duration: '', heading: true };
     const parts = l.split('|').map((p) => p.trim());
-    if (parts.length === 1) return { position: '', title: parts[0], duration: '', heading: false };
+    // Trailing parts that are links: each kept only if it's a page on one of the services.
+    const links: Track['links'] = {};
+    while (parts.length > 1 && /^https?:\/\//.test(parts.at(-1)!)) {
+      for (const url of parts.pop()!.split(/\s+/)) {
+        for (const s of ['spotify', 'apple', 'youtube'] as const) {
+          const ok = safeStreamingUrl(url, s);
+          if (ok) links[s] = ok;
+        }
+      }
+    }
+    const extra = Object.keys(links).length ? { links } : {};
+    if (parts.length === 1) return { position: '', title: parts[0], duration: '', heading: false, ...extra };
     if (parts.length === 2) return /^\d{1,2}:\d{2}(:\d{2})?$/.test(parts[1])
-      ? { position: '', title: parts[0], duration: parts[1], heading: false }
-      : { position: parts[0], title: parts[1], duration: '', heading: false };
-    return { position: parts[0], title: parts.slice(1, -1).join(' | '), duration: parts.at(-1)!, heading: false };
+      ? { position: '', title: parts[0], duration: parts[1], heading: false, ...extra }
+      : { position: parts[0], title: parts[1], duration: '', heading: false, ...extra };
+    return { position: parts[0], title: parts.slice(1, -1).join(' | '), duration: parts.at(-1)!, heading: false, ...extra };
   });
+}
+
+/**
+ * Vinyl positions (A1, A2, B1…) → a heading per side: "Side A", or "Disc 1 · Side A" when there are more than two
+ * sides; the position shows just the track number. Tracklists with their own headings, or positions that
+ * aren't letter + number (CDs, "1", "2"), are left as they are.
+ */
+export function withSideHeadings(tracks: Track[]): Track[] {
+  const songs = tracks.filter((t) => !t.heading);
+  if (tracks.some((t) => t.heading) || !songs.every((t) => /^[A-Z]\d*[a-z]?$/i.test(t.position))) return tracks;
+  const sides = new Set(songs.map((t) => t.position[0].toUpperCase()));
+  if (sides.size < 2) return tracks;
+  const discs = [...sides].some((s) => s > 'B');
+  const out: Track[] = [];
+  let current = '';
+  for (const t of tracks) {
+    const side = t.position[0].toUpperCase();
+    if (side !== current) {
+      current = side;
+      const i = side.charCodeAt(0) - 65;
+      out.push({ position: '', title: discs ? `Disc ${Math.floor(i / 2) + 1} · Side ${side}` : `Side ${side}`, duration: '', heading: true });
+    }
+    out.push({ ...t, position: t.position.slice(1) });
+  }
+  return out;
+}
+
+const RESERVED = new Set(['settings', 'login', 'logout', 'auth', 'invite', 'api', 'music', 'edit', 'admin', 'about', 'blog', 'records', 'shelf', 'new']);
+
+/** A shelf address (music.ar-va.com/<name>): 2–30 of a–z, 0–9 and "-", not at the ends; null if not allowed. */
+export function shelfName(value: string) {
+  const v = value.trim().toLowerCase();
+  return /^[a-z0-9](?:[a-z0-9-]{0,28}[a-z0-9])?$/.test(v) && v.length >= 2 && !RESERVED.has(v) ? v : null;
 }
 
 /** Only Spotify / Apple Music / YouTube (Music) pages are accepted as album links. */

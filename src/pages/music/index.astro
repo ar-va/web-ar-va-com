@@ -2,10 +2,10 @@
 // music.ar-va.com/ shows the admin's shelf; until that is connected, a list of shelves.
 export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
-import { adminShelfOwner, listShelves } from '../../music/store';
+import { adminShelfOwner, listShelves, shelfSlug } from '../../music/store';
 
 const owner = await adminShelfOwner();
-if (owner) return Astro.rewrite(`/music/${encodeURIComponent(owner.discogs_username!)}`);
+if (owner) return Astro.rewrite(`/music/${encodeURIComponent(shelfSlug(owner))}`);
 const shelves = await listShelves();
 ---
 <Layout title="Music - ARVA">
@@ -15,7 +15,7 @@ const shelves = await listShelves();
       <p class="text-zinc-500">No shelves yet.</p>
     ) : (
       <ul class="leading-8">
-        {shelves.map((s) => <li><a href={`/${encodeURIComponent(s.discogs_username)}`} class="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white underline decoration-zinc-300 dark:decoration-zinc-700 underline-offset-4">{s.name}</a> <span class="text-zinc-500">({s.count})</span></li>)}
+        {shelves.map((s) => <li><a href={`/${encodeURIComponent(shelfSlug(s))}`} class="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white underline decoration-zinc-300 dark:decoration-zinc-700 underline-offset-4">{s.name}</a> <span class="text-zinc-500">({s.count})</span></li>)}
       </ul>
     )}
   </div>

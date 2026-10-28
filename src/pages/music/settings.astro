@@ -2,8 +2,8 @@
 // Your account: what Telegram shared + log out; Discogs connection and sync for collectors; invites for the admin.
 export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
-import { loginHref } from '../../music/lib';
-import { canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, removeShelf } from '../../music/store';
+import { loginHref, shelfName } from '../../music/lib';
+import { canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, removeShelf, setShelfName, shelfSlug } from '../../music/store';
 
 const user = await currentUser(Astro.cookies);
 if (!user) return Astro.redirect(loginHref(Astro.url));
@@ -11,6 +11,7 @@ if (!user) return Astro.redirect(loginHref(Astro.url));
 let inviteUrl: string | null = null;
 let notice: string | null = Astro.url.searchParams.get('error');
 if (Astro.url.searchParams.has('welcome')) notice = 'Welcome! Connect your Discogs account to fill your shelf.';
+if (Astro.url.searchParams.has('named')) notice = 'Your shelf address is saved.';
 
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
@@ -18,6 +19,14 @@ if (Astro.request.method === 'POST') {
   if (action === 'logout') {
     await endSession(Astro.cookies, Astro.url.hostname);
     return Astro.redirect(`${Astro.url.protocol}//${Astro.url.host.replace(/^music\./, '')}/`, 303);
+  }
+  if (action === 'shelf-name' && canCollect(user)) {
+    const raw = String(form.get('shelf_name') ?? '').trim();
+    const name = raw ? shelfName(raw) : null;
+    const problem = raw && !name
+      ? 'Use 2–30 letters, numbers or dashes (not at the start or end); some words like “settings” are reserved.'
+      : await setShelfName(user, name);
+    return Astro.redirect(problem ? `/settings?error=${encodeURIComponent(problem)}` : '/settings?named', 303);
   }
   if (action === 'disconnect' && user.discogs_username) {
     await removeShelf(user.id, false);
@@ -100,7 +109,7 @@ const h2 = 'flex items-center gap-2 text-xs font-bold tracking-widest uppercase 
         {connected ? (
           <div class="flex flex-col gap-4">
             <p class="text-zinc-700 dark:text-zinc-300">
-              Connected to Discogs as <a href={`/${encodeURIComponent(user.discogs_username!)}`} class="text-blue-violet-600 dark:text-blue-violet-400 underline underline-offset-4">{user.discogs_username}</a>.
+              Connected to Discogs as <a href={`/${encodeURIComponent(shelfSlug(user))}`} class="text-blue-violet-600 dark:text-blue-violet-400 underline underline-offset-4">{user.discogs_username}</a>.
               Last synced <span id="synced-ago">{ago(user.synced_at)}</span>.
             </p>
             <div class="flex flex-wrap items-center gap-3">
@@ -109,6 +118,17 @@ const h2 = 'flex items-center gap-2 text-xs font-bold tracking-widest uppercase 
               <form method="post"><input type="hidden" name="action" value="disconnect" /><button class={quiet} onclick="return confirm('Disconnect Discogs and empty your shelf here? Your Discogs collection is not touched.')">Disconnect</button></form>
             </div>
             <p id="sync-status" class="text-sm text-zinc-600 dark:text-zinc-400 min-h-5" role="status" aria-live="polite"></p>
+            <form method="post" class="flex flex-col gap-2">
+              <input type="hidden" name="action" value="shelf-name" />
+              <label for="shelf-name" class="text-sm font-medium text-zinc-800 dark:text-zinc-200">Shelf address</label>
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="text-sm text-zinc-500">music.ar-va.com/</span>
+                <input id="shelf-name" name="shelf_name" value={user.shelf_name ?? ''} placeholder={user.discogs_username ?? ''} maxlength="30" autocomplete="off" spellcheck="false"
+                  class="w-44 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-3 py-1.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 transition-colors" />
+                <button class={quiet}>Save</button>
+              </div>
+              <p class="text-xs text-zinc-500">Your shelf’s main link. music.ar-va.com/{user.discogs_username} keeps working too. Leave it empty to use your Discogs name.</p>
+            </form>
             <div class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
               <p class="mb-2">To add a record, add it to your collection on Discogs (the app can scan the barcode). Your shelf catches up when you next open music.ar-va.com while logged in, or right away with “Sync now”.</p>
               <p>Your Discogs collection fields (Discogs → Collection → Settings → custom fields) show on each record page <strong class="font-medium text-zinc-800 dark:text-zinc-200">only when the field is set to public</strong>. Fields like “Gifted by”, “Purchased”, “Note” or “Comment” work well.</p>

@@ -1,15 +1,16 @@
 ---
-// A collector's shelf: latest addition, year/genre filters and search (same look as Writing.astro), then the covers on shelves.
+// A collector's shelf: a featured latest record, filters (added, released, genres) and search like Writing.astro,
+// sorting, and two views of the records: on shelves, or listed like blog articles.
 import Cover from './Cover.astro';
 import { formatReleased, type shelfView } from '../../music/lib';
 
 interface Props {
-  owner: { name: string; discogs_username: string };
+  owner: { name: string; slug: string; discogs_username: string; telegram: string | null };
   records: ReturnType<typeof shelfView>[];
-  shelves: { name: string; discogs_username: string; count: number }[];
+  shelves: { name: string; slug: string; count: number }[];
 }
 const { owner, records, shelves } = Astro.props;
-const base = `/${encodeURIComponent(owner.discogs_username)}`;
+const base = `/${encodeURIComponent(owner.slug)}`;
 const latest = records[0];
 // Discogs dates are in the collector's (Discogs') local time; show that day, not the UTC one.
 const addedOn = (iso: string) => formatReleased(iso.slice(0, 10));
@@ -21,20 +22,31 @@ const count = <T extends string>(values: T[]) => {
 };
 const years = [...count(records.map((r) => r.added.slice(0, 4)))].sort(([a], [b]) => b.localeCompare(a));
 // Released: decades first; clicking one shows its years (like the blog's year → month).
-const decades = [...count(records.filter((r) => r.releasedYear).map((r) => `${Math.floor(r.releasedYear! / 10) * 10}s`))].sort(([a], [b]) => a.localeCompare(b));
-const releasedYears = (decade: string) => [...count(records.filter((r) => r.releasedYear && `${Math.floor(r.releasedYear / 10) * 10}s` === decade).map((r) => String(r.releasedYear)))].sort(([a], [b]) => a.localeCompare(b));
+const decadeOf = (y: number) => `${Math.floor(y / 10) * 10}s`;
+const decades = [...count(records.filter((r) => r.releasedYear).map((r) => decadeOf(r.releasedYear!)))].sort(([a], [b]) => a.localeCompare(b));
+const releasedYears = (decade: string) => [...count(records.filter((r) => r.releasedYear && decadeOf(r.releasedYear) === decade).map((r) => String(r.releasedYear)))].sort(([a], [b]) => a.localeCompare(b));
 const genres = [...count(records.flatMap((r) => r.genres.map((g) => g.toLowerCase())))].sort(([a], [b]) => a.localeCompare(b));
-const others = shelves.filter((s) => s.discogs_username !== owner.discogs_username);
+const others = shelves.filter((s) => s.slug !== owner.slug);
+const sorts = [['new', 'New'], ['old', 'Old'], ['az', 'A–Z'], ['za', 'Z–A']];
 
 // Filter buttons: the exact classes Writing.astro uses for tags and years.
 const btn = 'group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white';
 const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors';
+const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white aria-pressed:text-blue-violet-600 dark:aria-pressed:text-blue-violet-400 aria-pressed:bg-blue-violet-50 dark:aria-pressed:bg-blue-violet-500/15 transition-colors';
 ---
 
 <div id="shelf" class="font-normal">
-  <div class="flex justify-between items-center mb-2 gap-4">
+  <div class="flex justify-between items-start mb-2 gap-4">
     <div class="min-w-0">
-      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">{owner.name}’s records<span class="text-blue-violet-500">.</span></h1>
+      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-2.5">
+        <span>{owner.name}’s records<span class="text-blue-violet-500">.</span></span>
+        {owner.telegram && (
+          <a href={`https://t.me/${owner.telegram}`} target="_blank" rel="noopener noreferrer" aria-label={`${owner.name} on Telegram`} title={`@${owner.telegram} on Telegram`}
+            class="text-zinc-400 hover:text-[#2aabee] transition-colors">
+            <svg class="w-5 h-5" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
+          </a>
+        )}
+      </h1>
       <p id="sync-progress" class="text-xs text-zinc-500 empty:hidden" role="status" aria-live="polite"></p>
     </div>
     <a href={`https://www.discogs.com/user/${encodeURIComponent(owner.discogs_username)}/collection`} class="shrink-0 text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 px-4 py-2 rounded-full transition-colors">On Discogs →</a>
@@ -45,19 +57,22 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
   ) : (
     <>
       {latest && (
-        <section>
-          <h2 class="text-zinc-500 text-sm">Latest</h2>
-          <a href={`${base}/${latest.instanceId}`} class="group flex items-center gap-4 mt-1">
-            <Cover record={latest} eager class="w-16 shrink-0 shadow-sm" />
+        <section class="mt-6">
+          <h2 class="text-zinc-500 text-sm mb-3">Latest</h2>
+          <a href={`${base}/${latest.instanceId}`} class="shelf-record group flex flex-col sm:flex-row sm:items-center gap-6 sm:gap-10">
+            <Cover record={latest} eager class="w-40 sm:w-48 shrink-0 mt-10 sm:mt-6" />
             <span class="min-w-0">
-              <span class="block text-2xl text-zinc-900 dark:text-zinc-200 group-hover:text-blue-violet-600 dark:group-hover:text-white transition-colors truncate">{latest.title}</span>
-              <span class="block text-zinc-500 text-sm truncate">{latest.artist} · added {addedOn(latest.added)}</span>
+              <span class="block text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-2">{latest.artist}</span>
+              <span class="block text-3xl sm:text-4xl font-bold leading-tight text-zinc-900 dark:text-white group-hover:text-blue-violet-600 dark:group-hover:text-blue-violet-400 transition-colors">{latest.title}</span>
+              <span class="block mt-2 text-zinc-500">
+                Added {addedOn(latest.added)}{latest.releasedYear && <> · released {latest.releasedYear}</>}{latest.genres.length > 0 && <> · {latest.genres.join(', ')}</>}
+              </span>
             </span>
           </a>
         </section>
       )}
 
-      <hr class="border-zinc-200 dark:border-zinc-800/80 my-6" />
+      <hr class="border-zinc-200 dark:border-zinc-800/80 my-8" />
 
       <section class="mb-2">
         <h2 class="text-zinc-500 text-sm">Added</h2>
@@ -73,7 +88,7 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
           <h2 class="text-zinc-500 text-sm">Released</h2>
           <div class="leading-8 text-base">
             {decades.map(([decade, n], i) => (
-              <span class="decade-block inline" data-decade-group={decade}><button type="button" data-decade={decade} class={`decade-btn ${btn}`}><span class={btnLabel}>{decade}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button><span class="decade-years hidden"><span class="text-zinc-500 dark:text-zinc-400 mr-1.5">:</span>{releasedYears(decade).map(([y, m], j, all) => (
+              <span class="decade-block inline"><button type="button" data-decade={decade} class={`decade-btn ${btn}`}><span class={btnLabel}>{decade}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button><span class="decade-years hidden"><span class="text-zinc-500 dark:text-zinc-400 mr-1.5">:</span>{releasedYears(decade).map(([y, m], j, all) => (
                 <span class="inline whitespace-nowrap"><button type="button" data-released={y} class={`released-btn ${btn}`}><span class={btnLabel}>{y}</span><span class="text-zinc-500 dark:text-zinc-400"> ({m})</span></button>{j < all.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
               ))}</span>{i < decades.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mx-1.5">·</span>}</span>
             ))}
@@ -94,7 +109,24 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
 
       <section>
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-          <h2 class="text-zinc-500 text-sm m-0 shrink-0">All records ({records.length})</h2>
+          <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+            <h2 class="text-zinc-500 text-sm m-0 shrink-0">All records ({records.length})</h2>
+            <div class="text-sm" role="group" aria-label="Sort records">
+              {sorts.map(([key, label], i) => (
+                <span><button type="button" data-sort={key} aria-pressed={key === 'new' ? 'true' : 'false'} class={`sort-btn ${btn} ${key === 'new' ? 'active-tag' : ''}`}><span class={btnLabel}>{label}</span></button>{i < sorts.length - 1 && <span class="text-zinc-400 dark:text-zinc-600 mx-1">·</span>}</span>
+              ))}
+            </div>
+            <div class="flex items-center gap-1" role="group" aria-label="View">
+              <button type="button" data-view="shelf" aria-pressed="true" title="Shelf" class={`view-btn ${viewBtn}`}>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1" /><rect x="13" y="4" width="7" height="7" rx="1" /><rect x="4" y="13" width="7" height="7" rx="1" /><rect x="13" y="13" width="7" height="7" rx="1" /></svg>
+                <span class="sr-only">Shelf view</span>
+              </button>
+              <button type="button" data-view="list" aria-pressed="false" title="List" class={`view-btn ${viewBtn}`}>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" /></svg>
+                <span class="sr-only">List view</span>
+              </button>
+            </div>
+          </div>
           <div class="relative w-full sm:w-64">
             <input type="search" id="record-search" placeholder="Search" aria-label="Search records"
               class="w-full bg-transparent border-b border-zinc-300 dark:border-zinc-700 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 transition-colors placeholder:text-zinc-400 dark:placeholder:text-zinc-600 [&::-webkit-search-cancel-button]:hidden" />
@@ -102,17 +134,37 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
           </div>
         </div>
 
-        <ul class="shelf mt-8" role="list">
+        <ul id="records-shelf" class="shelf mt-8" role="list">
           {records.map((r, i) => (
-            <li class="shelf-slot"
+            <li class="shelf-slot" data-record={r.instanceId}
+              data-added={r.added}
+              data-alpha={`${r.artist} ${r.title}`.toLowerCase()}
               data-year={r.added.slice(0, 4)}
               data-released={r.releasedYear ?? ''}
               data-genres={r.genres.map((g) => g.toLowerCase()).join('|')}
-              data-search={[r.artist, r.title, r.labels, r.year, ...r.genres, ...(r.styles ?? []), ...r.fields.map((f) => f.value)].join(' ').toLowerCase()}>
+              data-search={[r.artist, r.title, r.labels, r.year, r.releasedYear, ...r.genres, ...(r.styles ?? []), ...r.fields.map((f) => f.value)].join(' ').toLowerCase()}>
               <a href={`${base}/${r.instanceId}`} class="shelf-record block" title={`${r.artist} – ${r.title}`}>
                 <Cover record={r} eager={i < 12} />
                 <span class="sr-only">{r.artist} – {r.title}</span>
               </a>
+            </li>
+          ))}
+        </ul>
+
+        <!-- The same records listed like blog articles: date added · artist – title, genres on the right. -->
+        <ul id="records-list" class="hidden flex-col mt-2" role="list">
+          {records.map((r) => (
+            <li data-record={r.instanceId} class="flex items-center justify-between group py-2.5 gap-4 border-b border-zinc-100 dark:border-zinc-800/40 last:border-none">
+              <div class="flex items-center min-w-0 flex-grow pr-4">
+                <div class="hidden sm:flex items-center shrink-0">
+                  <time class="text-zinc-500 text-sm tabular-nums" datetime={r.added.slice(0, 10)}>{r.added.slice(0, 10)}</time>
+                  <span class="text-zinc-300 dark:text-zinc-700 mx-1.5">·</span>
+                </div>
+                <a href={`${base}/${r.instanceId}`} class="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white underline decoration-zinc-300 dark:decoration-zinc-700 hover:decoration-zinc-500 dark:hover:decoration-zinc-400 underline-offset-4 transition-colors text-base truncate block w-full">
+                  <span class="text-zinc-500 dark:text-zinc-400">{r.artist} –</span> {r.title}
+                </a>
+              </div>
+              <span class="hidden sm:block text-sm text-zinc-500 shrink-0 truncate max-w-[40%] text-right">{r.genres.map((g) => g.toLowerCase()).join(', ')}</span>
             </li>
           ))}
         </ul>
@@ -132,7 +184,7 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
         <h2 class="text-zinc-500 text-sm">Other shelves</h2>
         <p class="leading-8">
           {others.map((s, i) => (
-            <span class="whitespace-nowrap"><a href={`/${encodeURIComponent(s.discogs_username)}`} class="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white underline decoration-zinc-300 dark:decoration-zinc-700 hover:decoration-zinc-500 underline-offset-4 transition-colors">{s.name}</a><span class="text-zinc-500"> ({s.count})</span>{i < others.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
+            <span class="whitespace-nowrap"><a href={`/${encodeURIComponent(s.slug)}`} class="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white underline decoration-zinc-300 dark:decoration-zinc-700 hover:decoration-zinc-500 underline-offset-4 transition-colors">{s.name}</a><span class="text-zinc-500"> ({s.count})</span>{i < others.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
           ))}
         </p>
       </section>
@@ -145,14 +197,18 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
   const progress = document.getElementById('sync-progress');
   autoSync((message) => { if (progress) progress.textContent = message; });
 
-  const slots = [...document.querySelectorAll<HTMLElement>('.shelf-slot')];
+  const grid = document.getElementById('records-shelf');
+  const list = document.getElementById('records-list');
+  const slots = [...document.querySelectorAll<HTMLElement>('#records-shelf > [data-record]')];
+  const rows = new Map([...document.querySelectorAll<HTMLElement>('#records-list > [data-record]')].map((r) => [r.dataset.record!, r]));
   const search = document.getElementById('record-search') as HTMLInputElement | null;
-  const info = document.getElementById('filter-info')!;
-  const infoText = document.getElementById('filter-info-text')!;
+  const info = document.getElementById('filter-info');
+  const infoText = document.getElementById('filter-info-text');
   const years = new Set<string>();
   const genres = new Set<string>();
   const decades = new Set<string>();
   const released = new Set<string>();
+  const decadeOf = (y: string) => (y ? `${y.slice(0, 3)}0s` : '');
 
   function apply() {
     const words = (search?.value ?? '').toLowerCase().split(/\s+/).filter(Boolean);
@@ -161,30 +217,32 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
       const d = slot.dataset;
       const own = (d.genres ?? '').split('|');
       const rel = d.released ?? '';
-      const decade = rel ? `${rel.slice(0, 3)}0s` : '';
       // A decade with some years picked filters by those years; without, by the whole decade.
-      const pickedInDecade = [...released].some((y) => `${y.slice(0, 3)}0s` === decade);
+      const pickedInDecade = [...released].some((y) => decadeOf(y) === decadeOf(rel));
       const ok = (years.size === 0 || years.has(d.year!))
-        && (decades.size === 0 || (decades.has(decade) && (!pickedInDecade || released.has(rel))))
-        && [...genres].every((g) => own.includes(g))
+        && (decades.size === 0 || (decades.has(decadeOf(rel)) && (!pickedInDecade || released.has(rel))))
+        // Several genres: records in any of them.
+        && (genres.size === 0 || own.some((g) => genres.has(g)))
         && words.every((w) => d.search!.includes(w));
       slot.hidden = !ok;
+      const row = rows.get(d.record!);
+      if (row) row.hidden = !ok;
       if (ok) shown++;
     }
     const filtering = words.length > 0 || years.size > 0 || genres.size > 0 || decades.size > 0;
-    info.classList.toggle('hidden', !filtering);
-    info.classList.toggle('flex', filtering);
-    infoText.textContent = shown === 0 ? 'No matching records.' : `Showing ${shown} of ${slots.length}.`;
+    info?.classList.toggle('hidden', !filtering);
+    info?.classList.toggle('flex', filtering);
+    if (infoText) infoText.textContent = shown === 0 ? 'No matching records.' : `Showing ${shown} of ${slots.length}.`;
   }
 
   function toggle(set: Set<string>, attr: 'year' | 'genre' | 'decade' | 'released') {
     return (e: Event) => {
-      const btn = e.currentTarget as HTMLElement;
-      const value = btn.dataset[attr]!;
+      const button = e.currentTarget as HTMLElement;
+      const value = button.dataset[attr]!;
       set.has(value) ? set.delete(value) : set.add(value);
       if (attr === 'decade') {
-        btn.closest('.decade-block')!.querySelector('.decade-years')!.classList.toggle('hidden', !set.has(value));
-        if (!set.has(value)) [...released].filter((y) => `${y.slice(0, 3)}0s` === value).forEach((y) => {
+        button.closest('.decade-block')!.querySelector('.decade-years')!.classList.toggle('hidden', !set.has(value));
+        if (!set.has(value)) [...released].filter((y) => decadeOf(y) === value).forEach((y) => {
           released.delete(y);
           document.querySelector(`.released-btn[data-released="${y}"]`)?.classList.remove('active-tag');
         });
@@ -193,6 +251,35 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
       apply();
     };
   }
+
+  // Sorting reorders both views; A–Z is by artist, then title.
+  const compare: Record<string, (a: HTMLElement, b: HTMLElement) => number> = {
+    new: (a, b) => b.dataset.added!.localeCompare(a.dataset.added!),
+    old: (a, b) => a.dataset.added!.localeCompare(b.dataset.added!),
+    az: (a, b) => a.dataset.alpha!.localeCompare(b.dataset.alpha!),
+    za: (a, b) => b.dataset.alpha!.localeCompare(a.dataset.alpha!),
+  };
+  document.querySelectorAll<HTMLElement>('.sort-btn').forEach((b) => b.addEventListener('click', () => {
+    const order = [...slots].sort(compare[b.dataset.sort!]);
+    order.forEach((slot) => { grid?.appendChild(slot); const row = rows.get(slot.dataset.record!); if (row) list?.appendChild(row); });
+    document.querySelectorAll<HTMLElement>('.sort-btn').forEach((x) => {
+      x.classList.toggle('active-tag', x === b);
+      x.setAttribute('aria-pressed', String(x === b));
+    });
+  }));
+
+  // Shelf or list; the choice is remembered in this browser.
+  function setView(view: string) {
+    grid?.classList.toggle('hidden', view === 'list');
+    list?.classList.toggle('hidden', view !== 'list');
+    list?.classList.toggle('flex', view === 'list');
+    document.querySelectorAll<HTMLElement>('.view-btn').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.view === view)));
+  }
+  document.querySelectorAll<HTMLElement>('.view-btn').forEach((b) => b.addEventListener('click', () => {
+    setView(b.dataset.view!);
+    try { localStorage.setItem('records-view', b.dataset.view!); } catch {}
+  }));
+  try { if (localStorage.getItem('records-view') === 'list') setView('list'); } catch {}
 
   document.querySelectorAll('.year-btn').forEach((b) => b.addEventListener('click', toggle(years, 'year')));
   document.querySelectorAll('.genre-btn').forEach((b) => b.addEventListener('click', toggle(genres, 'genre')));
@@ -204,9 +291,9 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
     genres.clear();
     decades.clear();
     released.clear();
-    document.querySelectorAll('.decade-years').forEach((y) => y.classList.add('hidden'));
     if (search) search.value = '';
-    document.querySelectorAll('.active-tag').forEach((b) => b.classList.remove('active-tag'));
+    document.querySelectorAll('.decade-years').forEach((y) => y.classList.add('hidden'));
+    document.querySelectorAll('.year-btn, .genre-btn, .decade-btn, .released-btn').forEach((b) => b.classList.remove('active-tag'));
     apply();
   });
 </script>

@@ -7,7 +7,7 @@ import TelegramLogin from '../components/TelegramLogin.astro';
 import Cover from '../components/music/Cover.astro';
 import { createCleanSlug } from '../utils/helpers';
 import { safeReturnPath } from '../music/lib';
-import { adminShelfOwner, currentUser, shelfOwner, shelfRecord, shelfRecords } from '../music/store';
+import { adminShelfOwner, currentUser, shelfOwner, shelfRecord, shelfRecords, shelfSlug } from '../music/store';
 
 const returnTo = safeReturnPath(Astro.url.searchParams.get('return'), Astro.url.hostname);
 if (await currentUser(Astro.cookies)) return Astro.redirect(returnTo);
@@ -30,7 +30,7 @@ const fromRecord = recordOwner ? await shelfRecord(recordOwner.id, Number(instan
 const admin = await adminShelfOwner();
 const latest = admin ? await shelfRecords(admin.id) : [];
 const shelf = [...(fromRecord ? [fromRecord] : []), ...latest.filter((r) => r.instanceId !== fromRecord?.instanceId)].slice(0, 4);
-const shelfOwnerName = (fromRecord ? recordOwner! : admin)?.discogs_username;
+const shelfOwnerName = (fromRecord ? recordOwner : admin) ? shelfSlug((fromRecord ? recordOwner : admin)!) : null;
 const showShelf = shelf.length > 0 && !!shelfOwnerName;
 
 const about = fromRecord ? `${fromRecord.title} by ${fromRecord.artist}` : fromPost ? titleOf(fromPost.body) : null;

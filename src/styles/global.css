@@ -40,7 +40,7 @@
   --ledge-edge: #202024;
   --ledge-edge-2: #141417;
   --ledge-shadow: rgb(0 0 0 / 0.7);
-  --glow-strength: 80%;
+  --glow-strength: 62%;
 }
 
 .shelf {
@@ -101,29 +101,55 @@
   box-shadow: 0 0 0 1px rgb(255 255 255 / 0.05);
   transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.45s;
 }
-/* Pulled up out of the sleeve, as you would from a real shelf, with a glow in the vinyl's colour. */
-.shelf-record:hover .disc,
-.shelf-record:focus-visible .disc {
-  transform: translateY(-26%);
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08), 0 0 22px 3px color-mix(in srgb, var(--glow) var(--glow-strength), transparent);
+/* Light from inside the sleeve: it spills out of the opening, behind the record, in the vinyl's colour. */
+.sleeve::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  /* larger than the disc, so the light spills past its edge */
+  left: -30%;
+  right: -30%;
+  top: -70%;
+  height: 80%;
+  background: radial-gradient(ellipse 50% 85% at 50% 100%, color-mix(in srgb, var(--glow) var(--glow-strength), transparent) 38%, transparent 85%);
+  opacity: 0;
+  transition: opacity 0.45s;
+  pointer-events: none;
 }
+/* Pulled up out of the sleeve, as you would from a real shelf. */
+.shelf-record:hover .disc,
+.shelf-record:focus-visible .disc { transform: translateY(-26%); }
+.shelf-record:hover .sleeve::before,
+.shelf-record:focus-visible .sleeve::before { opacity: 1; }
 .shelf-record:hover .sleeve-face,
 .shelf-record:focus-visible .sleeve-face { transform: translateY(-3px); }
 .shelf-record:focus-visible { outline: 2px solid var(--color-blue-violet-500); outline-offset: 4px; }
 
-/* Record page: the vinyl rolls halfway out of the sleeve once, then rests there. */
+/* Record page: the vinyl rolls halfway out of the sleeve's open side, then rests there; the light comes from that side. */
 .sleeve-open .disc {
   transform: translateX(38%) rotate(300deg);
-  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08), 0 0 28px 4px color-mix(in srgb, var(--glow) var(--glow-strength), transparent);
   animation: roll-out 1.6s cubic-bezier(0.2, 0.7, 0.2, 1) 0.25s both;
 }
+.sleeve-open::before {
+  /* centred on the open edge and fully inside this box, so it fades out without hard edges */
+  left: 0;
+  right: -120%;
+  top: -40%;
+  height: 180%;
+  background: radial-gradient(ellipse 37% 40% at 45% 50%, color-mix(in srgb, var(--glow) var(--glow-strength), transparent) 42%, transparent 82%);
+  opacity: 1;
+  animation: light-in 1.6s ease-out 0.25s both;
+}
 @keyframes roll-out {
-  from { transform: translateX(0) rotate(0deg); box-shadow: 0 0 0 1px rgb(255 255 255 / 0.05); }
+  from { transform: translateX(0) rotate(0deg); }
+}
+@keyframes light-in {
+  from { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .disc, .sleeve-face { transition: none; }
-  .sleeve-open .disc { animation: none; }
+  .sleeve-open .disc, .sleeve-open::before { animation: none; }
 }
 
 /* Telegram's login button page says `color-scheme: light dark` (follows the OS). This site switches theme with a

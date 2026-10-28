@@ -6,9 +6,9 @@ import Cover from '../../../components/music/Cover.astro';
 import LoginButton from '../../../components/LoginButton.astro';
 import CommentThread from '../../../components/CommentThread.astro';
 import Listen from '../../../components/music/Listen.astro';
-import { displayDate, formatReleased, loginHref, musicPath, recordDefaults, recordValues, textToTracklist } from '../../../music/lib';
+import { displayDate, formatReleased, loginHref, musicPath, recordDefaults, recordValues, textToTracklist, withSideHeadings } from '../../../music/lib';
 import { cachedRelease } from '../../../music/discogs';
-import { addComment, canDeleteComment, currentUser, deleteComment, listComments, recordOverrides, shelfOwner, shelfRecord } from '../../../music/store';
+import { addComment, canDeleteComment, currentUser, deleteComment, listComments, recordOverrides, shelfOwner, shelfRecord, shelfSlug } from '../../../music/store';
 
 const instanceId = Number(Astro.params.record);
 const [user, owner] = await Promise.all([currentUser(Astro.cookies), shelfOwner(Astro.params.user!)]);
@@ -35,10 +35,10 @@ const [detail, comments, overrides] = owner && record
   ? await Promise.all([cachedRelease(record.releaseId), listComments(thread), recordOverrides(owner.id, instanceId)])
   : [null, [], {}];
 const v = record ? recordValues(recordDefaults(record, detail), overrides) : {};
-const tracks = record ? textToTracklist(v.tracklist) : [];
+const tracks = record ? withSideHeadings(textToTracklist(v.tracklist)) : [];
 const isOwner = !!user && user.id === owner?.id;
 
-const shelfPath = owner ? `/${encodeURIComponent(owner.discogs_username!)}` : '/';
+const shelfPath = owner ? `/${encodeURIComponent(shelfSlug(owner))}` : '/';
 
 const rows: [string, string | null | undefined][] = record ? [
   ['Artist', v.artist],
@@ -69,7 +69,9 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
       {isOwner && <p id="sync-progress" class="text-xs text-zinc-500 empty:hidden mt-2" role="status" aria-live="polite"></p>}
 
       <header class="mt-8 mb-12 border-b border-zinc-200 dark:border-zinc-800 pb-10 flex flex-col sm:flex-row sm:items-end gap-8 sm:gap-24">
-        <Cover record={record} eager class="sleeve-open w-48 sm:w-44 shrink-0" />
+        <button type="button" id="replay" class="shrink-0 self-start sm:self-auto cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-violet-500" aria-label="Pull the record out again" title="Pull the record out again">
+          <Cover record={record} eager class="sleeve-open w-48 sm:w-44" />
+        </button>
         <div class="min-w-0">
           <div class="flex items-center gap-4 mb-3">
             <div class="w-6 h-[2px] bg-blue-violet-500 shrink-0"></div>
@@ -103,7 +105,7 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
                 <span class="w-8 shrink-0 text-sm text-zinc-500 tabular-nums pt-0.5">{t.position}</span>
                 <span class="flex-grow min-w-0 text-zinc-800 dark:text-zinc-200">{t.title}</span>
                 {t.duration && <span class="text-sm text-zinc-500 tabular-nums pt-0.5">{t.duration}</span>}
-                <Listen query={`${v.artist} ${t.title}`} label={`Listen to ${t.title}`} />
+                <Listen query={`${v.artist} ${t.title}`} label={`Listen to ${t.title}`} links={t.links} />
               </li>
             ))}
           </ol>
@@ -133,4 +135,14 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
   import { autoSync } from '../../../music/sync';
   const progress = document.getElementById('sync-progress');
   if (progress) autoSync((message) => (progress.textContent = message));
+
+  // Clicking the cover tucks the record back in and rolls it out again.
+  const sleeve = document.querySelector<HTMLElement>('#replay .sleeve');
+  document.getElementById('replay')?.addEventListener('click', () => {
+    if (!sleeve) return;
+    // Restart the roll-out and the light (the ::before animation follows the class).
+    sleeve.classList.remove('sleeve-open');
+    void sleeve.offsetWidth;
+    sleeve.classList.add('sleeve-open');
+  });
 </script>

@@ -172,3 +172,26 @@ test('owner edits override Discogs key by key', async () => {
   assert.equal(shelfView(r, null, {}).releasedYear, null);
   assert.deepEqual(shelfView({ ...r, genres: ['Folk, World, & Country', 'Rock'] }, null, {}).genres, ['Folk, World, & Country', 'Rock']);
 });
+
+test('tracklist: per-track links, side headings, shelf names', async () => {
+  const { textToTracklist, tracklistToText, withSideHeadings, shelfName } = await import('../src/music/lib.ts');
+  const tracks = textToTracklist('A1 | Lazarus | 6:22 | https://open.spotify.com/track/1 https://music.apple.com/x/song/2 https://evil.example/3\nA2 | Dollar Days | https://music.youtube.com/watch?v=4');
+  assert.deepEqual(tracks[0].links, { spotify: 'https://open.spotify.com/track/1', apple: 'https://music.apple.com/x/song/2' });
+  assert.equal(tracks[0].duration, '6:22');
+  assert.deepEqual(tracks[1], { position: 'A2', title: 'Dollar Days', duration: '', heading: false, links: { youtube: 'https://music.youtube.com/watch?v=4' } });
+  assert.deepEqual(textToTracklist(tracklistToText(tracks)), tracks);
+
+  const t = (position) => ({ position, title: position, duration: '', heading: false });
+  const two = withSideHeadings([t('A1'), t('A2'), t('B1')]);
+  assert.deepEqual(two.map((x) => (x.heading ? `# ${x.title}` : x.position)), ['# Side A', '1', '2', '# Side B', '1']);
+  const four = withSideHeadings([t('A1'), t('B1'), t('C1'), t('D1')]);
+  assert.deepEqual(four.filter((x) => x.heading).map((x) => x.title), ['Disc 1 · Side A', 'Disc 1 · Side B', 'Disc 2 · Side C', 'Disc 2 · Side D']);
+  assert.deepEqual(withSideHeadings([t('1'), t('2')]).map((x) => x.position), ['1', '2']);
+  assert.equal(withSideHeadings([t('A1'), t('A2')]).length, 2);
+  const own = [{ position: '', title: 'Part one', duration: '', heading: true }, t('A1'), t('B1')];
+  assert.deepEqual(withSideHeadings(own), own);
+
+  assert.equal(shelfName(' Artur '), 'artur');
+  assert.equal(shelfName('a-r'), 'a-r');
+  for (const bad of ['a', '-ab', 'ab-', 'settings', 'Login', 'a b', 'ar.va', 'x'.repeat(31), '']) assert.equal(shelfName(bad), null, bad);
+});

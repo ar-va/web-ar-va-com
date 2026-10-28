@@ -23,8 +23,19 @@ const SCHEMA = [
 ];
 
 let ready: Promise<unknown> | null = null;
+// Columns added after the tables went live (CREATE TABLE IF NOT EXISTS doesn't add them to an existing table).
+const ADDED_COLUMNS = ['ALTER TABLE users ADD COLUMN shelf_name TEXT'];
+
+async function migrate() {
+  await env.DB.batch(SCHEMA.map((s) => env.DB.prepare(s)));
+  for (const sql of ADDED_COLUMNS) {
+    await env.DB.prepare(sql).run().catch((e) => { if (!/duplicate column/i.test(String(e))) throw e; });
+  }
+  await env.DB.prepare('CREATE UNIQUE INDEX IF NOT EXISTS users_shelf_name ON users (shelf_name)').run();
+}
+
 export async function db() {
-  ready ??= env.DB.batch(SCHEMA.map((s) => env.DB.prepare(s))).catch((e) => { ready = null; throw e; });
+  ready ??= migrate().catch((e) => { ready = null; throw e; });
   await ready;
   return env.DB;
 }
@@ -42,7 +53,12 @@ export interface User {
   synced_at: number | null;
   sync_error: string | null;
   created_at: number;
+  /** The owner's chosen shelf address (music.ar-va.com/<shelf_name>); the Discogs username always works too. */
+  shelf_name: string | null;
 }
+
+/** The address a shelf is linked under: the chosen name, else the Discogs username. */
+export const shelfSlug = (u: { shelf_name: string | null; discogs_username: string | null }) => u.shelf_name || u.discogs_username || '';
 
 export const isAdmin = (u: User | null) => !!u && !!env.ADMIN_TELEGRAM_ID && String(u.id) === env.ADMIN_TELEGRAM_ID;
 export const canCollect = (u: User | null) => !!u && (u.is_collector === 1 || isAdmin(u));
@@ -121,8 +137,20 @@ export async function removeShelf(userId: number, revoke: boolean) {
 
 const collectorSql = () => `(is_collector = 1 OR id = ${Number(env.ADMIN_TELEGRAM_ID) || 0})`;
 
-export async function shelfOwner(discogsUsername: string) {
-  return (await db()).prepare(`SELECT * FROM users WHERE discogs_username = ? AND ${collectorSql()}`).bind(discogsUsername).first<User>();
+/** The shelf at music.ar-va.com/<name>: by its chosen name or its Discogs username. */
+export async function shelfOwner(name: string) {
+  return (await db()).prepare(`SELECT * FROM users WHERE (shelf_name = lower(?1) OR discogs_username = ?1) AND discogs_username IS NOT NULL AND ${collectorSql()}`)
+    .bind(name).first<User>();
+}
+
+/** Sets (or clears, with null) the user's shelf address. Returns an error message or null. */
+export async function setShelfName(user: User, name: string | null) {
+  const d = await db();
+  if (name && await d.prepare('SELECT id FROM users WHERE id != ?2 AND (shelf_name = ?1 OR discogs_username = ?1)').bind(name, user.id).first()) {
+    return 'That address is already taken.';
+  }
+  await d.prepare('UPDATE users SET shelf_name = ? WHERE id = ?').bind(name, user.id).run();
+  return null;
 }
 
 export async function adminShelfOwner() {
@@ -131,10 +159,10 @@ export async function adminShelfOwner() {
 
 export async function listShelves() {
   const { results } = await (await db()).prepare(
-    `SELECT users.id, users.name, users.discogs_username, COUNT(records.instance_id) AS count FROM users
+    `SELECT users.id, users.name, users.discogs_username, users.shelf_name, COUNT(records.instance_id) AS count FROM users
      LEFT JOIN records ON records.user_id = users.id
      WHERE discogs_username IS NOT NULL AND ${collectorSql()} GROUP BY users.id ORDER BY users.name`,
-  ).all<{ id: number; name: string; discogs_username: string; count: number }>();
+  ).all<{ id: number; name: string; discogs_username: string; shelf_name: string | null; count: number }>();
   return results;
 }
 
