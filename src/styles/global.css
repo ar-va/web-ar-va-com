@@ -236,3 +236,22 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
   background: rgb(36 36 40 / 0.6);
   box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.6);
 }
+
+/* Theme switch: hovering (or keyboard focus) previews the other theme, whose icon comes alive: the sun turns and
+   swells in dark mode, the moon rocks in light mode. Reduced motion: it only brightens. */
+:root:not(.dark) #theme-toggle:is(:hover, :focus-visible) .tt-moon { color: var(--color-zinc-700); }
+.dark #theme-toggle:is(:hover, :focus-visible) .tt-sun { color: var(--color-zinc-100); }
+@media (prefers-reduced-motion: no-preference) {
+  :root:not(.dark) #theme-toggle:is(:hover, :focus-visible) .tt-moon { animation: tt-moon 1.4s ease-in-out infinite; }
+  .dark #theme-toggle:is(:hover, :focus-visible) .tt-sun { animation: tt-sun 2.4s ease-in-out infinite; }
+}
+@keyframes tt-sun {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(90deg) scale(1.25); }
+  100% { transform: rotate(180deg) scale(1); }
+}
+@keyframes tt-moon {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  30% { transform: rotate(-22deg) scale(1.15); }
+  65% { transform: rotate(12deg) scale(1.1); }
+}

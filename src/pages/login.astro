@@ -48,7 +48,6 @@ const perks = [
 
     <section class="md:col-start-1 md:row-start-1">
       <div class="flex items-center gap-4 mb-4">
-        <div class="w-6 h-[2px] bg-blue-violet-500"></div>
         <span class="text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400">Comments on ar-va.com</span>
       </div>
       <h1 class="text-5xl sm:text-6xl font-bold mb-5 tracking-tight text-zinc-900 dark:text-white leading-[1.05]">
@@ -103,7 +102,6 @@ const perks = [
     <section aria-label="What you can do after logging in" class:list={["md:col-start-1 md:row-start-2 grid grid-cols-1 gap-5 items-start", { "lg:grid-cols-2": showShelf }]}>
       <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-[#161616] p-6">
         <div class="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-3">
-          <div class="w-2 h-2 rounded-full bg-blue-violet-500"></div>
           {fromRecord ? 'On the shelf' : 'On the blog'}
         </div>
         {fromRecord ? (
@@ -124,7 +122,6 @@ const perks = [
         <div class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/60 dark:bg-[#161616] p-6 pb-7">
           <div class="flex items-center justify-between gap-3 mb-4">
             <div class="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400">
-              <div class="w-2 h-2 rounded-full bg-blue-violet-500"></div>
               And every record
             </div>
             <a href={`${musicOrigin}/${encodeURIComponent(shelfOwnerName)}`} class="text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4" aria-label="Open music.ar-va.com">→</a>

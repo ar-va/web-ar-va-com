@@ -105,7 +105,7 @@ const h2 = 'flex items-center gap-2 text-xs font-bold tracking-widest uppercase 
 
     {canCollect(user) ? (
       <section class={card} aria-labelledby="shelf-heading">
-        <h2 id="shelf-heading" class={h2}><span class="w-2 h-2 rounded-full bg-blue-violet-500"></span>Your shelf</h2>
+        <h2 id="shelf-heading" class={h2}>Your shelf</h2>
         {connected ? (
           <div class="flex flex-col gap-4">
             <p class="text-zinc-700 dark:text-zinc-300">
@@ -148,7 +148,7 @@ const h2 = 'flex items-center gap-2 text-xs font-bold tracking-widest uppercase 
 
     {isAdmin(user) && (
       <section class={card} aria-labelledby="collectors-heading">
-        <h2 id="collectors-heading" class={h2}><span class="w-2 h-2 rounded-full bg-blue-violet-500"></span>Collectors</h2>
+        <h2 id="collectors-heading" class={h2}>Collectors</h2>
         <ul class="flex flex-col mb-6">
           {collectors.map((c) => (
             <li class="flex items-center justify-between gap-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/40 last:border-none">
