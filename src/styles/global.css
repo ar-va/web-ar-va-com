@@ -283,11 +283,12 @@ html { scroll-padding-top: 5.5rem; }
    - grey "well" = something you can press or type in (filter toggle, Sort, view switch, search, theme switch
      track, an open filter group); hover a little darker;
    - violet "on" = it is on / selected (picked filters, the current view, an open menu or panel): opaque, so it
-     doesn't turn muddy over glass, and readable (about 6:1 light, 8:1 dark);
+     doesn't turn muddy over glass, and readable (about 6:1 light, 7:1 dark);
    - solid violet only for small signals (count badge, theme knob) and primary buttons.
    Toolbar controls are 2rem pills. */
 :root { --well: rgb(24 24 27 / 0.06); --well-hover: rgb(24 24 27 / 0.1); --on-bg: var(--color-blue-violet-100); --on-bg-hover: var(--color-blue-violet-200); --on-text: var(--color-blue-violet-700); }
-.dark { --well: rgb(255 255 255 / 0.08); --well-hover: rgb(255 255 255 / 0.13); --on-bg: var(--color-blue-violet-900); --on-bg-hover: var(--color-blue-violet-800); --on-text: var(--color-blue-violet-200); }
+/* Dark "on": a muted lavender (violet-400 mixed into the panel grey, opaque); violet-900 was too bold. */
+.dark { --well: rgb(255 255 255 / 0.08); --well-hover: rgb(255 255 255 / 0.13); --on-bg: color-mix(in srgb, var(--color-blue-violet-400) 22%, #242428); --on-bg-hover: color-mix(in srgb, var(--color-blue-violet-400) 30%, #242428); --on-text: var(--color-blue-violet-200); }
 .ctl {
   display: inline-flex; align-items: center; gap: 0.375rem; height: 2rem; padding: 0 0.875rem; border-radius: 9999px;
   font-size: 0.875rem; font-weight: 500; color: var(--color-zinc-700); background: var(--well);
