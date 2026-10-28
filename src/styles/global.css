@@ -225,16 +225,14 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
 @keyframes skeleton { from { background-position: 100% 0; } to { background-position: 0 0; } }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
 
-/* Frosted glass (header pill): a translucent tint over the blurred page, a hairline edge and a soft lift. */
+/* Frosted glass (header pills): a translucent tint over the blurred page and a soft lift; no outline. */
 .glass {
   background: rgb(255 255 255 / 0.62);
-  border: 1px solid rgb(24 24 27 / 0.07);
-  box-shadow: 0 8px 28px -12px rgb(0 0 0 / 0.18), inset 0 1px 0 rgb(255 255 255 / 0.5);
+  box-shadow: 0 8px 28px -12px rgb(0 0 0 / 0.18);
   -webkit-backdrop-filter: blur(18px) saturate(1.6);
   backdrop-filter: blur(18px) saturate(1.6);
 }
 .dark .glass {
-  background: rgb(30 30 34 / 0.55);
-  border-color: rgb(255 255 255 / 0.08);
-  box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.06);
+  background: rgb(36 36 40 / 0.6);
+  box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.6);
 }
