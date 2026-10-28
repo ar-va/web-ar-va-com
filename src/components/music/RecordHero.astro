@@ -18,9 +18,9 @@ interface Props {
 }
 const { record, artist, title, released, genres, trackCount, links, href } = Astro.props;
 // Discogs' added date is in the collector's local time: show that day, not the UTC one.
+const added = `Added on ${formatReleased(record.added.slice(0, 10))}`;
 const facts = [
-  `Added on ${formatReleased(record.added.slice(0, 10))}`,
-  released && `Released ${displayDate(released)}`,
+  released && `Released on ${displayDate(released)}`,
   genres.join(', '),
   trackCount > 0 && `${trackCount} track${trackCount === 1 ? '' : 's'}`,
 ].filter(Boolean);
@@ -37,14 +37,12 @@ const Heading = href ? 'h2' : 'h1';
     </button>
   )}
   <div class="min-w-0">
-    <div class="flex items-center gap-4 mb-3">
-      <div class="w-6 h-[2px] bg-blue-violet-500 shrink-0"></div>
-      <span class="text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400">{artist}</span>
-    </div>
+    <p class="text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-3">{artist}</p>
     <Heading class="text-3xl sm:text-4xl font-bold leading-tight text-zinc-900 dark:text-white">
       {href ? <a href={href} class="hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{title}</a> : title}
     </Heading>
-    <p class="mt-2 text-zinc-500">{facts.join(' · ')}</p>
+    <p class="mt-2 text-zinc-500">{added}</p>
+    {facts.length > 0 && <p class="text-zinc-500">{facts.join(' · ')}</p>}
     <div class="mt-4 flex items-center gap-3 text-sm text-zinc-500">
       <span>Listen</span>
       <Listen size="md" query={`${artist} ${title}`} label={`Listen to ${title}`} links={links} />

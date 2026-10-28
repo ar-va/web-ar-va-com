@@ -24,7 +24,13 @@ const SCHEMA = [
 
 let ready: Promise<unknown> | null = null;
 // Columns added after the tables went live (CREATE TABLE IF NOT EXISTS doesn't add them to an existing table).
-const ADDED_COLUMNS = ['ALTER TABLE users ADD COLUMN shelf_name TEXT'];
+const ADDED_COLUMNS = [
+  'ALTER TABLE users ADD COLUMN shelf_name TEXT',
+  'ALTER TABLE comments ADD COLUMN parent_id INTEGER',
+  'ALTER TABLE comments ADD COLUMN edited_at INTEGER',
+  'ALTER TABLE post_comments ADD COLUMN parent_id INTEGER',
+  'ALTER TABLE post_comments ADD COLUMN edited_at INTEGER',
+];
 
 async function migrate() {
   await env.DB.batch(SCHEMA.map((s) => env.DB.prepare(s)));
@@ -213,7 +219,10 @@ export async function shelfReleases(userId: number) {
 export const COMMENT_MAX = 2000;
 const COMMENTS_PER_10_MIN = 10;
 
-export interface Comment { id: number; body: string; created_at: number; author_id: number; name: string; username: string | null; photo_url: string | null }
+export interface Comment {
+  id: number; body: string; created_at: number; edited_at: number | null; parent_id: number | null;
+  author_id: number; name: string; username: string | null; photo_url: string | null;
+}
 
 /** A comment thread: a record on a shelf, or a blog post. */
 export type Thread = { shelfId: number; instanceId: number } | { slug: string };
@@ -225,26 +234,52 @@ const threadSql = (t: Thread) => 'slug' in t
 export async function listComments(t: Thread) {
   const { table, where, args } = threadSql(t);
   const { results } = await (await db()).prepare(
-    `SELECT c.id, body, c.created_at, author_id, users.name, users.username, users.photo_url FROM ${table} c
+    `SELECT c.id, body, c.created_at, c.edited_at, c.parent_id, author_id, users.name, users.username, users.photo_url FROM ${table} c
      JOIN users ON users.id = c.author_id WHERE ${where} ORDER BY c.id`,
   ).bind(...args).all<Comment>();
   return results;
 }
 
-/** Returns an error message, or null when the comment was saved. */
-export async function addComment(t: Thread, author: User, body: string) {
+/** Comment text as stored, or an error message. */
+function commentText(body: string) {
   const text = body.replace(/\r\n/g, '\n').trim();
-  if (!text) return 'Write something first.';
-  if (text.length > COMMENT_MAX) return `Comments can be up to ${COMMENT_MAX} characters.`;
+  if (!text) return { error: 'Write something first.' };
+  if (text.length > COMMENT_MAX) return { error: `Comments can be up to ${COMMENT_MAX} characters.` };
+  return { text };
+}
+
+/**
+ * Saves a comment (or a reply, with `parentId`). Replies stay one level deep: answering a reply attaches it to the
+ * same top comment, but `parentAuthorId` is the person actually answered (for the notification).
+ */
+export async function addComment(t: Thread, author: User, body: string, parentId: number | null = null):
+  Promise<{ error: string } | { id: number; parentAuthorId: number | null }> {
+  const checked = commentText(body);
+  if ('error' in checked) return checked;
   const d = await db();
   const recent = await d.prepare(
     `SELECT (SELECT COUNT(*) FROM comments WHERE author_id = ?1 AND created_at > ?2)
           + (SELECT COUNT(*) FROM post_comments WHERE author_id = ?1 AND created_at > ?2) AS n`,
   ).bind(author.id, now() - 600).first<number>('n');
-  if ((recent ?? 0) >= COMMENTS_PER_10_MIN) return 'That’s a lot of comments at once. Try again in a few minutes.';
-  const { table, cols, args } = threadSql(t);
-  await d.prepare(`INSERT INTO ${table} (${cols.join(', ')}, author_id, body, created_at) VALUES (${cols.map(() => '?').join(', ')}, ?, ?, ?)`)
-    .bind(...args, author.id, text, now()).run();
+  if ((recent ?? 0) >= COMMENTS_PER_10_MIN) return { error: 'That’s a lot of comments at once. Try again in a few minutes.' };
+  const { table, cols, where, args } = threadSql(t);
+  let parent: { id: number; parent_id: number | null; author_id: number } | null = null;
+  if (parentId) {
+    parent = await d.prepare(`SELECT id, parent_id, author_id FROM ${table} WHERE id = ? AND ${where}`).bind(parentId, ...args).first();
+    if (!parent) return { error: 'That comment isn’t here any more.' };
+  }
+  const res = await d.prepare(`INSERT INTO ${table} (${cols.join(', ')}, author_id, body, created_at, parent_id) VALUES (${cols.map(() => '?').join(', ')}, ?, ?, ?, ?)`)
+    .bind(...args, author.id, checked.text, now(), parent ? parent.parent_id ?? parent.id : null).run();
+  return { id: Number(res.meta.last_row_id), parentAuthorId: parent?.author_id ?? null };
+}
+
+/** The author edits their own comment. Returns an error message or null. */
+export async function editComment(t: Thread, commentId: number, user: User, body: string) {
+  const checked = commentText(body);
+  if ('error' in checked) return checked.error;
+  const { table, where, args } = threadSql(t);
+  await (await db()).prepare(`UPDATE ${table} SET body = ?, edited_at = ? WHERE id = ? AND author_id = ? AND ${where}`)
+    .bind(checked.text, now(), commentId, user.id, ...args).run();
   return null;
 }
 
@@ -252,8 +287,9 @@ export async function addComment(t: Thread, author: User, body: string) {
 export const canDeleteComment = (t: Thread, authorId: number, user: User | null) =>
   !!user && (user.id === authorId || isAdmin(user) || (!('slug' in t) && t.shelfId === user.id));
 
+/** Deleting a comment also deletes its replies. */
 export async function deleteComment(t: Thread, commentId: number, user: User) {
   const { table, where, args } = threadSql(t);
   const comment = await (await db()).prepare(`SELECT author_id FROM ${table} WHERE id = ? AND ${where}`).bind(commentId, ...args).first<{ author_id: number }>();
-  if (comment && canDeleteComment(t, comment.author_id, user)) await (await db()).prepare(`DELETE FROM ${table} WHERE id = ?`).bind(commentId).run();
+  if (comment && canDeleteComment(t, comment.author_id, user)) await (await db()).prepare(`DELETE FROM ${table} WHERE id = ?1 OR parent_id = ?1`).bind(commentId).run();
 }

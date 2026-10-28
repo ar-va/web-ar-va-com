@@ -6,9 +6,10 @@ import RecordHero from '../../../components/music/RecordHero.astro';
 import LoginButton from '../../../components/LoginButton.astro';
 import CommentThread from '../../../components/CommentThread.astro';
 import Listen from '../../../components/music/Listen.astro';
-import { displayDate, formatReleased, loginHref, musicPath, recordDefaults, recordValues, shelfView, textToTracklist, withSideHeadings } from '../../../music/lib';
+import { commentNotices, displayDate, formatReleased, loginHref, musicPath, recordDefaults, recordValues, shelfView, textToTracklist, withSideHeadings } from '../../../music/lib';
 import { cachedRelease } from '../../../music/discogs';
-import { addComment, canDeleteComment, currentUser, deleteComment, listComments, recordOverrides, shelfOwner, shelfRecord, shelfSlug } from '../../../music/store';
+import { addComment, canDeleteComment, currentUser, deleteComment, editComment, listComments, recordOverrides, shelfOwner, shelfRecord, shelfSlug } from '../../../music/store';
+import { notify } from '../../../music/notify';
 
 const instanceId = Number(Astro.params.record);
 const [user, owner] = await Promise.all([currentUser(Astro.cookies), shelfOwner(Astro.params.user!)]);
@@ -21,13 +22,29 @@ let draft = '';
 if (owner && record && Astro.request.method === 'POST') {
   if (!user) return Astro.redirect(loginHref(Astro.url), 303);
   const form = await Astro.request.formData();
-  if (form.get('action') === 'delete') {
-    await deleteComment(thread, Number(form.get('id')), user);
+  const action = form.get('action');
+  const id = Number(form.get('id'));
+  if (action === 'delete') {
+    await deleteComment(thread, id, user);
     return Astro.redirect(`${path}#comments`, 303);
   }
-  draft = String(form.get('body') ?? '');
-  error = await addComment(thread, user, draft);
-  if (!error) return Astro.redirect(`${path}#comments`, 303);
+  if (action === 'edit') {
+    error = await editComment(thread, id, user, String(form.get('body') ?? ''));
+    if (!error) return Astro.redirect(`${path}#comment-${id}`, 303);
+  } else {
+    draft = String(form.get('body') ?? '');
+    const saved = await addComment(thread, user, draft, Number(form.get('parent_id')) || null);
+    if ('error' in saved) {
+      error = saved.error;
+    } else {
+      const title = (await recordOverrides(owner.id, instanceId)).title ?? record.title;
+      Astro.locals.cfContext.waitUntil(notify(commentNotices({
+        authorId: user.id, authorName: user.name, ownerId: owner.id, parentAuthorId: saved.parentAuthorId,
+        title, body: draft.trim(), url: `${Astro.url.origin}${path}#comment-${saved.id}`,
+      })));
+      return Astro.redirect(`${path}#comment-${saved.id}`, 303);
+    }
+  }
 }
 
 if (!owner || !record) Astro.response.status = 404;

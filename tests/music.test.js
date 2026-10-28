@@ -198,3 +198,21 @@ test('tracklist: per-track links, side headings, shelf names', async () => {
   assert.equal(shelfName('a-r'), 'a-r');
   for (const bad of ['a', '-ab', 'ab-', 'settings', 'Login', 'a b', 'ar.va', 'x'.repeat(31), '']) assert.equal(shelfName(bad), null, bad);
 });
+
+test('comment links and notifications', async () => {
+  const { linkify, commentNotices } = await import('../src/music/lib.ts');
+  assert.deepEqual(linkify('see https://ar-va.com/blog/x, and http://a.b/c?d=1.'), [
+    { text: 'see ' }, { url: 'https://ar-va.com/blog/x' }, { text: ', and ' }, { url: 'http://a.b/c?d=1' }, { text: '.' }]);
+  assert.deepEqual(linkify('javascript:alert(1) no links'), [{ text: 'javascript:alert(1) no links' }]);
+
+  const base = { authorId: 1, authorName: 'Ann <b>', ownerId: 9, parentAuthorId: null, title: 'Blackstar & co', body: 'Nice <i>', url: 'https://music.ar-va.com/a/1#comment-5' };
+  const owner = commentNotices(base);
+  assert.equal(owner.length, 1);
+  assert.equal(owner[0].chatId, 9);
+  assert.match(owner[0].text, /^<b>Ann &lt;b&gt;<\/b> commented on <b>Blackstar &amp; co<\/b>:\n\nNice &lt;i&gt;\n\n<a href="https:\/\/music\.ar-va\.com\/a\/1#comment-5">/);
+  assert.deepEqual(commentNotices({ ...base, authorId: 9 }), []); // own shelf: nobody
+  const reply = commentNotices({ ...base, parentAuthorId: 4 });
+  assert.deepEqual(reply.map((n) => [n.chatId, n.text.includes('replied to your comment')]), [[4, true], [9, false]]);
+  assert.deepEqual(commentNotices({ ...base, parentAuthorId: 9 }).map((n) => n.chatId), [9]); // owner replied to: one message
+  assert.deepEqual(commentNotices({ ...base, ownerId: null }), []);
+});

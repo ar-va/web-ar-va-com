@@ -358,3 +358,33 @@ export function shelfView(r: ShelfRecord, d: ReleaseDetail | null, overrides: Ov
     links: { spotify: v.spotify, apple: v.apple, youtube: v.youtube },
   };
 }
+
+// ---- Comments: links and Telegram notifications ----
+
+/** Splits comment text into plain text and http(s) links, so links can be rendered clickable (text stays escaped). */
+export function linkify(text: string): ({ text: string } | { url: string })[] {
+  const parts: ({ text: string } | { url: string })[] = [];
+  let last = 0;
+  for (const m of text.matchAll(/https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]]/g)) {
+    if (m.index! > last) parts.push({ text: text.slice(last, m.index) });
+    parts.push({ url: m[0] });
+    last = m.index! + m[0].length;
+  }
+  if (last < text.length) parts.push({ text: text.slice(last) });
+  return parts;
+}
+
+const escapeHtml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+/**
+ * Telegram messages for a new comment: the person replied to hears "replied to your comment", the owner of the
+ * place (shelf owner, or the admin for the blog) hears "commented on". Nobody hears about their own comment.
+ */
+export function commentNotices(c: { authorId: number; authorName: string; ownerId: number | null; parentAuthorId: number | null; title: string; body: string; url: string }) {
+  const excerpt = c.body.length > 300 ? `${c.body.slice(0, 300)}…` : c.body;
+  const text = (verb: string) => `<b>${escapeHtml(c.authorName)}</b> ${verb} <b>${escapeHtml(c.title)}</b>:\n\n${escapeHtml(excerpt)}\n\n<a href="${escapeHtml(c.url)}">Open the comment</a>`;
+  const out: { chatId: number; text: string }[] = [];
+  if (c.parentAuthorId && c.parentAuthorId !== c.authorId) out.push({ chatId: c.parentAuthorId, text: text('replied to your comment on') });
+  if (c.ownerId && c.ownerId !== c.authorId && c.ownerId !== c.parentAuthorId) out.push({ chatId: c.ownerId, text: text(c.parentAuthorId ? 'replied to a comment on' : 'commented on') });
+  return out;
+}

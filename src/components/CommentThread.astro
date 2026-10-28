@@ -1,6 +1,7 @@
 ---
 // Comments list + form, shared by music record pages and blog posts. The "login" slot shows when logged out.
 import { COMMENT_MAX, type Comment, type User } from '../music/store';
+import CommentItem from './CommentItem.astro';
 
 interface Props {
   comments: Comment[];
@@ -12,34 +13,23 @@ interface Props {
   draft?: string;
 }
 const { comments, user, canDelete, action, hidden = {}, error = null, draft = '' } = Astro.props;
-const date = (d: Date) => d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+const top = comments.filter((c) => !c.parent_id);
+const replies = (id: number) => comments.filter((c) => c.parent_id === id);
 ---
 <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6">Comments{comments.length > 0 && <span class="text-zinc-500 font-normal"> ({comments.length})</span>}</h2>
 
-{comments.length > 0 && (
-  <ul class="flex flex-col gap-6 mb-10">
-    {comments.map((c) => (
-      <li class="flex gap-3">
-        {c.photo_url
-          ? <img src={c.photo_url} alt="" width="36" height="36" loading="lazy" referrerpolicy="no-referrer" class="w-9 h-9 rounded-full object-cover shrink-0" />
-          : <span class="w-9 h-9 rounded-full bg-blue-violet-500 text-white grid place-items-center shrink-0" aria-hidden="true">{c.name.charAt(0)}</span>}
-        <div class="min-w-0 flex-grow">
-          <div class="text-sm flex flex-wrap items-baseline gap-x-2">
-            {c.username
-              ? <a href={`https://t.me/${c.username}`} class="font-medium text-zinc-900 dark:text-white hover:text-blue-violet-500 transition-colors">{c.name}</a>
-              : <span class="font-medium text-zinc-900 dark:text-white">{c.name}</span>}
-            <time class="text-zinc-500" datetime={new Date(c.created_at * 1000).toISOString()}>{date(new Date(c.created_at * 1000))}</time>
-            {canDelete(c.author_id) && (
-              <form method="post" action={action} class="inline">
-                {Object.entries(hidden).map(([k, v]) => <input type="hidden" name={k} value={v} />)}
-                <input type="hidden" name="action" value="delete" />
-                <input type="hidden" name="id" value={c.id} />
-                <button class="text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" onclick="return confirm('Delete this comment?')">Delete</button>
-              </form>
-            )}
-          </div>
-          <p class="mt-1 text-zinc-700 dark:text-zinc-300 whitespace-pre-line break-words">{c.body}</p>
-        </div>
+{top.length > 0 && (
+  <ul class="flex flex-col gap-7 mb-10">
+    {top.map((c) => (
+      <li>
+        <CommentItem comment={c} user={user} canDelete={canDelete(c.author_id)} action={action} hidden={hidden} />
+        {replies(c.id).length > 0 && (
+          <ul class="mt-4 ml-12 flex flex-col gap-4 border-l border-zinc-200 dark:border-zinc-800 pl-4">
+            {replies(c.id).map((r) => (
+              <li><CommentItem comment={r} user={user} canDelete={canDelete(r.author_id)} action={action} hidden={hidden} small /></li>
+            ))}
+          </ul>
+        )}
       </li>
     ))}
   </ul>
