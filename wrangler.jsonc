@@ -14,8 +14,9 @@
     { "pattern": "ar-va.com", "custom_domain": true },
     { "pattern": "music.ar-va.com", "custom_domain": true }
   ],
-  // No database_id: Wrangler creates the database on the first deploy.
-  "d1_databases": [{ "binding": "DB", "database_name": "ar-va-music" }],
+  // In eastern North America (moved 2026-10-28 from "ar-va-music", which Cloudflare had placed in Singapore:
+  // ~0.3 s per query from here). The old database stays as a backup.
+  "d1_databases": [{ "binding": "DB", "database_name": "ar-va-music-na", "database_id": "96eed6b4-2463-4d7b-835a-63f90db32ad8" }],
   // No cron: the server can't reach Discogs (shared Cloudflare address over its limit); collectors' browsers sync.
   "triggers": { "crons": [] },
   "vars": {
