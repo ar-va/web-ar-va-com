@@ -1,5 +1,6 @@
 // D1: users, sessions, invites, synced records, cached release details, comments.
 import { env } from 'cloudflare:workers';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import type { AstroCookies } from 'astro';
 import { randomToken, sha256, shelfView, siteDomain, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
 
@@ -32,8 +33,17 @@ let ready: Promise<unknown> | null = null;
 export async function db() {
   ready ??= env.DB.batch(SCHEMA.map((s) => env.DB.prepare(s))).catch((e) => { ready = null; throw e; });
   await ready;
-  return env.DB;
+  const request = dbRequest.getStore();
+  if (!request) return env.DB;
+  return (request.session ??= env.DB.withSession(request.bookmark ?? 'first-unconstrained'));
 }
+
+/**
+ * One D1 session per request (set up in src/worker.ts). Read replication is on: a session reads from the nearest
+ * copy (visitors in Europe aren't sent to North America), writes go to the primary, and a visitor who has just
+ * written something carries its bookmark, so their next page waits for a copy that already has it.
+ */
+export const dbRequest = new AsyncLocalStorage<{ bookmark: string | null; session?: D1DatabaseSession }>();
 
 const now = () => Math.floor(Date.now() / 1000);
 
