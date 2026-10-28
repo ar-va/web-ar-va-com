@@ -7,6 +7,7 @@ const { record, eager = false, class: className = '' } = Astro.props;
 ---
 <div class={`sleeve relative aspect-square ${className}`} style={record.vinyl ? `--vinyl: ${record.vinyl}` : undefined}>
   <span class="disc" aria-hidden="true"></span>
+  <span class="glare" aria-hidden="true"></span>
   {record.cover ? (
     <img src={record.cover} alt="" width="600" height="600" loading={eager ? 'eager' : 'lazy'} decoding="async"
       referrerpolicy="no-referrer" class="sleeve-face relative w-full h-full object-cover" />
