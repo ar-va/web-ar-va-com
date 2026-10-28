@@ -113,11 +113,11 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
   <!-- All Writing Section -->
   <section id="all-writing">
     <!-- Stays under the header (frosted) while scrolling through the posts; lets go where the section ends. -->
-    <div class="glass-under sticky top-16 z-40 rounded-3xl sm:rounded-full flex flex-wrap items-center justify-between gap-2 sm:gap-4 p-1.5 pl-4">
-      <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+    <div class="glass-under sticky top-16 z-40 rounded-3xl sm:rounded-full flex flex-wrap items-center justify-between gap-2 sm:gap-4 p-1.5">
+      <div class="flex flex-wrap items-center gap-2">
         <h2 class="m-0 shrink-0">
           <button type="button" id="filters-toggle" aria-expanded="false" aria-controls="filters-panel" title="Filter by date and topic"
-            class="group inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white aria-expanded:text-zinc-900 dark:aria-expanded:text-white transition-colors">
+            class="ctl group pl-2.5">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></svg>
             All writing
             <span id="filters-count" hidden class="min-w-5 h-5 px-1.5 rounded-full bg-blue-violet-500 text-white text-[11px] font-semibold leading-5 text-center"></span>
@@ -132,7 +132,7 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
           type="text" 
           id="search-input" 
           placeholder="Search" 
-          class="w-full h-8 rounded-full bg-zinc-900/5 dark:bg-white/10 pl-3.5 pr-9 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-violet-500/60 transition-shadow placeholder:text-zinc-500"
+          class="w-full h-8 rounded-full bg-(--well) pl-3.5 pr-9 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-violet-500/60 transition-shadow placeholder:text-zinc-500"
           aria-label="Search writing"
         />
         <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -142,7 +142,7 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
 
       <!-- Filters drop down from "All writing" (and travel with the bar); several can be picked before closing. -->
       <div id="filters-panel" hidden class="glass absolute left-0 right-0 top-full mt-2 rounded-3xl px-5 py-4 max-h-[70vh] overflow-y-auto space-y-1">
-        <button type="button" data-filters-reset disabled title="Clear the filters (search stays)"
+        <button type="button" data-filters-reset disabled title="Clear the filters and the search"
           class="absolute right-4 top-3.5 inline-flex items-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-colors">
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>
           Reset
@@ -219,7 +219,7 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
     
     <div id="filter-info-container" class="hidden mt-4 text-sm text-zinc-500 items-baseline">
       <span id="filter-info-text"></span>
-      <button id="clear-all-btn" class="ml-1 text-blue-violet-600 dark:text-blue-violet-400 hover:text-zinc-900 dark:hover:text-white transition-colors underline decoration-blue-violet-500/50 hover:decoration-blue-violet-500 underline-offset-4">Clear all</button>
+      <button id="clear-all-btn" class="ml-1 text-blue-violet-600 dark:text-blue-violet-400 hover:text-zinc-900 dark:hover:text-white transition-colors underline decoration-blue-violet-500/50 hover:decoration-blue-violet-500 underline-offset-4">Reset</button>
     </div>
     
     <p id="no-results-message" class="text-zinc-500 text-sm hidden mt-4">No matching posts found.</p>
@@ -427,14 +427,8 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
         filterPosts();
       });
     }
-    // The panel's Reset: the filters only, the search stays.
-    document.querySelector('[data-filters-reset]')?.addEventListener('click', () => {
-      activeTags.clear();
-      activeYears.clear();
-      activeMonths.clear();
-      syncStyles();
-      filterPosts();
-    });
+    // The panel's Reset does the same as the one under the list.
+    document.querySelector('[data-filters-reset]')?.addEventListener('click', () => clearAllBtn?.click());
 
     allTagBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {

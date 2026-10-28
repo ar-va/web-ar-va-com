@@ -279,10 +279,28 @@ html { scroll-padding-top: 5.5rem; }
 #filters-panel { background: rgb(255 255 255 / 0.9); }
 .dark #filters-panel { background: rgb(30 30 34 / 0.9); }
 
-/* Filters panel: an open decade (shelf) or year (blog) and its years / months share one grey pill, the theme
-   switch's track colour; every picked filter is a pill like the Sort button. All of them 2rem tall, like Sort and
-   the search field. The group is a wrapping inline-flex so pills inside can be full height (an inline background
-   only covers the text). */
+/* Controls follow one rule everywhere (2026-10-28):
+   - grey "well" = something you can press or type in (filter toggle, Sort, view switch, search, theme switch
+     track, an open filter group); hover a little darker;
+   - violet "on" = it is on / selected (picked filters, the current view, an open menu or panel): opaque, so it
+     doesn't turn muddy over glass, and readable (about 6:1 light, 8:1 dark);
+   - solid violet only for small signals (count badge, theme knob) and primary buttons.
+   Toolbar controls are 2rem pills. */
+:root { --well: rgb(24 24 27 / 0.06); --well-hover: rgb(24 24 27 / 0.1); --on-bg: var(--color-blue-violet-100); --on-bg-hover: var(--color-blue-violet-200); --on-text: var(--color-blue-violet-700); }
+.dark { --well: rgb(255 255 255 / 0.08); --well-hover: rgb(255 255 255 / 0.13); --on-bg: var(--color-blue-violet-900); --on-bg-hover: var(--color-blue-violet-800); --on-text: var(--color-blue-violet-200); }
+.ctl {
+  display: inline-flex; align-items: center; gap: 0.375rem; height: 2rem; padding: 0 0.875rem; border-radius: 9999px;
+  font-size: 0.875rem; font-weight: 500; color: var(--color-zinc-700); background: var(--well);
+  transition: background-color 0.15s, color 0.15s;
+}
+.dark .ctl { color: var(--color-zinc-200); }
+.ctl:hover { background: var(--well-hover); }
+.ctl[aria-expanded="true"], .ctl[aria-pressed="true"] { background: var(--on-bg); color: var(--on-text); }
+.ctl[aria-expanded="true"]:hover, .ctl[aria-pressed="true"]:hover { background: var(--on-bg-hover); }
+
+/* Filters panel: an open decade (shelf) or year (blog) and its years / months share one well-grey pill; picked
+   filters are "on" pills. All 2rem tall; the group is a wrapping inline-flex so pills inside can be full height
+   (an inline background only covers the text), aligned by baseline so the words sit on the plain filters' line. */
 .filter-group.open {
   display: inline-flex;
   flex-wrap: wrap;
@@ -290,11 +308,11 @@ html { scroll-padding-top: 5.5rem; }
   min-height: 2rem;
   padding-right: 12px;
   border-radius: 1rem;
-  vertical-align: baseline; /* the words line up with the plain filters beside it */
-  background: rgb(24 24 27 / 0.06);
+  vertical-align: baseline;
+  background: var(--well);
 }
-.dark .filter-group.open { background: rgb(255 255 255 / 0.1); }
-/* Its years / months row too: a text line around a centred 2rem pill would come out ~2px taller. */
+/* Ends with its last picked pill when that is the last item. */
+.filter-group.open:has(> span > span:last-child > .active-tag) { padding-right: 0; }
 .filter-group.open > span, .filter-group.open > span > span { display: inline-flex; flex-wrap: wrap; align-items: center; }
 #filters-panel .active-tag {
   display: inline-flex;
@@ -302,12 +320,9 @@ html { scroll-padding-top: 5.5rem; }
   height: 2rem;
   padding: 0 12px;
   border-radius: 9999px;
-  vertical-align: baseline; /* the words line up with the plain filters beside it */
-  background: var(--color-blue-violet-50);
+  vertical-align: baseline;
+  background: var(--on-bg);
 }
-#filters-panel .active-tag:hover { background: var(--color-blue-violet-100); }
-.dark #filters-panel .active-tag { background: color-mix(in srgb, var(--color-blue-violet-500) 15%, transparent); }
-.dark #filters-panel .active-tag:hover { background: color-mix(in srgb, var(--color-blue-violet-500) 25%, transparent); }
-#filters-panel .active-tag span { color: var(--color-blue-violet-600); text-decoration-line: none; white-space: pre; }
-.dark #filters-panel .active-tag span { color: var(--color-blue-violet-400); }
+#filters-panel .active-tag:hover { background: var(--on-bg-hover); }
+#filters-panel .active-tag span { color: var(--on-text); text-decoration-line: none; white-space: pre; }
 #filters-panel .active-tag span + span { opacity: 0.7; }

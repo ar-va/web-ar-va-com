@@ -31,7 +31,8 @@ const others = shelves.filter((s) => s.slug !== owner.slug);
 // Filter buttons: the exact classes Writing.astro uses for tags and years.
 const btn = 'group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white';
 const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors';
-const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:text-white aria-pressed:text-blue-violet-600 dark:aria-pressed:text-blue-violet-400 aria-pressed:bg-blue-violet-50 dark:aria-pressed:bg-blue-violet-500/15 transition-colors';
+// The view switch is a segmented control like the theme switch: a well with the current view "on".
+const viewBtn = 'h-6 w-8 inline-flex items-center justify-center rounded-full text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white aria-pressed:bg-(--on-bg) aria-pressed:text-(--on-text) transition-colors';
 ---
 
 <div id="shelf" class="font-normal">
@@ -72,11 +73,11 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
 
       <section id="all-records">
         <!-- Stays under the header (frosted) while scrolling through the records; lets go where the section ends. -->
-        <div class="glass-under sticky top-16 z-40 rounded-3xl sm:rounded-full flex flex-wrap items-center justify-between gap-2 sm:gap-4 p-1.5 pl-4">
-          <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+        <div class="glass-under sticky top-16 z-40 rounded-3xl sm:rounded-full flex flex-wrap items-center justify-between gap-2 sm:gap-4 p-1.5">
+          <div class="flex flex-wrap items-center gap-2">
             <h2 class="m-0 shrink-0">
               <button type="button" id="filters-toggle" aria-expanded="false" aria-controls="filters-panel" title="Filter by added, released and genre"
-                class="group inline-flex items-center gap-1.5 text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white aria-expanded:text-zinc-900 dark:aria-expanded:text-white transition-colors">
+                class="ctl group pl-2.5">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></svg>
                 All records ({records.length})
                 <span id="filters-count" hidden class="min-w-5 h-5 px-1.5 rounded-full bg-blue-violet-500 text-white text-[11px] font-semibold leading-5 text-center"></span>
@@ -84,7 +85,7 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
               </button>
             </h2>
             <SortMenu id="records-sort" />
-            <div class="flex items-center gap-1" role="group" aria-label="View">
+            <div class="inline-flex items-center h-8 p-1 gap-0.5 rounded-full bg-(--well)" role="group" aria-label="View">
               <button type="button" data-view="shelf" aria-pressed="true" title="Shelf" class={`view-btn ${viewBtn}`}>
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1" /><rect x="13" y="4" width="7" height="7" rx="1" /><rect x="4" y="13" width="7" height="7" rx="1" /><rect x="13" y="13" width="7" height="7" rx="1" /></svg>
                 <span class="sr-only">Shelf view</span>
@@ -97,13 +98,13 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
           </div>
           <div class="relative flex-1 min-w-32 sm:flex-none sm:w-64">
             <input type="search" id="record-search" placeholder="Search" aria-label="Search records"
-              class="w-full h-8 rounded-full bg-zinc-900/5 dark:bg-white/10 pl-3.5 pr-9 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-violet-500/60 transition-shadow placeholder:text-zinc-500 [&::-webkit-search-cancel-button]:hidden" />
+              class="w-full h-8 rounded-full bg-(--well) pl-3.5 pr-9 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-violet-500/60 transition-shadow placeholder:text-zinc-500 [&::-webkit-search-cancel-button]:hidden" />
             <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           </div>
 
           <!-- Filters drop down from "All records" (and travel with the bar); several can be picked before closing. -->
           <div id="filters-panel" hidden class="glass absolute left-0 right-0 top-full mt-2 rounded-3xl px-5 py-4 max-h-[70vh] overflow-y-auto space-y-1">
-            <button type="button" data-filters-reset disabled title="Clear the filters (search stays)"
+            <button type="button" data-filters-reset disabled title="Clear the filters and the search"
               class="absolute right-4 top-3.5 inline-flex items-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-colors">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>
               Reset
@@ -178,7 +179,7 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
 
         <div id="filter-info" class="hidden mt-6 text-sm text-zinc-500 items-baseline">
           <span id="filter-info-text"></span>
-          <button type="button" id="clear-filters" class="ml-1 text-blue-violet-600 dark:text-blue-violet-400 hover:text-zinc-900 dark:hover:text-white transition-colors underline decoration-blue-violet-500/50 hover:decoration-blue-violet-500 underline-offset-4">Clear all</button>
+          <button type="button" id="clear-filters" class="ml-1 text-blue-violet-600 dark:text-blue-violet-400 hover:text-zinc-900 dark:hover:text-white transition-colors underline decoration-blue-violet-500/50 hover:decoration-blue-violet-500 underline-offset-4">Reset</button>
         </div>
 
         <a href={`https://www.discogs.com/user/${encodeURIComponent(owner.discogs_username)}/collection`} class="mt-10 inline-block text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 -mx-4 px-4 py-2 rounded-full transition-colors">View Discogs catalogue →</a>
@@ -339,18 +340,17 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
   document.querySelectorAll('.decade-btn').forEach((b) => b.addEventListener('click', toggle(decades, 'decade')));
   document.querySelectorAll('.released-btn').forEach((b) => b.addEventListener('click', toggle(released, 'released')));
   search?.addEventListener('input', apply);
-  // "Clear all" under the records also empties the search; the panel's Reset only the filters.
-  const reset = (clearSearch: boolean) => {
+  // Reset (in the panel and under the records): the filters and the search.
+  const reset = () => {
     years.clear();
     genres.clear();
     decades.clear();
     released.clear();
-    if (search && clearSearch) search.value = '';
+    if (search) search.value = '';
     document.querySelectorAll('.decade-years').forEach((y) => y.classList.add('hidden'));
     document.querySelectorAll('.filter-group').forEach((g) => g.classList.remove('open'));
     document.querySelectorAll('.year-btn, .genre-btn, .decade-btn, .released-btn').forEach((b) => b.classList.remove('active-tag'));
     apply();
   };
-  document.getElementById('clear-filters')?.addEventListener('click', () => reset(true));
-  document.querySelector('[data-filters-reset]')?.addEventListener('click', () => reset(false));
+  document.querySelectorAll('#clear-filters, [data-filters-reset]').forEach((b) => b.addEventListener('click', reset));
 </script>
