@@ -7,10 +7,10 @@ const main = onMusic ? 'https://ar-va.com' : '';
 const link = 'text-zinc-500 hover:text-blue-violet-500 transition-colors dark:text-zinc-400 dark:hover:text-blue-violet-400';
 ---
 
-<!-- Two floating frosted-glass pills, centred and only as wide as their contents: the menu, then account + theme. -->
+<!-- Three floating frosted-glass pills, centred and only as wide as their contents: logo, menu, account + theme. -->
 <nav id="site-header" class="sticky top-3 z-50 mt-3 px-3 sm:px-4 flex justify-center items-center gap-2">
-  <div class="glass h-11 rounded-full flex items-center gap-4 sm:gap-8 px-4 sm:px-6">
-    <a href={`${main}/`} class="font-bold text-xl tracking-tight text-zinc-900 dark:text-white">ARVA</a>
+  <a href={`${main}/`} class="glass h-11 rounded-full flex items-center px-4 sm:px-5 font-bold text-xl tracking-tight text-zinc-900 dark:text-white">ARVA</a>
+  <div class="glass h-11 rounded-full flex items-center px-4 sm:px-6">
     <div class="flex items-center gap-4 sm:gap-6 text-sm font-medium">
       <a href={`${main}/`} class={`${link} hidden sm:inline`}>Home</a>
       <a href={`${main}/blog`} class={link}>Blog</a>
