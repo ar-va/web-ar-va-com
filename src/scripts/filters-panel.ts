@@ -17,8 +17,9 @@ export function filtersPanel(toggleId = 'filters-toggle', panelId = 'filters-pan
   });
 }
 
-/** The number of picked filters next to the toolbar's title, so it shows while the panel is closed. */
+/** The number of picked filters next to the toolbar's title (shows while the panel is closed); Reset is off at 0. */
 export function filtersCount(n: number, badgeId = 'filters-count') {
   const badge = document.getElementById(badgeId);
   if (badge) { badge.textContent = String(n); badge.hidden = n === 0; }
+  document.querySelectorAll<HTMLButtonElement>('[data-filters-reset]').forEach((b) => { b.disabled = n === 0; });
 }

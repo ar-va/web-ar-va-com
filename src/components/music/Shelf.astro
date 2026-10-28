@@ -103,6 +103,11 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
 
           <!-- Filters drop down from "All records" (and travel with the bar); several can be picked before closing. -->
           <div id="filters-panel" hidden class="glass absolute left-0 right-0 top-full mt-2 rounded-3xl px-5 py-4 max-h-[70vh] overflow-y-auto space-y-1">
+            <button type="button" data-filters-reset disabled title="Clear the filters (search stays)"
+              class="absolute right-4 top-3.5 inline-flex items-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-colors">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>
+              Reset
+            </button>
             <section class="mb-2">
               <h2 class="text-zinc-500 text-sm">Added</h2>
               <div class="leading-8 text-base">
@@ -334,15 +339,18 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
   document.querySelectorAll('.decade-btn').forEach((b) => b.addEventListener('click', toggle(decades, 'decade')));
   document.querySelectorAll('.released-btn').forEach((b) => b.addEventListener('click', toggle(released, 'released')));
   search?.addEventListener('input', apply);
-  document.getElementById('clear-filters')?.addEventListener('click', () => {
+  // "Clear all" under the records also empties the search; the panel's Reset only the filters.
+  const reset = (clearSearch: boolean) => {
     years.clear();
     genres.clear();
     decades.clear();
     released.clear();
-    if (search) search.value = '';
+    if (search && clearSearch) search.value = '';
     document.querySelectorAll('.decade-years').forEach((y) => y.classList.add('hidden'));
     document.querySelectorAll('.filter-group').forEach((g) => g.classList.remove('open'));
     document.querySelectorAll('.year-btn, .genre-btn, .decade-btn, .released-btn').forEach((b) => b.classList.remove('active-tag'));
     apply();
-  });
+  };
+  document.getElementById('clear-filters')?.addEventListener('click', () => reset(true));
+  document.querySelector('[data-filters-reset]')?.addEventListener('click', () => reset(false));
 </script>

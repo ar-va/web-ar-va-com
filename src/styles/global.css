@@ -279,22 +279,23 @@ html { scroll-padding-top: 5.5rem; }
 #filters-panel { background: rgb(255 255 255 / 0.9); }
 .dark #filters-panel { background: rgb(30 30 34 / 0.9); }
 
-/* An open decade (shelf) or year (blog) and its years / months share one tinted pill; the open one and any
-   picked year or month inside sit on a stronger pill of their own (in place of the underline). */
+/* Filters panel: an open decade (shelf) or year (blog) and its years / months share one grey pill, the theme
+   switch's track colour; every picked filter in the panel is a solid purple pill (in place of the underline). */
 .filter-group.open {
-  background: color-mix(in srgb, var(--color-blue-violet-500) 10%, transparent);
+  background: rgb(24 24 27 / 0.06);
   border-radius: 9999px;
   padding: 3px 10px 3px 2px;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
-.filter-group.open .active-tag {
-  background: color-mix(in srgb, var(--color-blue-violet-500) 20%, transparent);
+.dark .filter-group.open { background: rgb(255 255 255 / 0.1); }
+#filters-panel .active-tag {
+  background: var(--color-blue-violet-500);
   border-radius: 9999px;
   padding: 1px 9px;
   /* The buttons are as tall as the 2rem line; the group's inline background only wraps the text: match them. */
   line-height: 1.5;
 }
-.filter-group.open .active-tag span { text-decoration-line: none; }
-.dark .filter-group.open { background: color-mix(in srgb, var(--color-blue-violet-400) 13%, transparent); }
-.dark .filter-group.open .active-tag { background: color-mix(in srgb, var(--color-blue-violet-400) 24%, transparent); }
+#filters-panel .active-tag:hover { background: var(--color-blue-violet-600); }
+#filters-panel .active-tag span { color: #fff; text-decoration-line: none; }
+#filters-panel .active-tag span + span { color: rgb(255 255 255 / 0.75); }

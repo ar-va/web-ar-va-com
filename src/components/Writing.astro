@@ -142,6 +142,11 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
 
       <!-- Filters drop down from "All writing" (and travel with the bar); several can be picked before closing. -->
       <div id="filters-panel" hidden class="glass absolute left-0 right-0 top-full mt-2 rounded-3xl px-5 py-4 max-h-[70vh] overflow-y-auto space-y-1">
+        <button type="button" data-filters-reset disabled title="Clear the filters (search stays)"
+          class="absolute right-4 top-3.5 inline-flex items-center gap-1 text-xs font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-colors">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>
+          Reset
+        </button>
         <!-- Publishing Date Filters -->
         <section class="mb-2">
           <h2 class="text-zinc-500 dark:text-zinc-500 text-sm">Date published</h2>
@@ -422,6 +427,14 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
         filterPosts();
       });
     }
+    // The panel's Reset: the filters only, the search stays.
+    document.querySelector('[data-filters-reset]')?.addEventListener('click', () => {
+      activeTags.clear();
+      activeYears.clear();
+      activeMonths.clear();
+      syncStyles();
+      filterPosts();
+    });
 
     allTagBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
