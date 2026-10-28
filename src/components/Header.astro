@@ -7,8 +7,9 @@ const main = onMusic ? 'https://ar-va.com' : '';
 const link = 'text-zinc-500 hover:text-blue-violet-500 transition-colors dark:text-zinc-400 dark:hover:text-blue-violet-400';
 ---
 
-<nav id="site-header" class="sticky top-0 z-50 w-full bg-transparent transition-all duration-300">
-  <div class="max-w-6xl mx-auto px-6 w-full flex justify-between items-center py-2">
+<!-- A floating frosted-glass pill: the page shows through, blurred, as it scrolls under it. -->
+<nav id="site-header" class="sticky top-3 z-50 mt-3 px-3 sm:px-4">
+  <div class="glass max-w-6xl mx-auto rounded-full flex justify-between items-center gap-3 pl-5 sm:pl-6 pr-1.5 py-1.5">
     <a href={`${main}/`} class="font-bold text-xl tracking-tight text-zinc-900 dark:text-white">
       ARVA<span class="text-blue-violet-500">.</span>
     </a>
@@ -17,7 +18,7 @@ const link = 'text-zinc-500 hover:text-blue-violet-500 transition-colors dark:te
       <a href={`${main}/blog`} class={link}>Blog</a>
       <a href={onMusic ? '/' : 'https://music.ar-va.com/'} class={link} aria-current={onMusic ? 'page' : undefined}>Music</a>
       <a id="account" href="https://ar-va.com/login" title="Log in with Telegram"
-        class="flex items-center gap-1.5 rounded-full border border-zinc-200 dark:border-zinc-700 pl-2 pr-3 py-1 text-zinc-600 dark:text-zinc-300 hover:border-[#2aabee] dark:hover:border-[#2aabee] hover:text-zinc-900 dark:hover:text-white transition-colors">
+        class="flex items-center gap-1.5 rounded-full bg-zinc-900 dark:bg-white pl-2.5 pr-3.5 py-1.5 text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-200 transition-colors">
         <svg class="w-4 h-4 text-[#2aabee] shrink-0" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
         <span class="whitespace-nowrap">Log in</span>
       </a>
@@ -47,23 +48,4 @@ const link = 'text-zinc-500 hover:text-blue-violet-500 transition-colors dark:te
     const name = Object.assign(document.createElement('span'), { textContent: who.n, className: 'sr-only sm:not-sr-only' });
     a.replaceChildren(pic, name);
   })();
-</script>
-
-<script>
-  const handleScroll = () => {
-    const header = document.getElementById('site-header');
-    if (!header) return;
-    
-    if (window.scrollY > 20) {
-      header.classList.add('bg-white/90', 'dark:bg-[#111111]/90', 'backdrop-blur-md', 'dark:border-zinc-800');
-      header.classList.remove('bg-transparent');
-    } else {
-      header.classList.remove('bg-white/90', 'dark:bg-[#111111]/90', 'backdrop-blur-md', 'dark:border-zinc-800');
-      header.classList.add('bg-transparent');
-    }
-  };
-
-  window.addEventListener('scroll', handleScroll);
-  // Run on initial load in case the page is refreshed while scrolled down
-  handleScroll();
 </script>
