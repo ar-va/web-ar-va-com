@@ -2,7 +2,8 @@
 // per-address limit (measured 2026-10-27: 71 of 25 used before our first request). Instead it signs requests that
 // the collector's browser sends (src/music/sync.ts) and stores what the browser brings back.
 import { env } from 'cloudflare:workers';
-import { oauthHeader, seal, signablePath, toReleaseDetail, toShelfRecord, unseal, type CollectionField, type ReleaseDetail } from './lib';
+import { oauthHeader, safeCoverUrl, safeStreamingUrl, seal, signablePath, toReleaseDetail, toShelfRecord, unseal, type CollectionField, type Match, type ReleaseDetail } from './lib';
+import { spotifyMatch } from './spotify';
 import { db, type User } from './store';
 
 type Token = { key: string; secret: string };
@@ -90,7 +91,8 @@ export async function missingReleases(user: User) {
   const d = await db();
   const { results } = await d.prepare(
     `SELECT DISTINCT json_extract(r.data, '$.releaseId') AS releaseId, json_extract(r.data, '$.masterId') AS masterId FROM records r
-     LEFT JOIN releases rel ON rel.id = json_extract(r.data, '$.releaseId') AND rel.fetched_at > ? AND json_type(rel.data, '$.firstReleased') IS NOT NULL
+     LEFT JOIN releases rel ON rel.id = json_extract(r.data, '$.releaseId') AND rel.fetched_at > ?
+       AND json_type(rel.data, '$.firstReleased') IS NOT NULL AND json_type(rel.data, '$.images') IS NOT NULL
      WHERE r.user_id = ? AND rel.id IS NULL`,
   ).bind(now() - RELEASE_MAX_AGE, user.id).all<{ releaseId: number; masterId: number }>();
   return results;
@@ -110,4 +112,46 @@ export async function saveRelease(user: User, release: any, masterYear: unknown,
 export async function cachedRelease(releaseId: number): Promise<ReleaseDetail | null> {
   const row = await (await db()).prepare('SELECT data FROM releases WHERE id = ?').bind(releaseId).first<{ data: string }>();
   return row ? JSON.parse(row.data) : null;
+}
+
+// ---- Streaming matches (Apple Music found by the browser, Spotify looked up here) ----
+
+const MATCH_MAX_AGE = 60 * 86400;
+
+/** Releases on the shelf not (recently) looked up on the streaming services, with the names to search for. */
+export async function unmatchedReleases(user: User) {
+  const { results } = await (await db()).prepare(
+    `SELECT DISTINCT json_extract(r.data, '$.releaseId') AS releaseId, json_extract(r.data, '$.artist') AS artist, json_extract(r.data, '$.title') AS title
+     FROM records r LEFT JOIN matches m ON m.release_id = json_extract(r.data, '$.releaseId') AND m.matched_at > ?
+     WHERE r.user_id = ? AND m.release_id IS NULL`,
+  ).bind(now() - MATCH_MAX_AGE, user.id).all<{ releaseId: number; artist: string; title: string }>();
+  return results;
+}
+
+/** Stores what the browser found on Apple Music (checked) plus a Spotify lookup; only for releases on the user's shelf. */
+export async function saveMatch(user: User, releaseId: number, apple: any) {
+  const d = await db();
+  const record = Number.isSafeInteger(releaseId) && await d.prepare(
+    `SELECT json_extract(data, '$.artist') AS artist, json_extract(data, '$.title') AS title FROM records WHERE user_id = ? AND json_extract(data, '$.releaseId') = ? LIMIT 1`,
+  ).bind(user.id, releaseId).first<{ artist: string; title: string }>();
+  if (!record) return false;
+  const match: Match = {};
+  const albumUrl = typeof apple?.url === 'string' ? safeStreamingUrl(apple.url, 'apple') : null;
+  if (albumUrl) {
+    match.apple = {
+      url: albumUrl,
+      artwork: typeof apple.artwork === 'string' ? safeCoverUrl(apple.artwork) : null,
+      tracks: (Array.isArray(apple.tracks) ? apple.tracks : []).slice(0, 100)
+        .map((t: any) => ({ title: String(t?.title ?? '').slice(0, 300), url: typeof t?.url === 'string' ? safeStreamingUrl(t.url, 'apple') : null }))
+        .filter((t: { title: string; url: string | null }) => t.title && t.url),
+    };
+  }
+  try {
+    const spotify = await spotifyMatch(record.artist, record.title);
+    if (spotify) match.spotify = spotify;
+  } catch (e) {
+    console.log(`spotify match failed for ${releaseId}: ${e instanceof Error ? e.message : e}`);
+  }
+  await d.prepare('INSERT OR REPLACE INTO matches (release_id, data, matched_at) VALUES (?, ?, ?)').bind(releaseId, JSON.stringify(match), now()).run();
+  return true;
 }

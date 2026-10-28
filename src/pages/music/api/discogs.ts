@@ -2,7 +2,7 @@
 import type { APIRoute } from 'astro';
 import { canCollect, currentUser } from '../../../music/store';
 import {
-  accessTokenRequest, missingReleases, requestTokenRequest, saveCollection, savePending, saveRelease, saveToken, setUsername, signFor,
+  accessTokenRequest, missingReleases, requestTokenRequest, saveCollection, saveMatch, savePending, saveRelease, saveToken, setUsername, signFor, unmatchedReleases,
 } from '../../../music/discogs';
 
 export const prerender = false;
@@ -22,7 +22,9 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
       case 'status':
         return json({ username: user.discogs_token ? user.discogs_username : null, syncedAt: user.synced_at });
       case 'missing':
-        return json({ missing: user.discogs_username ? await missingReleases(user) : [] });
+        return json({ missing: user.discogs_username ? await missingReleases(user) : [], unmatched: user.discogs_username ? await unmatchedReleases(user) : [] });
+      case 'match':
+        return (await saveMatch(user, Number(body.releaseId), body.apple)) ? json({ ok: true }) : json({ error: 'Not on your shelf.' }, 400);
       case 'request_token':
         return json(await requestTokenRequest(`${url.origin}/auth/discogs`));
       case 'pending':

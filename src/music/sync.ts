@@ -1,6 +1,8 @@
 // Browser side of Discogs: requests go from the collector's own address (the site's server can't reach
 // Discogs, see discogs.ts), each one signed by /api/discogs; results are handed back to the site.
 
+import { normalizeName, pickAlbum } from './lib';
+
 type Signed = { method: 'GET' | 'POST'; url: string; authorization: string };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -75,6 +77,61 @@ async function syncDetails(missing: Missing[], progress: (message: string) => vo
   }
 }
 
+// ---- Apple Music: its public search allows browsers (CORS) and needs no key; ~20 searches a minute. ----
+
+const appleUrl = (u: string) => { const url = new URL(u); url.searchParams.delete('uo'); return url.href; };
+
+let lastApple = 0;
+
+async function itunes(path: string) {
+  for (let attempt = 0; ; attempt++) {
+    // At most one request every 3 s keeps under Apple's ~20 a minute.
+    await sleep(Math.max(0, lastApple + 3000 - Date.now()));
+    lastApple = Date.now();
+    try {
+      const res = await fetch(`https://itunes.apple.com${path}`);
+      if (res.ok) return res.json();
+      if (res.status !== 403 && res.status !== 429) throw new Error(`Apple answered ${res.status}`);
+    } catch (e) {
+      if (!(e instanceof TypeError) || attempt === 2) throw e;
+    }
+    if (attempt === 2) throw new Error('Apple asked to slow down');
+    await sleep(61_000);
+  }
+}
+
+async function appleMatch(artist: string, title: string) {
+  const albums = (found: any) => (found.results ?? []).filter((x: any) => x.wrapperType === 'collection')
+    .map((x: any) => ({ id: x.collectionId, title: x.collectionName, artist: x.artistName, url: x.collectionViewUrl, artwork: x.artworkUrl100 }));
+  let best = pickAlbum(albums(await itunes(`/search?entity=album&limit=15&term=${encodeURIComponent(`${artist} ${title}`)}`)), artist, title);
+  if (!best) {
+    // Apple's search often misses an album that its artist page lists (symbols, "&", other stores' spellings).
+    const a = normalizeName(artist);
+    const artists = await itunes(`/search?entity=musicArtist&limit=5&term=${encodeURIComponent(artist)}`);
+    const found = (artists.results ?? []).find((x: any) => { const n = normalizeName(x.artistName ?? ''); return n && (a === n || a.includes(n)); });
+    if (found) best = pickAlbum(albums(await itunes(`/lookup?entity=album&limit=200&id=${found.artistId}`)), artist, title);
+  }
+  if (!best) return null;
+  const songs = await itunes(`/lookup?entity=song&id=${best.id}`);
+  return {
+    url: appleUrl(best.url),
+    // Apple serves the same artwork at any size by name; 600 px matches Discogs' images and keeps the shelf light.
+    artwork: typeof best.artwork === 'string' ? best.artwork.replace(/\d+x\d+bb/, '600x600bb') : null,
+    tracks: (songs.results ?? []).filter((x: any) => x.wrapperType === 'track').map((x: any) => ({ title: x.trackName, url: appleUrl(x.trackViewUrl) })),
+  };
+}
+
+type Unmatched = { releaseId: number; artist: string; title: string };
+
+/** Looks each album up on Apple Music, then lets the site add Spotify and store the links. */
+async function syncMatches(list: Unmatched[], progress: (message: string) => void, prefix = '') {
+  for (const [i, r] of list.entries()) {
+    progress(`${prefix}Finding albums on streaming services: ${i + 1} of ${list.length}…`);
+    const apple = await appleMatch(r.artist, r.title).catch(() => null);
+    await site({ action: 'match', releaseId: r.releaseId, apple });
+  }
+}
+
 /** Copies the collection to the site, then fetches details for releases the site doesn't have yet. */
 export async function syncShelf(progress: (message: string) => void = () => {}) {
   const { username } = await site({ action: 'status' });
@@ -90,6 +147,8 @@ export async function syncShelf(progress: (message: string) => void = () => {}) 
   }
   const { count, missing } = await site({ action: 'collection', fields, releases });
   await syncDetails(missing, progress, `${count} records on the shelf. `);
+  const { unmatched } = await site({ action: 'missing' });
+  await syncMatches(unmatched, progress, `${count} records on the shelf. `);
   progress(`${count} records on the shelf. Everything is up to date.`);
 }
 
@@ -104,9 +163,10 @@ export async function autoSync(progress: (message: string) => void = () => {}) {
     const status = await site({ action: 'status' });
     if (!status.username) return sessionStorage.setItem(skip, '1');
     if (!status.syncedAt || Date.now() / 1000 - status.syncedAt > 1800) return await syncShelf(progress);
-    const { missing } = await site({ action: 'missing' });
-    if (missing.length) {
+    const { missing, unmatched } = await site({ action: 'missing' });
+    if (missing.length || unmatched.length) {
       await syncDetails(missing, progress);
+      await syncMatches(unmatched, progress);
       progress('Everything is up to date. Reload to see it.');
     }
   } catch {

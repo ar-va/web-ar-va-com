@@ -4,3 +4,6 @@ DISCOGS_CONSUMER_KEY=from-discogs-settings-developers
 DISCOGS_CONSUMER_SECRET=from-discogs-settings-developers
 # Any long random string; encrypts stored Discogs tokens. Changing it disconnects every shelf.
 TOKEN_KEY=change-me
+# Optional: Spotify app (developer.spotify.com) for automatic Spotify album/track links.
+# SPOTIFY_CLIENT_ID=
+# SPOTIFY_CLIENT_SECRET=

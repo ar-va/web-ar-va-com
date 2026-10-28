@@ -3,9 +3,9 @@
 // (to the owner only) with a Revert button. An empty field means "use Discogs".
 export const prerender = false;
 import Layout from '../../../../layouts/Layout.astro';
-import { loginHref, musicPath, recordDefaults, safeStreamingUrl, type Overrides } from '../../../../music/lib';
+import { loginHref, musicPath, recordDefaults, safeCoverUrl, safeStreamingUrl, type Overrides } from '../../../../music/lib';
 import { cachedRelease } from '../../../../music/discogs';
-import { currentUser, recordOverrides, saveOverrides, shelfOwner, shelfRecord } from '../../../../music/store';
+import { currentUser, recordOverrides, releaseMatch, saveOverrides, shelfOwner, shelfRecord } from '../../../../music/store';
 
 const instanceId = Number(Astro.params.record);
 const [user, owner] = await Promise.all([currentUser(Astro.cookies), shelfOwner(Astro.params.user!)]);
@@ -14,8 +14,8 @@ if (!user) return Astro.redirect(loginHref(Astro.url));
 const record = owner && user.id === owner.id && Number.isSafeInteger(instanceId) ? await shelfRecord(owner.id, instanceId) : null;
 if (!record) return Astro.redirect(recordPath);
 
-const detail = await cachedRelease(record.releaseId);
-const defaults = recordDefaults(record, detail);
+const [detail, match] = await Promise.all([cachedRelease(record.releaseId), releaseMatch(record.releaseId)]);
+const defaults = recordDefaults(record, detail, match);
 let overrides: Overrides = await recordOverrides(owner!.id, instanceId);
 const errors: Record<string, string> = {};
 const links = { spotify: 'Spotify', apple: 'Apple Music', youtube: 'YouTube Music' } as const;
@@ -28,6 +28,7 @@ if (Astro.request.method === 'POST') {
     for (const key of Object.keys(defaults)) {
       const value = String(form.get(key) ?? '').replace(/\r\n/g, '\n').trim().slice(0, 5000);
       if (!value || value === defaults[key] || key === revert) continue;
+      if (key === 'cover' && !safeCoverUrl(value)) continue;
       if (key in links && !safeStreamingUrl(value, key as keyof typeof links)) {
         errors[key] = `Paste a link from ${links[key as keyof typeof links]} (https://…).`;
         continue;
@@ -43,6 +44,13 @@ if (Astro.request.method === 'POST') {
 }
 
 const values = { ...defaults, ...overrides };
+// Cover choices: Discogs' photo (the default), Apple Music's official artwork (suggested), then Discogs' other photos.
+const appleArt = match?.apple?.artwork ?? null;
+const covers = [...new Map([
+  ...(defaults.cover ? [[defaults.cover, 'Discogs photo']] : []),
+  ...(appleArt ? [[appleArt, 'Apple Music artwork']] : []),
+  ...(detail?.images ?? []).slice(1).map((src, i) => [src, `Discogs photo ${i + 2}`]),
+] as [string, string][])];
 const fields: { key: string; label: string; hint?: string; multiline?: boolean }[] = [
   { key: 'artist', label: 'Artist' },
   { key: 'title', label: 'Album' },
@@ -55,7 +63,7 @@ const fields: { key: string; label: string; hint?: string; multiline?: boolean }
   { key: 'country', label: 'Country' },
   ...Object.keys(defaults).filter((k) => k.startsWith('field:')).map((k) => ({ key: k, label: k.slice(6), hint: 'One of your Discogs collection fields.', multiline: defaults[k].length > 60 })),
   { key: 'tracklist', label: 'Tracklist', hint: 'Position, title, length and, under “Links”, the track on each service. Positions like A1, B1 are shown as Side A, Side B.', multiline: true },
-  ...Object.entries(links).map(([key, name]) => ({ key, label: `${name} link`, hint: `The album on ${name}. Empty: the ${name} icon searches for it.` })),
+  ...Object.entries(links).map(([key, name]) => ({ key, label: `${name} link`, hint: defaults[key] ? `Found automatically. Paste another ${name} album link if it’s the wrong one.` : `The album on ${name}. Empty: the ${name} icon searches for it.` })),
 ];
 const input = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-4 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 transition-colors';
 const edited = Object.keys(overrides).length;
@@ -65,7 +73,7 @@ const dated = new Set(['released', 'vinylRelease']);
   <div class="max-w-3xl mx-auto px-6 w-full flex-grow py-24">
     <a href={recordPath} class="text-sm text-zinc-500 hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors">← Back to the record</a>
     <h1 class="mt-6 text-2xl font-bold text-zinc-900 dark:text-white">Edit {values.title}<span class="text-blue-violet-500">.</span></h1>
-    <p class="mt-2 mb-8 text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">Everything starts from Discogs. What you change here is what visitors see; Discogs’ value stays underneath (only you see it) so you can go back any time.</p>
+    <p class="mt-2 mb-8 text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">Everything starts from Discogs and the automatic Apple Music / Spotify matches. What you change here is what visitors see; the default stays underneath (only you see it) so you can go back any time.</p>
 
     {Astro.url.searchParams.has('saved') && Object.keys(errors).length === 0 && (
       <p class="mb-6 rounded-xl border border-blue-violet-200 dark:border-blue-violet-900 bg-blue-violet-50 dark:bg-blue-violet-500/10 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300" role="status">Saved. <a href={recordPath} class="underline underline-offset-4">See the record →</a></p>
@@ -74,6 +82,31 @@ const dated = new Set(['released', 'vinylRelease']);
     <form method="post" class="flex flex-col gap-6">
       <!-- Enter in a field submits with the form's first button: make that Save, not a Revert. -->
       <button class="sr-only" tabindex="-1" aria-hidden="true">Save</button>
+
+      {covers.length > 1 && (
+        <fieldset>
+          <legend class="flex items-center gap-2 text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-2">
+            Cover
+            {'cover' in overrides && <span class="text-[10px] font-bold tracking-widest uppercase text-blue-violet-600 dark:text-blue-violet-400">Edited</span>}
+          </legend>
+          <div class="flex flex-wrap gap-3">
+            {covers.map(([src, label]) => (
+              <label class="group cursor-pointer w-28">
+                <input type="radio" name="cover" value={src} checked={values.cover === src} class="sr-only peer" />
+                <img src={src} alt="" width="112" height="112" loading="lazy" referrerpolicy="no-referrer"
+                  class="w-28 h-28 object-cover rounded-lg border-2 border-transparent peer-checked:border-blue-violet-500 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-violet-500 group-hover:opacity-90" />
+                <span class="mt-1 block text-xs text-zinc-500 peer-checked:text-blue-violet-600 dark:peer-checked:text-blue-violet-400">
+                  {label}{src === appleArt && src !== values.cover && <span class="block text-blue-violet-600 dark:text-blue-violet-400">Suggested</span>}
+                </span>
+              </label>
+            ))}
+          </div>
+          <div class="mt-1.5 flex items-start justify-between gap-4 text-xs text-zinc-500">
+            <span>The main cover on the shelf and the record page; the others appear in its photo gallery.</span>
+            {'cover' in overrides && <button name="revert" value="cover" class="shrink-0 font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Revert</button>}
+          </div>
+        </fieldset>
+      )}
       {fields.map((f) => {
         const changed = f.key in overrides;
         const original = defaults[f.key];
@@ -102,7 +135,7 @@ const dated = new Set(['released', 'vinylRelease']);
             {errors[f.key] && <p class="mt-1.5 text-sm text-red-600 dark:text-red-400" role="alert">{errors[f.key]}</p>}
             {changed ? (
               <div class="mt-1.5 flex items-start justify-between gap-4 text-xs text-zinc-500">
-                <span class="min-w-0 whitespace-pre-line break-words line-clamp-4">Discogs: {original || '(empty)'}</span>
+                <span class="min-w-0 whitespace-pre-line break-words line-clamp-4">Default: {original || '(empty)'}</span>
                 <button name="revert" value={f.key} class="shrink-0 font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Revert</button>
               </div>
             ) : (

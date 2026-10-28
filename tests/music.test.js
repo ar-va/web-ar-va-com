@@ -216,3 +216,41 @@ test('comment links and notifications', async () => {
   assert.deepEqual(commentNotices({ ...base, parentAuthorId: 9 }).map((n) => n.chatId), [9]); // owner replied to: one message
   assert.deepEqual(commentNotices({ ...base, ownerId: null }), []);
 });
+
+test('streaming matches, cover sources, gallery', async () => {
+  const { pickAlbum, normalizeName, withMatchLinks, safeCoverUrl, gallery, recordDefaults, shelfView, streamingSearch } = await import('../src/music/lib.ts');
+  assert.equal(normalizeName('Sherane A.K.A Master Splinter’s Daughter'), normalizeName('Sherane a.k.A Master Splinter\'s Daughter'));
+  assert.equal(normalizeName('good kid, m.A.A.d city (Deluxe Version)'), 'good kid m a a d city');
+  assert.equal(normalizeName('Ночь'), 'ночь');
+  const c = (title, artist = 'Kendrick Lamar') => ({ title, artist });
+  assert.equal(pickAlbum([c('good kid, m.A.A.d city (Deluxe Version)'), c('good kid, m.A.A.d city'), c('DAMN.')], 'Kendrick Lamar', 'Good Kid, M.A.A.D City').title, 'good kid, m.A.A.d city');
+  assert.equal(pickAlbum([c('good kid, m.A.A.d city (Deluxe Version)')], 'Kendrick Lamar', 'Good Kid, M.A.A.D City').title, 'good kid, m.A.A.d city (Deluxe Version)');
+  assert.equal(pickAlbum([c('Good Kid, M.A.A.D City', 'Someone Else')], 'Kendrick Lamar', 'Good Kid, M.A.A.D City'), null);
+  assert.equal(pickAlbum([c('Mr. Morale')], 'Kendrick Lamar', 'Good Kid, M.A.A.D City'), null);
+  assert.equal(pickAlbum([c('Alfredo', 'Freddie Gibbs & The Alchemist'), c('Alfredo 2', 'Freddie Gibbs & The Alchemist')], 'Freddie Gibbs & The Alchemist', 'Alfredo II').title, 'Alfredo 2');
+  assert.equal(pickAlbum([c('★ - Single', 'David Bowie'), c('Blackstar', 'David Bowie')], 'David Bowie', '★ (Blackstar)').title, 'Blackstar');
+  assert.equal(normalizeName('I Robot vi'), 'i robot 6');
+
+  const m = { apple: { url: 'https://music.apple.com/us/album/1', artwork: 'https://is1-ssl.mzstatic.com/x/1200x1200bb.jpg', tracks: [{ title: 'Sherane a.k.A Master Splinter’s Daughter', url: 'https://music.apple.com/t1' }] },
+    spotify: { url: 'https://open.spotify.com/album/s', tracks: [{ title: "Sherane a.k.a Master Splinter's Daughter", url: 'https://open.spotify.com/track/s1' }] } };
+  const tracks = [{ position: 'A1', title: "Sherane A.K.A Master Splinter's Daughter", duration: '', heading: false }, { position: 'A2', title: 'Other', duration: '', heading: false, links: { apple: 'https://music.apple.com/mine' } }];
+  const linked = withMatchLinks(tracks, m);
+  assert.deepEqual(linked[0].links, { apple: 'https://music.apple.com/t1', spotify: 'https://open.spotify.com/track/s1' });
+  assert.deepEqual(linked[1].links, { apple: 'https://music.apple.com/mine' });
+
+  assert.ok(safeCoverUrl('https://is3-ssl.mzstatic.com/image/x.jpg'));
+  assert.ok(safeCoverUrl('https://i.discogs.com/abc.jpeg'));
+  for (const bad of ['https://evil.example/x.jpg', 'http://i.discogs.com/x', 'javascript:alert(1)', '', null]) assert.equal(safeCoverUrl(bad), null);
+
+  assert.deepEqual(gallery('https://i.discogs.com/c', 'https://i.discogs.com/c', ['https://i.discogs.com/p1', 'https://i.discogs.com/p2']), ['https://i.discogs.com/c', 'https://i.discogs.com/p2']);
+  assert.deepEqual(gallery('https://is1-ssl.mzstatic.com/a', 'https://i.discogs.com/c', ['https://i.discogs.com/p1', 'https://i.discogs.com/p2']), ['https://is1-ssl.mzstatic.com/a', 'https://i.discogs.com/p1', 'https://i.discogs.com/p2']);
+
+  const r = { instanceId: 1, releaseId: 2, masterId: 0, artist: 'Kendrick Lamar', title: 'Good Kid', year: 2022, cover: 'https://i.discogs.com/c', labels: '', format: '', genres: [], styles: [], added: '2024-12-21T00:00:00-08:00', rating: 0, fields: [] };
+  const d = { released: null, originalYear: 2012, country: null, tracklist: tracks, uri: 'https://www.discogs.com/release/2' };
+  const defaults = recordDefaults(r, d, m);
+  assert.equal(defaults.apple, 'https://music.apple.com/us/album/1');
+  assert.match(defaults.tracklist, /https:\/\/open\.spotify\.com\/track\/s1/);
+  assert.equal(shelfView(r, d, { cover: 'https://is1-ssl.mzstatic.com/a' }, m).cover, 'https://is1-ssl.mzstatic.com/a');
+  assert.equal(shelfView(r, d, { cover: 'https://evil.example/a' }, m).cover, 'https://i.discogs.com/c');
+  assert.equal(streamingSearch('a b', 'track').spotify, 'https://open.spotify.com/search/a%20b/tracks');
+});

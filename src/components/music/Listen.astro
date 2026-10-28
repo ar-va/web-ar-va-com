@@ -1,10 +1,11 @@
 ---
-// Spotify / Apple Music / YouTube Music icons: the owner's exact link when given, else a search on that service.
+// Spotify / Apple Music / YouTube Music icons: the owner's link or an automatic match when there is one, else a search on
+// that service (Spotify's narrowed to albums or tracks).
 import { safeStreamingUrl, streamingSearch } from '../../music/lib';
 
-interface Props { query: string; label: string; links?: { spotify?: string; apple?: string; youtube?: string }; size?: 'sm' | 'md' }
-const { query, label, links = {}, size = 'sm' } = Astro.props;
-const search = streamingSearch(query);
+interface Props { query: string; label: string; links?: { spotify?: string; apple?: string; youtube?: string }; size?: 'sm' | 'md'; kind?: 'album' | 'track' }
+const { query, label, links = {}, size = 'sm', kind = 'album' } = Astro.props;
+const search = streamingSearch(query, kind);
 const services = [
   { key: 'spotify', name: 'Spotify', hover: 'hover:text-[#1db954]' },
   { key: 'apple', name: 'Apple Music', hover: 'hover:text-[#fa2d48]' },

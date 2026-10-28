@@ -158,6 +158,8 @@ export interface ReleaseDetail {
   originalYear: number | null;
   /** Release date of the master's main release ("2016-01-08"); missing on details cached before 2026-10-28. */
   firstReleased?: string | null;
+  /** Discogs photos of this release (primary first), for the record page's gallery. */
+  images?: string[];
   country: string | null;
   tracklist: { position: string; title: string; duration: string; heading: boolean }[];
   uri: string;
@@ -172,6 +174,7 @@ export function toReleaseDetail(release: any, masterYear: number | null, firstRe
     country: release.country || null,
     tracklist: (release.tracklist ?? []).map((t: any) => ({ position: t.position, title: t.title, duration: t.duration, heading: t.type_ === 'heading' })),
     uri: typeof release.uri === 'string' && release.uri.startsWith('https://www.discogs.com/') ? release.uri : `https://www.discogs.com/release/${Number(release.id)}`,
+    images: (release.images ?? []).map((i: any) => i?.uri).filter((u: unknown): u is string => typeof u === 'string' && u.startsWith('https://i.discogs.com/')).slice(0, 12),
   };
 }
 
@@ -310,14 +313,14 @@ export function safeStreamingUrl(value: string, service: 'spotify' | 'apple' | '
 }
 
 /** Search pages on each service, used when the owner hasn't pasted an exact album link. */
-export const streamingSearch = (query: string) => ({
-  spotify: `https://open.spotify.com/search/${encodeURIComponent(query)}`,
+export const streamingSearch = (query: string, kind: 'album' | 'track' = 'album') => ({
+  spotify: `https://open.spotify.com/search/${encodeURIComponent(query)}/${kind === 'album' ? 'albums' : 'tracks'}`,
   apple: `https://music.apple.com/search?term=${encodeURIComponent(query)}`,
   youtube: `https://music.youtube.com/search?q=${encodeURIComponent(query)}`,
 });
 
 /** Every editable value as Discogs gives it (the owner's edits override these, key by key). */
-export function recordDefaults(r: ShelfRecord, d: ReleaseDetail | null): Overrides {
+export function recordDefaults(r: ShelfRecord, d: ReleaseDetail | null, m: Match | null = null): Overrides {
   return {
     artist: r.artist,
     title: r.title,
@@ -328,10 +331,11 @@ export function recordDefaults(r: ShelfRecord, d: ReleaseDetail | null): Overrid
     label: r.labels,
     format: r.format,
     country: d?.country ?? '',
-    tracklist: tracklistToText(d?.tracklist ?? []),
-    spotify: '',
-    apple: '',
+    tracklist: tracklistToText(withMatchLinks(d?.tracklist ?? [], m)),
+    spotify: m?.spotify?.url ?? '',
+    apple: m?.apple?.url ?? '',
     youtube: '',
+    cover: r.cover ?? '',
     ...Object.fromEntries(r.fields.map((f) => [`field:${f.name}`, f.value])),
   };
 }
@@ -344,10 +348,11 @@ export const recordValues = (defaults: Overrides, overrides: Overrides): Overrid
 export const displayDate = (value: string) => (/^\d{4}(-\d{2}){0,2}$/.test(value) ? formatReleased(value) : value) || null;
 
 /** The shelf's view of a record: edited artist/title/genres and the first release year for the "Released" filter. */
-export function shelfView(r: ShelfRecord, d: ReleaseDetail | null, overrides: Overrides) {
-  const v = recordValues(recordDefaults(r, d), overrides);
+export function shelfView(r: ShelfRecord, d: ReleaseDetail | null, overrides: Overrides, m: Match | null = null) {
+  const v = recordValues(recordDefaults(r, d, m), overrides);
   return {
     ...r,
+    cover: safeCoverUrl(v.cover) ?? r.cover,
     artist: v.artist,
     title: v.title,
     // Discogs genres can contain commas ("Folk, World, & Country"): only an owner-typed genre is split on them.
@@ -387,4 +392,69 @@ export function commentNotices(c: { authorId: number; authorName: string; ownerI
   if (c.parentAuthorId && c.parentAuthorId !== c.authorId) out.push({ chatId: c.parentAuthorId, text: text('replied to your comment on') });
   if (c.ownerId && c.ownerId !== c.authorId && c.ownerId !== c.parentAuthorId) out.push({ chatId: c.ownerId, text: text(c.parentAuthorId ? 'replied to a comment on' : 'commented on') });
   return out;
+}
+
+// ---- Automatic matches on streaming services, and covers ----
+
+/** A release found on the services: album link (+ Apple's artwork) and a link per track title. */
+export interface Match {
+  apple?: { url: string; artwork: string | null; tracks: { title: string; url: string }[] };
+  spotify?: { url: string; tracks: { title: string; url: string }[] };
+}
+
+/** For comparing names across catalogues: no accents, case, punctuation or "(Deluxe…)"-style suffixes. */
+export const normalizeName = (s: string) => s.normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase()
+  .replace(/[‘’'`]/g, '').replace(/\s*[([](deluxe|remaster|expanded|anniversary|edition|bonus|explicit|clean)[^)\]]*[)\]]/g, '')
+  .replace(/[^\p{L}\p{N}]+/gu, ' ').trim()
+  // "Alfredo II" on Discogs is "Alfredo 2" on Apple Music.
+  .replace(/(?<=\s|^)(ii|iii|iv|vi|vii|viii|ix)(?=\s|$)/g, (n) => String(['ii', 'iii', 'iv', '', 'vi', 'vii', 'viii', 'ix'].indexOf(n) + 2));
+
+/**
+ * The catalogue album that is this record: the artist must match, then an exact title beats a longer
+ * edition ("… (Deluxe)"), which beats a shorter one; null when nothing fits well enough to link to.
+ */
+export function pickAlbum<T extends { title: string; artist: string }>(candidates: T[], artist: string, title: string): T | null {
+  const a = normalizeName(artist), t = normalizeName(title);
+  const score = (c: T) => {
+    const ca = normalizeName(c.artist), ct = normalizeName(c.title);
+    if (!(ca === a || ca.includes(a) || a.includes(ca))) return 0;
+    return ct === t ? 3 : ct.startsWith(t) ? 2 : t.startsWith(ct) && ct.length > 3 ? 1 : 0;
+  };
+  let best: T | null = null, top = 0;
+  for (const c of candidates) {
+    const s = score(c);
+    if (s > top || (s === top && s > 0 && best && c.title.length < best.title.length)) { best = c; top = s; }
+  }
+  return best;
+}
+
+/** Discogs tracks with the matched services' links added by title (a link the owner typed is kept). */
+export function withMatchLinks(tracks: Track[], m: Match | null): Track[] {
+  if (!m) return tracks;
+  const find = (list: { title: string; url: string }[] | undefined, title: string) => {
+    const n = normalizeName(title);
+    return list?.find((x) => normalizeName(x.title) === n)?.url ?? list?.find((x) => { const xn = normalizeName(x.title); return xn.startsWith(n) || n.startsWith(xn); })?.url;
+  };
+  return tracks.map((t) => {
+    if (t.heading) return t;
+    const links = { ...Object.fromEntries(Object.entries({ apple: find(m.apple?.tracks, t.title), spotify: find(m.spotify?.tracks, t.title) }).filter(([, v]) => v)), ...t.links };
+    return Object.keys(links).length ? { ...t, links } : t;
+  });
+}
+
+/** Cover images come only from Discogs or Apple's artwork servers. */
+export function safeCoverUrl(value: string | null | undefined) {
+  if (!value) return null;
+  try {
+    const u = new URL(value);
+    return u.protocol === 'https:' && (u.hostname === 'i.discogs.com' || /^is\d+-ssl\.mzstatic\.com$/.test(u.hostname)) ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The record page's gallery: the main cover first (the owner's pick, else Discogs'), then Discogs' photos. */
+export function gallery(main: string | null, discogsCover: string | null, images: string[] = []) {
+  const rest = main && main !== discogsCover ? images : images.slice(1);
+  return [...new Set([main, ...rest].filter((u): u is string => !!u))];
 }

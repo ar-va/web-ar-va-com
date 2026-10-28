@@ -19,6 +19,7 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS post_comments (id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT NOT NULL, author_id INTEGER NOT NULL,
     body TEXT NOT NULL, created_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS post_comments_by_slug ON post_comments (slug)`,
+  `CREATE TABLE IF NOT EXISTS matches (release_id INTEGER PRIMARY KEY, data TEXT NOT NULL, matched_at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS overrides (user_id INTEGER NOT NULL, instance_id INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY (user_id, instance_id))`,
 ];
 
@@ -204,6 +205,19 @@ export async function saveOverrides(userId: number, instanceId: number, data: Ov
   await (Object.keys(data).length
     ? d.prepare('INSERT OR REPLACE INTO overrides (user_id, instance_id, data) VALUES (?, ?, ?)').bind(userId, instanceId, JSON.stringify(data))
     : d.prepare('DELETE FROM overrides WHERE user_id = ? AND instance_id = ?').bind(userId, instanceId)).run();
+}
+
+/** Automatic streaming matches for a whole shelf (release id → match). */
+export async function shelfMatches(userId: number) {
+  const { results } = await (await db()).prepare(
+    `SELECT release_id, data FROM matches WHERE release_id IN (SELECT json_extract(data, '$.releaseId') FROM records WHERE user_id = ?)`,
+  ).bind(userId).all<{ release_id: number; data: string }>();
+  return new Map(results.map((r) => [r.release_id, JSON.parse(r.data) as import('./lib').Match]));
+}
+
+export async function releaseMatch(releaseId: number): Promise<import('./lib').Match | null> {
+  const row = await (await db()).prepare('SELECT data FROM matches WHERE release_id = ?').bind(releaseId).first<{ data: string }>();
+  return row ? JSON.parse(row.data) : null;
 }
 
 /** Cached release details for a whole shelf (release id → details). */
