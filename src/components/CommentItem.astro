@@ -1,6 +1,6 @@
 ---
-// One comment: author, date, text with clickable links, and Reply / Edit / Delete. Reply and Edit open in place
-// (<details>, no script needed) and post to the same handler as the main form.
+// One comment: author, date, text with clickable links, and Reply / Edit / Delete on one line. Edit swaps the text
+// for an editor in place; Reply opens a box under the comment. Both have Cancel (behaviour: src/scripts/comments.ts).
 import { COMMENT_MAX, type Comment, type User } from '../music/store';
 import { linkify } from '../music/lib';
 
@@ -13,12 +13,15 @@ interface Props {
   small?: boolean;
 }
 const { comment: c, user, canDelete, action, hidden, small = false } = Astro.props;
+const own = !!user && user.id === c.author_id;
 const date = (s: number) => new Date(s * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-const field = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-3 py-2 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 transition-colors';
-const small_btn = 'bg-blue-violet-500 text-white text-xs font-medium px-4 py-1.5 rounded-full hover:bg-blue-violet-600 transition-colors';
-const actionLink = 'cursor-pointer list-none text-zinc-400 hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors [&::-webkit-details-marker]:hidden';
+const field = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-3.5 py-2.5 text-zinc-900 dark:text-white leading-relaxed focus:outline-none focus:border-blue-violet-500 transition-colors resize-y';
+const primary = 'bg-blue-violet-500 text-white text-sm font-medium px-4 py-1.5 rounded-full hover:bg-blue-violet-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors';
+const quiet = 'text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white px-3 py-1.5 rounded-full transition-colors';
+const act = 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors';
+const hint = 'ml-auto hidden sm:inline text-xs text-zinc-400 dark:text-zinc-500';
 ---
-<div id={`comment-${c.id}`} class="flex gap-3 scroll-mt-24">
+<div id={`comment-${c.id}`} class="flex gap-3 scroll-mt-24" data-comment>
   {c.photo_url
     ? <img src={c.photo_url} alt="" width="36" height="36" loading="lazy" referrerpolicy="no-referrer" class={`${small ? 'w-7 h-7' : 'w-9 h-9'} rounded-full object-cover shrink-0`} />
     : <span class={`${small ? 'w-7 h-7 text-xs' : 'w-9 h-9'} rounded-full bg-blue-violet-500 text-white grid place-items-center shrink-0`} aria-hidden="true">{c.name.charAt(0)}</span>}
@@ -28,44 +31,54 @@ const actionLink = 'cursor-pointer list-none text-zinc-400 hover:text-blue-viole
         ? <a href={`https://t.me/${c.username}`} class="font-medium text-zinc-900 dark:text-white hover:text-blue-violet-500 transition-colors">{c.name}</a>
         : <span class="font-medium text-zinc-900 dark:text-white">{c.name}</span>}
       <time class="text-zinc-500" datetime={new Date(c.created_at * 1000).toISOString()}>{date(c.created_at)}</time>
-      {c.edited_at && <span class="text-zinc-400 text-xs" title={`Edited ${date(c.edited_at)}`}>edited</span>}
+      {c.edited_at && <span class="text-zinc-400 dark:text-zinc-500 text-xs" title={`Edited ${date(c.edited_at)}`}>· edited</span>}
     </div>
-    <p class="mt-1 text-zinc-700 dark:text-zinc-300 whitespace-pre-line break-words">{linkify(c.body).map((part) => 'url' in part
-      ? <a href={part.url} target="_blank" rel="nofollow ugc noopener noreferrer" class="text-blue-violet-600 dark:text-blue-violet-400 underline decoration-blue-violet-500/30 hover:decoration-blue-violet-500 underline-offset-4 break-all">{part.url}</a>
-      : part.text)}</p>
+
+    <div data-view>
+      <p class="mt-1 text-zinc-700 dark:text-zinc-300 whitespace-pre-line break-words">{linkify(c.body).map((part) => 'url' in part
+        ? <a href={part.url} target="_blank" rel="nofollow ugc noopener noreferrer" class="text-blue-violet-600 dark:text-blue-violet-400 underline decoration-blue-violet-500/30 hover:decoration-blue-violet-500 underline-offset-4 break-all">{part.url}</a>
+        : part.text)}</p>
+      {user && (
+        <div class="mt-1.5 flex items-center gap-4 text-sm">
+          <button type="button" class={act} data-open="reply" aria-expanded="false" aria-controls={`reply-${c.id}`}>Reply</button>
+          {own && <button type="button" class={act} data-open="edit" aria-expanded="false" aria-controls={`edit-${c.id}`}>Edit</button>}
+          {canDelete && (
+            <form method="post" action={action} class="inline-flex">
+              {Object.entries(hidden).map(([k, v]) => <input type="hidden" name={k} value={v} />)}
+              <input type="hidden" name="action" value="delete" />
+              <input type="hidden" name="id" value={c.id} />
+              <button class={`${act} hover:!text-red-600 dark:hover:!text-red-400`} onclick={`return confirm('Delete this comment${small ? '' : ' and its replies'}?')`}>Delete</button>
+            </form>
+          )}
+        </div>
+      )}
+    </div>
+
+    {own && (
+      <form id={`edit-${c.id}`} method="post" action={action} data-panel="edit" hidden class="comment-panel mt-1.5 flex flex-col gap-2">
+        {Object.entries(hidden).map(([k, v]) => <input type="hidden" name={k} value={v} />)}
+        <input type="hidden" name="action" value="edit" />
+        <input type="hidden" name="id" value={c.id} />
+        <textarea name="body" rows="3" required maxlength={COMMENT_MAX} aria-label="Edit your comment" class={field}>{c.body}</textarea>
+        <div class="flex items-center gap-1">
+          <button class={primary} data-submit="Saving…">Save</button>
+          <button type="button" class={quiet} data-cancel>Cancel</button>
+          <span class={hint}>Esc to cancel · ⌘/Ctrl + Enter to save</span>
+        </div>
+      </form>
+    )}
 
     {user && (
-      <div class="mt-1.5 flex flex-wrap items-start gap-x-4 text-sm">
-        <details class="[&[open]]:basis-full">
-          <summary class={actionLink}>Reply</summary>
-          <form method="post" action={action} class="mt-2 flex flex-col gap-2">
-            {Object.entries(hidden).map(([k, v]) => <input type="hidden" name={k} value={v} />)}
-            <input type="hidden" name="parent_id" value={c.id} />
-            <textarea name="body" rows="2" required maxlength={COMMENT_MAX} aria-label={`Reply to ${c.name}`} placeholder={`Reply to ${c.name}…`} class={field}></textarea>
-            <div><button class={small_btn}>Reply</button></div>
-          </form>
-        </details>
-        {user.id === c.author_id && (
-          <details class="[&[open]]:basis-full">
-            <summary class={actionLink}>Edit</summary>
-            <form method="post" action={action} class="mt-2 flex flex-col gap-2">
-              {Object.entries(hidden).map(([k, v]) => <input type="hidden" name={k} value={v} />)}
-              <input type="hidden" name="action" value="edit" />
-              <input type="hidden" name="id" value={c.id} />
-              <textarea name="body" rows="3" required maxlength={COMMENT_MAX} aria-label="Edit your comment" class={field}>{c.body}</textarea>
-              <div><button class={small_btn}>Save</button></div>
-            </form>
-          </details>
-        )}
-        {canDelete && (
-          <form method="post" action={action}>
-            {Object.entries(hidden).map(([k, v]) => <input type="hidden" name={k} value={v} />)}
-            <input type="hidden" name="action" value="delete" />
-            <input type="hidden" name="id" value={c.id} />
-            <button class="text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors" onclick={`return confirm('Delete this comment${small ? '' : ' and its replies'}?')`}>Delete</button>
-          </form>
-        )}
-      </div>
+      <form id={`reply-${c.id}`} method="post" action={action} data-panel="reply" hidden class="comment-panel mt-3 flex flex-col gap-2">
+        {Object.entries(hidden).map(([k, v]) => <input type="hidden" name={k} value={v} />)}
+        <input type="hidden" name="parent_id" value={c.id} />
+        <textarea name="body" rows="2" required maxlength={COMMENT_MAX} aria-label={`Reply to ${c.name}`} placeholder={`Reply to ${c.name}…`} class={field}></textarea>
+        <div class="flex items-center gap-1">
+          <button class={primary} data-submit="Sending…">Reply</button>
+          <button type="button" class={quiet} data-cancel>Cancel</button>
+          <span class={hint}>Esc to cancel · ⌘/Ctrl + Enter to send</span>
+        </div>
+      </form>
     )}
   </div>
 </div>

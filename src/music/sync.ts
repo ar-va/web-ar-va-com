@@ -39,7 +39,9 @@ async function signedGet(path: string, onWait?: () => void): Promise<any> {
         return await (await send(await site({ action: 'sign', path }), true)).json();
       }
     } catch (e) {
-      if ((e as { status?: number }).status !== 429 || attempt === 3) throw e;
+      // Discogs' 429 replies carry no CORS header, so a browser often sees "Failed to fetch" (TypeError) instead.
+      const limited = (e as { status?: number }).status === 429 || e instanceof TypeError;
+      if (!limited || attempt === 3) throw e;
       onWait?.();
       await sleep(61_000);
     }

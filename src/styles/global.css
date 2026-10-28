@@ -160,3 +160,8 @@
    class, so on a dark OS with the light theme the browser painted the frame's background opaque (black corners
    around the rounded button). Giving the frame the same setting keeps it transparent. */
 iframe[id^="telegram-login"] { color-scheme: light dark; }
+
+/* Comment reply / edit boxes ease in (src/scripts/comments.ts). */
+.comment-panel:not([hidden]) { animation: panel-in 0.18s ease-out; }
+@keyframes panel-in { from { opacity: 0; transform: translateY(-3px); } }
+@media (prefers-reduced-motion: reduce) { .comment-panel:not([hidden]) { animation: none; } }

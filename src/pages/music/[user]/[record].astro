@@ -137,6 +137,7 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
 
 <script>
   // The owner's visit finishes any missing tracklists (see src/music/sync.ts); others skip it quickly.
+  import '../../../scripts/comments';
   import { autoSync } from '../../../music/sync';
   const progress = document.getElementById('sync-progress');
   if (progress) autoSync((message) => (progress.textContent = message));
