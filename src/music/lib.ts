@@ -268,3 +268,43 @@ export const streamingSearch = (query: string) => ({
   apple: `https://music.apple.com/search?term=${encodeURIComponent(query)}`,
   youtube: `https://music.youtube.com/search?q=${encodeURIComponent(query)}`,
 });
+
+/** Every editable value as Discogs gives it (the owner's edits override these, key by key). */
+export function recordDefaults(r: ShelfRecord, d: ReleaseDetail | null): Overrides {
+  return {
+    artist: r.artist,
+    title: r.title,
+    released: d?.firstReleased ?? (d?.originalYear ? String(d.originalYear) : ''),
+    vinylRelease: d?.released ?? (r.year ? String(r.year) : ''),
+    genre: r.genres.join(', '),
+    style: (r.styles ?? []).join(', '),
+    label: r.labels,
+    format: r.format,
+    country: d?.country ?? '',
+    tracklist: tracklistToText(d?.tracklist ?? []),
+    spotify: '',
+    apple: '',
+    youtube: '',
+    ...Object.fromEntries(r.fields.map((f) => [`field:${f.name}`, f.value])),
+  };
+}
+
+/** What visitors see: the owner's edit where there is one, else Discogs. Edits of keys Discogs no longer has are dropped. */
+export const recordValues = (defaults: Overrides, overrides: Overrides): Overrides =>
+  ({ ...defaults, ...Object.fromEntries(Object.entries(overrides).filter(([k]) => k in defaults)) });
+
+/** A date shown as Discogs writes it ("2016-01-08" → "January 8, 2016"), anything else as typed. */
+export const displayDate = (value: string) => (/^\d{4}(-\d{2}){0,2}$/.test(value) ? formatReleased(value) : value) || null;
+
+/** The shelf's view of a record: edited artist/title/genres and the first release year for the "Released" filter. */
+export function shelfView(r: ShelfRecord, d: ReleaseDetail | null, overrides: Overrides) {
+  const v = recordValues(recordDefaults(r, d), overrides);
+  return {
+    ...r,
+    artist: v.artist,
+    title: v.title,
+    // Discogs genres can contain commas ("Folk, World, & Country"): only an owner-typed genre is split on them.
+    genres: 'genre' in overrides ? v.genre.split(',').map((g) => g.trim()).filter(Boolean) : r.genres,
+    releasedYear: Number(v.released.match(/\b(1[89]|20)\d{2}\b/)?.[0]) || null,
+  };
+}

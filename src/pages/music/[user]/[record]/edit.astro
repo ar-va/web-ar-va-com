@@ -1,0 +1,108 @@
+---
+// The owner's edit form for one record. Discogs' values stay underneath: each edited field shows the Discogs value
+// (to the owner only) with a Revert button. An empty field means "use Discogs".
+export const prerender = false;
+import Layout from '../../../../layouts/Layout.astro';
+import { loginHref, musicPath, recordDefaults, safeStreamingUrl, type Overrides } from '../../../../music/lib';
+import { cachedRelease } from '../../../../music/discogs';
+import { currentUser, recordOverrides, saveOverrides, shelfOwner, shelfRecord } from '../../../../music/store';
+
+const instanceId = Number(Astro.params.record);
+const [user, owner] = await Promise.all([currentUser(Astro.cookies), shelfOwner(Astro.params.user!)]);
+const recordPath = musicPath(Astro.url).replace(/\/edit$/, '');
+if (!user) return Astro.redirect(loginHref(Astro.url));
+const record = owner && user.id === owner.id && Number.isSafeInteger(instanceId) ? await shelfRecord(owner.id, instanceId) : null;
+if (!record) return Astro.redirect(recordPath);
+
+const detail = await cachedRelease(record.releaseId);
+const defaults = recordDefaults(record, detail);
+let overrides: Overrides = await recordOverrides(owner!.id, instanceId);
+const errors: Record<string, string> = {};
+const links = { spotify: 'Spotify', apple: 'Apple Music', youtube: 'YouTube Music' } as const;
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const revert = String(form.get('revert') ?? '');
+  const next: Overrides = {};
+  if (revert !== '*') {
+    for (const key of Object.keys(defaults)) {
+      const value = String(form.get(key) ?? '').replace(/\r\n/g, '\n').trim().slice(0, 5000);
+      if (!value || value === defaults[key] || key === revert) continue;
+      if (key in links && !safeStreamingUrl(value, key as keyof typeof links)) {
+        errors[key] = `Paste a link from ${links[key as keyof typeof links]} (https://…).`;
+        continue;
+      }
+      next[key] = value;
+    }
+  }
+  if (Object.keys(errors).length === 0) {
+    await saveOverrides(owner!.id, instanceId, next);
+    return Astro.redirect(`${recordPath}/edit?saved`, 303);
+  }
+  overrides = next;
+}
+
+const values = { ...defaults, ...overrides };
+const fields: { key: string; label: string; hint?: string; multiline?: boolean }[] = [
+  { key: 'artist', label: 'Artist' },
+  { key: 'title', label: 'Album' },
+  { key: 'released', label: 'Released', hint: 'When the album first came out. A date like 2016-01-08 is shown as “January 8, 2016”; anything else as typed.' },
+  { key: 'vinylRelease', label: 'Vinyl release', hint: 'When this pressing came out.' },
+  { key: 'genre', label: 'Genre', hint: 'Comma-separated; used by the Genres filter on the shelf.' },
+  { key: 'style', label: 'Style' },
+  { key: 'label', label: 'Label' },
+  { key: 'format', label: 'Format' },
+  { key: 'country', label: 'Country' },
+  ...Object.keys(defaults).filter((k) => k.startsWith('field:')).map((k) => ({ key: k, label: k.slice(6), hint: 'One of your Discogs collection fields.', multiline: defaults[k].length > 60 })),
+  { key: 'tracklist', label: 'Tracklist', hint: 'One track per line: A1 | Title | 4:52. A line like “## Side B” adds a heading.', multiline: true },
+  ...Object.entries(links).map(([key, name]) => ({ key, label: `${name} link`, hint: `The album on ${name}. Empty: the ${name} icon searches for it.` })),
+];
+const input = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-4 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 transition-colors';
+const edited = Object.keys(overrides).length;
+---
+<Layout title={`Edit ${values.title} - ARVA`}>
+  <div class="max-w-3xl mx-auto px-6 w-full flex-grow py-24">
+    <a href={recordPath} class="text-sm text-zinc-500 hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors">← Back to the record</a>
+    <h1 class="mt-6 text-2xl font-bold text-zinc-900 dark:text-white">Edit {values.title}<span class="text-blue-violet-500">.</span></h1>
+    <p class="mt-2 mb-8 text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">Everything starts from Discogs. What you change here is what visitors see; Discogs’ value stays underneath (only you see it) so you can go back any time.</p>
+
+    {Astro.url.searchParams.has('saved') && Object.keys(errors).length === 0 && (
+      <p class="mb-6 rounded-xl border border-blue-violet-200 dark:border-blue-violet-900 bg-blue-violet-50 dark:bg-blue-violet-500/10 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300" role="status">Saved. <a href={recordPath} class="underline underline-offset-4">See the record →</a></p>
+    )}
+
+    <form method="post" class="flex flex-col gap-6">
+      <!-- Enter in a field submits with the form's first button: make that Save, not a Revert. -->
+      <button class="sr-only" tabindex="-1" aria-hidden="true">Save</button>
+      {fields.map((f) => {
+        const changed = f.key in overrides;
+        const original = defaults[f.key];
+        return (
+          <div>
+            <label for={`f-${f.key}`} class="flex items-center gap-2 text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-1.5">
+              {f.label}
+              {changed && <span class="text-[10px] font-bold tracking-widest uppercase text-blue-violet-600 dark:text-blue-violet-400">Edited</span>}
+            </label>
+            {f.multiline
+              ? <textarea id={`f-${f.key}`} name={f.key} rows={f.key === 'tracklist' ? Math.min(24, Math.max(6, values[f.key].split('\n').length + 1)) : 4} class={`${input} font-normal leading-relaxed ${f.key === 'tracklist' ? 'font-mono text-sm' : ''}`}>{values[f.key]}</textarea>
+              : <input id={`f-${f.key}`} name={f.key} value={values[f.key]} class={input} inputmode={f.key in links ? 'url' : undefined} aria-invalid={errors[f.key] ? 'true' : undefined} />}
+            {errors[f.key] && <p class="mt-1.5 text-sm text-red-600 dark:text-red-400" role="alert">{errors[f.key]}</p>}
+            {changed ? (
+              <div class="mt-1.5 flex items-start justify-between gap-4 text-xs text-zinc-500">
+                <span class="min-w-0 whitespace-pre-line break-words line-clamp-4">Discogs: {original || '(empty)'}</span>
+                <button name="revert" value={f.key} class="shrink-0 font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Revert</button>
+              </div>
+            ) : (
+              f.hint && <p class="mt-1.5 text-xs text-zinc-500">{f.hint}</p>
+            )}
+          </div>
+        );
+      })}
+
+      <div class="flex flex-wrap items-center gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">
+        <button class="bg-blue-violet-500 text-white text-sm font-medium px-6 py-2.5 rounded-full hover:bg-blue-violet-600 transition-colors">Save</button>
+        {edited > 0 && <button name="revert" value="*" class="text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-red-600 dark:hover:text-red-400 px-4 py-2 rounded-full transition-colors" onclick="return confirm('Undo all your edits to this record and use Discogs’ data again?')">Revert all ({edited})</button>}
+        <a href={recordPath} class="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white px-2 transition-colors">Cancel</a>
+      </div>
+    </form>
+  </div>
+</Layout>

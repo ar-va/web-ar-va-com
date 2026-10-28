@@ -22,9 +22,10 @@ const { title, description } = Astro.props;
     <!-- Single, optimized theme script to prevent flashing -->
     <script is:inline>
       const theme = (() => {
-        if (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) {
-          return localStorage.getItem('theme');
-        }
+        // A cookie for the whole site (ar-va.com and music.ar-va.com), set by ThemeToggle; then the older per-site choice.
+        const saved = document.cookie.match(/(?:^|; )theme=(dark|light)/);
+        if (saved) return saved[1];
+        try { if (localStorage.getItem('theme')) return localStorage.getItem('theme'); } catch {}
         if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
           return 'dark';
         }

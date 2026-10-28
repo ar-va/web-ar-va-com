@@ -59,6 +59,20 @@ export async function finishConnect(token: string, verifier: string) {
   await site({ action: 'username', username });
 }
 
+type Missing = { releaseId: number; masterId: number };
+
+/** Tracklist, dates and the first release date (the master's main release) for each listed release. */
+async function syncDetails(missing: Missing[], progress: (message: string) => void, prefix = '') {
+  const waiting = () => progress('Discogs asked to slow down; continuing in a minute…');
+  for (const [i, m] of missing.entries()) {
+    progress(`${prefix}Adding tracklists and release dates: ${i + 1} of ${missing.length}…`);
+    const release = await signedGet(`/releases/${m.releaseId}`, waiting);
+    const master = m.masterId ? await signedGet(`/masters/${m.masterId}`, waiting).catch(() => null) : null;
+    const main = master?.main_release && master.main_release !== m.releaseId ? await signedGet(`/releases/${master.main_release}`, waiting).catch(() => null) : release;
+    await site({ action: 'release', release, masterYear: master?.year ?? null, firstReleased: (master ? main?.released : null) ?? null });
+  }
+}
+
 /** Copies the collection to the site, then fetches details for releases the site doesn't have yet. */
 export async function syncShelf(progress: (message: string) => void = () => {}) {
   const { username } = await site({ action: 'status' });
@@ -73,23 +87,26 @@ export async function syncShelf(progress: (message: string) => void = () => {}) 
     releases.push(...data.releases);
   }
   const { count, missing } = await site({ action: 'collection', fields, releases });
-  for (const [i, m] of (missing as { releaseId: number; masterId: number }[]).entries()) {
-    progress(`${count} records on the shelf. Adding tracklists: ${i + 1} of ${missing.length}…`);
-    const release = await signedGet(`/releases/${m.releaseId}`, waiting);
-    const master = m.masterId ? await signedGet(`/masters/${m.masterId}`, waiting).catch(() => null) : null;
-    await site({ action: 'release', release, masterYear: master?.year ?? null });
-  }
+  await syncDetails(missing, progress, `${count} records on the shelf. `);
   progress(`${count} records on the shelf. Everything is up to date.`);
 }
 
-/** On music pages: a logged-in collector's visit quietly re-syncs their shelf every half hour or so. */
-export async function autoSync() {
+/**
+ * On music pages: a logged-in collector's visit re-syncs the collection every half hour or so, and in between
+ * finishes any tracklists an earlier sync didn't get to (e.g. the tab was closed).
+ */
+export async function autoSync(progress: (message: string) => void = () => {}) {
   const skip = 'no-autosync';
   try {
     if (!/(?:^|; )who=/.test(document.cookie) || sessionStorage.getItem(skip)) return;
     const status = await site({ action: 'status' });
     if (!status.username) return sessionStorage.setItem(skip, '1');
-    if (!status.syncedAt || Date.now() / 1000 - status.syncedAt > 1800) await syncShelf();
+    if (!status.syncedAt || Date.now() / 1000 - status.syncedAt > 1800) return await syncShelf(progress);
+    const { missing } = await site({ action: 'missing' });
+    if (missing.length) {
+      await syncDetails(missing, progress);
+      progress('Everything is up to date. Reload to see it.');
+    }
   } catch {
     // Not a collector (403), or Discogs/network trouble: stop trying for this tab; "Sync now" shows errors.
     try { sessionStorage.setItem(skip, '1'); } catch {}

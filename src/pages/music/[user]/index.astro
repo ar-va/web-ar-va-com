@@ -2,10 +2,12 @@
 export const prerender = false;
 import Layout from '../../../layouts/Layout.astro';
 import Shelf from '../../../components/music/Shelf.astro';
-import { listShelves, shelfOwner, shelfRecords } from '../../../music/store';
+import { listShelves, shelfOverrides, shelfOwner, shelfRecords, shelfReleases } from '../../../music/store';
+import { shelfView } from '../../../music/lib';
 
 const [owner, shelves] = await Promise.all([shelfOwner(Astro.params.user!), listShelves()]);
-const records = owner ? await shelfRecords(owner.id) : [];
+const [raw, overrides, releases] = owner ? await Promise.all([shelfRecords(owner.id), shelfOverrides(owner.id), shelfReleases(owner.id)]) : [[], new Map(), new Map()];
+const records = raw.map((r) => shelfView(r, releases.get(r.releaseId) ?? null, overrides.get(r.instanceId) ?? {}));
 if (!owner) Astro.response.status = 404;
 ---
 <Layout title={owner ? `${owner.name}’s records - ARVA` : 'Not found - ARVA'} description={owner ? `${records.length} vinyl records on ${owner.name}’s shelf.` : undefined}>

@@ -19,15 +19,28 @@
   --color-blue-violet-950: #1b1a4c;
 }
 /* ---- Music shelf (music.ar-va.com) ---- */
+/* Each row is a ledge: a lit top surface the sleeves stand on, a darker front edge, and a soft wall behind. */
 :root {
-  --plank-top: #fafafa;
-  --plank: #e4e4e7;
-  --plank-edge: #a1a1aa;
+  --wall-top: rgb(24 24 27 / 0.015);
+  --wall: rgb(24 24 27 / 0.06);
+  --ledge-top: #f4f4f5;
+  --ledge-top-2: #e2e2e6;
+  --ledge-lip: #ffffff;
+  --ledge-edge: #d4d4d8;
+  --ledge-edge-2: #b9b9c1;
+  --ledge-shadow: rgb(0 0 0 / 0.18);
+  --glow-strength: 45%;
 }
 .dark {
-  --plank-top: #3f3f46;
-  --plank: #27272a;
-  --plank-edge: #0a0a0a;
+  --wall-top: rgb(255 255 255 / 0.012);
+  --wall: rgb(255 255 255 / 0.05);
+  --ledge-top: #45454c;
+  --ledge-top-2: #2e2e33;
+  --ledge-lip: #55555d;
+  --ledge-edge: #202024;
+  --ledge-edge-2: #141417;
+  --ledge-shadow: rgb(0 0 0 / 0.7);
+  --glow-strength: 80%;
 }
 
 .shelf {
@@ -35,29 +48,45 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
   column-gap: var(--gap);
-  row-gap: 3.5rem;
-  padding: 0 calc(var(--gap) / 2) 1rem;
+  row-gap: 4.5rem;
+  padding: 1.25rem calc(var(--gap) / 2) 1.5rem;
+  isolation: isolate;
 }
 @media (min-width: 640px) {
   .shelf { grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); }
 }
 .shelf-slot { position: relative; }
-/* Each slot draws its piece of the plank, reaching half a gap to both sides, so a row reads as one board. */
+/* Each slot draws its piece of wall and ledge, reaching half a gap to both sides, so a row reads as one shelf. */
+.shelf-slot::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -1.25rem calc(var(--gap) / -2) 0;
+  /* the back of the shelf unit: light falls on it from above, darker towards the ledge */
+  background: linear-gradient(to bottom, var(--wall-top), var(--wall));
+}
 .shelf-slot::after {
   content: '';
   position: absolute;
-  top: 100%;
+  z-index: -1;
+  top: calc(100% - 7px);
   left: calc(var(--gap) / -2);
   right: calc(var(--gap) / -2);
-  height: 0.75rem;
-  background: linear-gradient(to bottom, var(--plank-top) 0 2px, var(--plank) 2px, var(--plank-edge));
-  box-shadow: 0 12px 14px -10px rgb(0 0 0 / 0.45);
+  height: 28px;
+  /* top surface in front of the sleeves, a lit lip, then the front edge */
+  background: linear-gradient(to bottom, var(--ledge-top), var(--ledge-top-2) 17px, var(--ledge-lip) 17px 18px, var(--ledge-edge) 18px, var(--ledge-edge-2));
+  box-shadow: 0 20px 22px -14px var(--ledge-shadow);
 }
 
-.sleeve { isolation: isolate; }
+.sleeve {
+  --vinyl: #131316;
+  --glow: color-mix(in srgb, var(--vinyl) 40%, var(--color-blue-violet-400));
+  isolation: isolate;
+}
 .sleeve-face {
   z-index: 1;
-  box-shadow: 0 1px 1px rgb(0 0 0 / 0.08), 8px -2px 16px -8px rgb(0 0 0 / 0.4);
+  /* contact shadow on the ledge + a soft one on the wall */
+  box-shadow: 0 5px 6px -3px rgb(0 0 0 / 0.35), 8px -2px 16px -8px rgb(0 0 0 / 0.35);
   transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .disc {
@@ -66,21 +95,35 @@
   z-index: 0;
   border-radius: 9999px;
   background:
-    radial-gradient(circle, #111 0 2%, var(--color-blue-violet-500) 2.5% 16%, #0b0b0b 16.5% 18%, transparent 18.5%),
-    repeating-radial-gradient(circle, #141414 0 1px, #232323 1px 3px);
-  transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+    radial-gradient(circle, #111 0 2%, var(--color-blue-violet-500) 2.5% 16%, rgb(0 0 0 / 0.45) 16.5% 18%, transparent 18.5%),
+    conic-gradient(from 20deg, transparent 0 8%, rgb(255 255 255 / 0.16) 13%, transparent 19% 58%, rgb(255 255 255 / 0.11) 63%, transparent 69%),
+    repeating-radial-gradient(circle, var(--vinyl) 0 1px, color-mix(in srgb, var(--vinyl) 85%, white) 1px 3px);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.05);
+  transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.45s;
 }
-/* Pulled up out of the sleeve, as you would from a real shelf. */
+/* Pulled up out of the sleeve, as you would from a real shelf, with a glow in the vinyl's colour. */
 .shelf-record:hover .disc,
-.shelf-record:focus-visible .disc { transform: translateY(-26%); }
+.shelf-record:focus-visible .disc {
+  transform: translateY(-26%);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08), 0 0 22px 3px color-mix(in srgb, var(--glow) var(--glow-strength), transparent);
+}
 .shelf-record:hover .sleeve-face,
 .shelf-record:focus-visible .sleeve-face { transform: translateY(-3px); }
 .shelf-record:focus-visible { outline: 2px solid var(--color-blue-violet-500); outline-offset: 4px; }
-/* Record page: the disc rests half out of the sleeve. */
-.sleeve-open .disc { transform: translateX(34%) rotate(20deg); }
+
+/* Record page: the vinyl rolls halfway out of the sleeve once, then rests there. */
+.sleeve-open .disc {
+  transform: translateX(38%) rotate(300deg);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08), 0 0 28px 4px color-mix(in srgb, var(--glow) var(--glow-strength), transparent);
+  animation: roll-out 1.6s cubic-bezier(0.2, 0.7, 0.2, 1) 0.25s both;
+}
+@keyframes roll-out {
+  from { transform: translateX(0) rotate(0deg); box-shadow: 0 0 0 1px rgb(255 255 255 / 0.05); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .disc, .sleeve-face { transition: none; }
+  .sleeve-open .disc { animation: none; }
 }
 
 /* Telegram's login button page says `color-scheme: light dark` (follows the OS). This site switches theme with a

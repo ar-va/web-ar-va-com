@@ -1,11 +1,11 @@
 ---
 // A collector's shelf: latest addition, year/genre filters and search (same look as Writing.astro), then the covers on shelves.
 import Cover from './Cover.astro';
-import { formatReleased, type ShelfRecord } from '../../music/lib';
+import { formatReleased, type shelfView } from '../../music/lib';
 
 interface Props {
   owner: { name: string; discogs_username: string };
-  records: ShelfRecord[];
+  records: ReturnType<typeof shelfView>[];
   shelves: { name: string; discogs_username: string; count: number }[];
 }
 const { owner, records, shelves } = Astro.props;
@@ -20,6 +20,9 @@ const count = <T extends string>(values: T[]) => {
   return m;
 };
 const years = [...count(records.map((r) => r.added.slice(0, 4)))].sort(([a], [b]) => b.localeCompare(a));
+// Released: decades first; clicking one shows its years (like the blog's year → month).
+const decades = [...count(records.filter((r) => r.releasedYear).map((r) => `${Math.floor(r.releasedYear! / 10) * 10}s`))].sort(([a], [b]) => a.localeCompare(b));
+const releasedYears = (decade: string) => [...count(records.filter((r) => r.releasedYear && `${Math.floor(r.releasedYear / 10) * 10}s` === decade).map((r) => String(r.releasedYear)))].sort(([a], [b]) => a.localeCompare(b));
 const genres = [...count(records.flatMap((r) => r.genres.map((g) => g.toLowerCase())))].sort(([a], [b]) => a.localeCompare(b));
 const others = shelves.filter((s) => s.discogs_username !== owner.discogs_username);
 
@@ -30,7 +33,10 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
 
 <div id="shelf" class="font-normal">
   <div class="flex justify-between items-center mb-2 gap-4">
-    <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">{owner.name}’s records<span class="text-blue-violet-500">.</span></h1>
+    <div class="min-w-0">
+      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">{owner.name}’s records<span class="text-blue-violet-500">.</span></h1>
+      <p id="sync-progress" class="text-xs text-zinc-500 empty:hidden" role="status" aria-live="polite"></p>
+    </div>
     <a href={`https://www.discogs.com/user/${encodeURIComponent(owner.discogs_username)}/collection`} class="shrink-0 text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 px-4 py-2 rounded-full transition-colors">On Discogs →</a>
   </div>
 
@@ -62,6 +68,19 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
         </div>
       </section>
 
+      {decades.length > 0 && (
+        <section class="mb-2">
+          <h2 class="text-zinc-500 text-sm">Released</h2>
+          <div class="leading-8 text-base">
+            {decades.map(([decade, n], i) => (
+              <span class="decade-block inline" data-decade-group={decade}><button type="button" data-decade={decade} class={`decade-btn ${btn}`}><span class={btnLabel}>{decade}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button><span class="decade-years hidden"><span class="text-zinc-500 dark:text-zinc-400 mr-1.5">:</span>{releasedYears(decade).map(([y, m], j, all) => (
+                <span class="inline whitespace-nowrap"><button type="button" data-released={y} class={`released-btn ${btn}`}><span class={btnLabel}>{y}</span><span class="text-zinc-500 dark:text-zinc-400"> ({m})</span></button>{j < all.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
+              ))}</span>{i < decades.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mx-1.5">·</span>}</span>
+            ))}
+          </div>
+        </section>
+      )}
+
       <section>
         <h2 class="text-zinc-500 text-sm">Genres</h2>
         <div class="leading-8 text-base">
@@ -87,6 +106,7 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
           {records.map((r, i) => (
             <li class="shelf-slot"
               data-year={r.added.slice(0, 4)}
+              data-released={r.releasedYear ?? ''}
               data-genres={r.genres.map((g) => g.toLowerCase()).join('|')}
               data-search={[r.artist, r.title, r.labels, r.year, ...r.genres, ...(r.styles ?? []), ...r.fields.map((f) => f.value)].join(' ').toLowerCase()}>
               <a href={`${base}/${r.instanceId}`} class="shelf-record block" title={`${r.artist} – ${r.title}`}>
@@ -122,7 +142,8 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
 
 <script>
   import { autoSync } from '../../music/sync';
-  autoSync();
+  const progress = document.getElementById('sync-progress');
+  autoSync((message) => { if (progress) progress.textContent = message; });
 
   const slots = [...document.querySelectorAll<HTMLElement>('.shelf-slot')];
   const search = document.getElementById('record-search') as HTMLInputElement | null;
@@ -130,6 +151,8 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
   const infoText = document.getElementById('filter-info-text')!;
   const years = new Set<string>();
   const genres = new Set<string>();
+  const decades = new Set<string>();
+  const released = new Set<string>();
 
   function apply() {
     const words = (search?.value ?? '').toLowerCase().split(/\s+/).filter(Boolean);
@@ -137,23 +160,35 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
     for (const slot of slots) {
       const d = slot.dataset;
       const own = (d.genres ?? '').split('|');
+      const rel = d.released ?? '';
+      const decade = rel ? `${rel.slice(0, 3)}0s` : '';
+      // A decade with some years picked filters by those years; without, by the whole decade.
+      const pickedInDecade = [...released].some((y) => `${y.slice(0, 3)}0s` === decade);
       const ok = (years.size === 0 || years.has(d.year!))
+        && (decades.size === 0 || (decades.has(decade) && (!pickedInDecade || released.has(rel))))
         && [...genres].every((g) => own.includes(g))
         && words.every((w) => d.search!.includes(w));
       slot.hidden = !ok;
       if (ok) shown++;
     }
-    const filtering = words.length > 0 || years.size > 0 || genres.size > 0;
+    const filtering = words.length > 0 || years.size > 0 || genres.size > 0 || decades.size > 0;
     info.classList.toggle('hidden', !filtering);
     info.classList.toggle('flex', filtering);
     infoText.textContent = shown === 0 ? 'No matching records.' : `Showing ${shown} of ${slots.length}.`;
   }
 
-  function toggle(set: Set<string>, attr: 'year' | 'genre') {
+  function toggle(set: Set<string>, attr: 'year' | 'genre' | 'decade' | 'released') {
     return (e: Event) => {
       const btn = e.currentTarget as HTMLElement;
       const value = btn.dataset[attr]!;
       set.has(value) ? set.delete(value) : set.add(value);
+      if (attr === 'decade') {
+        btn.closest('.decade-block')!.querySelector('.decade-years')!.classList.toggle('hidden', !set.has(value));
+        if (!set.has(value)) [...released].filter((y) => `${y.slice(0, 3)}0s` === value).forEach((y) => {
+          released.delete(y);
+          document.querySelector(`.released-btn[data-released="${y}"]`)?.classList.remove('active-tag');
+        });
+      }
       document.querySelectorAll<HTMLElement>(`.${attr}-btn[data-${attr}="${CSS.escape(value)}"]`).forEach((b) => b.classList.toggle('active-tag', set.has(value)));
       apply();
     };
@@ -161,10 +196,15 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
 
   document.querySelectorAll('.year-btn').forEach((b) => b.addEventListener('click', toggle(years, 'year')));
   document.querySelectorAll('.genre-btn').forEach((b) => b.addEventListener('click', toggle(genres, 'genre')));
+  document.querySelectorAll('.decade-btn').forEach((b) => b.addEventListener('click', toggle(decades, 'decade')));
+  document.querySelectorAll('.released-btn').forEach((b) => b.addEventListener('click', toggle(released, 'released')));
   search?.addEventListener('input', apply);
   document.getElementById('clear-filters')?.addEventListener('click', () => {
     years.clear();
     genres.clear();
+    decades.clear();
+    released.clear();
+    document.querySelectorAll('.decade-years').forEach((y) => y.classList.add('hidden'));
     if (search) search.value = '';
     document.querySelectorAll('.active-tag').forEach((b) => b.classList.remove('active-tag'));
     apply();

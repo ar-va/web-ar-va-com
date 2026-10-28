@@ -1,13 +1,14 @@
 ---
-// One record: Discogs details, the collector's public Discogs fields, tracklist, and comments (Telegram login).
+// One record: Discogs details (with the owner's edits), public Discogs fields, tracklist with listening links, comments.
 export const prerender = false;
 import Layout from '../../../layouts/Layout.astro';
 import Cover from '../../../components/music/Cover.astro';
 import LoginButton from '../../../components/LoginButton.astro';
 import CommentThread from '../../../components/CommentThread.astro';
-import { formatReleased, loginHref, musicPath } from '../../../music/lib';
+import Listen from '../../../components/music/Listen.astro';
+import { displayDate, formatReleased, loginHref, musicPath, recordDefaults, recordValues, textToTracklist } from '../../../music/lib';
 import { cachedRelease } from '../../../music/discogs';
-import { addComment, canDeleteComment, currentUser, deleteComment, listComments, shelfOwner, shelfRecord } from '../../../music/store';
+import { addComment, canDeleteComment, currentUser, deleteComment, listComments, recordOverrides, shelfOwner, shelfRecord } from '../../../music/store';
 
 const instanceId = Number(Astro.params.record);
 const [user, owner] = await Promise.all([currentUser(Astro.cookies), shelfOwner(Astro.params.user!)]);
@@ -30,44 +31,55 @@ if (owner && record && Astro.request.method === 'POST') {
 }
 
 if (!owner || !record) Astro.response.status = 404;
-const [detail, comments] = owner && record
-  ? await Promise.all([cachedRelease(record.releaseId), listComments(thread)])
-  : [null, []];
+const [detail, comments, overrides] = owner && record
+  ? await Promise.all([cachedRelease(record.releaseId), listComments(thread), recordOverrides(owner.id, instanceId)])
+  : [null, [], {}];
+const v = record ? recordValues(recordDefaults(record, detail), overrides) : {};
+const tracks = record ? textToTracklist(v.tracklist) : [];
+const isOwner = !!user && user.id === owner?.id;
 
 const shelfPath = owner ? `/${encodeURIComponent(owner.discogs_username!)}` : '/';
 
 const rows: [string, string | null | undefined][] = record ? [
-  ['Artist', record.artist],
-  ['Album', record.title],
-  ['Released', detail?.originalYear ? String(detail.originalYear) : null],
-  ['Vinyl release', formatReleased(detail?.released ?? null) ?? (record.year ? String(record.year) : null)],
-  ['Genre', record.genres.join(', ')],
-  ['Style', (record.styles ?? []).join(', ')],
-  ['Label', record.labels],
-  ['Format', record.format],
-  ['Country', detail?.country],
+  ['Artist', v.artist],
+  ['Album', v.title],
+  ['Released', displayDate(v.released)],
+  ['Vinyl release', displayDate(v.vinylRelease)],
+  ['Genre', v.genre],
+  ['Style', v.style],
+  ['Label', v.label],
+  ['Format', v.format],
+  ['Country', v.country],
   ['Added to collection', formatReleased(record.added.slice(0, 10))],
-  ...record.fields.map((f) => [f.name, f.value] as [string, string]),
+  ...Object.entries(v).filter(([k]) => k.startsWith('field:')).map(([k, value]) => [k.slice(6), value] as [string, string]),
 ] : [];
 const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoration-blue-violet-500/30 hover:decoration-blue-violet-500 underline-offset-4 transition-colors';
 ---
-<Layout title={record ? `${record.title} by ${record.artist} - ARVA` : 'Not found - ARVA'} description={record ? `${record.artist} – ${record.title}, on ${owner!.name}’s shelf.` : undefined}>
+<Layout title={record ? `${v.title} by ${v.artist} - ARVA` : 'Not found - ARVA'} description={record ? `${v.artist} – ${v.title}${v.released ? ` (${displayDate(v.released)})` : ''}, on ${owner!.name}’s shelf.` : undefined}>
   {!record || !owner ? (
     <div class="max-w-3xl mx-auto px-6 w-full flex-grow py-24">
       <p class="text-zinc-500">This record isn’t on the shelf (any more). <a href={shelfPath} class={link}>Back to the shelf →</a></p>
     </div>
   ) : (
     <article class="max-w-3xl mx-auto px-6 w-full flex-grow py-24">
-      <a href={shelfPath} class="text-sm text-zinc-500 hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors">← {owner.name}’s records</a>
+      <div class="flex items-center justify-between gap-4">
+        <a href={shelfPath} class="text-sm text-zinc-500 hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors">← {owner.name}’s records</a>
+        {isOwner && <a href={`${path}/edit`} class="text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 px-4 py-2 rounded-full transition-colors">Edit</a>}
+      </div>
+      {isOwner && <p id="sync-progress" class="text-xs text-zinc-500 empty:hidden mt-2" role="status" aria-live="polite"></p>}
 
       <header class="mt-8 mb-12 border-b border-zinc-200 dark:border-zinc-800 pb-10 flex flex-col sm:flex-row sm:items-end gap-8 sm:gap-24">
         <Cover record={record} eager class="sleeve-open w-48 sm:w-44 shrink-0" />
         <div class="min-w-0">
           <div class="flex items-center gap-4 mb-3">
             <div class="w-6 h-[2px] bg-blue-violet-500 shrink-0"></div>
-            <span class="text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400">{record.artist}</span>
+            <span class="text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400">{v.artist}</span>
           </div>
-          <h1 class="text-4xl font-bold text-zinc-900 dark:text-white leading-tight">{record.title}</h1>
+          <h1 class="text-4xl font-bold text-zinc-900 dark:text-white leading-tight">{v.title}</h1>
+          <div class="mt-4 flex items-center gap-3 text-sm text-zinc-500">
+            <span>Listen</span>
+            <Listen size="md" query={`${v.artist} ${v.title}`} label={`Listen to ${v.title}`} links={{ spotify: v.spotify, apple: v.apple, youtube: v.youtube }} />
+          </div>
         </div>
       </header>
 
@@ -80,21 +92,24 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
         ))}
       </dl>
 
-      {detail && detail.tracklist.length > 0 && (
+      {tracks.length > 0 ? (
         <section class="mt-12">
           <h2 class="text-zinc-500 text-sm mb-2">Tracklist</h2>
           <ol>
-            {detail.tracklist.map((t) => t.heading ? (
+            {tracks.map((t) => t.heading ? (
               <li class="pt-5 pb-1 text-xs font-bold tracking-widest uppercase text-zinc-500">{t.title}</li>
             ) : (
               <li class="flex gap-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/40 last:border-none">
                 <span class="w-8 shrink-0 text-sm text-zinc-500 tabular-nums pt-0.5">{t.position}</span>
-                <span class="flex-grow text-zinc-800 dark:text-zinc-200">{t.title}</span>
+                <span class="flex-grow min-w-0 text-zinc-800 dark:text-zinc-200">{t.title}</span>
                 {t.duration && <span class="text-sm text-zinc-500 tabular-nums pt-0.5">{t.duration}</span>}
+                <Listen query={`${v.artist} ${t.title}`} label={`Listen to ${t.title}`} />
               </li>
             ))}
           </ol>
         </section>
+      ) : (
+        <p class="mt-12 text-sm text-zinc-500">The tracklist arrives with the next sync from Discogs.</p>
       )}
 
       <p class="mt-8 text-sm text-zinc-500">
@@ -112,3 +127,10 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
     </article>
   )}
 </Layout>
+
+<script>
+  // The owner's visit finishes any missing tracklists (see src/music/sync.ts); others skip it quickly.
+  import { autoSync } from '../../../music/sync';
+  const progress = document.getElementById('sync-progress');
+  if (progress) autoSync((message) => (progress.textContent = message));
+</script>

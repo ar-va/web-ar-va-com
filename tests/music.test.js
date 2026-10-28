@@ -151,3 +151,24 @@ test('tracklist text round trip and streaming links', () => {
   assert.equal(safeStreamingUrl('http://music.apple.com/x', 'apple'), null);
   assert.ok(safeStreamingUrl('https://music.youtube.com/playlist?list=x', 'youtube'));
 });
+
+test('owner edits override Discogs key by key', async () => {
+  const { recordDefaults, recordValues, shelfView, displayDate } = await import('../src/music/lib.ts');
+  const r = { instanceId: 1, releaseId: 2, masterId: 3, artist: 'David Bowie', title: '★', year: 2026, cover: null, labels: 'ISO', format: 'Vinyl, LP', genres: ['Jazz', 'Rock'], styles: ['Art Rock'], added: '2026-10-14T00:00:00-07:00', rating: 0, fields: [{ name: 'Notes', value: 'Gift' }] };
+  const d = { released: '2026-07-24', originalYear: 2016, firstReleased: '2016-01-08', country: 'Germany', tracklist: [{ position: 'A1', title: 'Blackstar', duration: '9:57', heading: false }], uri: 'https://www.discogs.com/release/2' };
+  const defaults = recordDefaults(r, d);
+  assert.equal(defaults.released, '2016-01-08');
+  assert.equal(defaults.tracklist, 'A1 | Blackstar | 9:57');
+  assert.equal(defaults['field:Notes'], 'Gift');
+  const v = recordValues(defaults, { title: 'Blackstar', 'field:Gone': 'x', spotify: 'https://open.spotify.com/album/1' });
+  assert.equal(v.title, 'Blackstar');
+  assert.equal(v.artist, 'David Bowie');
+  assert.equal(v['field:Gone'], undefined);
+  assert.equal(displayDate('2016-01-08'), 'January 8, 2016');
+  assert.equal(displayDate('around 1975'), 'around 1975');
+  const s = shelfView(r, d, { genre: 'Jazz, Art Rock', released: 'January 1975' });
+  assert.deepEqual(s.genres, ['Jazz', 'Art Rock']);
+  assert.equal(s.releasedYear, 1975);
+  assert.equal(shelfView(r, null, {}).releasedYear, null);
+  assert.deepEqual(shelfView({ ...r, genres: ['Folk, World, & Country', 'Rock'] }, null, {}).genres, ['Folk, World, & Country', 'Rock']);
+});
