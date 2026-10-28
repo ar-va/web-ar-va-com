@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import { createCleanSlug, getReadingTime } from '../utils/helpers';
+import SortMenu from './SortMenu.astro';
 
 const allPosts = await getCollection('blog');
 const sortedPosts = allPosts
@@ -144,11 +145,7 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
     <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
       <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
         <h2 class="text-zinc-500 dark:text-zinc-500 text-sm m-0 shrink-0">All writing</h2>
-        <div class="text-sm" role="group" aria-label="Sort posts">
-          {[['new', 'New'], ['old', 'Old'], ['az', 'A–Z'], ['za', 'Z–A']].map(([key, label], i, all) => (
-            <span><button type="button" data-sort={key} aria-pressed={key === 'new' ? 'true' : 'false'} class={`sort-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white ${key === 'new' ? 'active-tag' : ''}`}><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 transition-colors">{label}</span></button>{i < all.length - 1 && <span class="text-zinc-400 dark:text-zinc-600 mx-1">·</span>}</span>
-          ))}
-        </div>
+        <SortMenu id="posts-sort" />
       </div>
       
       <div class="relative w-full sm:w-64">
@@ -236,13 +233,9 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
     const sorters: Record<string, (a: Element, b: Element) => number> = {
       new: (a, b) => byDate(b, a), old: byDate, az: byTitle, za: (a, b) => byTitle(b, a),
     };
-    document.querySelectorAll<HTMLElement>('.sort-btn').forEach((btn) => btn.addEventListener('click', () => {
-      [...posts].sort(sorters[btn.dataset.sort!]).forEach((p) => postsContainer?.appendChild(p));
-      document.querySelectorAll<HTMLElement>('.sort-btn').forEach((b) => {
-        b.classList.toggle('active-tag', b === btn);
-        b.setAttribute('aria-pressed', String(b === btn));
-      });
-    }));
+    document.getElementById('posts-sort')?.addEventListener('sort', (e) => {
+      [...posts].sort(sorters[(e as CustomEvent<string>).detail]).forEach((p) => postsContainer?.appendChild(p));
+    });
 
     let currentSearch = '';
     let activeTags = new Set();

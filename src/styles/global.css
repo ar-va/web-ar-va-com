@@ -106,12 +106,13 @@
   content: '';
   position: absolute;
   z-index: -1;
-  /* larger than the disc, so the light spills past its edge */
-  left: -30%;
-  right: -30%;
-  top: -70%;
-  height: 80%;
-  background: radial-gradient(ellipse 50% 85% at 50% 100%, color-mix(in srgb, var(--glow) var(--glow-strength), transparent) 38%, transparent 85%);
+  /* About the sleeve's width and fading out before every edge of this box (its bottom is hidden behind the
+     sleeve), so all that shows is a soft halo above the record's exposed edge, no hard lines. */
+  left: -10%;
+  right: -10%;
+  top: -62%;
+  height: 72%;
+  background: radial-gradient(ellipse 48% 80% at 50% 100%, color-mix(in srgb, var(--glow) calc(var(--glow-strength) * 0.8), transparent) 30%, transparent 92%);
   opacity: 0;
   transition: opacity 0.45s;
   pointer-events: none;

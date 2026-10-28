@@ -2,6 +2,7 @@
 // A collector's shelf: a featured latest record, filters (added, released, genres) and search like Writing.astro,
 // sorting, and two views of the records: on shelves, or listed like blog articles.
 import Cover from './Cover.astro';
+import SortMenu from '../SortMenu.astro';
 import { formatReleased, type shelfView } from '../../music/lib';
 
 interface Props {
@@ -27,7 +28,6 @@ const decades = [...count(records.filter((r) => r.releasedYear).map((r) => decad
 const releasedYears = (decade: string) => [...count(records.filter((r) => r.releasedYear && decadeOf(r.releasedYear) === decade).map((r) => String(r.releasedYear)))].sort(([a], [b]) => a.localeCompare(b));
 const genres = [...count(records.flatMap((r) => r.genres.map((g) => g.toLowerCase())))].sort(([a], [b]) => a.localeCompare(b));
 const others = shelves.filter((s) => s.slug !== owner.slug);
-const sorts = [['new', 'New'], ['old', 'Old'], ['az', 'A–Z'], ['za', 'Z–A']];
 
 // Filter buttons: the exact classes Writing.astro uses for tags and years.
 const btn = 'group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white';
@@ -111,11 +111,7 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
             <h2 class="text-zinc-500 text-sm m-0 shrink-0">All records ({records.length})</h2>
-            <div class="text-sm" role="group" aria-label="Sort records">
-              {sorts.map(([key, label], i) => (
-                <span><button type="button" data-sort={key} aria-pressed={key === 'new' ? 'true' : 'false'} class={`sort-btn ${btn} ${key === 'new' ? 'active-tag' : ''}`}><span class={btnLabel}>{label}</span></button>{i < sorts.length - 1 && <span class="text-zinc-400 dark:text-zinc-600 mx-1">·</span>}</span>
-              ))}
-            </div>
+            <SortMenu id="records-sort" />
             <div class="flex items-center gap-1" role="group" aria-label="View">
               <button type="button" data-view="shelf" aria-pressed="true" title="Shelf" class={`view-btn ${viewBtn}`}>
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1" /><rect x="13" y="4" width="7" height="7" rx="1" /><rect x="4" y="13" width="7" height="7" rx="1" /><rect x="13" y="13" width="7" height="7" rx="1" /></svg>
@@ -152,7 +148,7 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
         </ul>
 
         <!-- The same records listed like blog articles: date added · artist – title, genres on the right. -->
-        <ul id="records-list" class="hidden flex-col mt-2" role="list">
+        <ul id="records-list" hidden class="flex flex-col mt-2" role="list">
           {records.map((r) => (
             <li data-record={r.instanceId} class="flex items-center justify-between group py-2.5 gap-4 border-b border-zinc-100 dark:border-zinc-800/40 last:border-none">
               <div class="flex items-center min-w-0 flex-grow pr-4">
@@ -259,20 +255,16 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
     az: (a, b) => a.dataset.alpha!.localeCompare(b.dataset.alpha!),
     za: (a, b) => b.dataset.alpha!.localeCompare(a.dataset.alpha!),
   };
-  document.querySelectorAll<HTMLElement>('.sort-btn').forEach((b) => b.addEventListener('click', () => {
-    const order = [...slots].sort(compare[b.dataset.sort!]);
+  document.getElementById('records-sort')?.addEventListener('sort', (e) => {
+    const order = [...slots].sort(compare[(e as CustomEvent<string>).detail]);
     order.forEach((slot) => { grid?.appendChild(slot); const row = rows.get(slot.dataset.record!); if (row) list?.appendChild(row); });
-    document.querySelectorAll<HTMLElement>('.sort-btn').forEach((x) => {
-      x.classList.toggle('active-tag', x === b);
-      x.setAttribute('aria-pressed', String(x === b));
-    });
-  }));
+  });
 
-  // Shelf or list; the choice is remembered in this browser.
+  // Shelf or list; the choice is remembered in this browser. (The `hidden` attribute, not the class: .shelf's own
+  // display: grid outranks Tailwind's `hidden` class.)
   function setView(view: string) {
-    grid?.classList.toggle('hidden', view === 'list');
-    list?.classList.toggle('hidden', view !== 'list');
-    list?.classList.toggle('flex', view === 'list');
+    if (grid) grid.hidden = view === 'list';
+    if (list) list.hidden = view !== 'list';
     document.querySelectorAll<HTMLElement>('.view-btn').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.view === view)));
   }
   document.querySelectorAll<HTMLElement>('.view-btn').forEach((b) => b.addEventListener('click', () => {

@@ -136,13 +136,23 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
   const progress = document.getElementById('sync-progress');
   if (progress) autoSync((message) => (progress.textContent = message));
 
-  // Clicking the cover tucks the record back in and rolls it out again.
-  const sleeve = document.querySelector<HTMLElement>('#replay .sleeve');
-  document.getElementById('replay')?.addEventListener('click', () => {
-    if (!sleeve) return;
-    // Restart the roll-out and the light (the ::before animation follows the class).
-    sleeve.classList.remove('sleeve-open');
-    void sleeve.offsetWidth;
-    sleeve.classList.add('sleeve-open');
+  // Clicking the cover slides the record back into the sleeve, then rolls it out again (with the light).
+  // Taps while it moves are ignored, so it always plays to the end.
+  const replay = document.getElementById('replay');
+  const sleeve = replay?.querySelector<HTMLElement>('.sleeve');
+  const disc = sleeve?.querySelector<HTMLElement>('.disc');
+  let playing = false;
+  replay?.addEventListener('click', async () => {
+    if (!sleeve || !disc || playing || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    playing = true;
+    const out = { transform: 'translateX(38%) rotate(300deg)' }, inside = { transform: 'translateX(0) rotate(0deg)' };
+    const back = [disc.animate([out, inside], { duration: 700, easing: 'cubic-bezier(0.5, 0, 0.75, 0)', fill: 'forwards' }),
+      sleeve.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: 'forwards', pseudoElement: '::before' })];
+    await Promise.all(back.map((a) => a.finished));
+    const forth = [disc.animate([inside, out], { duration: 1600, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)', fill: 'forwards' }),
+      sleeve.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1600, easing: 'ease-out', fill: 'forwards', pseudoElement: '::before' })];
+    await Promise.all(forth.map((a) => a.finished));
+    [...back, ...forth].forEach((a) => a.cancel()); // the stylesheet holds the same resting state
+    playing = false;
   });
 </script>
