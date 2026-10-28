@@ -192,6 +192,33 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
   import { notesOnHover } from '../../scripts/notes';
   notesOnHover('#records-shelf .shelf-record');
 
+  // Records rise onto their shelf the first time they scroll into view (left to right along a row); whatever is
+  // on screen when the page opens just shows. Rows in the list view the same. None with reduced motion.
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches && 'IntersectionObserver' in window) {
+    const reveal = new IntersectionObserver((entries) => {
+      // Each row staggers left to right on its own, so a jump down the page doesn't leave lower rows waiting.
+      const inRow = new Map<number, number>();
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        const el = entry.target as HTMLElement;
+        reveal.unobserve(el);
+        const row = Math.round(entry.boundingClientRect.top);
+        const i = inRow.get(row) ?? 0;
+        inRow.set(row, i + 1);
+        el.style.animationDelay = `${Math.min(i, 8) * 70}ms`;
+        el.classList.replace('reveal-pending', 'reveal-in');
+        el.addEventListener('animationend', () => { el.classList.remove('reveal-in'); el.style.animationDelay = ''; }, { once: true });
+      }
+    }, { rootMargin: '0px 0px -6% 0px' });
+    for (const el of document.querySelectorAll<HTMLElement>('#records-shelf .shelf-record, #records-list > li')) {
+      // Already on screen, or in the hidden view (its box is empty): leave it as it is.
+      const box = el.getBoundingClientRect();
+      if (!box.height || box.top < innerHeight) continue;
+      el.classList.add('reveal-pending');
+      reveal.observe(el);
+    }
+  }
+
   // Share: copy the collection's link and say so for a moment.
   const share = document.getElementById('share-shelf');
   const done = document.getElementById('share-done');
