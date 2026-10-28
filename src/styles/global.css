@@ -211,3 +211,16 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
   color: color-mix(in srgb, var(--glow) 70%, var(--note-mix));
   will-change: transform, opacity;
 }
+
+/* Loading placeholder: a soft light sweeping left to right. On images it is the background, so the picture covers
+   it as soon as it paints; no script needed. */
+.skeleton {
+  --sk: #e4e4e7;
+  --sk-hi: #f4f4f5;
+  background: linear-gradient(90deg, var(--sk) 40%, var(--sk-hi) 50%, var(--sk) 60%) var(--sk);
+  background-size: 300% 100%;
+  animation: skeleton 1.6s ease-in-out infinite;
+}
+.dark .skeleton { --sk: #232326; --sk-hi: #34343a; }
+@keyframes skeleton { from { background-position: 100% 0; } to { background-position: 0 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }

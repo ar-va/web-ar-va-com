@@ -53,7 +53,7 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
       </h1>
       <p id="sync-progress" class="text-xs text-zinc-500 empty:hidden" role="status" aria-live="polite"></p>
     </div>
-    <a href={`https://www.discogs.com/user/${encodeURIComponent(owner.discogs_username)}/collection`} class="shrink-0 text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 px-4 py-2 rounded-full transition-colors">On Discogs →</a>
+    {records.length > 0 && <a href="#all-records" class="shrink-0 text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 px-4 py-2 rounded-full transition-colors">All records ↓</a>}
   </div>
 
   {records.length === 0 ? (
@@ -103,7 +103,7 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
 
       <hr class="border-zinc-200 dark:border-zinc-800/80 my-6" />
 
-      <section>
+      <section id="all-records" class="scroll-mt-8">
         <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
             <h2 class="text-zinc-500 text-sm m-0 shrink-0">All records ({records.length})</h2>
@@ -165,6 +165,8 @@ const viewBtn = 'p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 dark:hover:t
           <span id="filter-info-text"></span>
           <button type="button" id="clear-filters" class="ml-1 text-blue-violet-600 dark:text-blue-violet-400 hover:text-zinc-900 dark:hover:text-white transition-colors underline decoration-blue-violet-500/50 hover:decoration-blue-violet-500 underline-offset-4">Clear all</button>
         </div>
+
+        <a href={`https://www.discogs.com/user/${encodeURIComponent(owner.discogs_username)}/collection`} class="mt-10 inline-block text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 -mx-4 px-4 py-2 rounded-full transition-colors">View Discogs catalogue →</a>
       </section>
     </>
   )}

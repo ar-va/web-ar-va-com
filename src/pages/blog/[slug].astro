@@ -68,7 +68,18 @@ const displayTitle = h1 ? h1.text : 'Untitled Post';
     <hr class="border-zinc-200 dark:border-zinc-800/80 my-12" />
     <section id="comments" class="scroll-mt-24">
       <BlogComments server:defer slug={Astro.params.slug!}>
-        <p slot="fallback" class="text-sm text-zinc-500">Loading comments…</p>
+        <div slot="fallback" aria-busy="true" aria-label="Loading comments" class="flex flex-col gap-7">
+          {[0, 1].map(() => (
+            <div class="flex gap-3">
+              <span class="skeleton w-9 h-9 rounded-full shrink-0"></span>
+              <span class="flex-grow flex flex-col gap-2 pt-1">
+                <span class="skeleton h-3 w-40 rounded-full"></span>
+                <span class="skeleton h-3 w-full max-w-md rounded-full"></span>
+                <span class="skeleton h-3 w-2/3 max-w-xs rounded-full"></span>
+              </span>
+            </div>
+          ))}
+        </div>
       </BlogComments>
     </section>
   </article>

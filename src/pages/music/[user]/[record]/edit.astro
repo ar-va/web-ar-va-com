@@ -46,11 +46,16 @@ if (Astro.request.method === 'POST') {
 const values = { ...defaults, ...overrides };
 // Cover choices: Discogs' photo (the default), Apple Music's official artwork (suggested), then Discogs' other photos.
 const appleArt = match?.apple?.artwork ?? null;
+// The current pick goes first so it stays selected (and saved) even if it's no longer among the suggestions.
 const covers = [...new Map([
+  ...(values.cover ? [[values.cover, 'Current cover']] : []),
   ...(defaults.cover ? [[defaults.cover, 'Discogs photo']] : []),
   ...(appleArt ? [[appleArt, 'Apple Music artwork']] : []),
   ...(detail?.images ?? []).slice(1).map((src, i) => [src, `Discogs photo ${i + 2}`]),
 ] as [string, string][])];
+const coverNote = !match
+  ? 'Apple Music’s official artwork shows up here once it’s found: that happens in the background while your shelf page is open.'
+  : !appleArt ? 'Apple Music doesn’t seem to have this album, so there’s no official artwork to suggest.' : null;
 const fields: { key: string; label: string; hint?: string; multiline?: boolean }[] = [
   { key: 'artist', label: 'Artist' },
   { key: 'title', label: 'Album' },
@@ -83,7 +88,7 @@ const dated = new Set(['released', 'vinylRelease']);
       <!-- Enter in a field submits with the form's first button: make that Save, not a Revert. -->
       <button class="sr-only" tabindex="-1" aria-hidden="true">Save</button>
 
-      {covers.length > 1 && (
+      {covers.length > 0 && (
         <fieldset>
           <legend class="flex items-center gap-2 text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-2">
             Cover
@@ -93,8 +98,8 @@ const dated = new Set(['released', 'vinylRelease']);
             {covers.map(([src, label]) => (
               <label class="group cursor-pointer w-28">
                 <input type="radio" name="cover" value={src} checked={values.cover === src} class="sr-only peer" />
-                <img src={src} alt="" width="112" height="112" loading="lazy" referrerpolicy="no-referrer"
-                  class="w-28 h-28 object-cover rounded-lg border-2 border-transparent peer-checked:border-blue-violet-500 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-violet-500 group-hover:opacity-90" />
+                <img onload="this.classList.remove('skeleton')" onerror="this.classList.remove('skeleton')" src={src} alt="" width="112" height="112" loading="lazy" referrerpolicy="no-referrer"
+                  class="skeleton w-28 h-28 object-cover rounded-lg border-2 border-transparent peer-checked:border-blue-violet-500 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-blue-violet-500 group-hover:opacity-90" />
                 <span class="mt-1 block text-xs text-zinc-500 peer-checked:text-blue-violet-600 dark:peer-checked:text-blue-violet-400">
                   {label}{src === appleArt && src !== values.cover && <span class="block text-blue-violet-600 dark:text-blue-violet-400">Suggested</span>}
                 </span>
@@ -102,7 +107,7 @@ const dated = new Set(['released', 'vinylRelease']);
             ))}
           </div>
           <div class="mt-1.5 flex items-start justify-between gap-4 text-xs text-zinc-500">
-            <span>The main cover on the shelf and the record page; the others appear in its photo gallery.</span>
+            <span>The main cover on the shelf and the record page; the others appear in its photo gallery.{coverNote && <span class="block mt-1">{coverNote}</span>}</span>
             {'cover' in overrides && <button name="revert" value="cover" class="shrink-0 font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Revert</button>}
           </div>
         </fieldset>

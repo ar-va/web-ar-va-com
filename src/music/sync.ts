@@ -132,6 +132,21 @@ async function syncMatches(list: Unmatched[], progress: (message: string) => voi
   }
 }
 
+/**
+ * Tracklists (Discogs) and streaming matches (Apple) side by side: separate services with separate limits, and
+ * one failing doesn't stop the other.
+ */
+async function syncBoth(missing: Missing[], unmatched: Unmatched[], progress: (message: string) => void, prefix = '') {
+  const state = { details: '', matches: '' };
+  const show = () => progress(prefix + [state.details, state.matches].filter(Boolean).join(' · '));
+  const results = await Promise.allSettled([
+    syncDetails(missing, (m) => { state.details = m; show(); }),
+    syncMatches(unmatched, (m) => { state.matches = m; show(); }),
+  ]);
+  const failed = results.find((r) => r.status === 'rejected');
+  if (failed) throw (failed as PromiseRejectedResult).reason;
+}
+
 /** Copies the collection to the site, then fetches details for releases the site doesn't have yet. */
 export async function syncShelf(progress: (message: string) => void = () => {}) {
   const { username } = await site({ action: 'status' });
@@ -145,10 +160,9 @@ export async function syncShelf(progress: (message: string) => void = () => {}) 
     pages = data.pagination.pages;
     releases.push(...data.releases);
   }
-  const { count, missing } = await site({ action: 'collection', fields, releases });
-  await syncDetails(missing, progress, `${count} records on the shelf. `);
-  const { unmatched } = await site({ action: 'missing' });
-  await syncMatches(unmatched, progress, `${count} records on the shelf. `);
+  const { count } = await site({ action: 'collection', fields, releases });
+  const { missing, unmatched } = await site({ action: 'missing' });
+  await syncBoth(missing, unmatched, progress, `${count} records on the shelf. `);
   progress(`${count} records on the shelf. Everything is up to date.`);
 }
 
@@ -165,8 +179,7 @@ export async function autoSync(progress: (message: string) => void = () => {}) {
     if (!status.syncedAt || Date.now() / 1000 - status.syncedAt > 1800) return await syncShelf(progress);
     const { missing, unmatched } = await site({ action: 'missing' });
     if (missing.length || unmatched.length) {
-      await syncDetails(missing, progress);
-      await syncMatches(unmatched, progress);
+      await syncBoth(missing, unmatched, progress);
       progress('Everything is up to date. Reload to see it.');
     }
   } catch {
