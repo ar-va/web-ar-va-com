@@ -295,6 +295,8 @@ html { scroll-padding-top: 5.5rem; }
   font-size: 0.875rem; font-weight: 500; color: var(--color-zinc-700); background: var(--well);
   transition: background-color 0.15s, color 0.15s;
 }
+/* Phones: a little tighter, so filters + Sort + the view switch share one row on a 360 px screen. */
+@media (max-width: 639px) { .ctl { padding: 0 0.625rem; gap: 0.3rem; } }
 .dark .ctl { color: var(--color-zinc-200); }
 .ctl:hover { background: var(--well-hover); }
 .ctl[aria-expanded="true"], .ctl[aria-pressed="true"] { background: var(--on-bg); color: var(--on-text); }

@@ -32,7 +32,7 @@ const others = shelves.filter((s) => s.slug !== owner.slug);
 const btn = 'group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white';
 const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors';
 // The view switch is a segmented control like the theme switch: a well with the current view "on".
-const viewBtn = 'h-6 w-8 inline-flex items-center justify-center rounded-full text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white aria-pressed:bg-(--on-bg) aria-pressed:text-(--on-text) transition-colors';
+const viewBtn = 'h-6 w-7 sm:w-8 inline-flex items-center justify-center rounded-full text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white aria-pressed:bg-(--on-bg) aria-pressed:text-(--on-text) transition-colors';
 ---
 
 <div id="shelf" class="font-normal">
@@ -73,8 +73,8 @@ const viewBtn = 'h-6 w-8 inline-flex items-center justify-center rounded-full te
 
       <section id="all-records">
         <!-- Stays under the header (frosted) while scrolling through the records; lets go where the section ends. -->
-        <div class="glass-under sticky top-16 z-40 rounded-3xl sm:rounded-full flex flex-wrap items-center justify-between gap-2 sm:gap-4 p-1.5">
-          <div class="flex flex-wrap items-center gap-2">
+        <div class="glass-under sticky top-16 z-40 rounded-3xl sm:rounded-full flex flex-wrap items-center justify-center sm:justify-between gap-2 sm:gap-4 p-1.5">
+          <div class="flex flex-wrap items-center justify-center gap-2">
             <h2 class="m-0 shrink-0">
               <button type="button" id="filters-toggle" aria-expanded="false" aria-controls="filters-panel" title="Filter by added, released and genre"
                 class="ctl group pl-2.5">
