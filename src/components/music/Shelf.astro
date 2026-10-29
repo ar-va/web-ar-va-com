@@ -77,11 +77,11 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
           <div class="glass-under relative rounded-3xl sm:rounded-full flex flex-wrap items-center justify-center gap-2 p-1.5">
             <h2 class="m-0 shrink-0">
               <button type="button" id="filters-toggle" aria-expanded="false" aria-controls="filters-panel" title="Filter by added, released and genre"
-                class="ctl group pl-2.5">
+                class="ctl group pl-2.5 max-sm:!px-2 max-sm:min-w-8 max-sm:justify-center">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></svg>
-                All records ({records.length})
+                <span class="max-sm:sr-only">Filter</span>
                 <span id="filters-count" hidden class="min-w-5 h-5 px-1.5 rounded-full bg-blue-violet-500 text-white text-[11px] font-semibold leading-5 text-center"></span>
-                <svg class="w-3.5 h-3.5 transition-transform group-aria-expanded:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
+                <svg class="w-3.5 h-3.5 transition-transform group-aria-expanded:rotate-180 max-sm:hidden" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
               </button>
             </h2>
             <SortMenu id="records-sort" />
