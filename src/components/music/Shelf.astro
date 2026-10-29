@@ -31,8 +31,9 @@ const others = shelves.filter((s) => s.slug !== owner.slug);
 // Filter buttons: the exact classes Writing.astro uses for tags and years.
 const btn = 'group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white';
 const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors';
-// The view switch is a segmented control like the theme switch: a well with the current view "on".
-const viewBtn = 'h-6 w-7 sm:w-8 inline-flex items-center justify-center rounded-full text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white aria-pressed:bg-(--on-bg) aria-pressed:text-(--on-text) transition-colors';
+// View switch: two round chips like the other toolbar controls, the current view "on". (Inside a grey track the
+// same purple looked like a different shade.)
+const viewBtn = 'ctl ctl-icon';
 ---
 
 <div id="shelf" class="font-normal">
@@ -85,7 +86,7 @@ const viewBtn = 'h-6 w-7 sm:w-8 inline-flex items-center justify-center rounded-
               </button>
             </h2>
             <SortMenu id="records-sort" />
-            <div class="inline-flex items-center h-8 p-1 gap-0.5 rounded-full bg-(--well)" role="group" aria-label="View">
+            <div class="inline-flex items-center gap-1" role="group" aria-label="View">
               <button type="button" data-view="shelf" aria-pressed="true" title="Shelf" class={`view-btn ${viewBtn}`}>
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1" /><rect x="13" y="4" width="7" height="7" rx="1" /><rect x="4" y="13" width="7" height="7" rx="1" /><rect x="13" y="13" width="7" height="7" rx="1" /></svg>
                 <span class="sr-only">Shelf view</span>
