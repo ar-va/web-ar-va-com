@@ -83,19 +83,38 @@ const Heading = href ? 'h2' : 'h1';
     let playing = false;
     let visible = true;
     new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(sleeve);
-    const rampTo = (target: number, ms: number, done?: () => void) => {
+    // Spin-up: the speed eases in like a platter catching up.
+    const spinUp = (ms: number) => {
       cancelAnimationFrame(ramp);
       const from = spin!.playbackRate;
       const start = performance.now();
       const step = (now: number) => {
         const t = Math.min(1, (now - start) / ms);
-        // Spin-up eases in like a platter catching speed; spin-down eases out like one coasting to a halt.
-        const k = target > from ? 1 - (1 - t) ** 2 : t * (2 - t);
-        spin!.playbackRate = from + (target - from) * k;
+        spin!.playbackRate = from + (1 - from) * (1 - (1 - t) ** 2);
         if (t < 1) ramp = requestAnimationFrame(step);
-        else done?.();
       };
       ramp = requestAnimationFrame(step);
+    };
+    // Spin-down: coasts from its current speed and halts on a whole turn, so the record's faint sheen comes to rest
+    // under the still glare (where it also starts from). Returns how long the stop takes.
+    const coast = () => {
+      cancelAnimationFrame(ramp);
+      const s = spin!;
+      const from = Number(s.currentTime);
+      const speed = Math.max(s.playbackRate, 0.4);
+      s.pause();
+      // about 1.1 s of travel at full speed (a ~2.2 s stop), rounded to a whole turn, never less than a third of one
+      let to = Math.round((from + 1100 * speed) / REV_MS) * REV_MS;
+      if (to - from < REV_MS / 3) to += REV_MS;
+      const ms = (2 * (to - from)) / speed; // easing out from that speed: distance = speed × time / 2
+      const start = performance.now();
+      const step = (now: number) => {
+        const t = Math.min(1, (now - start) / ms);
+        s.currentTime = from + (to - from) * t * (2 - t);
+        if (t < 1) ramp = requestAnimationFrame(step);
+      };
+      ramp = requestAnimationFrame(step);
+      return ms;
     };
     const set = (on: boolean) => {
       playing = on;
@@ -114,10 +133,10 @@ const Heading = href ? 'h2' : 'h1';
             [{ transform: 'translateX(38%) rotate(300deg)' }, { transform: 'translateX(38%) rotate(660deg)' }],
             { duration: REV_MS, iterations: Infinity },
           );
-          spin.playbackRate = 0;
         }
+        spin.playbackRate = 0;
         spin.play();
-        rampTo(1, 1100);
+        spinUp(1100);
         fadeGlare(0, 900);
         emitBurst(sleeve, 'right', 3, 900, 400);
         clearInterval(notes);
@@ -125,8 +144,7 @@ const Heading = href ? 'h2' : 'h1';
       } else {
         set(false);
         clearInterval(notes);
-        rampTo(0, 2200, () => spin?.pause());
-        fadeGlare(1, 2200);
+        fadeGlare(1, coast());
       }
     };
     button.addEventListener('click', toggle);
