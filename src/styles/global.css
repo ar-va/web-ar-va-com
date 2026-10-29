@@ -141,7 +141,9 @@ html { scrollbar-gutter: stable; }
   border-radius: 9999px;
   background:
     radial-gradient(circle, #111 0 2%, var(--color-blue-violet-500) 2.5% 16%, rgb(0 0 0 / 0.45) 16.5% 18%, transparent 18.5%),
-    conic-gradient(from 20deg, transparent 0 8%, rgb(255 255 255 / 0.16) 13%, transparent 19% 58%, rgb(255 255 255 / 0.11) 63%, transparent 69%),
+    /* one faint sheen that turns with the record, so the spin shows at its real speed (two sheens half a turn apart
+       made 33⅓ rpm look twice as fast; the bright glare is the still .glare) */
+    conic-gradient(from 20deg, transparent 0 6%, rgb(255 255 255 / 0.08) 11%, transparent 16%),
     repeating-radial-gradient(circle, var(--vinyl) 0 1px, color-mix(in srgb, var(--vinyl) 85%, white) 1px 3px);
   box-shadow: 0 0 0 1px rgb(255 255 255 / 0.05);
   transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.45s;
@@ -173,16 +175,16 @@ html { scrollbar-gutter: stable; }
 .shelf-record:focus-visible .sleeve-face { transform: translateY(-3px); }
 .shelf-record:focus-visible { outline: 2px solid var(--color-blue-violet-500); outline-offset: 4px; }
 
-/* The room's light on the vinyl: two white wedges that follow the record out of the sleeve but never rotate,
-   so the grooves turn under a still glare (roll-out, spin). Hidden inside the sleeve; skips the centre label. */
+/* The room's light on the vinyl: one soft white wedge that follows the record out of the sleeve but never rotates.
+   Hidden inside the sleeve; skips the centre label. The hero fades it out while the record plays (RecordHero.astro). */
 .glare {
   position: absolute;
   inset: 3%;
   z-index: 0;
   border-radius: 9999px;
   pointer-events: none;
-  /* two streaks either side of 3 o'clock, where the rolled-out record shows; turned for the shelf (12 o'clock) */
-  background: conic-gradient(transparent 0 11%, rgb(255 255 255 / 0.42) 15.5%, transparent 20% 30%, rgb(255 255 255 / 0.3) 34.5%, transparent 39%);
+  /* at 3 o'clock, where the rolled-out record shows; turned for the shelf (12 o'clock) */
+  background: conic-gradient(transparent 0 17%, rgb(255 255 255 / 0.34) 25%, transparent 33%);
   -webkit-mask: radial-gradient(circle, transparent 0 18.5%, #000 21%);
   mask: radial-gradient(circle, transparent 0 18.5%, #000 21%);
   mix-blend-mode: screen;

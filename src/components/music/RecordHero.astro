@@ -73,7 +73,10 @@ const Heading = href ? 'h2' : 'h1';
     const button = turntable.querySelector<HTMLElement>('[data-spin]')!;
     const disc = turntable.querySelector<HTMLElement>('.disc');
     const sleeve = disc?.closest<HTMLElement>('.sleeve');
+    const glare = turntable.querySelector<HTMLElement>('.glare');
     if (!disc || !sleeve) return;
+    // The still glare gives way while the record plays and comes back as it stops.
+    const fadeGlare = (to: number, ms: number) => glare?.animate([{ opacity: getComputedStyle(glare).opacity }, { opacity: to }], { duration: ms, easing: 'ease-in-out', fill: 'forwards' });
     let spin: Animation | null = null;
     let ramp = 0;
     let notes = 0;
@@ -115,6 +118,7 @@ const Heading = href ? 'h2' : 'h1';
         }
         spin.play();
         rampTo(1, 1100);
+        fadeGlare(0, 900);
         emitBurst(sleeve, 'right', 3, 900, 400);
         clearInterval(notes);
         notes = window.setInterval(() => { if (visible && !document.hidden) emitBurst(sleeve, 'right', 1, 300); }, 1600);
@@ -122,6 +126,7 @@ const Heading = href ? 'h2' : 'h1';
         set(false);
         clearInterval(notes);
         rampTo(0, 2200, () => spin?.pause());
+        fadeGlare(1, 2200);
       }
     };
     button.addEventListener('click', toggle);
