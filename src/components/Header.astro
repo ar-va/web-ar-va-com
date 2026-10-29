@@ -12,21 +12,24 @@ const current = (on: boolean) => (on ? 'page' : undefined);
 
 <!-- A plain header across the page width: logo left, menu centred on the page (phones too), account + theme right.
      The theme switch is the only pill. Not pinned: it scrolls away with the page (user, 2026-10-29). -->
-<nav id="site-header" class="relative z-50 mt-3 max-w-5xl mx-auto px-6 w-full grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+<nav id="site-header" class="relative z-50 mt-3 max-w-5xl mx-auto px-6 w-full grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
   <a href={`${main}/`} class="shrink-0 justify-self-start h-11 flex items-center" aria-label="ARVA home">
     <!-- Brand logo files (two-tone: Moss leaf, wordmark in the text colour), ink on light and washi on dark: the full
-         horizontal logo everywhere, 24 px tall, 22 px on phones (the brand's mobile size; fits beside the menu at 360 px). -->
-    <img src="/brand/arva-horizontal-ink-moss.svg" alt="ARVA" width="100" height="24" class="h-[22px] sm:h-6 w-auto object-contain object-left dark:hidden" />
-    <img src="/brand/arva-horizontal-washi-moss.svg" alt="ARVA" width="100" height="24" class="h-[22px] sm:h-6 w-auto object-contain object-left hidden dark:block" />
+         horizontal logo, 24 px tall, 22 px on phones; below 360 px only the leaf (the brand's small mark), so the
+         menu stays centred (user, 2026-10-29). -->
+    <img src="/brand/arva-horizontal-ink-moss.svg" alt="ARVA" width="100" height="24" class="h-[22px] sm:h-6 w-auto dark:hidden max-[359px]:!hidden" />
+    <img src="/brand/arva-horizontal-washi-moss.svg" alt="ARVA" width="100" height="24" class="h-[22px] sm:h-6 w-auto hidden dark:block max-[359px]:!hidden" />
+    <img src="/brand/arva-mark-small-ink-moss.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 hidden max-[359px]:block dark:!hidden" />
+    <img src="/brand/arva-mark-small-washi-moss.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 hidden dark:max-[359px]:block" />
   </a>
   <div class="h-11 flex items-center">
-    <div class="flex items-center gap-5 sm:gap-7 text-sm font-medium">
+    <div class="flex items-center gap-4 min-[360px]:gap-5 sm:gap-7 text-sm font-medium">
       <a href={`${main}/`} class={`${link} hidden sm:inline`} aria-current={current(!onMusic && path === '/')}>Home</a>
       <a href={`${main}/blog`} class={link} aria-current={current(!onMusic && path.startsWith('/blog'))}>Blog</a>
       <a href={onMusic ? '/' : 'https://music.ar-va.com/'} class={link} aria-current={current(onMusic)}>Music</a>
     </div>
   </div>
-  <div class="justify-self-end h-11 flex items-center gap-3 sm:gap-4 text-sm font-medium">
+  <div class="justify-self-end h-11 flex items-center gap-2 min-[360px]:gap-3 sm:gap-4 text-sm font-medium">
     <a id="account" href="https://ar-va.com/login" title="Log in with Telegram" aria-label="Log in with Telegram"
       class="flex items-center gap-1.5 h-8 text-zinc-600 dark:text-zinc-300 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">
       <svg class="w-4 h-4 shrink-0" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
