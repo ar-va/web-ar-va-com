@@ -34,13 +34,17 @@ Files are in `logo/`. Never redraw or retype the logo; always use the files. **L
 | `arva-mark-small-ink.svg` / `-washi.svg` | Mark alone, below 32 px (simplified, no midrib) |
 | `arva-mark-moss.svg` | Heritage contexts only (print, packaging, an "about" page); Moss `--moss` (was russet) |
 | `arva-wordmark-ink.svg` | Wordmark alone, only where the mark already appears nearby |
-| `favicon.svg` | Browser favicon; switches colour automatically in dark mode |
+| `arva-horizontal-ink-moss.svg` / `-washi-moss.svg` | **Default on screen** (site header): Moss leaf, wordmark in `--text` |
+| `arva-stacked-ink-moss.svg` / `-washi-moss.svg` | Square spaces on screen, two-tone |
+| `arva-mark-small-ink-moss.svg` / `-washi-moss.svg` | Leaf alone below 32 px on screen (phone header) |
+| `favicon.svg` | Browser favicon: the Moss leaf, switching to mint on dark tabs |
 
 Rules:
 - Header logo height is 24–32 px on desktop and 22–26 px on mobile.
 - Clear space on every side must be at least the width of the leaf's tip lobe (about ¼ of the mark's height).
 - Swap ink and washi files with the theme. Never place the ink logo on a dark background or the washi logo on a light one.
 - Never use the accent colour (indigo or periwinkle) on the logo.
+- **Two-tone:** on screen the leaf may be `--moss` while the wordmark stays `--text` (the `-moss` files). This is the one place Moss may sit on an interactive element (the logo as a home link). Use the one-colour ink / washi files for print, embossing, stamps and other single-colour uses.
 - Never rotate, outline, add shadows to, add gradients to, stretch, or animate-distort the logo. The 45° lean is part of the mark.
 - Never put the leaf in a circle, a badge, or a frame.
 
@@ -202,6 +206,8 @@ Rules:
   `favicon.svg` now switches ink → washi on dark browser tabs itself.
 - **2026-10-29 (later):** light page lightened to #FDFDFB (almost white, a hint of paper; sunken #F1F2F6); Moss moved
   from teal to leaf-green: #237A50 light, #8BD8A9 dark (was #1F7A66 / #73DACA); `arva-mark-moss.svg` follows.
+- **2026-10-29 (two-tone logo):** new `-moss` logo files: the leaf in Moss (#237A50 light, #8BD8A9 dark), the
+  wordmark in `--text`. They are the default on screen; the favicon is the Moss leaf. One-colour files stay for print.
 - **Site note (ar-va.com):** the owner chose "identity only" for the site: logo, fonts and colours follow these
   rules, while the site keeps its frosted-glass pill header and toolbars, pill-shaped controls, and the music
   shelf's vinyl animations, which sections 5, 6, 8 and 9 would otherwise rule out.
