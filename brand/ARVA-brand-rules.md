@@ -137,6 +137,26 @@ Rules:
 - Paragraphs are at most 68 characters wide (`--measure`). Use `text-wrap: balance` on headings and `pretty` on paragraphs.
 - Left-align text. Centre it only for short hero lines or empty states.
 
+### Which font when
+
+Decide by what the text **does**, not by which HTML tag it sits in.
+
+| Font | Use it for | Examples on ar-va.com |
+|---|---|---|
+| **Archivo** (600, 112% width) | Titles a reader scans for: page titles, section titles, card and item titles, album and post titles | "Artur — ARVA", "Selected work", "Tracklist", "Comments", "Chet Baker Sings", edit-page card titles |
+| **IBM Plex Sans** | Everything read or operated: body text, meta lines, links, navigation, buttons and controls, form fields, and small grey labels that name a group | "Filter", "Sort", "Spotify", "Show details", "Latest", "Added", "Genres", "Date published", "Added to the shelf…" |
+| **IBM Plex Mono** (500, uppercase, tracked) | Eyebrow labels above a title (in Moss) and side / status labels | "BUSINESS SUCCESS SPECIALIST", "RELEASED", the artist above an album title, "SIDE A" |
+| **IBM Plex Mono** (400, normal case) | Numbers that line up in columns, codes | Track positions (A1) and lengths (4:52), code |
+
+Rules of thumb:
+1. **A control is never in Archivo**, even when it sits inside a heading for structure. Buttons, toggles and menu items are Plex Sans.
+2. **Small grey labels are Plex Sans**, even when they are headings in the markup (`font-sans`). Archivo below about 18 px looks cramped and competes with real titles.
+3. **Mono uppercase is a label, not a title.** Never use it for sentences or anything longer than a few words.
+4. **Mono normal case only for aligned numbers and code.** Dates in running text stay Plex Sans.
+5. **One family per element.** Don't mix Archivo and Plex Sans inside a single button or line.
+
+On the site, Archivo is applied to `h1`–`h4` in the CSS base layer, so an element that is a heading only for structure can switch to Plex Sans with `font-sans`; Plex Mono is applied automatically to uppercase tracked labels.
+
 ---
 
 ## 5. Layout and spacing
@@ -242,6 +262,8 @@ Rules:
   same "on" colour (`--accent-tint`-style tint with accent text); solid `--accent` fill is kept for primary buttons.
 - **2026-10-29 (brighter on-state):** dark `--accent-tint` #2F3058 → #3F3F75; the old tint had the grey controls'
   brightness, so selected and unselected pills looked alike.
+- **2026-10-29 (fonts):** added "Which font when"; small label headings and the Filter button were in Archivo by
+  accident (heading tags) and are now Plex Sans.
 - **Site note (ar-va.com):** the owner chose "identity only" for the site: logo, fonts and colours follow these
   rules, while the site keeps its frosted-glass pill header and toolbars, pill-shaped controls, and the music
   shelf's vinyl animations, which sections 5, 6, 8 and 9 would otherwise rule out.

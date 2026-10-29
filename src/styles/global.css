@@ -45,9 +45,12 @@
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
-/* Brand type: Archivo for headings (112 % width; the bold ones at 600), Plex Mono for the small uppercase labels. */
-h1, h2, h3, h4 { font-family: var(--font-heading); font-stretch: 112%; }
-:is(h1, h2, h3, h4).font-bold { font-weight: 600; }
+/* Brand type (brand/ARVA-brand-rules.md, "Which font when"): Archivo for titles (112 % width; bold ones at 600), in the
+   base layer so a small label heading can say `font-sans`; Plex Mono for the small uppercase labels. */
+@layer base {
+  h1, h2, h3, h4 { font-family: var(--font-heading); font-stretch: 112%; }
+  :is(h1, h2, h3, h4).font-bold { font-weight: 600; }
+}
 .uppercase.tracking-widest { font-family: var(--font-mono); color: var(--color-moss); }
 .dark .uppercase.tracking-widest { color: var(--color-moss-light); }
 /* ---- Music shelf (music.ar-va.com) ---- */
@@ -391,14 +394,18 @@ html { scroll-padding-top: 1.5rem; }
 /* Edit page: the tracklist row being dragged lifts off the list. */
 .track.dragging { position: relative; z-index: 10; box-shadow: 0 10px 24px -8px rgb(0 0 0 / 0.25); border-color: var(--color-blue-violet-500); }
 
-/* Phones: the list toolbar spans the width with its controls spread out and 2.5rem tall (easier to see and tap); the
+/* Phones: the list toolbar spans the width, controls 2.5rem tall and together, search filling the rest (easier to see and tap); the
    filters panel, hung from the toolbar row, is full width too. */
 @media (max-width: 639px) {
-  .list-toolbar { width: 100%; justify-content: space-between; }
+  .list-toolbar { width: 100%; justify-content: flex-start; flex-wrap: nowrap; }
   .list-toolbar .ctl { height: 2.5rem; min-width: 2.5rem; }
   .list-toolbar .ctl svg:first-child { width: 1.125rem; height: 1.125rem; }
-  .list-toolbar .search-field input { width: 2.5rem; height: 2.5rem; padding-left: 2.5rem; }
-  .list-toolbar .search-field input:focus, .list-toolbar .search-field input:not(:placeholder-shown) { width: 9rem; }
+  /* Search fills the rest of the bar as an open field (the other controls sit together on the left). */
+  .list-toolbar .search-field { flex: 1; min-width: 0; }
+  .list-toolbar .search-field input,
+  .list-toolbar .search-field input:focus,
+  .list-toolbar .search-field input:not(:placeholder-shown) { width: 100%; height: 2.5rem; padding: 0 0.75rem 0 2.5rem; cursor: text; }
+  .list-toolbar .search-field input:not(:focus)::placeholder { color: var(--color-zinc-500); }
   .list-toolbar .search-field svg { left: 0.69rem; width: 1.125rem; height: 1.125rem; }
   .list-toolbar .view-switch { height: 2.5rem; width: 4.5rem; }
   .list-toolbar .view-btn, .list-toolbar .view-knob { height: 2rem; width: 2rem; }

@@ -63,7 +63,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
     <>
       {latest && (
         <section class="mt-6">
-          <h2 class="text-zinc-500 text-sm mb-6">Latest</h2>
+          <h2 class="font-sans text-zinc-500 text-sm mb-6">Latest</h2>
           <RecordHero record={latest} artist={latest.artist} title={latest.title} released={latest.released} genres={latest.genres}
             trackCount={latest.trackCount} links={latest.links} runtime={latest.runtime ?? undefined} href={`${base}/${latest.instanceId}`} />
         </section>
@@ -71,10 +71,13 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
 
 
       <section id="all-records" class="mt-14">
+
+
+        <h2 class="sr-only">All records</h2>
         <!-- A frosted pill (filters, Sort, views, search) that sticks to the top while scrolling through the records; lets go where the section ends. -->
         <div class="sticky top-3 z-40 flex items-center justify-between gap-2">
           <div class="list-toolbar glass-under relative rounded-full flex flex-wrap items-center justify-center gap-2 p-1.5">
-            <h2 class="m-0 shrink-0">
+            <div class="shrink-0">
               <button type="button" id="filters-toggle" aria-expanded="false" aria-controls="filters-panel" title="Filter by added, released and genre"
                 class="ctl group pl-2.5 max-sm:!px-2 max-sm:min-w-8 max-sm:justify-center">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></svg>
@@ -82,7 +85,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
                 <span id="filters-count" hidden class="min-w-5 h-5 px-1.5 rounded-full bg-(--on-bg) text-(--on-text) text-[11px] font-semibold leading-5 text-center"></span>
                 <svg class="w-3.5 h-3.5 transition-transform group-aria-expanded:rotate-180 max-sm:hidden" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
               </button>
-            </h2>
+            </div>
             <SortMenu id="records-sort" />
             <div class="view-switch relative inline-flex h-8 w-14 items-center justify-between px-1 rounded-full bg-(--well)" role="group" aria-label="View" data-view-current="shelf">
               <span aria-hidden="true" class="view-knob absolute left-1 h-6 w-6 rounded-full bg-(--on-bg) shadow-[0_1px_3px_rgb(0_0_0/0.15)] transition-transform duration-300"></span>
@@ -110,7 +113,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
               Reset
             </button>
             <section class="mb-2">
-              <h2 class="text-zinc-500 text-sm">Added</h2>
+              <h2 class="font-sans text-zinc-500 text-sm">Added</h2>
               <div class="leading-8 text-base">
                 {years.map(([year, n], i) => (
                   <span class="inline whitespace-nowrap"><button type="button" data-year={year} class={`year-btn ${btn}`}><span class={btnLabel}>{year}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button>{i < years.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mx-1.5">·</span>}</span>
@@ -120,7 +123,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
 
             {decades.length > 0 && (
               <section class="mb-2">
-                <h2 class="text-zinc-500 text-sm">Released</h2>
+                <h2 class="font-sans text-zinc-500 text-sm">Released</h2>
                 <div class="leading-8 text-base">
                   {decades.map(([decade, n], i) => (
                     <span class="decade-block inline"><span class="filter-group"><button type="button" data-decade={decade} class={`decade-btn ${btn}`}><span class={btnLabel}>{decade}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button><span class="decade-years hidden ml-1.5">{releasedYears(decade).map(([y, m], j, all) => (
@@ -132,7 +135,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
             )}
 
             <section>
-              <h2 class="text-zinc-500 text-sm">Genres</h2>
+              <h2 class="font-sans text-zinc-500 text-sm">Genres</h2>
               <div class="leading-8 text-base">
                 {genres.map(([genre, n], i) => (
                   <span class="inline whitespace-nowrap"><button type="button" data-genre={genre} class={`genre-btn ${btn}`}><span class={btnLabel}>{genre}</span><span class="text-zinc-500 dark:text-zinc-400"> ({n})</span></button>{i < genres.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
@@ -191,7 +194,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
     <>
       <hr class="border-zinc-200 dark:border-zinc-800/80 my-6" />
       <section>
-        <h2 class="text-zinc-500 text-sm">Other shelves</h2>
+        <h2 class="font-sans text-zinc-500 text-sm">Other shelves</h2>
         <p class="leading-8">
           {others.map((s, i) => (
             <span class="whitespace-nowrap"><a href={`/${encodeURIComponent(s.slug)}`} class="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white underline decoration-zinc-300 dark:decoration-zinc-700 hover:decoration-zinc-500 underline-offset-4 transition-colors">{s.name}</a><span class="text-zinc-500"> ({s.count})</span>{i < others.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
