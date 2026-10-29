@@ -385,7 +385,3 @@ html { scroll-padding-top: 1.5rem; }
 .search-field svg { position: absolute; left: 0.5rem; top: 50%; translate: 0 -50%; width: 1rem; height: 1rem; pointer-events: none; }
 @media (max-width: 639px) { .search-field input:focus, .search-field input:not(:placeholder-shown) { width: 11rem; } }
 @media (prefers-reduced-motion: reduce) { .search-field input { transition: none; } }
-
-/* Streaming services in the palette's own versions of their colours (Tokyo Night; Tokyo Night Day in light). */
-:root { --spotify: #587539; --apple-music: #e3265c; --youtube: #c64343; }
-.dark { --spotify: #9ece6a; --apple-music: #f7768e; --youtube: #e0605f; }

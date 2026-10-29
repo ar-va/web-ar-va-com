@@ -1,5 +1,5 @@
 ---
-// Spotify / Apple Music / YouTube Music icons, each in its service's colour as tuned to the palette (lifts a little on hover): the owner's link or an automatic match when there is one, else a search on
+// Spotify / Apple Music / YouTube Music icons, in the accent colour (lifts a little on hover): the owner's link or an automatic match when there is one, else a search on
 // that service (Spotify's narrowed to albums or tracks).
 import { safeStreamingUrl, streamingSearch } from '../../music/lib';
 
@@ -7,9 +7,9 @@ interface Props { query: string; label: string; links?: { spotify?: string; appl
 const { query, label, links = {}, size = 'sm', kind = 'album' } = Astro.props;
 const search = streamingSearch(query, kind);
 const services = [
-  { key: 'spotify', name: 'Spotify', color: 'text-(--spotify)' },
-  { key: 'apple', name: 'Apple Music', color: 'text-(--apple-music)' },
-  { key: 'youtube', name: 'YouTube Music', color: 'text-(--youtube)' },
+  { key: 'spotify', name: 'Spotify' },
+  { key: 'apple', name: 'Apple Music' },
+  { key: 'youtube', name: 'YouTube Music' },
 ] as const;
 const icon = size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
 ---
@@ -18,7 +18,7 @@ const icon = size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
     const href = (links[s.key] && safeStreamingUrl(links[s.key]!, s.key)) || search[s.key];
     return (
       <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`${label} on ${s.name}`} title={`${label} on ${s.name}`}
-        class={`${s.color} inline-block transition-transform duration-200 ease-out hover:-translate-y-0.5 hover:scale-115 focus-visible:-translate-y-0.5 focus-visible:scale-115 motion-reduce:transition-none motion-reduce:hover:transform-none`}>
+        class={`text-blue-violet-600 dark:text-blue-violet-400 hover:text-blue-violet-700 dark:hover:text-blue-violet-300 inline-block transition-transform duration-200 ease-out hover:-translate-y-0.5 hover:scale-115 focus-visible:-translate-y-0.5 focus-visible:scale-115 motion-reduce:transition-none motion-reduce:hover:transform-none`}>
         {s.key === 'spotify' && (
           <svg class={icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5" /><path d="M7.3 9.6c3.3-1 6.8-.7 9.6.9M7.9 12.7c2.7-.7 5.4-.4 7.6.8M8.5 15.6c2-.5 3.9-.3 5.6.6" /></svg>
         )}
