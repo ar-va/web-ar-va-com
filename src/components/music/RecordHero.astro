@@ -1,7 +1,7 @@
 ---
 // The big record block shared by the album page and the shelf's "Latest", identical on both (user, 2026-10-29): the sleeve with the vinyl rolled out to
 // the right, then artist, album, added / released / genre / tracks, and the streaming links.
-// On the album page (no `href`) the cover is a button that spins the record; on the shelf it links to the album.
+// The cover is a play / stop switch on both (the record plays on its own after rolling out); on the shelf the title links to the album.
 import Cover from './Cover.astro';
 import Listen from './Listen.astro';
 import { displayDate, formatReleased, type ShelfRecord } from '../../music/lib';
@@ -31,15 +31,10 @@ const Heading = href ? 'h2' : 'h1';
 ---
 <!-- The rolled-out disc sticks out 38 % of the sleeve's width: the gap leaves it ~60 px clear of the text. -->
 <div class="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-36">
-  {href ? (
-    <a href={href} class="shrink-0 self-start sm:self-auto" tabindex="-1" aria-hidden="true">
-      <Cover record={record} eager class="sleeve-open w-48 sm:w-60" />
-    </a>
-  ) : (
-    <button type="button" data-spin aria-pressed="false" class="shrink-0 self-start sm:self-auto cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-violet-500" aria-label="Play the record" title="Play the record">
-      <Cover record={record} eager class="sleeve-open w-48 sm:w-60" />
-    </button>
-  )}
+  <!-- The cover is the turntable's switch on both heroes (album page and the shelf's Latest; the title links on). -->
+  <button type="button" data-spin aria-pressed="false" class="shrink-0 self-start sm:self-auto cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-violet-500" aria-label="Play the record" title="Play the record">
+    <Cover record={record} eager class="sleeve-open w-48 sm:w-60" />
+  </button>
   <div class="min-w-0 flex-1">
     <p class="text-xs font-bold tracking-widest uppercase mb-2">{artist}</p>
     <Heading class="text-3xl sm:text-5xl font-bold leading-[1.05] text-zinc-900 dark:text-white">
@@ -60,8 +55,9 @@ const Heading = href ? 'h2' : 'h1';
   // Notes drift out of the open side while the record rolls out (CSS: 0.25 s delay, 1.6 s).
   document.querySelectorAll<HTMLElement>('.sleeve-open').forEach((sleeve) => emitBurst(sleeve, 'right', 9, 1500, 300));
 
-  // Clicking the cover plays the record like a turntable: it spins up to 33⅓ rpm (a turn every 1.8 s) and keeps going,
-  // with a note drifting out now and then; clicking again slows it to a stop. Nothing with reduced motion.
+  // The record plays like a turntable: once it has rolled out it spins up to 33⅓ rpm (a turn every 1.8 s) and keeps
+  // going, a note drifting out now and then (only while the hero is on screen). Tapping the cover stops the notes and
+  // slows it to a halt; tapping again starts it. Nothing moves with reduced motion.
   const REV_MS = 1800;
   document.querySelectorAll<HTMLElement>('[data-spin]').forEach((button) => {
     const disc = button.querySelector<HTMLElement>('.disc');
@@ -71,6 +67,8 @@ const Heading = href ? 'h2' : 'h1';
     let ramp = 0;
     let notes = 0;
     let playing = false;
+    let visible = true;
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(sleeve);
     const rampTo = (target: number, ms: number, done?: () => void) => {
       cancelAnimationFrame(ramp);
       const from = spin!.playbackRate;
@@ -92,7 +90,7 @@ const Heading = href ? 'h2' : 'h1';
       button.title = label;
       button.setAttribute('aria-label', label);
     };
-    button.addEventListener('click', () => {
+    const toggle = () => {
       if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       if (!playing) {
         set(true);
@@ -108,12 +106,18 @@ const Heading = href ? 'h2' : 'h1';
         rampTo(1, 1100);
         emitBurst(sleeve, 'right', 3, 900, 400);
         clearInterval(notes);
-        notes = window.setInterval(() => emitBurst(sleeve, 'right', 1, 300), 1600);
+        notes = window.setInterval(() => { if (visible && !document.hidden) emitBurst(sleeve, 'right', 1, 300); }, 1600);
       } else {
         set(false);
         clearInterval(notes);
         rampTo(0, 2200, () => spin?.pause());
       }
-    });
+    };
+    button.addEventListener('click', toggle);
+    // Start playing as the roll-out (CSS `roll-out`, 0.25 s delay + 1.6 s) settles.
+    let started = false;
+    const autoplay = () => { if (!started && !playing) { started = true; toggle(); } };
+    disc.addEventListener('animationend', (e) => { if (e.animationName === 'roll-out') autoplay(); }, { once: true });
+    setTimeout(autoplay, 2000);
   });
 </script>
