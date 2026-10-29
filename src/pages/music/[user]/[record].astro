@@ -87,18 +87,21 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
       </div>
       {isOwner && <p id="sync-progress" class="text-xs text-zinc-500 empty:hidden mt-2" role="status" aria-live="polite"></p>}
 
-      <header class="mt-10 mb-12 border-b border-zinc-200 dark:border-zinc-800 pb-12 !max-w-none">
+      <header class="mt-10 mb-12 !max-w-none">
         <RecordHero record={hero!} artist={hero!.artist} title={hero!.title} released={hero!.released} genres={hero!.genres} trackCount={hero!.trackCount} links={hero!.links} />
         <Gallery images={photos} title={hero!.title} />
       </header>
 
-      <!-- The release's details stay folded until asked for (native <details>: keyboard and screen readers included). -->
-      <details class="group/details">
-        <summary class="ctl w-fit cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
-          <span class="group-open/details:hidden">Show all details</span><span class="hidden group-open/details:inline">Hide details</span>
+      <!-- The divider under the hero carries the details toggle: line, label, line, all in the line's colour (brighter on
+           hover / focus). Native <details>: keyboard and screen readers included. -->
+      <details class="group/details !max-w-none">
+        <summary class="flex items-center gap-3 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden text-sm text-zinc-200 dark:text-zinc-800 hover:text-zinc-500 dark:hover:text-zinc-500 focus-visible:text-zinc-500 focus-visible:outline-none transition-colors">
+          <span class="h-px flex-1 bg-current" aria-hidden="true"></span>
+          <span class="group-open/details:hidden">Show details</span><span class="hidden group-open/details:inline">Hide details</span>
           <svg class="w-3.5 h-3.5 transition-transform group-open/details:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
+          <span class="h-px flex-1 bg-current" aria-hidden="true"></span>
         </summary>
-        <dl class="mt-6 grid grid-cols-1 sm:grid-cols-[11rem_1fr] gap-x-8 gap-y-1 sm:gap-y-3">
+        <dl class="mt-8 max-w-3xl grid grid-cols-1 sm:grid-cols-[11rem_1fr] gap-x-8 gap-y-1 sm:gap-y-3">
           {rows.filter(([, v]) => v).map(([k, v]) => (
             <>
               <dt class="text-sm text-zinc-500 sm:pt-0.5 mt-2 sm:mt-0">{k}</dt>
