@@ -1,12 +1,12 @@
-/* ARVA design tokens v3 (2026-10-29: Tokyo Night–based dark, cool light, Moss secondary) — light + dark.
+/* ARVA design tokens v3 (2026-10-29: Tokyo Night–based dark, near-white paper light, Moss leaf-green secondary) — light + dark.
    Fonts: <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"> */
 
 :root,
 [data-theme="light"] {
   color-scheme: light;
-  --bg: #F8F9FC;            /* Cool Paper */
+  --bg: #FDFDFB;            /* Paper: almost white */
   --surface: #FFFFFF;       /* cards, inputs, menus */
-  --sunken: #EEF0F7;        /* Mist: alternating bands, wells, code */
+  --sunken: #F1F2F6;        /* Mist: alternating bands, wells, code */
   --line: #D8DBE6;          /* borders, dividers */
   --text: #1F2335;          /* Ink */
   --text-2: #565F89;        /* Slate: secondary text */
@@ -14,7 +14,7 @@
   --accent-hover: #4B45B0;
   --on-accent: #FFFFFF;
   --accent-tint: #E4E8FF;   /* tags, selection, info */
-  --moss: #1F7A66;          /* Moss: secondary, small leaf details */
+  --moss: #237A50;          /* Moss: secondary, small leaf details (fern green) */
   --success: #2F7D3A;
   --warning: #8A5D10;
   --error: #C0394B;
@@ -32,7 +32,7 @@
   --accent-hover: #B7BDFF;
   --on-accent: #1A1B26;
   --accent-tint: #2F3058;
-  --moss: #73DACA;          /* Lichen */
+  --moss: #8BD8A9;          /* Mint leaf */
   --success: #9ECE6A;
   --warning: #E0AF68;
   --error: #F7768E;
@@ -44,7 +44,7 @@
     --bg: #1A1B26; --surface: #24283B; --sunken: #292E42; --line: #3B4261;
     --text: #C0CAF5; --text-2: #9AA5CE;
     --accent: #A2A8FC; --accent-hover: #B7BDFF; --on-accent: #1A1B26; --accent-tint: #2F3058;
-    --moss: #73DACA; --success: #9ECE6A; --warning: #E0AF68; --error: #F7768E;
+    --moss: #8BD8A9; --success: #9ECE6A; --warning: #E0AF68; --error: #F7768E;
   }
 }
 
