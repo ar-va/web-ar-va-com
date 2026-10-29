@@ -7,7 +7,7 @@ import Gallery from '../../../components/music/Gallery.astro';
 import LoginButton from '../../../components/LoginButton.astro';
 import CommentThread from '../../../components/CommentThread.astro';
 import Listen from '../../../components/music/Listen.astro';
-import { commentNotices, displayDate, formatReleased, gallery, loginHref, musicPath, recordDefaults, recordValues, shelfView, textToTracklist, withSideHeadings } from '../../../music/lib';
+import { commentNotices, displayDate, formatReleased, gallery, loginHref, musicPath, recordDefaults, recordValues, runtime, shelfView, textToTracklist, withSideHeadings } from '../../../music/lib';
 import { addComment, canDeleteComment, currentUser, deleteComment, editComment, recordData, shelfSlug } from '../../../music/store';
 import { notify } from '../../../music/notify';
 
@@ -52,6 +52,7 @@ if (owner && record && Astro.request.method === 'POST') {
 if (!owner || !record) Astro.response.status = 404;
 const v = record ? recordValues(recordDefaults(record, detail, match), overrides) : {};
 const tracks = record ? withSideHeadings(textToTracklist(v.tracklist)) : [];
+const totalTime = runtime(tracks);
 const hero = record ? shelfView(record, detail, overrides, match) : null;
 const photos = record ? gallery(hero!.cover, record.cover, detail?.images) : [];
 const isOwner = !!user && user.id === owner?.id;
@@ -82,14 +83,20 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
     <article class="max-w-5xl mx-auto px-6 w-full flex-grow py-24 *:max-w-3xl">
       <!-- The top row and the hero use the whole frame; details, tracklist and comments keep the reading measure. -->
       <div class="flex items-center justify-between gap-4 !max-w-none">
-        <a href={shelfPath} class="text-sm text-zinc-500 hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors">← {owner.name}’s records</a>
-        {isOwner && <a href={`${path}/edit`} class="text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 px-4 py-2 rounded-full transition-colors">Edit</a>}
+        <a href={shelfPath} class="text-sm text-zinc-500 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">← {owner.name}’s records</a>
+        {isOwner && (
+          <a href={`${path}/edit`} class="ctl pl-2.5">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.9 4.1a2.1 2.1 0 0 1 3 3L8.5 18.5 4 20l1.5-4.5z" /></svg>
+            Edit
+          </a>
+        )}
       </div>
       {isOwner && <p id="sync-progress" class="text-xs text-zinc-500 empty:hidden mt-2" role="status" aria-live="polite"></p>}
 
-      <header class="mt-10 mb-12 !max-w-none">
-        <RecordHero record={hero!} artist={hero!.artist} title={hero!.title} released={hero!.released} genres={hero!.genres} trackCount={hero!.trackCount} links={hero!.links} />
-        <Gallery images={photos} title={hero!.title} />
+      <header class="mt-10 mb-14 !max-w-none">
+        <RecordHero record={hero!} artist={hero!.artist} title={hero!.title} released={hero!.released} genres={hero!.genres} trackCount={hero!.trackCount} links={hero!.links} runtime={totalTime ?? undefined}>
+          <Gallery images={photos} title={hero!.title} />
+        </RecordHero>
       </header>
 
       <!-- The divider under the hero carries the details toggle: label at the left, then the line, all in the line's colour (brighter on
@@ -100,28 +107,31 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
           <svg class="w-3.5 h-3.5 transition-transform group-open/details:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
           <span class="h-px flex-1 bg-current" aria-hidden="true"></span>
         </summary>
-        <dl class="mt-8 max-w-3xl grid grid-cols-1 sm:grid-cols-[11rem_1fr] gap-x-8 gap-y-1 sm:gap-y-3">
+        <dl class="mt-8 grid grid-cols-2 sm:grid-cols-3 gap-x-8 gap-y-6">
           {rows.filter(([, v]) => v).map(([k, v]) => (
-            <>
-              <dt class="text-sm text-zinc-500 sm:pt-0.5 mt-2 sm:mt-0">{k}</dt>
-              <dd class="text-zinc-800 dark:text-zinc-200 whitespace-pre-line break-words">{v}</dd>
-            </>
+            <div class="min-w-0">
+              <dt class="text-sm text-zinc-500">{k}</dt>
+              <dd class="mt-1 text-zinc-800 dark:text-zinc-200 whitespace-pre-line break-words">{v}</dd>
+            </div>
           ))}
         </dl>
       </details>
 
       {tracks.length > 0 ? (
-        <section class="mt-12">
-          <h2 class="text-zinc-500 text-sm mb-2">Tracklist</h2>
-          <ol>
+        <section class="mt-14">
+          <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Tracklist</h2>
+          <!-- Rows light up on hover; their listening icons show on hover or focus (always on touch screens). -->
+          <ol class="mt-4 -mx-3">
             {tracks.map((t) => t.heading ? (
-              <li class="pt-5 pb-1 text-xs font-bold tracking-widest uppercase text-zinc-500">{t.title}</li>
+              <li class="px-3 pt-6 pb-2 first:pt-1 text-xs font-bold tracking-widest uppercase">{t.title}</li>
             ) : (
-              <li class="flex gap-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/40 last:border-none">
-                <span class="w-8 shrink-0 text-sm text-zinc-500 tabular-nums pt-0.5">{t.position}</span>
+              <li class="group flex items-center gap-4 px-3 py-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/[0.04] focus-within:bg-zinc-100 dark:focus-within:bg-white/[0.04] transition-colors">
+                <span class="w-7 shrink-0 font-mono text-sm text-zinc-500 tabular-nums">{t.position}</span>
                 <span class="flex-grow min-w-0 text-zinc-800 dark:text-zinc-200">{t.title}</span>
-                {t.duration && <span class="text-sm text-zinc-500 tabular-nums pt-0.5">{t.duration}</span>}
-                <Listen query={`${v.artist} ${t.title}`} label={`Listen to ${t.title}`} links={t.links} kind="track" />
+                <span class="sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
+                  <Listen query={`${v.artist} ${t.title}`} label={`Listen to ${t.title}`} links={t.links} kind="track" />
+                </span>
+                {t.duration && <span class="w-12 shrink-0 text-right font-mono text-sm text-zinc-500 tabular-nums">{t.duration}</span>}
               </li>
             ))}
           </ol>

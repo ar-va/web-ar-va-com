@@ -15,38 +15,44 @@ interface Props {
   trackCount: number;
   links: { spotify?: string; apple?: string; youtube?: string };
   href?: string;
+  /** Total running time, e.g. "42 min" (the album page). */
+  runtime?: string;
 }
-const { record, artist, title, released, genres, trackCount, links, href } = Astro.props;
+const { record, artist, title, released, genres, trackCount, links, href, runtime } = Astro.props;
 // Discogs' added date is in the collector's local time: show that day, not the UTC one.
-const added = `Added on ${formatReleased(record.added.slice(0, 10))}`;
+const added = `Added to the shelf ${formatReleased(record.added.slice(0, 10))}`;
 const facts = [
-  released && `Released on ${displayDate(released)}`,
+  released && displayDate(released),
   genres.join(', '),
   trackCount > 0 && `${trackCount} track${trackCount === 1 ? '' : 's'}`,
+  runtime,
 ].filter(Boolean);
 const Heading = href ? 'h2' : 'h1';
 ---
-<div class="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-28">
+<!-- The rolled-out disc sticks out 38 % of the sleeve's width: the gap leaves it ~50 px clear of the text. -->
+<div class={`flex flex-col sm:flex-row sm:items-center gap-8 ${href ? 'sm:gap-32' : 'sm:gap-36'}`}>
   {href ? (
     <a href={href} class="shrink-0 self-start sm:self-auto" tabindex="-1" aria-hidden="true">
-      <Cover record={record} eager class="sleeve-open w-44 sm:w-48" />
+      <Cover record={record} eager class="sleeve-open w-44 sm:w-52" />
     </a>
   ) : (
-    <button type="button" data-spin class="shrink-0 self-start sm:self-auto cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-violet-500" aria-label="Spin the record" title="Spin the record">
-      <Cover record={record} eager class="sleeve-open w-44 sm:w-48" />
+    <button type="button" data-spin aria-pressed="false" class="shrink-0 self-start sm:self-auto cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-violet-500" aria-label="Play the record" title="Play the record">
+      <Cover record={record} eager class="sleeve-open w-48 sm:w-60" />
     </button>
   )}
-  <div class="min-w-0">
-    <p class="text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-1">{artist}</p>
-    <Heading class="text-3xl sm:text-4xl font-bold leading-tight text-zinc-900 dark:text-white">
+  <div class="min-w-0 flex-1">
+    <p class="text-xs font-bold tracking-widest uppercase mb-2">{artist}</p>
+    <Heading class="text-3xl sm:text-5xl font-bold leading-[1.05] text-zinc-900 dark:text-white">
       {href ? <a href={href} class="hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{title}</a> : title}
     </Heading>
-    <p class="mt-2 text-zinc-500">{added}</p>
-    {facts.length > 0 && <p class="text-zinc-500">{facts.join(' · ')}</p>}
-    <div class="mt-4 flex items-center gap-3 text-sm text-zinc-500">
-      <span>Listen</span>
-      <Listen size="md" query={`${artist} ${title}`} label={`Listen to ${title}`} links={links} />
+    {facts.length > 0 && <p class="mt-4 text-zinc-700 dark:text-zinc-300">{facts.join(' · ')}</p>}
+    <p class="mt-1 text-sm text-zinc-500">{added}</p>
+    <div class="mt-6">
+      {href
+        ? <div class="flex items-center gap-3 text-sm text-zinc-500"><span>Listen</span><Listen size="md" query={`${artist} ${title}`} label={`Listen to ${title}`} links={links} /></div>
+        : <Listen buttons query={`${artist} ${title}`} label={`Listen to ${title}`} links={links} />}
     </div>
+    <slot />
   </div>
 </div>
 
@@ -56,20 +62,60 @@ const Heading = href ? 'h2' : 'h1';
   // Notes drift out of the open side while the record rolls out (CSS: 0.25 s delay, 1.6 s).
   document.querySelectorAll<HTMLElement>('.sleeve-open').forEach((sleeve) => emitBurst(sleeve, 'right', 9, 1500, 300));
 
-  // Clicking the cover spins the record where it rests; taps while it spins are ignored.
+  // Clicking the cover plays the record like a turntable: it spins up to 33⅓ rpm (a turn every 1.8 s) and keeps going,
+  // with a note drifting out now and then; clicking again slows it to a stop. Nothing with reduced motion.
+  const REV_MS = 1800;
   document.querySelectorAll<HTMLElement>('[data-spin]').forEach((button) => {
     const disc = button.querySelector<HTMLElement>('.disc');
-    let spinning = false;
-    button.addEventListener('click', async () => {
-      if (!disc || spinning || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      spinning = true;
-      emitBurst(disc.closest<HTMLElement>('.sleeve')!, 'right', 8, 1200);
-      const spin = disc.animate(
-        [{ transform: 'translateX(38%) rotate(300deg)' }, { transform: 'translateX(38%) rotate(1020deg)' }],
-        { duration: 1600, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)' },
-      );
-      await spin.finished;
-      spinning = false;
+    const sleeve = disc?.closest<HTMLElement>('.sleeve');
+    if (!disc || !sleeve) return;
+    let spin: Animation | null = null;
+    let ramp = 0;
+    let notes = 0;
+    let playing = false;
+    const rampTo = (target: number, ms: number, done?: () => void) => {
+      cancelAnimationFrame(ramp);
+      const from = spin!.playbackRate;
+      const start = performance.now();
+      const step = (now: number) => {
+        const t = Math.min(1, (now - start) / ms);
+        // Spin-up eases in like a platter catching speed; spin-down eases out like one coasting to a halt.
+        const k = target > from ? 1 - (1 - t) ** 2 : t * (2 - t);
+        spin!.playbackRate = from + (target - from) * k;
+        if (t < 1) ramp = requestAnimationFrame(step);
+        else done?.();
+      };
+      ramp = requestAnimationFrame(step);
+    };
+    const set = (on: boolean) => {
+      playing = on;
+      button.setAttribute('aria-pressed', String(on));
+      const label = on ? 'Stop the record' : 'Play the record';
+      button.title = label;
+      button.setAttribute('aria-label', label);
+    };
+    button.addEventListener('click', () => {
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (!playing) {
+        set(true);
+        if (!spin) {
+          // The resting record sits rolled out 38 % and turned 300°; the spin carries on from there.
+          spin = disc.animate(
+            [{ transform: 'translateX(38%) rotate(300deg)' }, { transform: 'translateX(38%) rotate(660deg)' }],
+            { duration: REV_MS, iterations: Infinity },
+          );
+          spin.playbackRate = 0;
+        }
+        spin.play();
+        rampTo(1, 1100);
+        emitBurst(sleeve, 'right', 3, 900, 400);
+        clearInterval(notes);
+        notes = window.setInterval(() => emitBurst(sleeve, 'right', 1, 300), 1600);
+      } else {
+        set(false);
+        clearInterval(notes);
+        rampTo(0, 2200, () => spin?.pause());
+      }
     });
   });
 </script>

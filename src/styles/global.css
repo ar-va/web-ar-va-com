@@ -385,3 +385,6 @@ html { scroll-padding-top: 1.5rem; }
 .search-field svg { position: absolute; left: 0.5rem; top: 50%; translate: 0 -50%; width: 1rem; height: 1rem; pointer-events: none; }
 @media (max-width: 639px) { .search-field input:focus, .search-field input:not(:placeholder-shown) { width: 11rem; } }
 @media (prefers-reduced-motion: reduce) { .search-field input { transition: none; } }
+
+/* Edit page: the tracklist row being dragged lifts off the list. */
+.track.dragging { position: relative; z-index: 10; box-shadow: 0 10px 24px -8px rgb(0 0 0 / 0.25); border-color: var(--color-blue-violet-500); }

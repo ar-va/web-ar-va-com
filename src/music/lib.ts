@@ -273,6 +273,39 @@ export function textToTracklist(text: string): Track[] {
  * sides; the position shows just the track number. Tracklists with their own headings, or positions that
  * aren't letter + number (CDs, "1", "2"), are left as they are.
  */
+/** Total running time ("42 min", "1 h 12 min") when every track has a length like 4:52 or 1:02:10; else null. */
+export function runtime(tracks: Track[]): string | null {
+  const songs = tracks.filter((t) => !t.heading);
+  if (!songs.length) return null;
+  let seconds = 0;
+  for (const t of songs) {
+    const parts = t.duration.trim().split(':');
+    if (parts.length < 2 || parts.length > 3 || parts.some((p) => !/^\d+$/.test(p))) return null;
+    seconds += parts.reduce((sum, p) => sum * 60 + Number(p), 0);
+  }
+  const minutes = Math.round(seconds / 60);
+  return minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
+}
+
+/**
+ * Drag-and-drop renumbering for the edit page: positions like A1, B2 are numbered again in their new order within
+ * each side letter; plain numbers 1, 2, 3 run straight through. Other positions (CD1-3, empty) stay as typed.
+ */
+export function renumber(positions: string[]): string[] {
+  const counts = new Map<string, number>();
+  const plain = positions.filter((p) => /^\d+$/.test(p)).length;
+  let n = 0;
+  return positions.map((p) => {
+    const side = p.match(/^([A-Za-z]{1,2})\d+$/);
+    if (side) {
+      const k = (counts.get(side[1]) ?? 0) + 1;
+      counts.set(side[1], k);
+      return `${side[1]}${k}`;
+    }
+    return /^\d+$/.test(p) && plain ? String(++n) : p;
+  });
+}
+
 export function withSideHeadings(tracks: Track[]): Track[] {
   const songs = tracks.filter((t) => !t.heading);
   if (tracks.some((t) => t.heading) || !songs.every((t) => /^[A-Z]\d*[a-z]?$/i.test(t.position))) return tracks;
