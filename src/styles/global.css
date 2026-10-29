@@ -321,9 +321,10 @@ html { scroll-padding-top: 1.5rem; }
      on-state); solid violet only for primary buttons.
    Toolbar controls are 2rem pills. */
 :root { --well: rgb(31 35 53 / 0.06); --well-hover: rgb(31 35 53 / 0.1); --on-bg: var(--color-blue-violet-100); --on-bg-hover: var(--color-blue-violet-200); --on-text: var(--color-blue-violet-700); }
-/* Dark "on": a soft deep purple (violet-500 mixed into the dark surface, opaque; close to the brand's #2F3058 tint); violet-900 was too bold, the
+/* Dark "on": violet-500 mixed 45 % into the dark surface, opaque (at 25 % it had the grey wells' brightness and
+   only the hue set it apart; user 2026-10-29: "indistinguishable"); violet-900 was too bold, the
    first 22 % violet-400 mix a little too pale. */
-.dark { --well: rgb(255 255 255 / 0.08); --well-hover: rgb(255 255 255 / 0.13); --on-bg: color-mix(in srgb, var(--color-blue-violet-500) 25%, #1e2029); --on-bg-hover: color-mix(in srgb, var(--color-blue-violet-500) 33%, #1e2029); --on-text: var(--color-blue-violet-200); }
+.dark { --well: rgb(255 255 255 / 0.08); --well-hover: rgb(255 255 255 / 0.13); --on-bg: color-mix(in srgb, var(--color-blue-violet-500) 45%, #1e2029); --on-bg-hover: color-mix(in srgb, var(--color-blue-violet-500) 55%, #1e2029); --on-text: var(--color-blue-violet-200); }
 .ctl {
   display: inline-flex; align-items: center; gap: 0.375rem; height: 2rem; padding: 0 0.875rem; border-radius: 9999px;
   font-size: 0.875rem; font-weight: 500; color: var(--color-zinc-700); background: var(--well);
