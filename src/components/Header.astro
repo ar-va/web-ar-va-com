@@ -10,9 +10,9 @@ const path = Astro.url.pathname;
 const current = (on: boolean) => (on ? 'page' : undefined);
 ---
 
-<!-- Three frosted-glass pills across the page width: logo left, menu centred, account + theme right. Not pinned:
-     it scrolls away with the page (user, 2026-10-29). -->
-<nav id="site-header" class="relative z-50 mt-3 max-w-5xl mx-auto px-3 sm:px-6 w-full flex justify-between items-center gap-2 sm:grid sm:grid-cols-[1fr_auto_1fr]">
+<!-- A plain header across the page width: logo left, menu centred on the page (phones too), account + theme right.
+     The theme switch is the only pill. Not pinned: it scrolls away with the page (user, 2026-10-29). -->
+<nav id="site-header" class="relative z-50 mt-3 max-w-5xl mx-auto px-6 w-full grid grid-cols-[1fr_auto_1fr] items-center gap-3">
   <a href={`${main}/`} class="shrink-0 justify-self-start h-11 flex items-center" aria-label="ARVA home">
     <!-- Brand logo files (two-tone: Moss leaf, wordmark in the text colour), ink on light and washi on dark: the horizontal logo (24 px) from 640 px up; on phones the
          small leaf mark (the brand's file for sizes under 32 px), since the full logo doesn't fit beside the menu. -->
@@ -21,18 +21,18 @@ const current = (on: boolean) => (on ? 'page' : undefined);
     <img src="/brand/arva-mark-small-ink-moss.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 sm:hidden dark:hidden" />
     <img src="/brand/arva-mark-small-washi-moss.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 hidden dark:block dark:sm:hidden" />
   </a>
-  <div class="glass shrink-0 h-11 rounded-full flex items-center px-4 sm:px-6">
-    <div class="flex items-center gap-4 sm:gap-6 text-sm font-medium">
+  <div class="h-11 flex items-center">
+    <div class="flex items-center gap-5 sm:gap-7 text-sm font-medium">
       <a href={`${main}/`} class={`${link} hidden sm:inline`} aria-current={current(!onMusic && path === '/')}>Home</a>
       <a href={`${main}/blog`} class={link} aria-current={current(!onMusic && path.startsWith('/blog'))}>Blog</a>
       <a href={onMusic ? '/' : 'https://music.ar-va.com/'} class={link} aria-current={current(onMusic)}>Music</a>
     </div>
   </div>
-  <div class="glass shrink-0 justify-self-end h-11 rounded-full flex items-center gap-1.5 p-1.5 text-sm font-medium">
-    <a id="account" href="https://ar-va.com/login" title="Log in with Telegram"
-      class="flex items-center gap-1.5 h-8 rounded-full bg-blue-violet-600 dark:bg-blue-violet-400 pl-2.5 pr-3.5 text-white dark:text-zinc-950 hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 transition-colors">
+  <div class="justify-self-end h-11 flex items-center gap-3 sm:gap-4 text-sm font-medium">
+    <a id="account" href="https://ar-va.com/login" title="Log in with Telegram" aria-label="Log in with Telegram"
+      class="flex items-center gap-1.5 h-8 text-zinc-600 dark:text-zinc-300 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">
       <svg class="w-4 h-4 shrink-0" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
-      <span class="whitespace-nowrap">Log in</span>
+      <span class="whitespace-nowrap max-sm:sr-only">Log in</span>
     </a>
     <ThemeToggle />
   </div>
@@ -53,7 +53,8 @@ const current = (on: boolean) => (on ? 'page' : undefined);
     }
     a.href = `${location.protocol}//music.${base}/settings`;
     a.title = 'Your account';
-    a.className = 'flex items-center gap-2 h-8 pl-1 pr-2 text-zinc-600 dark:text-zinc-300 hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors';
+    a.setAttribute('aria-label', `Your account (${who.n})`);
+    a.className = 'flex items-center gap-2 h-8 text-zinc-600 dark:text-zinc-300 hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors';
     const pic = typeof who.p === 'string' && who.p.startsWith('https://') ? Object.assign(document.createElement('img'), { src: who.p, alt: '', width: 24, height: 24, referrerPolicy: 'no-referrer', className: 'w-6 h-6 rounded-full object-cover' })
       : Object.assign(document.createElement('span'), { textContent: who.n.charAt(0), className: 'w-6 h-6 rounded-full bg-blue-violet-500 text-white text-xs grid place-items-center' });
     const name = Object.assign(document.createElement('span'), { textContent: who.n, className: 'sr-only sm:not-sr-only' });
