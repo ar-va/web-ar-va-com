@@ -74,7 +74,7 @@ const fields: { key: string; label: string; hint?: string; multiline?: boolean }
   { key: 'tracklist', label: 'Tracklist', hint: 'Position, title, length and, under “Links”, the track on each service. Positions like A1, B1 are shown as Side A, Side B.', multiline: true },
   ...Object.entries(links).map(([key, name]) => ({ key, label: `${name} link`, hint: defaults[key] ? `Found automatically. Paste another ${name} album link if it’s the wrong one.` : `The album on ${name}. Empty: the ${name} icon searches for it.` })),
 ];
-const input = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-4 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 transition-colors';
+const input = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-4 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 transition-colors';
 const edited = Object.keys(overrides).length;
 const dated = new Set(['released', 'vinylRelease']);
 ---
@@ -172,16 +172,16 @@ const dated = new Set(['released', 'vinylRelease']);
       <template id="track-row">
         <div class="track rounded-xl border border-zinc-200 dark:border-zinc-800 p-2.5 flex flex-col gap-2">
           <div class="flex items-center gap-2">
-            <input data-k="position" aria-label="Position" placeholder="A1" class="w-14 shrink-0 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-2 py-1.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500" />
-            <input data-k="title" aria-label="Title" placeholder="Title" class="min-w-0 flex-grow rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-2.5 py-1.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500" />
-            <input data-k="duration" aria-label="Length" placeholder="4:52" class="w-16 shrink-0 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-2 py-1.5 text-sm tabular-nums text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500" />
+            <input data-k="position" aria-label="Position" placeholder="A1" class="w-14 shrink-0 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-2 py-1.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500" />
+            <input data-k="title" aria-label="Title" placeholder="Title" class="min-w-0 flex-grow rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-2.5 py-1.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500" />
+            <input data-k="duration" aria-label="Length" placeholder="4:52" class="w-16 shrink-0 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-2 py-1.5 text-sm tabular-nums text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500" />
             <button type="button" data-act="links" class="shrink-0 text-xs font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4 px-1">Links</button>
             <button type="button" data-act="remove" aria-label="Remove this line" class="shrink-0 w-7 h-7 grid place-items-center rounded-full text-zinc-400 hover:text-red-600 dark:hover:text-red-400">×</button>
           </div>
           <div data-links class="hidden grid-cols-1 sm:grid-cols-3 gap-2">
-            <input data-k="spotify" type="url" aria-label="Spotify link" placeholder="Spotify link" class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500" />
-            <input data-k="apple" type="url" aria-label="Apple Music link" placeholder="Apple Music link" class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500" />
-            <input data-k="youtube" type="url" aria-label="YouTube Music link" placeholder="YouTube Music link" class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500" />
+            <input data-k="spotify" type="url" aria-label="Spotify link" placeholder="Spotify link" class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500" />
+            <input data-k="apple" type="url" aria-label="Apple Music link" placeholder="Apple Music link" class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500" />
+            <input data-k="youtube" type="url" aria-label="YouTube Music link" placeholder="YouTube Music link" class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500" />
           </div>
         </div>
       </template>

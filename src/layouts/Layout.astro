@@ -16,6 +16,10 @@ const { title, description } = Astro.props;
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <title>{title}</title>
+    <!-- ARVA brand fonts: Archivo (headings), IBM Plex Sans (text), IBM Plex Mono (labels). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
     {description && <meta name="description" content={description} />}
     <slot name="head" />
     
@@ -38,7 +42,7 @@ const { title, description } = Astro.props;
       }
     </script>
   </head>
-  <body class="bg-white text-zinc-900 transition-colors duration-300 dark:bg-[#111111] dark:text-zinc-300 antialiased min-h-screen flex flex-col">
+  <body class="bg-paper text-zinc-900 transition-colors duration-300 dark:bg-zinc-950 dark:text-zinc-300 antialiased min-h-screen flex flex-col">
     <Header />
     <div class="flex-grow flex flex-col">
       <slot />

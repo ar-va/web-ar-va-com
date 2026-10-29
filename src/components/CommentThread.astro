@@ -40,7 +40,7 @@ const replies = (id: number) => comments.filter((c) => c.parent_id === id);
     {Object.entries(hidden).map(([k, v]) => <input type="hidden" name={k} value={v} />)}
     <label for="comment-body" class="text-sm text-zinc-500">Comment as {user.name}</label>
     <textarea id="comment-body" name="body" rows="3" required maxlength={COMMENT_MAX}
-      class="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-[#1a1a1a] px-4 py-3 text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 transition-colors"
+      class="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-4 py-3 text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 transition-colors"
       aria-describedby={error ? 'comment-error' : undefined}>{draft}</textarea>
     {error && <p id="comment-error" class="text-sm text-red-600 dark:text-red-400" role="alert">{error}</p>}
     <div><button class="bg-blue-violet-500 text-white text-sm font-medium px-6 py-2.5 rounded-full hover:bg-blue-violet-600 transition-colors">Post comment</button></div>

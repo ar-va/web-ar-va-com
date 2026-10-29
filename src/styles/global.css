@@ -4,41 +4,69 @@
 /* Enable manual class-based dark mode */
 @custom-variant dark (&:is(.dark *));
 
-/* Define your custom color palette */
+/* ARVA brand palette (ARVA-brand-rules.md, arva-tokens.css; applied 2026-10-29, "identity only": the site keeps
+   its own shapes and layout). The two scales the whole site already uses are remapped, so every class follows:
+   blue-violet = the accent (600 Indigo #5A57C4 in light, 400 Periwinkle #A2A8FC in dark, 700/300 their hovers,
+   100/900 the accent tints); zinc = warm neutrals (200 line, 600 Bark, 900 Gall Ink, 950 Night Ink, 800 dark
+   line, 400 dark secondary text). Paper White / Night Ink page, #211F28 dark surface. */
 @theme {
-  --color-blue-violet-50: #edf2ff;
-  --color-blue-violet-100: #dfe7ff;
-  --color-blue-violet-200: #c5d3ff;
-  --color-blue-violet-300: #a2b6ff;
-  --color-blue-violet-400: #7d8efc;
-  --color-blue-violet-500: #5f68f5;
-  --color-blue-violet-600: #4f4ceb;
-  --color-blue-violet-700: #3a34ce;
-  --color-blue-violet-800: #302da6;
-  --color-blue-violet-900: #2b2b84;
-  --color-blue-violet-950: #1b1a4c;
+  --color-blue-violet-50: #f1f3ff;
+  --color-blue-violet-100: #e4e8ff;
+  --color-blue-violet-200: #cbd1ff;
+  --color-blue-violet-300: #b7bdff;
+  --color-blue-violet-400: #a2a8fc;
+  --color-blue-violet-500: #6865d2;
+  --color-blue-violet-600: #5a57c4;
+  --color-blue-violet-700: #4b45b0;
+  --color-blue-violet-800: #3d3891;
+  --color-blue-violet-900: #2f3058;
+  --color-blue-violet-950: #1e1e3a;
+
+  --color-zinc-50: #faf8f4;
+  --color-zinc-100: #f4f0e8;
+  --color-zinc-200: #dbd7cf;
+  --color-zinc-300: #c8c3ba;
+  --color-zinc-400: #afaaa1;
+  --color-zinc-500: #7a736a;
+  --color-zinc-600: #696258;
+  --color-zinc-700: #4a4550;
+  --color-zinc-800: #3c3943;
+  --color-zinc-900: #1f1c26;
+  --color-zinc-950: #17151c;
+
+  --color-paper: #fdfcfa;
+  --color-night-surface: #211f28;
+
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-heading: 'Archivo', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
+
+/* Brand type: Archivo for headings (112 % width; the bold ones at 600), Plex Mono for the small uppercase labels. */
+h1, h2, h3, h4 { font-family: var(--font-heading); font-stretch: 112%; }
+:is(h1, h2, h3, h4).font-bold { font-weight: 600; }
+.uppercase.tracking-widest { font-family: var(--font-mono); }
 /* ---- Music shelf (music.ar-va.com) ---- */
 /* Each row is a ledge: a lit top surface the sleeves stand on, a darker front edge, and a soft wall behind. */
 :root {
-  --wall-top: rgb(24 24 27 / 0);
-  --wall: rgb(24 24 27 / 0.035);
-  --ledge-top: #f4f4f5;
-  --ledge-top-2: #e2e2e6;
-  --ledge-lip: #ffffff;
-  --ledge-edge: #d4d4d8;
-  --ledge-edge-2: #b9b9c1;
+  --wall-top: rgb(31 28 38 / 0);
+  --wall: rgb(31 28 38 / 0.035);
+  --ledge-top: #f4f0e8;
+  --ledge-top-2: #e5e0d6;
+  --ledge-lip: #fdfcfa;
+  --ledge-edge: #d3cdc2;
+  --ledge-edge-2: #bab3a6;
   --ledge-shadow: rgb(0 0 0 / 0.18);
   --glow-strength: 45%;
 }
 .dark {
   --wall-top: rgb(255 255 255 / 0);
   --wall: rgb(255 255 255 / 0.025);
-  --ledge-top: #45454c;
-  --ledge-top-2: #2e2e33;
-  --ledge-lip: #55555d;
-  --ledge-edge: #202024;
-  --ledge-edge-2: #141417;
+  --ledge-top: #4a4652;
+  --ledge-top-2: #322f3a;
+  --ledge-lip: #5a5662;
+  --ledge-edge: #211f28;
+  --ledge-edge-2: #17151c;
   --ledge-shadow: rgb(0 0 0 / 0.7);
   --glow-strength: 62%;
 }
@@ -215,13 +243,13 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
 /* Loading placeholder: a soft light sweeping left to right. On images it is the background, so the picture covers
    it as soon as it paints; no script needed. */
 .skeleton {
-  --sk: #e4e4e7;
-  --sk-hi: #f4f4f5;
+  --sk: #ece8e0;
+  --sk-hi: #f7f4ee;
   background: linear-gradient(90deg, var(--sk) 40%, var(--sk-hi) 50%, var(--sk) 60%) var(--sk);
   background-size: 300% 100%;
   animation: skeleton 1.6s ease-in-out infinite;
 }
-.dark .skeleton { --sk: #232326; --sk-hi: #34343a; }
+.dark .skeleton { --sk: #24222b; --sk-hi: #322f3a; }
 @keyframes skeleton { from { background-position: 100% 0; } to { background-position: 0 0; } }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
 
@@ -234,14 +262,14 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
 .glass-under { isolation: isolate; }
 .glass-under::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; }
 .glass, .glass-under::before {
-  background: rgb(255 255 255 / 0.62);
+  background: rgb(253 252 250 / 0.62);
   box-shadow: 0 12px 18px -12px rgb(0 0 0 / 0.22);
   will-change: transform;
   -webkit-backdrop-filter: blur(18px) saturate(1.6);
   backdrop-filter: blur(18px) saturate(1.6);
 }
 .dark .glass, .dark .glass-under::before {
-  background: rgb(36 36 40 / 0.6);
+  background: rgb(33 31 40 / 0.6);
   box-shadow: 0 12px 18px -12px rgb(0 0 0 / 0.65);
 }
 
@@ -265,7 +293,7 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
 }
 
 /* Over the photo viewer's dark backdrop the glass is always the dark kind, whatever the site theme. */
-dialog[data-lightbox] .glass { background: rgb(36 36 40 / 0.5); box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.6); }
+dialog[data-lightbox] .glass { background: rgb(33 31 40 / 0.5); box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.6); }
 
 /* The header stays on screen: jumps to #sections stop below it instead of under it. */
 html { scroll-padding-top: 5.5rem; }
@@ -276,8 +304,8 @@ html { scroll-padding-top: 5.5rem; }
 @keyframes reveal-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
 /* The filters panel is mostly text: a denser glass, so covers behind it don't show through the words. */
-#filters-panel { background: rgb(255 255 255 / 0.9); }
-.dark #filters-panel { background: rgb(30 30 34 / 0.9); }
+#filters-panel { background: rgb(253 252 250 / 0.92); }
+.dark #filters-panel { background: rgb(33 31 40 / 0.92); }
 
 /* Controls follow one rule everywhere (2026-10-28):
    - grey "well" = something you can press or type in (filter toggle, Sort, view switch, search, theme switch
@@ -286,10 +314,10 @@ html { scroll-padding-top: 5.5rem; }
      doesn't turn muddy over glass, and readable (about 6:1 light, 7:1 dark);
    - solid violet only for small signals (count badge, theme knob) and primary buttons.
    Toolbar controls are 2rem pills. */
-:root { --well: rgb(24 24 27 / 0.06); --well-hover: rgb(24 24 27 / 0.1); --on-bg: var(--color-blue-violet-100); --on-bg-hover: var(--color-blue-violet-200); --on-text: var(--color-blue-violet-700); }
-/* Dark "on": a soft deep purple (violet-500 mixed into the panel grey, opaque); violet-900 was too bold, the
+:root { --well: rgb(31 28 38 / 0.06); --well-hover: rgb(31 28 38 / 0.1); --on-bg: var(--color-blue-violet-100); --on-bg-hover: var(--color-blue-violet-200); --on-text: var(--color-blue-violet-700); }
+/* Dark "on": a soft deep purple (violet-500 mixed into the dark surface, opaque; close to the brand's #2F3058 tint); violet-900 was too bold, the
    first 22 % violet-400 mix a little too pale. */
-.dark { --well: rgb(255 255 255 / 0.08); --well-hover: rgb(255 255 255 / 0.13); --on-bg: color-mix(in srgb, var(--color-blue-violet-500) 25%, #242428); --on-bg-hover: color-mix(in srgb, var(--color-blue-violet-500) 33%, #242428); --on-text: var(--color-blue-violet-200); }
+.dark { --well: rgb(255 255 255 / 0.08); --well-hover: rgb(255 255 255 / 0.13); --on-bg: color-mix(in srgb, var(--color-blue-violet-500) 25%, #211f28); --on-bg-hover: color-mix(in srgb, var(--color-blue-violet-500) 33%, #211f28); --on-text: var(--color-blue-violet-200); }
 .ctl {
   display: inline-flex; align-items: center; gap: 0.375rem; height: 2rem; padding: 0 0.875rem; border-radius: 9999px;
   font-size: 0.875rem; font-weight: 500; color: var(--color-zinc-700); background: var(--well);
