@@ -257,7 +257,8 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
 @keyframes skeleton { from { background-position: 100% 0; } to { background-position: 0 0; } }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
 
-/* Frosted glass (header pills): a translucent tint over the blurred page and a soft lift; no outline.
+/* Frosted glass (header pills): a translucent tint over the blurred page and a light lift; no outline (shadow
+   softened 2026-10-29: "too strong").
    The shadow falls straight down and stays within the 8 px between header pills: a wider one was drawn over
    the neighbouring pill and showed as a hard-edged band there when a hovered link repainted (user, 2026-10-28).
    Each glass element also gets its own layer, so one repainting doesn't disturb another's blur.
@@ -267,14 +268,14 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
 .glass-under::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; }
 .glass, .glass-under::before {
   background: rgb(248 249 252 / 0.62);
-  box-shadow: 0 12px 18px -12px rgb(0 0 0 / 0.22);
+  box-shadow: 0 6px 14px -10px rgb(31 35 53 / 0.12);
   will-change: transform;
   -webkit-backdrop-filter: blur(18px) saturate(1.6);
   backdrop-filter: blur(18px) saturate(1.6);
 }
 .dark .glass, .dark .glass-under::before {
   background: rgb(36 40 59 / 0.6);
-  box-shadow: 0 12px 18px -12px rgb(0 0 0 / 0.65);
+  box-shadow: 0 6px 14px -10px rgb(0 0 0 / 0.35);
 }
 
 /* Theme switch: hovering (or keyboard focus) previews the other theme, whose icon comes alive: the sun turns and

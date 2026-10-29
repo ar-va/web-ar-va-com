@@ -23,7 +23,7 @@ ARVA makes modern digital products with the patience of a century-old craft work
 
 ## 2. Logo
 
-Files are in `logo/`. Never redraw, retype, or recolour the logo; always use the files.
+Files are in `logo/`. Never redraw or retype the logo; always use the files. **Logo colours follow the palette:** the ink files use `--text` (light) and the washi files use `--text` (dark); they change only when the brand palette changes, and then every file changes together (see the changelog). Never recolour a single file for one page.
 
 | File | Use |
 |---|---|
@@ -32,7 +32,7 @@ Files are in `logo/`. Never redraw, retype, or recolour the logo; always use the
 | `arva-stacked-ink.svg` / `-washi.svg` | Square spaces: splash, social, about page |
 | `arva-mark-ink.svg` / `-washi.svg` | Mark alone, 32 px and larger |
 | `arva-mark-small-ink.svg` / `-washi.svg` | Mark alone, below 32 px (simplified, no midrib) |
-| `arva-mark-russet.svg` | Print and packaging only (the russet is no longer a screen colour since 2026-10-29) |
+| `arva-mark-moss.svg` | Heritage contexts only (print, packaging, an "about" page); Moss `--moss` (was russet) |
 | `arva-wordmark-ink.svg` | Wordmark alone, only where the mark already appears nearby |
 | `favicon.svg` | Browser favicon; switches colour automatically in dark mode |
 
@@ -171,7 +171,7 @@ Rules:
 
 - Bright grass or eco greens (the only green is `--moss`), rainbow, or neon colours, or gradient backgrounds.
 - Any font other than Archivo, IBM Plex Sans, IBM Plex Mono, and Plex Sans JP.
-- The logo recoloured, redrawn, in a circle, or in the accent colour.
+- The logo redrawn, in a circle, in the accent colour, or recoloured outside a palette change.
 - Moss on interactive elements.
 - White text on periwinkle (dark-theme accent).
 - Glassmorphism, heavy shadows, pill buttons, cards with a coloured left border.
@@ -196,6 +196,10 @@ Rules:
 - **2026-10-29:** colours refreshed. The first warm neutrals (Paper White, Washi, Bark, Night Ink) and the russet
   heritage colour read as burnt and brownish; the dark theme now follows Tokyo Night, the light theme is a cool
   paper, and the secondary is Moss (teal-green) instead of russet. Accent unchanged.
+- **2026-10-29 (logo):** logo files follow the v3 palette: ink #1F1C26 → #1F2335, washi #F4F0E8 → #C0CAF5 (the
+  dark-theme text), russet mark → Moss #1F7A66 (`arva-mark-moss.svg`). File names keep "ink" / "washi" for the
+  light / dark versions. Their embedded Content Credentials (C2PA) were removed: they certified the old colours.
+  `favicon.svg` now switches ink → washi on dark browser tabs itself.
 - **Site note (ar-va.com):** the owner chose "identity only" for the site: logo, fonts and colours follow these
   rules, while the site keeps its frosted-glass pill header and toolbars, pill-shaped controls, and the music
   shelf's vinyl animations, which sections 5, 6, 8 and 9 would otherwise rule out.
