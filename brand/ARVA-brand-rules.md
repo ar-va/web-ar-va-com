@@ -89,6 +89,26 @@ Rules:
 - Use `--sunken` (Mist) to alternate full-width sections in the light theme.
 - Shadows: avoid them. Separate surfaces with `--line` borders. If a floating element (menu, modal) truly needs one, use `0 8px 24px rgb(0 0 0 / .12)` in light and `0 8px 24px rgb(0 0 0 / .4)` in dark.
 
+### Purple or Moss
+
+**Purple (`--accent`) means "you can act on this". Moss (`--moss`) means "this is who we are". Everything else is neutral** (`--text`, `--text-2`, `--line`).
+
+| Use purple for | Use Moss for | Keep neutral |
+|---|---|---|
+| Links (inline and "All records ↓"-style) | The leaf in the logo | Body text and headings |
+| Primary buttons ("View work", "Log in", "Post comment") | Mono uppercase eyebrow labels that name what you see ("BUSINESS SUCCESS SPECIALIST", "RELEASED", the artist above an album title) | Secondary text, dates, counts in brackets |
+| Current or selected state: active nav, picked filters, current view, switch knobs, open menus | Rare heritage or editorial accents: a "since" line, one stamp-like detail, a pull quote's mark | Dividers and borders |
+| Focus rings and hover states | Descriptive markers that are not clickable (e.g. a "new" marker on a recent record, a category label) | Grey control pills at rest |
+| Small signals: count badges, Reset | | Small section headings ("Latest", "Photos", "Tracklist") |
+| Icons that act: streaming links, share | | |
+
+Rules of thumb:
+1. **One test.** If it reacts to a click or hover, purple. If it only tells you what something is, Moss. If neither, neutral.
+2. **Never both on one element**, and never Moss and purple side by side as two equal choices.
+3. **Proportion:** purple up to about 10% of a screen, Moss under 3%. Moss is a signature, not a second accent.
+4. **Moss is not "success".** Status messages ("Saved", "Synced") use `--success`. Keep a Moss label and a success message apart: in the dark theme they are close in colour.
+5. **Moss never fills large areas or buttons**; it is always text-sized, or the leaf.
+
 ### Theme switching
 - Support both themes using `[data-theme="light"|"dark"]` on `<html>`. If no attribute is set, follow `prefers-color-scheme`.
 - The theme toggle is a small icon button in the header (sun/moon line icons). Remember the choice in `localStorage`.
@@ -216,6 +236,8 @@ Rules:
   #1E2029, sunken #292E42 → #262935, line #3B4261 → #333645, text #C0CAF5 → #C6CBE4, text-2 #9AA5CE → #9CA3C4. The washi
   logo files follow the new dark `--text`.
 - **2026-10-29 (service icons):** the per-service colours were dropped again; service icons use the accent.
+- **2026-10-29 (purple or Moss):** added the "Purple or Moss" section: purple for action and state, Moss for
+  identity and labels, neutral for the rest.
 - **Site note (ar-va.com):** the owner chose "identity only" for the site: logo, fonts and colours follow these
   rules, while the site keeps its frosted-glass pill header and toolbars, pill-shaped controls, and the music
   shelf's vinyl animations, which sections 5, 6, 8 and 9 would otherwise rule out.
