@@ -390,3 +390,17 @@ html { scroll-padding-top: 1.5rem; }
 
 /* Edit page: the tracklist row being dragged lifts off the list. */
 .track.dragging { position: relative; z-index: 10; box-shadow: 0 10px 24px -8px rgb(0 0 0 / 0.25); border-color: var(--color-blue-violet-500); }
+
+/* Phones: the list toolbar spans the width with its controls spread out and 2.5rem tall (easier to see and tap); the
+   filters panel, hung from the toolbar row, is full width too. */
+@media (max-width: 639px) {
+  .list-toolbar { width: 100%; justify-content: space-between; }
+  .list-toolbar .ctl { height: 2.5rem; min-width: 2.5rem; }
+  .list-toolbar .ctl svg:first-child { width: 1.125rem; height: 1.125rem; }
+  .list-toolbar .search-field input { width: 2.5rem; height: 2.5rem; padding-left: 2.5rem; }
+  .list-toolbar .search-field input:focus, .list-toolbar .search-field input:not(:placeholder-shown) { width: 9rem; }
+  .list-toolbar .search-field svg { left: 0.69rem; width: 1.125rem; height: 1.125rem; }
+  .list-toolbar .view-switch { height: 2.5rem; width: 4.5rem; }
+  .list-toolbar .view-btn, .list-toolbar .view-knob { height: 2rem; width: 2rem; }
+  .list-toolbar .view-switch[data-view-current="list"] .view-knob { transform: translateX(2rem); }
+}

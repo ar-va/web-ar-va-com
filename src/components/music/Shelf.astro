@@ -43,7 +43,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
       <h1 class="text-3xl font-bold leading-tight text-zinc-900 dark:text-white">{owner.name}’s records</h1>
       <p id="sync-progress" class="mt-1 text-xs text-zinc-500 empty:hidden" role="status" aria-live="polite"></p>
     </div>
-    <div class="flex items-center gap-2 shrink-0">
+    <div class="flex items-center gap-2 shrink-0 max-sm:self-end">
       <button type="button" id="share-shelf" data-url={`${Astro.url.origin}${base}`} aria-label="Copy the link to this collection" title="Copy link" class="ctl relative !px-0 w-8 justify-center">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" /></svg>
         <span id="share-done" role="status" class="glass pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium text-zinc-900 dark:text-white opacity-0 transition-opacity"></span>
@@ -72,8 +72,8 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
 
       <section id="all-records" class="mt-14">
         <!-- A frosted pill (filters, Sort, views, search) that sticks to the top while scrolling through the records; lets go where the section ends. -->
-        <div class="sticky top-3 z-40 grid w-fit mx-auto gap-2 sm:flex sm:w-auto sm:mx-0 sm:items-center sm:justify-between">
-          <div class="glass-under relative rounded-3xl sm:rounded-full flex flex-wrap items-center justify-center gap-2 p-1.5">
+        <div class="sticky top-3 z-40 flex items-center justify-between gap-2">
+          <div class="list-toolbar glass-under relative rounded-full flex flex-wrap items-center justify-center gap-2 p-1.5">
             <h2 class="m-0 shrink-0">
               <button type="button" id="filters-toggle" aria-expanded="false" aria-controls="filters-panel" title="Filter by added, released and genre"
                 class="ctl group pl-2.5 max-sm:!px-2 max-sm:min-w-8 max-sm:justify-center">

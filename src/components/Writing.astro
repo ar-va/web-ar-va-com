@@ -112,8 +112,8 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
   <!-- All Writing Section -->
   <section id="all-writing" class="mt-12">
     <!-- A frosted pill (filters, Sort, views, search) that sticks to the top while scrolling through the posts; lets go where the section ends. -->
-    <div class="sticky top-3 z-40 grid w-fit mx-auto gap-2 sm:flex sm:w-auto sm:mx-0 sm:items-center sm:justify-between">
-      <div class="glass-under relative rounded-3xl sm:rounded-full flex flex-wrap items-center justify-center gap-2 p-1.5">
+    <div class="sticky top-3 z-40 flex items-center justify-between gap-2">
+      <div class="list-toolbar glass-under relative rounded-full flex flex-wrap items-center justify-center gap-2 p-1.5">
         <h2 class="m-0 shrink-0">
           <button type="button" id="filters-toggle" aria-expanded="false" aria-controls="filters-panel" title="Filter by date and topic"
             class="ctl group pl-2.5 max-sm:!px-2 max-sm:min-w-8 max-sm:justify-center">
