@@ -317,7 +317,8 @@ html { scroll-padding-top: 1.5rem; }
      track, an open filter group); hover a little darker;
    - violet "on" = it is on / selected (picked filters, the current view, an open menu or panel): opaque, so it
      doesn't turn muddy over glass, and readable (about 6:1 light, 7:1 dark);
-   - solid violet only for small signals (count badge, theme knob) and primary buttons.
+   - the same "on" tint for the switch knobs (theme, view) and the filter count badge (2026-10-29: one colour for every
+     on-state); solid violet only for primary buttons.
    Toolbar controls are 2rem pills. */
 :root { --well: rgb(31 35 53 / 0.06); --well-hover: rgb(31 35 53 / 0.1); --on-bg: var(--color-blue-violet-100); --on-bg-hover: var(--color-blue-violet-200); --on-text: var(--color-blue-violet-700); }
 /* Dark "on": a soft deep purple (violet-500 mixed into the dark surface, opaque; close to the brand's #2F3058 tint); violet-900 was too bold, the

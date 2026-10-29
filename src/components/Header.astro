@@ -56,7 +56,7 @@ const current = (on: boolean) => (on ? 'page' : undefined);
     a.setAttribute('aria-label', `Your account (${who.n})`);
     a.className = 'flex items-center gap-2 h-8 text-zinc-600 dark:text-zinc-300 hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors';
     const pic = typeof who.p === 'string' && who.p.startsWith('https://') ? Object.assign(document.createElement('img'), { src: who.p, alt: '', width: 24, height: 24, referrerPolicy: 'no-referrer', className: 'w-6 h-6 rounded-full object-cover' })
-      : Object.assign(document.createElement('span'), { textContent: who.n.charAt(0), className: 'w-6 h-6 rounded-full bg-blue-violet-500 text-white text-xs grid place-items-center' });
+      : Object.assign(document.createElement('span'), { textContent: who.n.charAt(0), className: 'w-6 h-6 rounded-full bg-(--on-bg) text-(--on-text) text-xs grid place-items-center' });
     const name = Object.assign(document.createElement('span'), { textContent: who.n, className: 'sr-only sm:not-sr-only' });
     a.replaceChildren(pic, name);
   })();

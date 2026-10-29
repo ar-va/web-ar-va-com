@@ -16,7 +16,7 @@ const { comment: c, user, canDelete, action, hidden, small = false } = Astro.pro
 const own = !!user && user.id === c.author_id;
 const date = (s: number) => new Date(s * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 const field = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-3.5 py-2.5 text-zinc-900 dark:text-white leading-relaxed focus:outline-none focus:border-blue-violet-500 transition-colors resize-y';
-const primary = 'bg-blue-violet-500 text-white text-sm font-medium px-4 py-1.5 rounded-full hover:bg-blue-violet-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors';
+const primary = 'bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 text-sm font-medium px-4 py-1.5 rounded-full hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors';
 const quiet = 'text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white px-3 py-1.5 rounded-full transition-colors';
 const act = 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors';
 const hint = 'ml-auto hidden sm:inline text-xs text-zinc-400 dark:text-zinc-500';
@@ -24,7 +24,7 @@ const hint = 'ml-auto hidden sm:inline text-xs text-zinc-400 dark:text-zinc-500'
 <div id={`comment-${c.id}`} class="flex gap-3" data-comment>
   {c.photo_url
     ? <img src={c.photo_url} alt="" width="36" height="36" loading="lazy" referrerpolicy="no-referrer" class={`${small ? 'w-7 h-7' : 'w-9 h-9'} rounded-full object-cover shrink-0`} />
-    : <span class={`${small ? 'w-7 h-7 text-xs' : 'w-9 h-9'} rounded-full bg-blue-violet-500 text-white grid place-items-center shrink-0`} aria-hidden="true">{c.name.charAt(0)}</span>}
+    : <span class={`${small ? 'w-7 h-7 text-xs' : 'w-9 h-9'} rounded-full bg-(--on-bg) text-(--on-text) grid place-items-center shrink-0`} aria-hidden="true">{c.name.charAt(0)}</span>}
   <div class="min-w-0 flex-grow">
     <div class="text-sm flex flex-wrap items-baseline gap-x-2">
       {c.username
