@@ -99,7 +99,7 @@ Rules:
 | Primary buttons ("View work", "Log in", "Post comment") | Mono uppercase eyebrow labels that name what you see ("BUSINESS SUCCESS SPECIALIST", "RELEASED", the artist above an album title) | Secondary text, dates, counts in brackets |
 | Current or selected state: active nav, picked filters, current view, switch knobs, open menus | Rare heritage or editorial accents: a "since" line, one stamp-like detail, a pull quote's mark | Dividers and borders |
 | Focus rings and hover states | Descriptive markers that are not clickable (e.g. a "new" marker on a recent record, a category label) | Grey control pills at rest |
-| Small signals: count badges, Reset | | Small section headings ("Latest", "Photos", "Tracklist") |
+| Small signals: count badges (in the `--accent-tint` "on" colour, like every on-state), Reset | | Small section headings ("Latest", "Photos", "Tracklist") |
 | Icons that act: streaming links, share | | |
 
 Rules of thumb:
@@ -238,6 +238,8 @@ Rules:
 - **2026-10-29 (service icons):** the per-service colours were dropped again; service icons use the accent.
 - **2026-10-29 (purple or Moss):** added the "Purple or Moss" section: purple for action and state, Moss for
   identity and labels, neutral for the rest.
+- **2026-10-29 (one on-state colour):** selected pills, open toggles, switch knobs and count badges all use the
+  same "on" colour (`--accent-tint`-style tint with accent text); solid `--accent` fill is kept for primary buttons.
 - **Site note (ar-va.com):** the owner chose "identity only" for the site: logo, fonts and colours follow these
   rules, while the site keeps its frosted-glass pill header and toolbars, pill-shaped controls, and the music
   shelf's vinyl animations, which sections 5, 6, 8 and 9 would otherwise rule out.
