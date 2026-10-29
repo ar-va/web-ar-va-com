@@ -92,14 +92,21 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
         <Gallery images={photos} title={hero!.title} />
       </header>
 
-      <dl class="grid grid-cols-1 sm:grid-cols-[11rem_1fr] gap-x-8 gap-y-1 sm:gap-y-3">
-        {rows.filter(([, v]) => v).map(([k, v]) => (
-          <>
-            <dt class="text-sm text-zinc-500 sm:pt-0.5 mt-2 sm:mt-0">{k}</dt>
-            <dd class="text-zinc-800 dark:text-zinc-200 whitespace-pre-line break-words">{v}</dd>
-          </>
-        ))}
-      </dl>
+      <!-- The release's details stay folded until asked for (native <details>: keyboard and screen readers included). -->
+      <details class="group/details">
+        <summary class="ctl w-fit cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+          <span class="group-open/details:hidden">Show all details</span><span class="hidden group-open/details:inline">Hide details</span>
+          <svg class="w-3.5 h-3.5 transition-transform group-open/details:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
+        </summary>
+        <dl class="mt-6 grid grid-cols-1 sm:grid-cols-[11rem_1fr] gap-x-8 gap-y-1 sm:gap-y-3">
+          {rows.filter(([, v]) => v).map(([k, v]) => (
+            <>
+              <dt class="text-sm text-zinc-500 sm:pt-0.5 mt-2 sm:mt-0">{k}</dt>
+              <dd class="text-zinc-800 dark:text-zinc-200 whitespace-pre-line break-words">{v}</dd>
+            </>
+          ))}
+        </dl>
+      </details>
 
       {tracks.length > 0 ? (
         <section class="mt-12">
