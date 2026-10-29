@@ -79,7 +79,7 @@ const edited = Object.keys(overrides).length;
 const dated = new Set(['released', 'vinylRelease']);
 ---
 <Layout title={`Edit ${values.title} - ARVA`}>
-  <div class="max-w-3xl mx-auto px-6 w-full flex-grow py-24">
+  <div class="max-w-5xl mx-auto px-6 w-full flex-grow py-24 *:max-w-3xl">
     <a href={recordPath} class="text-sm text-zinc-500 hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors">← Back to the record</a>
     <h1 class="mt-6 text-2xl font-bold text-zinc-900 dark:text-white">Edit {values.title}</h1>
     <p class="mt-2 mb-8 text-sm text-zinc-600 dark:text-zinc-400 max-w-xl">Everything starts from Discogs and the automatic Apple Music / Spotify matches. What you change here is what visitors see; the default stays underneath (only you see it) so you can go back any time.</p>

@@ -10,7 +10,7 @@ const { shelves } = data;
 ---
 {data.owner ? <ShelfPage {...data} /> : (
 <Layout title="Music - ARVA">
-  <div class="max-w-3xl mx-auto px-6 w-full flex-grow py-24">
+  <div class="max-w-5xl mx-auto px-6 w-full flex-grow py-24 *:max-w-3xl">
     <h1 class="text-2xl font-bold text-zinc-900 dark:text-white mb-4">Records</h1>
     {shelves.length === 0 ? (
       <p class="text-zinc-500">No shelves yet.</p>
