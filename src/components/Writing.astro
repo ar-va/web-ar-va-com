@@ -112,34 +112,26 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
 
   <!-- All Writing Section -->
   <section id="all-writing">
-    <!-- Two frosted pills, like the header (controls; search), stay under the header while scrolling through the posts; lets go where the section ends. -->
-    <div class="sticky top-16 z-40 grid w-fit mx-auto gap-2 sm:flex sm:w-auto sm:mx-0 sm:items-center sm:justify-between">
+    <!-- A frosted pill (filters, Sort, views, search) that sticks to the top while scrolling through the posts; lets go where the section ends. -->
+    <div class="sticky top-3 z-40 grid w-fit mx-auto gap-2 sm:flex sm:w-auto sm:mx-0 sm:items-center sm:justify-between">
       <div class="glass-under relative rounded-3xl sm:rounded-full flex flex-wrap items-center justify-center gap-2 p-1.5">
         <h2 class="m-0 shrink-0">
           <button type="button" id="filters-toggle" aria-expanded="false" aria-controls="filters-panel" title="Filter by date and topic"
             class="ctl group pl-2.5">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></svg>
-            All writing
+            All writing ({postsWithData.length})
             <span id="filters-count" hidden class="min-w-5 h-5 px-1.5 rounded-full bg-blue-violet-500 text-white text-[11px] font-semibold leading-5 text-center"></span>
             <svg class="w-3.5 h-3.5 transition-transform group-aria-expanded:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
           </button>
         </h2>
         <SortMenu id="posts-sort" />
+        <!-- Search: a round icon like the other controls that widens into a field when used (.search-field). -->
+        <label class="search-field">
+          <input type="search" id="search-input" placeholder="Search" aria-label="Search writing" autocomplete="off"
+            onkeydown="if (event.key === 'Escape') { this.value = ''; this.dispatchEvent(new Event('input', { bubbles: true })); this.blur(); }" />
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+        </label>
       </div>
-      
-      <div class="glass-under relative rounded-full p-1.5 w-full sm:w-72"><div class="relative">
-        <input 
-          type="text" 
-          id="search-input" 
-          placeholder="Search" 
-          class="w-full h-8 rounded-full bg-(--well) pl-3.5 pr-9 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-violet-500/60 transition-shadow placeholder:text-zinc-500"
-          aria-label="Search writing"
-        />
-        <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
-      </div></div>
-
       <!-- Filters drop down from "All writing" (and travel with the bar); several can be picked before closing. -->
       <div id="filters-panel" hidden class="glass absolute left-0 right-0 top-full mt-2 rounded-3xl px-5 py-4 max-h-[70vh] overflow-y-auto space-y-1">
         <button type="button" data-filters-reset disabled title="Clear the filters and the search"
