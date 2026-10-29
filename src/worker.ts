@@ -2,8 +2,11 @@
 import { handle } from '@astrojs/cloudflare/handler';
 import { dbRequest } from './music/store';
 import { siteDomain } from './music/lib';
+import { MAIN_SITE_PUBLIC } from './site';
 
 const SHARED = /^\/(_astro\/|favicon\.|brand\/)/;
+// While the main site is hidden, ar-va.com only serves the login and the files music pages share.
+const LOGIN = /^\/(login$|auth\/)/;
 const BOOKMARK = 'd1-bookmark';
 
 export default {
@@ -16,6 +19,9 @@ export default {
       }
     } else if (/^\/music(\/|$)/.test(url.pathname)) {
       return new Response('Not found', { status: 404 });
+    } else if (!MAIN_SITE_PUBLIC && !SHARED.test(url.pathname) && !LOGIN.test(url.pathname)) {
+      // 302, not 301: browsers and search engines shouldn't remember it, the site comes back later.
+      return Response.redirect(`${url.protocol}//music.${url.host}/`, 302);
     }
     const bookmark = request.headers.get('cookie')?.match(/(?:^|;\s*)d1-bookmark=([^;]+)/)?.[1];
     const state: Parameters<typeof dbRequest.run>[0] = { bookmark: bookmark ? decodeURIComponent(bookmark) : null };
