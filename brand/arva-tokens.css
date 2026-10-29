@@ -24,15 +24,15 @@
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --bg: #1A1B26;            /* Night (Tokyo Night) */
-  --surface: #24283B;       /* Storm */
-  --sunken: #292E42;        /* also: raised menus/popovers */
-  --line: #3B4261;
-  --text: #C0CAF5;          /* Moonlight */
-  --text-2: #9AA5CE;
+  --bg: #15161C;            /* Night (Tokyo Night, toned down) */
+  --surface: #1E2029;       /* Storm, toned down */
+  --sunken: #262935;        /* also: raised menus/popovers */
+  --line: #333645;
+  --text: #C6CBE4;          /* Moonlight */
+  --text-2: #9CA3C4;
   --accent: #A2A8FC;        /* Periwinkle */
   --accent-hover: #B7BDFF;
-  --on-accent: #1A1B26;
+  --on-accent: #15161C;
   --accent-tint: #2F3058;
   --moss: #8BD8A9;          /* Mint leaf */
   --success: #9ECE6A;
@@ -44,9 +44,9 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #1A1B26; --surface: #24283B; --sunken: #292E42; --line: #3B4261;
-    --text: #C0CAF5; --text-2: #9AA5CE;
-    --accent: #A2A8FC; --accent-hover: #B7BDFF; --on-accent: #1A1B26; --accent-tint: #2F3058;
+    --bg: #15161C; --surface: #1E2029; --sunken: #262935; --line: #333645;
+    --text: #C6CBE4; --text-2: #9CA3C4;
+    --accent: #A2A8FC; --accent-hover: #B7BDFF; --on-accent: #15161C; --accent-tint: #2F3058;
     --moss: #8BD8A9; --success: #9ECE6A; --warning: #E0AF68; --error: #F7768E;
     --spotify: #9ECE6A; --apple-music: #F7768E; --youtube: #E0605F;
   }

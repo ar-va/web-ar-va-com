@@ -56,15 +56,15 @@ Use **only** the CSS variables from `arva-tokens.css`. Do not write hex values i
 
 | Token | Light | Dark | Role |
 |---|---|---|---|
-| `--bg` | #FDFDFB Paper | #1A1B26 Night | Page background |
-| `--surface` | #FFFFFF White | #24283B Storm | Cards, inputs, menus, modals |
-| `--sunken` | #F1F2F6 Mist | #292E42 | Alternating section bands, code blocks, wells, table stripes, popovers on dark |
-| `--line` | #D8DBE6 | #3B4261 | All borders and dividers (1px) |
-| `--text` | #1F2335 Ink | #C0CAF5 Moonlight | Headings and body text |
-| `--text-2` | #565F89 Slate | #9AA5CE | Captions, meta, placeholders, secondary text |
+| `--bg` | #FDFDFB Paper | #15161C Night | Page background |
+| `--surface` | #FFFFFF White | #1E2029 Storm | Cards, inputs, menus, modals |
+| `--sunken` | #F1F2F6 Mist | #262935 | Alternating section bands, code blocks, wells, table stripes, popovers on dark |
+| `--line` | #D8DBE6 | #333645 | All borders and dividers (1px) |
+| `--text` | #1F2335 Ink | #C6CBE4 Moonlight | Headings and body text |
+| `--text-2` | #565F89 Slate | #9CA3C4 | Captions, meta, placeholders, secondary text |
 | `--accent` | #5A57C4 Indigo | #A2A8FC Periwinkle | Primary buttons, links, focus rings, active nav |
 | `--accent-hover` | #4B45B0 | #B7BDFF | Hover state of the accent |
-| `--on-accent` | #FFFFFF | #1A1B26 | Text and icons placed on an accent fill |
+| `--on-accent` | #FFFFFF | #15161C | Text and icons placed on an accent fill |
 | `--accent-tint` | #E4E8FF | #2F3058 | Tags, selected rows, info banners, text selection |
 | `--moss` | #237A50 Moss | #8BD8A9 Mint leaf | Secondary: small heritage and nature details (see below) |
 | `--success` | #2F7D3A | #9ECE6A | Success messages and icons |
@@ -73,7 +73,7 @@ Use **only** the CSS variables from `arva-tokens.css`. Do not write hex values i
 
 Every text colour above meets WCAG AA (4.5:1 or better) on `--bg`, `--surface` and `--sunken` in its theme (checked 2026-10-29).
 
-The dark theme is based on **Tokyo Night** (night background, storm surfaces, moonlight text); the light theme is almost white with a slight hint of paper. Moss is the leaf: a fresh leaf-green chosen to sit opposite the indigo accent.
+The dark theme is based on **Tokyo Night**, toned down: less blue and a touch darker (night background, storm surfaces, moonlight text); the light theme is almost white with a slight hint of paper. Moss is the leaf: a fresh leaf-green chosen to sit opposite the indigo accent.
 
 **Service colours.** Third-party services keep a recognisable colour, taken from the palette's family (Tokyo Night, Tokyo Night Day in light) instead of their exact brand hex: `--spotify` #587539 / #9ECE6A, `--apple-music` #E3265C / #F7768E, `--youtube` #C64343 / #E0605F. Use them only on those services' icons. Third-party sign-in buttons (Telegram) use the site's primary button style, with the service's icon in the button's text colour.
 
@@ -212,6 +212,9 @@ Rules:
   wordmark in `--text`. They are the default on screen; the favicon is the Moss leaf. One-colour files stay for print.
 - **2026-10-29 (services):** service colours added (streaming icons); the header's Telegram "Log in" became a primary
   button (accent fill, `--on-accent` label, icon in the label colour) instead of black/white with Telegram blue.
+- **2026-10-29 (dark toned down):** the Tokyo Night base read too blue: bg #1A1B26 → #15161C, surface #24283B →
+  #1E2029, sunken #292E42 → #262935, line #3B4261 → #333645, text #C0CAF5 → #C6CBE4, text-2 #9AA5CE → #9CA3C4. The washi
+  logo files follow the new dark `--text`.
 - **Site note (ar-va.com):** the owner chose "identity only" for the site: logo, fonts and colours follow these
   rules, while the site keeps its frosted-glass pill header and toolbars, pill-shaped controls, and the music
   shelf's vinyl animations, which sections 5, 6, 8 and 9 would otherwise rule out.
