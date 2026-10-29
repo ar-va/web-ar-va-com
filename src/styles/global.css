@@ -304,7 +304,7 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
 }
 
 /* Over the photo viewer's dark backdrop the glass is always the dark kind, whatever the site theme. */
-dialog[data-lightbox] .glass { background: rgb(21 22 28 / 0.5); box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.6); }
+dialog[data-lightbox] .glass, .glass.spin-btn { background: rgb(21 22 28 / 0.5); box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.6); }
 
 /* Jumps to #sections stop a little below the top (the header scrolls away; list toolbars stick at the top). */
 html { scroll-padding-top: 1.5rem; }
