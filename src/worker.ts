@@ -3,7 +3,7 @@ import { handle } from '@astrojs/cloudflare/handler';
 import { dbRequest } from './music/store';
 import { siteDomain } from './music/lib';
 
-const SHARED = /^\/(_astro\/|favicon\.)/;
+const SHARED = /^\/(_astro\/|favicon\.|brand\/)/;
 const BOOKMARK = 'd1-bookmark';
 
 export default {
