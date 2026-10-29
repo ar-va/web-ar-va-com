@@ -49,8 +49,11 @@
    base layer so a small label heading can say `font-sans`; Plex Mono for the small uppercase labels. */
 @layer base {
   h1, h2, h3, h4 { font-family: var(--font-heading); font-stretch: 112%; }
-  :is(h1, h2, h3, h4).font-bold { font-weight: 600; }
 }
+/* Unlayered, so it beats the `font-bold` utility: brand headings are 600. */
+:is(h1, h2, h3, h4).font-bold { font-weight: 600; }
+/* Always keep room for the scrollbar, so short and long pages line up (desktop scrollbars take ~15 px). */
+html { scrollbar-gutter: stable; }
 .uppercase.tracking-widest { font-family: var(--font-mono); color: var(--color-moss); }
 .dark .uppercase.tracking-widest { color: var(--color-moss-light); }
 /* ---- Music shelf (music.ar-va.com) ---- */
