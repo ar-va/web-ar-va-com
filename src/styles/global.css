@@ -331,7 +331,8 @@ html { scroll-padding-top: 1.5rem; }
 /* Phones: a little tighter, so filters + Sort + the view switch share one row on a 360 px screen. */
 @media (max-width: 639px) { .ctl { padding: 0 0.625rem; gap: 0.3rem; } }
 .dark .ctl { color: var(--color-zinc-200); }
-.ctl.ctl-icon { width: 2rem; padding: 0; justify-content: center; }
+/* View switch (Shelf.astro): the knob slides under the list icon like the theme switch's does for the moon. */
+.view-switch[data-view-current="list"] .view-knob { transform: translateX(1.5rem); }
 .ctl:hover { background: var(--well-hover); }
 .ctl[aria-expanded="true"], .ctl[aria-pressed="true"] { background: var(--on-bg); color: var(--on-text); }
 .ctl[aria-expanded="true"]:hover, .ctl[aria-pressed="true"]:hover { background: var(--on-bg-hover); }
