@@ -1,5 +1,6 @@
 ---
 import ThemeToggle from './ThemeToggle.astro';
+import { MAIN_SITE_PUBLIC } from '../site';
 
 // On music.ar-va.com the main site's links must leave the subdomain.
 const onMusic = Astro.url.hostname.startsWith('music.');
@@ -8,12 +9,15 @@ const link = 'text-zinc-500 hover:text-blue-violet-500 transition-colors dark:te
 // The section the visitor is in stays highlighted: Home on /, Blog on /blog and its posts, Music on music.ar-va.com.
 const path = Astro.url.pathname;
 const current = (on: boolean) => (on ? 'page' : undefined);
+// While home and blog are hidden (src/site.ts) the logo leads to the shelf and the menu is empty (Music alone would
+// repeat the logo).
+const home = MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https://music.ar-va.com/';
 ---
 
 <!-- A plain header across the page width: logo left, menu centred on the page (phones too), account + theme right.
      The theme switch is the only pill. Not pinned: it scrolls away with the page (user, 2026-10-29). -->
 <nav id="site-header" class="relative z-50 mt-3 max-w-5xl mx-auto px-6 w-full grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
-  <a href={`${main}/`} class="shrink-0 justify-self-start h-11 flex items-center" aria-label="ARVA home">
+  <a href={home} class="shrink-0 justify-self-start h-11 flex items-center" aria-label="ARVA home">
     <!-- Brand logo files (two-tone: Moss leaf, wordmark in the text colour), ink on light and washi on dark: the full
          horizontal logo, 24 px tall, 22 px on phones; below 360 px only the leaf (the brand's small mark), so the
          menu stays centred (user, 2026-10-29). -->
@@ -23,11 +27,11 @@ const current = (on: boolean) => (on ? 'page' : undefined);
     <img src="/brand/arva-mark-small-washi-moss.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 hidden dark:max-[359px]:block" />
   </a>
   <div class="h-11 flex items-center">
-    <div class="flex items-center gap-4 min-[360px]:gap-5 sm:gap-7 text-sm font-medium">
+    {MAIN_SITE_PUBLIC && <div class="flex items-center gap-4 min-[360px]:gap-5 sm:gap-7 text-sm font-medium">
       <a href={`${main}/`} class={`${link} hidden sm:inline`} aria-current={current(!onMusic && path === '/')}>Home</a>
       <a href={`${main}/blog`} class={link} aria-current={current(!onMusic && path.startsWith('/blog'))}>Blog</a>
       <a href={onMusic ? '/' : 'https://music.ar-va.com/'} class={link} aria-current={current(onMusic)}>Music</a>
-    </div>
+    </div>}
   </div>
   <div class="justify-self-end h-11 flex items-center gap-2 min-[360px]:gap-3 sm:gap-4 text-sm font-medium">
     <a id="account" href="https://ar-va.com/login" title="Log in with Telegram" aria-label="Log in with Telegram"
