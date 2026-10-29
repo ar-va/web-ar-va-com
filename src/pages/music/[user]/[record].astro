@@ -131,7 +131,7 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
             ) : (
               <li class="group flex items-center gap-4 px-3 py-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/[0.04] focus-within:bg-zinc-100 dark:focus-within:bg-white/[0.04] transition-colors">
                 <span class="w-7 shrink-0 font-mono text-sm text-zinc-500 tabular-nums">{t.position}</span>
-                <span class="flex-grow min-w-0 text-zinc-800 dark:text-zinc-200">{t.title}</span>
+                <span class="flex-grow min-w-0 text-zinc-800 dark:text-zinc-200"><button type="button" data-copy title="Click to copy" class="cursor-copy text-left rounded-sm hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-violet-500 transition-opacity">{t.title}</button></span>
                 <span class="sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
                   <Listen query={`${v.artist} ${t.title}`} label={`Listen to ${t.title}`} links={t.links} kind="track" />
                 </span>
@@ -163,6 +163,7 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
 <script>
   // The owner's visit finishes any missing tracklists (see src/music/sync.ts); others skip it quickly.
   import '../../../scripts/comments';
+  import '../../../scripts/copy';
   import { autoSync } from '../../../music/sync';
   const progress = document.getElementById('sync-progress');
   if (progress) autoSync((message) => (progress.textContent = message));
