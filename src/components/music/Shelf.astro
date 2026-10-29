@@ -37,25 +37,24 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
 ---
 
 <div id="shelf" class="font-normal">
-  <div class="flex justify-between items-start mb-2 gap-4">
+  <!-- Title on its own line; the share / Telegram / All records pills sit beside it (below it on phones). -->
+  <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-2">
     <div class="min-w-0">
-      <h1 class="text-2xl font-bold text-zinc-900 dark:text-white flex items-center gap-2.5">
-        <span>{owner.name}’s records</span>
-        <button type="button" id="share-shelf" data-url={`${Astro.url.origin}${base}`} aria-label="Copy the link to this collection" title="Copy link"
-          class="relative text-zinc-400 hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" /></svg>
-          <span id="share-done" role="status" class="glass pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium text-zinc-900 dark:text-white opacity-0 transition-opacity"></span>
-        </button>
-        {owner.telegram && (
-          <a href={`https://t.me/${owner.telegram}`} target="_blank" rel="noopener noreferrer" aria-label={`${owner.name} on Telegram`} title={`@${owner.telegram} on Telegram`}
-            class="text-zinc-400 hover:text-[#2aabee] transition-colors">
-            <svg class="w-5 h-5" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
-          </a>
-        )}
-      </h1>
-      <p id="sync-progress" class="text-xs text-zinc-500 empty:hidden" role="status" aria-live="polite"></p>
+      <h1 class="text-3xl font-bold leading-tight text-zinc-900 dark:text-white">{owner.name}’s records</h1>
+      <p id="sync-progress" class="mt-1 text-xs text-zinc-500 empty:hidden" role="status" aria-live="polite"></p>
     </div>
-    {records.length > 0 && <a href="#all-records" class="shrink-0 text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 px-4 py-2 rounded-full transition-colors">All records ↓</a>}
+    <div class="flex items-center gap-2 shrink-0">
+      <button type="button" id="share-shelf" data-url={`${Astro.url.origin}${base}`} aria-label="Copy the link to this collection" title="Copy link" class="ctl relative !px-0 w-8 justify-center">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" /></svg>
+        <span id="share-done" role="status" class="glass pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium text-zinc-900 dark:text-white opacity-0 transition-opacity"></span>
+      </button>
+      {owner.telegram && (
+        <a href={`https://t.me/${owner.telegram}`} target="_blank" rel="noopener noreferrer" aria-label={`${owner.name} on Telegram`} title={`@${owner.telegram} on Telegram`} class="ctl relative !px-0 w-8 justify-center">
+          <svg class="w-4 h-4" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
+        </a>
+      )}
+      {records.length > 0 && <a href="#all-records" class="ctl">All records <span aria-hidden="true">↓</span></a>}
+    </div>
   </div>
 
   {records.length === 0 ? (
@@ -66,7 +65,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
         <section class="mt-6">
           <h2 class="text-zinc-500 text-sm mb-6">Latest</h2>
           <RecordHero record={latest} artist={latest.artist} title={latest.title} released={latest.released} genres={latest.genres}
-            trackCount={latest.trackCount} links={latest.links} href={`${base}/${latest.instanceId}`} />
+            trackCount={latest.trackCount} links={latest.links} runtime={latest.runtime ?? undefined} href={`${base}/${latest.instanceId}`} />
         </section>
       )}
 
