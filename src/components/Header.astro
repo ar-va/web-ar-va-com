@@ -10,8 +10,9 @@ const path = Astro.url.pathname;
 const current = (on: boolean) => (on ? 'page' : undefined);
 ---
 
-<!-- Three floating frosted-glass pills across the page width: logo left, menu centred, account + theme right. -->
-<nav id="site-header" class="sticky top-3 z-50 mt-3 max-w-5xl mx-auto px-3 sm:px-6 w-full flex justify-between items-center gap-2 sm:grid sm:grid-cols-[1fr_auto_1fr]">
+<!-- Three frosted-glass pills across the page width: logo left, menu centred, account + theme right. Not pinned:
+     it scrolls away with the page (user, 2026-10-29). -->
+<nav id="site-header" class="relative z-50 mt-3 max-w-5xl mx-auto px-3 sm:px-6 w-full flex justify-between items-center gap-2 sm:grid sm:grid-cols-[1fr_auto_1fr]">
   <a href={`${main}/`} class="glass shrink-0 justify-self-start h-11 rounded-full flex items-center px-3.5 sm:px-5" aria-label="ARVA home">
     <!-- Brand logo files, ink on light and washi on dark: the horizontal logo (24 px) from 640 px up; on phones the
          small leaf mark (the brand's file for sizes under 32 px), since the full logo doesn't fit beside the menu. -->
