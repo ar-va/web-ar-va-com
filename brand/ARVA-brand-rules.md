@@ -75,6 +75,8 @@ Every text colour above meets WCAG AA (4.5:1 or better) on `--bg`, `--surface` a
 
 The dark theme is based on **Tokyo Night** (night background, storm surfaces, moonlight text); the light theme is almost white with a slight hint of paper. Moss is the leaf: a fresh leaf-green chosen to sit opposite the indigo accent.
 
+**Service colours.** Third-party services keep a recognisable colour, taken from the palette's family (Tokyo Night, Tokyo Night Day in light) instead of their exact brand hex: `--spotify` #587539 / #9ECE6A, `--apple-music` #E3265C / #F7768E, `--youtube` #C64343 / #E0605F. Use them only on those services' icons. Third-party sign-in buttons (Telegram) use the site's primary button style, with the service's icon in the button's text colour.
+
 **Proportions on any screen:** about 60% `--bg` and `--surface`, 30% `--text`, at most 10% `--accent`, under 3% `--moss`.
 
 Rules:
@@ -208,6 +210,8 @@ Rules:
   from teal to leaf-green: #237A50 light, #8BD8A9 dark (was #1F7A66 / #73DACA); `arva-mark-moss.svg` follows.
 - **2026-10-29 (two-tone logo):** new `-moss` logo files: the leaf in Moss (#237A50 light, #8BD8A9 dark), the
   wordmark in `--text`. They are the default on screen; the favicon is the Moss leaf. One-colour files stay for print.
+- **2026-10-29 (services):** service colours added (streaming icons); the header's Telegram "Log in" became a primary
+  button (accent fill, `--on-accent` label, icon in the label colour) instead of black/white with Telegram blue.
 - **Site note (ar-va.com):** the owner chose "identity only" for the site: logo, fonts and colours follow these
   rules, while the site keeps its frosted-glass pill header and toolbars, pill-shaped controls, and the music
   shelf's vinyl animations, which sections 5, 6, 8 and 9 would otherwise rule out.

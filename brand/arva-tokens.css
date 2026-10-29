@@ -18,6 +18,8 @@
   --success: #2F7D3A;
   --warning: #8A5D10;
   --error: #C0394B;
+  /* Service colours (streaming links): the palette's versions of their brand colours. */
+  --spotify: #587539; --apple-music: #E3265C; --youtube: #C64343;
 }
 
 [data-theme="dark"] {
@@ -36,6 +38,7 @@
   --success: #9ECE6A;
   --warning: #E0AF68;
   --error: #F7768E;
+  --spotify: #9ECE6A; --apple-music: #F7768E; --youtube: #E0605F;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -45,6 +48,7 @@
     --text: #C0CAF5; --text-2: #9AA5CE;
     --accent: #A2A8FC; --accent-hover: #B7BDFF; --on-accent: #1A1B26; --accent-tint: #2F3058;
     --moss: #8BD8A9; --success: #9ECE6A; --warning: #E0AF68; --error: #F7768E;
+    --spotify: #9ECE6A; --apple-music: #F7768E; --youtube: #E0605F;
   }
 }
 
