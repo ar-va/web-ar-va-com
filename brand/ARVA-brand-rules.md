@@ -32,7 +32,7 @@ Files are in `logo/`. Never redraw, retype, or recolour the logo; always use the
 | `arva-stacked-ink.svg` / `-washi.svg` | Square spaces: splash, social, about page |
 | `arva-mark-ink.svg` / `-washi.svg` | Mark alone, 32 px and larger |
 | `arva-mark-small-ink.svg` / `-washi.svg` | Mark alone, below 32 px (simplified, no midrib) |
-| `arva-mark-russet.svg` | Heritage contexts only (print, packaging, an "about" page) |
+| `arva-mark-russet.svg` | Print and packaging only (the russet is no longer a screen colour since 2026-10-29) |
 | `arva-wordmark-ink.svg` | Wordmark alone, only where the mark already appears nearby |
 | `favicon.svg` | Browser favicon; switches colour automatically in dark mode |
 
@@ -52,33 +52,35 @@ Use **only** the CSS variables from `arva-tokens.css`. Do not write hex values i
 
 | Token | Light | Dark | Role |
 |---|---|---|---|
-| `--bg` | #FDFCFA Paper White | #17151C Night Ink | Page background |
-| `--surface` | #FFFFFF White | #211F28 | Cards, inputs, menus, modals |
-| `--sunken` | #F4F0E8 Washi | #2C2934 | Alternating section bands, code blocks, wells, table stripes, popovers on dark |
-| `--line` | #DBD7CF | #3C3943 | All borders and dividers (1px) |
-| `--text` | #1F1C26 Gall Ink | #EFEBE2 | Headings and body text |
-| `--text-2` | #696258 Bark | #AFAAA1 | Captions, meta, placeholders, secondary text |
+| `--bg` | #F8F9FC Cool Paper | #1A1B26 Night | Page background |
+| `--surface` | #FFFFFF White | #24283B Storm | Cards, inputs, menus, modals |
+| `--sunken` | #EEF0F7 Mist | #292E42 | Alternating section bands, code blocks, wells, table stripes, popovers on dark |
+| `--line` | #D8DBE6 | #3B4261 | All borders and dividers (1px) |
+| `--text` | #1F2335 Ink | #C0CAF5 Moonlight | Headings and body text |
+| `--text-2` | #565F89 Slate | #9AA5CE | Captions, meta, placeholders, secondary text |
 | `--accent` | #5A57C4 Indigo | #A2A8FC Periwinkle | Primary buttons, links, focus rings, active nav |
 | `--accent-hover` | #4B45B0 | #B7BDFF | Hover state of the accent |
-| `--on-accent` | #FFFFFF | #17151C | Text and icons placed on an accent fill |
+| `--on-accent` | #FFFFFF | #1A1B26 | Text and icons placed on an accent fill |
 | `--accent-tint` | #E4E8FF | #2F3058 | Tags, selected rows, info banners, text selection |
-| `--heritage` | #9A4E2B Marcescent | #D68960 | Rare heritage details only (see below) |
-| `--success` | #337344 | #76C788 | Success messages and icons |
-| `--warning` | #875814 | #E6B55D | Warning messages and icons |
-| `--error` | #B33830 | #EF7F72 | Error messages, invalid field borders |
+| `--moss` | #1F7A66 Moss | #73DACA Lichen | Secondary: small heritage and nature details (see below) |
+| `--success` | #2F7D3A | #9ECE6A | Success messages and icons |
+| `--warning` | #8A5D10 | #E0AF68 | Warning messages and icons |
+| `--error` | #C0394B | #F7768E | Error messages, invalid field borders |
 
-Every text and background pair above meets WCAG AA (4.5:1 or better).
+Every text colour above meets WCAG AA (4.5:1 or better) on `--bg`, `--surface` and `--sunken` in its theme (checked 2026-10-29).
 
-**Proportions on any screen:** about 60% `--bg` and `--surface`, 30% `--text`, at most 10% `--accent`, under 3% `--heritage`.
+The dark theme is based on **Tokyo Night** (night background, storm surfaces, moonlight text); the light theme is a cool, fresh paper. Moss is the leaf: a teal-green from the same family as the accent, so the two sit together.
+
+**Proportions on any screen:** about 60% `--bg` and `--surface`, 30% `--text`, at most 10% `--accent`, under 3% `--moss`.
 
 Rules:
-- Each view has one accent: indigo in light, periwinkle in dark. Don't introduce other blues, purples, or brand colours.
+- Each view has one accent: indigo in light, periwinkle in dark, plus the secondary `--moss` in small doses. Don't introduce other blues, purples, or brand colours.
 - Text on an accent fill always uses `--on-accent`. Never put white text on the dark-theme periwinkle.
-- `--heritage` (russet) is allowed for: an eyebrow label above a hero, one stamp-like detail, a "since" line, or editorial pull quotes. Never use it on buttons, links, form states, or large fills. It must not appear next to `--error`.
+- `--moss` is allowed for: eyebrow labels (the mono uppercase labels above titles), one stamp-like detail, a "since" line, or editorial pull quotes. Never use it on buttons, links, form states, or large fills. It must not appear next to `--success`, so status colours stay readable as status.
 - **No gradients**, except for the subtle overlays on photos described in section 7.
-- **No green as a brand colour.** It's an oak brand, but leaf-green is explicitly banned. `--success` appears only in form or status feedback.
-- Pure black (#000) is never used. In the light theme, white is reserved for `--surface` and `--on-accent`; the page itself is Paper White.
-- Use `--sunken` (Washi) to alternate full-width sections in the light theme, so long pages keep the brand's warm paper feel.
+- **Green only as Moss.** The leaf colour is the teal-green `--moss`, never a bright grass or eco green. `--success` appears only in form or status feedback.
+- Pure black (#000) is never used. In the light theme, white is reserved for `--surface` and `--on-accent`; the page itself is Cool Paper.
+- Use `--sunken` (Mist) to alternate full-width sections in the light theme.
 - Shadows: avoid them. Separate surfaces with `--line` borders. If a floating element (menu, modal) truly needs one, use `0 8px 24px rgb(0 0 0 / .12)` in light and `0 8px 24px rgb(0 0 0 / .4)` in dark.
 
 ### Theme switching
@@ -167,10 +169,10 @@ Rules:
 
 ## 9. Never
 
-- Leaf-green, rainbow, or neon colours, or gradient backgrounds.
+- Bright grass or eco greens (the only green is `--moss`), rainbow, or neon colours, or gradient backgrounds.
 - Any font other than Archivo, IBM Plex Sans, IBM Plex Mono, and Plex Sans JP.
 - The logo recoloured, redrawn, in a circle, or in the accent colour.
-- Russet on interactive elements.
+- Moss on interactive elements.
 - White text on periwinkle (dark-theme accent).
 - Glassmorphism, heavy shadows, pill buttons, cards with a coloured left border.
 - Emoji, exclamation marks, or hype words in copy.
@@ -186,3 +188,14 @@ Rules:
 4. Body text is 18 px Plex Sans, and headings are Archivo 600 at 112%.
 5. Every interactive element has a visible focus state and a hit area of at least 44 px.
 6. Text contrast is at least 4.5:1, which the tokens guarantee if used as specified.
+
+---
+
+## Changelog
+
+- **2026-10-29:** colours refreshed. The first warm neutrals (Paper White, Washi, Bark, Night Ink) and the russet
+  heritage colour read as burnt and brownish; the dark theme now follows Tokyo Night, the light theme is a cool
+  paper, and the secondary is Moss (teal-green) instead of russet. Accent unchanged.
+- **Site note (ar-va.com):** the owner chose "identity only" for the site: logo, fonts and colours follow these
+  rules, while the site keeps its frosted-glass pill header and toolbars, pill-shaped controls, and the music
+  shelf's vinyl animations, which sections 5, 6, 8 and 9 would otherwise rule out.
