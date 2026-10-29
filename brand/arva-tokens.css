@@ -31,7 +31,7 @@
   --accent: #A2A8FC;        /* Periwinkle */
   --accent-hover: #B7BDFF;
   --on-accent: #15161C;
-  --accent-tint: #2F3058;
+  --accent-tint: #3F3F75;
   --moss: #8BD8A9;          /* Mint leaf */
   --success: #9ECE6A;
   --warning: #E0AF68;
@@ -43,7 +43,7 @@
     color-scheme: dark;
     --bg: #15161C; --surface: #1E2029; --sunken: #262935; --line: #333645;
     --text: #C6CBE4; --text-2: #9CA3C4;
-    --accent: #A2A8FC; --accent-hover: #B7BDFF; --on-accent: #15161C; --accent-tint: #2F3058;
+    --accent: #A2A8FC; --accent-hover: #B7BDFF; --on-accent: #15161C; --accent-tint: #3F3F75;
     --moss: #8BD8A9; --success: #9ECE6A; --warning: #E0AF68; --error: #F7768E;
   }
 }

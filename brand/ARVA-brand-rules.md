@@ -65,7 +65,7 @@ Use **only** the CSS variables from `arva-tokens.css`. Do not write hex values i
 | `--accent` | #5A57C4 Indigo | #A2A8FC Periwinkle | Primary buttons, links, focus rings, active nav |
 | `--accent-hover` | #4B45B0 | #B7BDFF | Hover state of the accent |
 | `--on-accent` | #FFFFFF | #15161C | Text and icons placed on an accent fill |
-| `--accent-tint` | #E4E8FF | #2F3058 | Tags, selected rows, info banners, text selection |
+| `--accent-tint` | #E4E8FF | #3F3F75 | Tags, selected rows, info banners, text selection |
 | `--moss` | #237A50 Moss | #8BD8A9 Mint leaf | Secondary: small heritage and nature details (see below) |
 | `--success` | #2F7D3A | #9ECE6A | Success messages and icons |
 | `--warning` | #8A5D10 | #E0AF68 | Warning messages and icons |
@@ -240,6 +240,8 @@ Rules:
   identity and labels, neutral for the rest.
 - **2026-10-29 (one on-state colour):** selected pills, open toggles, switch knobs and count badges all use the
   same "on" colour (`--accent-tint`-style tint with accent text); solid `--accent` fill is kept for primary buttons.
+- **2026-10-29 (brighter on-state):** dark `--accent-tint` #2F3058 → #3F3F75; the old tint had the grey controls'
+  brightness, so selected and unselected pills looked alike.
 - **Site note (ar-va.com):** the owner chose "identity only" for the site: logo, fonts and colours follow these
   rules, while the site keeps its frosted-glass pill header and toolbars, pill-shaped controls, and the music
   shelf's vinyl animations, which sections 5, 6, 8 and 9 would otherwise rule out.
