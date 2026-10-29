@@ -31,9 +31,9 @@ const others = shelves.filter((s) => s.slug !== owner.slug);
 // Filter buttons: the exact classes Writing.astro uses for tags and years.
 const btn = 'group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white';
 const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors';
-// View switch: two round chips like the other toolbar controls, the current view "on". (Inside a grey track the
-// same purple looked like a different shade.)
-const viewBtn = 'ctl ctl-icon';
+// View switch: built like the theme switch (user, 2026-10-29): a grey track with a solid knob that slides under the
+// current view's icon. Two buttons underneath, so each view is still announced on its own.
+const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center rounded-full text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 aria-pressed:!text-white transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-violet-500';
 ---
 
 <div id="shelf" class="font-normal">
@@ -86,7 +86,8 @@ const viewBtn = 'ctl ctl-icon';
               </button>
             </h2>
             <SortMenu id="records-sort" />
-            <div class="inline-flex items-center gap-1" role="group" aria-label="View">
+            <div class="view-switch relative inline-flex h-8 w-14 items-center justify-between px-1 rounded-full bg-(--well)" role="group" aria-label="View" data-view-current="shelf">
+              <span aria-hidden="true" class="view-knob absolute left-1 h-6 w-6 rounded-full bg-blue-violet-600 dark:bg-blue-violet-400 transition-transform duration-300"></span>
               <button type="button" data-view="shelf" aria-pressed="true" title="Shelf" class={`view-btn ${viewBtn}`}>
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1" /><rect x="13" y="4" width="7" height="7" rx="1" /><rect x="4" y="13" width="7" height="7" rx="1" /><rect x="13" y="13" width="7" height="7" rx="1" /></svg>
                 <span class="sr-only">Shelf view</span>
@@ -329,6 +330,7 @@ const viewBtn = 'ctl ctl-icon';
     if (grid) grid.hidden = view === 'list';
     if (list) list.hidden = view !== 'list';
     document.querySelectorAll<HTMLElement>('.view-btn').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.view === view)));
+    document.querySelector('.view-switch')?.setAttribute('data-view-current', view);
   }
   document.querySelectorAll<HTMLElement>('.view-btn').forEach((b) => b.addEventListener('click', () => {
     setView(b.dataset.view!);
