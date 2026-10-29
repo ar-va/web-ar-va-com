@@ -1,5 +1,5 @@
 ---
-// The big record block shared by the album page and the shelf's "Latest": the sleeve with the vinyl rolled out to
+// The big record block shared by the album page and the shelf's "Latest", identical on both (user, 2026-10-29): the sleeve with the vinyl rolled out to
 // the right, then artist, album, added / released / genre / tracks, and the streaming links.
 // On the album page (no `href`) the cover is a button that spins the record; on the shelf it links to the album.
 import Cover from './Cover.astro';
@@ -29,11 +29,11 @@ const facts = [
 ].filter(Boolean);
 const Heading = href ? 'h2' : 'h1';
 ---
-<!-- The rolled-out disc sticks out 38 % of the sleeve's width: the gap leaves it ~50 px clear of the text. -->
-<div class={`flex flex-col sm:flex-row sm:items-center gap-8 ${href ? 'sm:gap-32' : 'sm:gap-36'}`}>
+<!-- The rolled-out disc sticks out 38 % of the sleeve's width: the gap leaves it ~60 px clear of the text. -->
+<div class="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-36">
   {href ? (
     <a href={href} class="shrink-0 self-start sm:self-auto" tabindex="-1" aria-hidden="true">
-      <Cover record={record} eager class="sleeve-open w-44 sm:w-52" />
+      <Cover record={record} eager class="sleeve-open w-48 sm:w-60" />
     </a>
   ) : (
     <button type="button" data-spin aria-pressed="false" class="shrink-0 self-start sm:self-auto cursor-pointer rounded focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-violet-500" aria-label="Play the record" title="Play the record">
@@ -48,9 +48,7 @@ const Heading = href ? 'h2' : 'h1';
     {facts.length > 0 && <p class="mt-4 text-zinc-700 dark:text-zinc-300">{facts.join(' · ')}</p>}
     <p class="mt-1 text-sm text-zinc-500">{added}</p>
     <div class="mt-6">
-      {href
-        ? <div class="flex items-center gap-3 text-sm text-zinc-500"><span>Listen</span><Listen size="md" query={`${artist} ${title}`} label={`Listen to ${title}`} links={links} /></div>
-        : <Listen buttons query={`${artist} ${title}`} label={`Listen to ${title}`} links={links} />}
+      <Listen buttons query={`${artist} ${title}`} label={`Listen to ${title}`} links={links} />
     </div>
     <slot />
   </div>

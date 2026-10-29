@@ -393,6 +393,7 @@ export function shelfView(r: ShelfRecord, d: ReleaseDetail | null, overrides: Ov
     releasedYear: Number(v.released.match(/\b(1[89]|20)\d{2}\b/)?.[0]) || null,
     released: v.released,
     trackCount: textToTracklist(v.tracklist).filter((t) => !t.heading).length,
+    runtime: runtime(textToTracklist(v.tracklist)),
     links: { spotify: v.spotify, apple: v.apple, youtube: v.youtube },
   };
 }
