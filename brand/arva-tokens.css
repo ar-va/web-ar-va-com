@@ -1,50 +1,50 @@
-/* ARVA design tokens v2 — light + dark.
+/* ARVA design tokens v3 (2026-10-29: Tokyo Night–based dark, cool light, Moss secondary) — light + dark.
    Fonts: <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"> */
 
 :root,
 [data-theme="light"] {
   color-scheme: light;
-  --bg: #FDFCFA;            /* Paper White */
+  --bg: #F8F9FC;            /* Cool Paper */
   --surface: #FFFFFF;       /* cards, inputs, menus */
-  --sunken: #F4F0E8;        /* Washi: alternating bands, wells, code */
-  --line: #DBD7CF;          /* borders, dividers */
-  --text: #1F1C26;          /* Gall Ink */
-  --text-2: #696258;        /* Bark: secondary text */
+  --sunken: #EEF0F7;        /* Mist: alternating bands, wells, code */
+  --line: #D8DBE6;          /* borders, dividers */
+  --text: #1F2335;          /* Ink */
+  --text-2: #565F89;        /* Slate: secondary text */
   --accent: #5A57C4;        /* Indigo: buttons, links, focus */
   --accent-hover: #4B45B0;
   --on-accent: #FFFFFF;
   --accent-tint: #E4E8FF;   /* tags, selection, info */
-  --heritage: #9A4E2B;      /* Marcescent: rare heritage details */
-  --success: #337344;
-  --warning: #875814;
-  --error: #B33830;
+  --moss: #1F7A66;          /* Moss: secondary, small leaf details */
+  --success: #2F7D3A;
+  --warning: #8A5D10;
+  --error: #C0394B;
 }
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --bg: #17151C;            /* Night Ink */
-  --surface: #211F28;
-  --sunken: #2C2934;        /* also: raised menus/popovers */
-  --line: #3C3943;
-  --text: #EFEBE2;          /* Washi, dimmed */
-  --text-2: #AFAAA1;
+  --bg: #1A1B26;            /* Night (Tokyo Night) */
+  --surface: #24283B;       /* Storm */
+  --sunken: #292E42;        /* also: raised menus/popovers */
+  --line: #3B4261;
+  --text: #C0CAF5;          /* Moonlight */
+  --text-2: #9AA5CE;
   --accent: #A2A8FC;        /* Periwinkle */
   --accent-hover: #B7BDFF;
-  --on-accent: #17151C;
+  --on-accent: #1A1B26;
   --accent-tint: #2F3058;
-  --heritage: #D68960;
-  --success: #76C788;
-  --warning: #E6B55D;
-  --error: #EF7F72;
+  --moss: #73DACA;          /* Lichen */
+  --success: #9ECE6A;
+  --warning: #E0AF68;
+  --error: #F7768E;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #17151C; --surface: #211F28; --sunken: #2C2934; --line: #3C3943;
-    --text: #EFEBE2; --text-2: #AFAAA1;
-    --accent: #A2A8FC; --accent-hover: #B7BDFF; --on-accent: #17151C; --accent-tint: #2F3058;
-    --heritage: #D68960; --success: #76C788; --warning: #E6B55D; --error: #EF7F72;
+    --bg: #1A1B26; --surface: #24283B; --sunken: #292E42; --line: #3B4261;
+    --text: #C0CAF5; --text-2: #9AA5CE;
+    --accent: #A2A8FC; --accent-hover: #B7BDFF; --on-accent: #1A1B26; --accent-tint: #2F3058;
+    --moss: #73DACA; --success: #9ECE6A; --warning: #E0AF68; --error: #F7768E;
   }
 }
 

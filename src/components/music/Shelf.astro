@@ -161,7 +161,7 @@ const viewBtn = 'ctl ctl-icon';
         </ul>
 
         <!-- The same records listed like blog articles: date added · artist – title, genres on the right. -->
-        <ul id="records-list" hidden class="flex flex-col mt-2" role="list">
+        <ul id="records-list" hidden class="flex flex-col mt-4" role="list">
           {records.map((r) => (
             <li data-record={r.instanceId} class="flex items-center justify-between group py-2.5 gap-4 border-b border-zinc-100 dark:border-zinc-800/40 last:border-none">
               <div class="flex items-center min-w-0 flex-grow pr-4">

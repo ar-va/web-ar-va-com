@@ -4,11 +4,12 @@
 /* Enable manual class-based dark mode */
 @custom-variant dark (&:is(.dark *));
 
-/* ARVA brand palette (ARVA-brand-rules.md, arva-tokens.css; applied 2026-10-29, "identity only": the site keeps
-   its own shapes and layout). The two scales the whole site already uses are remapped, so every class follows:
-   blue-violet = the accent (600 Indigo #5A57C4 in light, 400 Periwinkle #A2A8FC in dark, 700/300 their hovers,
-   100/900 the accent tints); zinc = warm neutrals (200 line, 600 Bark, 900 Gall Ink, 950 Night Ink, 800 dark
-   line, 400 dark secondary text). Paper White / Night Ink page, #211F28 dark surface. */
+/* ARVA brand palette (brand/ARVA-brand-rules.md, brand/arva-tokens.css). Dark is based on Tokyo Night (night
+   #1A1B26, storm surfaces, #C0CAF5 text), light is a fresh cool paper; accent Indigo / Periwinkle; secondary Moss
+   (teal-green, the oak leaf). The two scales every class uses are remapped: blue-violet = accent (600 Indigo
+   #5A57C4, 700 hover, 400 Periwinkle #A2A8FC, 300 dark hover, 100/900 tints); zinc = cool neutrals (900 ink
+   #1F2335, 600 slate #565F89, 200 line, 800 dark line #3B4261, 400 dark secondary #9AA5CE, 300 dark text
+   #C0CAF5, 950 night #1A1B26). Updated 2026-10-29: the first warm/brown neutrals looked burnt and not fresh. */
 @theme {
   --color-blue-violet-50: #f1f3ff;
   --color-blue-violet-100: #e4e8ff;
@@ -22,20 +23,22 @@
   --color-blue-violet-900: #2f3058;
   --color-blue-violet-950: #1e1e3a;
 
-  --color-zinc-50: #faf8f4;
-  --color-zinc-100: #f4f0e8;
-  --color-zinc-200: #dbd7cf;
-  --color-zinc-300: #c8c3ba;
-  --color-zinc-400: #afaaa1;
-  --color-zinc-500: #7a736a;
-  --color-zinc-600: #696258;
-  --color-zinc-700: #4a4550;
-  --color-zinc-800: #3c3943;
-  --color-zinc-900: #1f1c26;
-  --color-zinc-950: #17151c;
+  --color-zinc-50: #f8f9fc;
+  --color-zinc-100: #eef0f7;
+  --color-zinc-200: #d8dbe6;
+  --color-zinc-300: #c0caf5;
+  --color-zinc-400: #9aa5ce;
+  --color-zinc-500: #6c7398;
+  --color-zinc-600: #565f89;
+  --color-zinc-700: #414868;
+  --color-zinc-800: #3b4261;
+  --color-zinc-900: #1f2335;
+  --color-zinc-950: #1a1b26;
 
-  --color-paper: #fdfcfa;
-  --color-night-surface: #211f28;
+  --color-paper: #f8f9fc;
+  --color-night-surface: #24283b;
+  --color-moss: #1f7a66;
+  --color-moss-light: #73daca;
 
   --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
   --font-heading: 'Archivo', system-ui, sans-serif;
@@ -45,28 +48,29 @@
 /* Brand type: Archivo for headings (112 % width; the bold ones at 600), Plex Mono for the small uppercase labels. */
 h1, h2, h3, h4 { font-family: var(--font-heading); font-stretch: 112%; }
 :is(h1, h2, h3, h4).font-bold { font-weight: 600; }
-.uppercase.tracking-widest { font-family: var(--font-mono); }
+.uppercase.tracking-widest { font-family: var(--font-mono); color: var(--color-moss); }
+.dark .uppercase.tracking-widest { color: var(--color-moss-light); }
 /* ---- Music shelf (music.ar-va.com) ---- */
 /* Each row is a ledge: a lit top surface the sleeves stand on, a darker front edge, and a soft wall behind. */
 :root {
-  --wall-top: rgb(31 28 38 / 0);
-  --wall: rgb(31 28 38 / 0.035);
-  --ledge-top: #f4f0e8;
-  --ledge-top-2: #e5e0d6;
-  --ledge-lip: #fdfcfa;
-  --ledge-edge: #d3cdc2;
-  --ledge-edge-2: #bab3a6;
+  --wall-top: rgb(31 35 53 / 0);
+  --wall: rgb(31 35 53 / 0.035);
+  --ledge-top: #eef0f7;
+  --ledge-top-2: #dfe2ec;
+  --ledge-lip: #f8f9fc;
+  --ledge-edge: #cfd3e1;
+  --ledge-edge-2: #b4bacd;
   --ledge-shadow: rgb(0 0 0 / 0.18);
   --glow-strength: 45%;
 }
 .dark {
   --wall-top: rgb(255 255 255 / 0);
   --wall: rgb(255 255 255 / 0.025);
-  --ledge-top: #4a4652;
-  --ledge-top-2: #322f3a;
-  --ledge-lip: #5a5662;
-  --ledge-edge: #211f28;
-  --ledge-edge-2: #17151c;
+  --ledge-top: #3b4261;
+  --ledge-top-2: #292e42;
+  --ledge-lip: #4b5276;
+  --ledge-edge: #1f2335;
+  --ledge-edge-2: #16161e;
   --ledge-shadow: rgb(0 0 0 / 0.7);
   --glow-strength: 62%;
 }
@@ -243,13 +247,13 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
 /* Loading placeholder: a soft light sweeping left to right. On images it is the background, so the picture covers
    it as soon as it paints; no script needed. */
 .skeleton {
-  --sk: #ece8e0;
-  --sk-hi: #f7f4ee;
+  --sk: #e6e9f2;
+  --sk-hi: #f4f6fb;
   background: linear-gradient(90deg, var(--sk) 40%, var(--sk-hi) 50%, var(--sk) 60%) var(--sk);
   background-size: 300% 100%;
   animation: skeleton 1.6s ease-in-out infinite;
 }
-.dark .skeleton { --sk: #24222b; --sk-hi: #322f3a; }
+.dark .skeleton { --sk: #24283b; --sk-hi: #2f3550; }
 @keyframes skeleton { from { background-position: 100% 0; } to { background-position: 0 0; } }
 @media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
 
@@ -262,14 +266,14 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
 .glass-under { isolation: isolate; }
 .glass-under::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; }
 .glass, .glass-under::before {
-  background: rgb(253 252 250 / 0.62);
+  background: rgb(248 249 252 / 0.62);
   box-shadow: 0 12px 18px -12px rgb(0 0 0 / 0.22);
   will-change: transform;
   -webkit-backdrop-filter: blur(18px) saturate(1.6);
   backdrop-filter: blur(18px) saturate(1.6);
 }
 .dark .glass, .dark .glass-under::before {
-  background: rgb(33 31 40 / 0.6);
+  background: rgb(36 40 59 / 0.6);
   box-shadow: 0 12px 18px -12px rgb(0 0 0 / 0.65);
 }
 
@@ -293,7 +297,7 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
 }
 
 /* Over the photo viewer's dark backdrop the glass is always the dark kind, whatever the site theme. */
-dialog[data-lightbox] .glass { background: rgb(33 31 40 / 0.5); box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.6); }
+dialog[data-lightbox] .glass { background: rgb(26 27 38 / 0.5); box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.6); }
 
 /* The header stays on screen: jumps to #sections stop below it instead of under it. */
 html { scroll-padding-top: 5.5rem; }
@@ -304,8 +308,8 @@ html { scroll-padding-top: 5.5rem; }
 @keyframes reveal-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
 /* The filters panel is mostly text: a denser glass, so covers behind it don't show through the words. */
-#filters-panel { background: rgb(253 252 250 / 0.92); }
-.dark #filters-panel { background: rgb(33 31 40 / 0.92); }
+#filters-panel { background: rgb(248 249 252 / 0.92); }
+.dark #filters-panel { background: rgb(36 40 59 / 0.92); }
 
 /* Controls follow one rule everywhere (2026-10-28):
    - grey "well" = something you can press or type in (filter toggle, Sort, view switch, search, theme switch
@@ -314,10 +318,10 @@ html { scroll-padding-top: 5.5rem; }
      doesn't turn muddy over glass, and readable (about 6:1 light, 7:1 dark);
    - solid violet only for small signals (count badge, theme knob) and primary buttons.
    Toolbar controls are 2rem pills. */
-:root { --well: rgb(31 28 38 / 0.06); --well-hover: rgb(31 28 38 / 0.1); --on-bg: var(--color-blue-violet-100); --on-bg-hover: var(--color-blue-violet-200); --on-text: var(--color-blue-violet-700); }
+:root { --well: rgb(31 35 53 / 0.06); --well-hover: rgb(31 35 53 / 0.1); --on-bg: var(--color-blue-violet-100); --on-bg-hover: var(--color-blue-violet-200); --on-text: var(--color-blue-violet-700); }
 /* Dark "on": a soft deep purple (violet-500 mixed into the dark surface, opaque; close to the brand's #2F3058 tint); violet-900 was too bold, the
    first 22 % violet-400 mix a little too pale. */
-.dark { --well: rgb(255 255 255 / 0.08); --well-hover: rgb(255 255 255 / 0.13); --on-bg: color-mix(in srgb, var(--color-blue-violet-500) 25%, #211f28); --on-bg-hover: color-mix(in srgb, var(--color-blue-violet-500) 33%, #211f28); --on-text: var(--color-blue-violet-200); }
+.dark { --well: rgb(255 255 255 / 0.08); --well-hover: rgb(255 255 255 / 0.13); --on-bg: color-mix(in srgb, var(--color-blue-violet-500) 25%, #24283b); --on-bg-hover: color-mix(in srgb, var(--color-blue-violet-500) 33%, #24283b); --on-text: var(--color-blue-violet-200); }
 .ctl {
   display: inline-flex; align-items: center; gap: 0.375rem; height: 2rem; padding: 0 0.875rem; border-radius: 9999px;
   font-size: 0.875rem; font-weight: 500; color: var(--color-zinc-700); background: var(--well);
