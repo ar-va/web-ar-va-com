@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import {
-  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref, vinylColor, tracklistToText, textToTracklist, safeStreamingUrl,
+  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref, vinylColor, vinylPick, safeVinyl, tracklistToText, textToTracklist, safeStreamingUrl,
 } from '../src/music/lib.ts';
 
 const BOT = '123:test-bot-token';
@@ -130,6 +130,13 @@ test('vinyl colour from the format note', () => {
   assert.equal(vinylColor('Forest Green, Alternate Cover'), '#1f5f3a');
   assert.equal(vinylColor('White'), '#ece9e2');
   assert.equal(vinylColor('Milky Clear, Art Card'), '#ece9e2a6');
+  // the edit page's pick: swatch, custom, see-through; nothing unsafe reaches the style attribute
+  assert.equal(vinylPick('#c62f34', '#000000', false), '#c62f34');
+  assert.equal(vinylPick('#c62f34', '#000000', true), '#c62f34a6');
+  assert.equal(vinylPick('custom', '#12AB34', false), '#12ab34');
+  assert.equal(vinylPick('#d8dde673', '', true), '#d8dde673');
+  assert.equal(vinylPick('red; background:url(x)', '', false), '');
+  assert.equal(safeVinyl('#fff'), null);
   assert.equal(vinylColor('Clear'), '#d8dde673');
   assert.equal(vinylColor('Pink Translucent [Vodka Sauce]'), '#ec74a8a6');
   assert.equal(vinylColor('Blue Sunset Labels, Gatefold'), null);

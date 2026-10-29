@@ -148,6 +148,18 @@ html { scrollbar-gutter: stable; }
   box-shadow: 0 0 0 1px rgb(255 255 255 / 0.05);
   transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.45s;
 }
+/* Edit page: a small record per colour choice; "another colour" shows the spectrum until one is picked. */
+.vinyl-swatch {
+  background:
+    radial-gradient(circle, #111 0 5%, var(--color-blue-violet-500) 6% 28%, transparent 29%),
+    repeating-radial-gradient(circle, var(--vinyl) 0 1px, color-mix(in srgb, var(--vinyl) 85%, white) 1px 2.5px);
+  border: 1px solid rgb(0 0 0 / 0.12); /* not a box-shadow: that would hide Tailwind's ring on the picked one */
+}
+.vinyl-swatch-any {
+  background:
+    radial-gradient(circle, #111 0 5%, var(--color-blue-violet-500) 6% 28%, transparent 29%),
+    conic-gradient(#c62f34, #efc531, #2f9e5b, #6bb3e8, #2f5fd0, #7f4bc4, #ec74a8, #c62f34);
+}
 /* Light from inside the sleeve: it spills out of the opening, behind the record, in the vinyl's colour. */
 .sleeve::before {
   content: '';
