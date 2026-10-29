@@ -228,9 +228,25 @@ export function vinylColor(text: string): string | null {
     const clear = /\b(clear|transparent|translucent|crystal)\b/.test(part);
     const hit = COLORS.find(([re]) => re.test(part));
     if (hit) return clear ? `${hit[1]}a6` : hit[1];
-    if (clear) return '#d8dde6' + '73';
+    if (clear) return CLEAR_VINYL;
   }
   return null;
+}
+
+/** The edit page's disc colours (the ones Discogs notes map to); black is the CSS default disc. */
+export const CLEAR_VINYL = '#d8dde673';
+export const VINYL_SWATCHES: [string, string][] = [
+  ['Black', '#131316'], ['White', '#ece9e2'], ['Silver', '#a3a3ad'], ['Red', '#c62f34'], ['Pink', '#ec74a8'],
+  ['Purple', '#7f4bc4'], ['Navy', '#1e2f6b'], ['Blue', '#2f5fd0'], ['Sky blue', '#6bb3e8'], ['Forest green', '#1f5f3a'],
+  ['Green', '#2f9e5b'], ['Yellow', '#efc531'], ['Gold', '#c9a43c'], ['Orange', '#ec7a2c'], ['Brown', '#7a4e2d'], ['Clear', CLEAR_VINYL],
+];
+/** A disc colour safe for a `style` attribute: #rrggbb, or #rrggbbaa for a see-through pressing. */
+export const safeVinyl = (value: string | null | undefined) => (value && /^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(value) ? value.toLowerCase() : null);
+/** The edit form's pick: a swatch or the custom colour, made see-through when ticked (Clear already is). */
+export function vinylPick(swatch: string, custom: string, seeThrough: boolean) {
+  const base = safeVinyl(swatch === 'custom' ? custom : swatch);
+  if (!base) return '';
+  return seeThrough && base.length === 7 ? `${base}a6` : base;
 }
 
 // ---- Owner edits (overrides of the Discogs data) ----
@@ -369,6 +385,7 @@ export function recordDefaults(r: ShelfRecord, d: ReleaseDetail | null, m: Match
     apple: m?.apple?.url ?? '',
     youtube: '',
     cover: r.cover ?? '',
+    vinyl: r.vinyl ?? VINYL_SWATCHES[0][1],
     ...Object.fromEntries(r.fields.map((f) => [`field:${f.name}`, f.value])),
   };
 }
@@ -386,6 +403,7 @@ export function shelfView(r: ShelfRecord, d: ReleaseDetail | null, overrides: Ov
   return {
     ...r,
     cover: safeCoverUrl(v.cover) ?? r.cover,
+    vinyl: safeVinyl(v.vinyl) ?? r.vinyl,
     artist: v.artist,
     title: v.title,
     // Discogs genres can contain commas ("Folk, World, & Country"): only an owner-typed genre is split on them.

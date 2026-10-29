@@ -3,7 +3,7 @@
 // (to the owner only) with a Revert button. An empty field means "use Discogs".
 export const prerender = false;
 import Layout from '../../../../layouts/Layout.astro';
-import { loginHref, musicPath, recordDefaults, safeCoverUrl, safeStreamingUrl, type Overrides } from '../../../../music/lib';
+import { CLEAR_VINYL, VINYL_SWATCHES, loginHref, musicPath, recordDefaults, safeCoverUrl, safeStreamingUrl, vinylPick, type Overrides } from '../../../../music/lib';
 import { currentUser, recordData, saveOverrides } from '../../../../music/store';
 
 const instanceId = Number(Astro.params.record);
@@ -27,7 +27,8 @@ if (Astro.request.method === 'POST') {
   const next: Overrides = {};
   if (revert !== '*') {
     for (const key of Object.keys(defaults)) {
-      const value = String(form.get(key) ?? '').replace(/\r\n/g, '\n').trim().slice(0, 5000);
+      const raw = key === 'vinyl' ? vinylPick(String(form.get('vinyl') ?? ''), String(form.get('vinylCustom') ?? ''), form.has('vinylSeeThrough')) : form.get(key);
+      const value = String(raw ?? '').replace(/\r\n/g, '\n').trim().slice(0, 5000);
       if (!value || value === defaults[key] || key === revert) continue;
       if (key === 'cover' && !safeCoverUrl(value)) continue;
       if (key in links && !safeStreamingUrl(value, key as keyof typeof links)) {
@@ -57,6 +58,13 @@ const covers = [...new Map([
 const coverNote = !match
   ? 'Apple Music’s official artwork shows up here once it’s found: that happens in the background while your shelf page is open.'
   : !appleArt ? 'Apple Music doesn’t seem to have this album, so there’s no official artwork to suggest.' : null;
+// Vinyl: a swatch (or the custom colour) plus "see-through" (the colour's alpha); Clear is its own swatch.
+const vinylBase = values.vinyl === CLEAR_VINYL ? CLEAR_VINYL : values.vinyl.slice(0, 7);
+const vinylCustom = !VINYL_SWATCHES.some(([, hex]) => hex === vinylBase);
+const vinylName = (hex: string) => {
+  const name = VINYL_SWATCHES.find(([, h]) => h === (hex === CLEAR_VINYL ? hex : hex.slice(0, 7)))?.[0] ?? 'a custom colour';
+  return hex.length === 9 && hex !== CLEAR_VINYL ? `${name}, see-through` : name;
+};
 // A newly saved Apple Music link that isn't the matched album yet: the page fetches that album's cover and tracks.
 const albumId = (url?: string | null) => url?.match(/\/album\/(?:[^/?#]+\/)?(\d+)/)?.[1] ?? null;
 const autoRematch = Astro.request.method === 'GET' && !!overrides.apple && albumId(overrides.apple) !== albumId(match?.apple?.url);
@@ -130,6 +138,35 @@ const dated = new Set(['released', 'vinylRelease']);
           </div>
         </fieldset>
       )}
+
+      <fieldset class={card}>
+        <div class="flex items-center justify-between gap-4">
+          <legend class={`${cardTitle} flex items-center gap-2`}>
+            Vinyl colour
+            {'vinyl' in overrides && <span class="text-[10px] font-bold tracking-widest uppercase text-blue-violet-600 dark:text-blue-violet-400">Edited</span>}
+          </legend>
+          {'vinyl' in overrides && <button name="revert" value="vinyl" class="text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Revert</button>}
+        </div>
+        <p class="mt-1 text-sm text-zinc-500">The disc on the shelf and the record page. From Discogs: {vinylName(defaults.vinyl).toLowerCase()}{defaults.vinyl === VINYL_SWATCHES[0][1] && ' (nothing in its format note)'}.</p>
+        <div class="mt-4 flex flex-wrap gap-3">
+          {VINYL_SWATCHES.map(([name, hex]) => (
+            <label class="cursor-pointer" title={name}>
+              <input type="radio" name="vinyl" value={hex} checked={!vinylCustom && vinylBase === hex} class="sr-only peer" aria-label={name} />
+              <span class="vinyl-swatch block w-9 h-9 rounded-full ring-2 ring-transparent ring-offset-2 ring-offset-white dark:ring-offset-night-surface peer-checked:ring-blue-violet-500 peer-focus-visible:ring-blue-violet-500/60 transition-shadow" style={`--vinyl: ${hex}`}></span>
+            </label>
+          ))}
+          <!-- Any other colour: the native picker sits over the swatch; picking selects this choice (script below). -->
+          <label class="relative cursor-pointer" title="Another colour">
+            <input type="radio" name="vinyl" value="custom" checked={vinylCustom} class="sr-only peer" aria-label="Another colour" data-vinyl-custom />
+            <span data-vinyl-custom-swatch class={`block w-9 h-9 rounded-full ring-2 ring-transparent ring-offset-2 ring-offset-white dark:ring-offset-night-surface peer-checked:ring-blue-violet-500 peer-focus-visible:ring-blue-violet-500/60 transition-shadow ${vinylCustom ? 'vinyl-swatch' : 'vinyl-swatch-any'}`} style={vinylCustom ? `--vinyl: ${vinylBase}` : undefined}></span>
+            <input type="color" name="vinylCustom" value={vinylCustom ? vinylBase : '#7f4bc4'} class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="Pick another colour" />
+          </label>
+        </div>
+        <label class="mt-4 inline-flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer">
+          <input type="checkbox" name="vinylSeeThrough" checked={values.vinyl.length === 9 && values.vinyl !== CLEAR_VINYL} class="w-4 h-4 accent-blue-violet-600" />
+          See-through (a translucent pressing)
+        </label>
+      </fieldset>
 
       {groups.map((g) => (
         <section class={card} aria-labelledby={`g-${g.id}`}>
@@ -239,6 +276,15 @@ const dated = new Set(['released', 'vinylRelease']);
 <script>
   import { renumber, textToTracklist, tracklistToText, type Track } from '../../../../music/lib';
   import { rematch } from '../../../../music/sync';
+
+  // Vinyl colour: picking in the native colour picker chooses "another colour" and shows it on its swatch.
+  document.querySelector<HTMLInputElement>('input[name="vinylCustom"]')?.addEventListener('input', (e) => {
+    const picked = (e.target as HTMLInputElement).value;
+    document.querySelector<HTMLInputElement>('[data-vinyl-custom]')!.checked = true;
+    const swatch = document.querySelector<HTMLElement>('[data-vinyl-custom-swatch]')!;
+    swatch.classList.replace('vinyl-swatch-any', 'vinyl-swatch');
+    swatch.style.setProperty('--vinyl', picked);
+  });
 
   // "Match again": the album from the Apple Music link field, or a search by the artist and title fields (as typed).
   const box = document.querySelector<HTMLElement>('[data-rematch]');
