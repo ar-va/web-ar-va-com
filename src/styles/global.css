@@ -5,8 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ARVA brand palette (brand/ARVA-brand-rules.md, brand/arva-tokens.css). Dark is based on Tokyo Night (night
-   #1A1B26, storm surfaces, #C0CAF5 text), light is a fresh cool paper; accent Indigo / Periwinkle; secondary Moss
-   (teal-green, the oak leaf). The two scales every class uses are remapped: blue-violet = accent (600 Indigo
+   #1A1B26, storm surfaces, #C0CAF5 text), light is almost white with a hint of paper; accent Indigo / Periwinkle;
+   secondary Moss (leaf-green, the oak leaf). The two scales every class uses are remapped: blue-violet = accent (600 Indigo
    #5A57C4, 700 hover, 400 Periwinkle #A2A8FC, 300 dark hover, 100/900 tints); zinc = cool neutrals (900 ink
    #1F2335, 600 slate #565F89, 200 line, 800 dark line #3B4261, 400 dark secondary #9AA5CE, 300 dark text
    #C0CAF5, 950 night #1A1B26). Updated 2026-10-29: the first warm/brown neutrals looked burnt and not fresh. */
@@ -23,8 +23,8 @@
   --color-blue-violet-900: #2f3058;
   --color-blue-violet-950: #1e1e3a;
 
-  --color-zinc-50: #f8f9fc;
-  --color-zinc-100: #eef0f7;
+  --color-zinc-50: #fdfdfb;
+  --color-zinc-100: #f1f2f6;
   --color-zinc-200: #d8dbe6;
   --color-zinc-300: #c0caf5;
   --color-zinc-400: #9aa5ce;
@@ -35,10 +35,10 @@
   --color-zinc-900: #1f2335;
   --color-zinc-950: #1a1b26;
 
-  --color-paper: #f8f9fc;
+  --color-paper: #fdfdfb;
   --color-night-surface: #24283b;
-  --color-moss: #1f7a66;
-  --color-moss-light: #73daca;
+  --color-moss: #237a50;
+  --color-moss-light: #8bd8a9;
 
   --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
   --font-heading: 'Archivo', system-ui, sans-serif;
@@ -55,9 +55,9 @@ h1, h2, h3, h4 { font-family: var(--font-heading); font-stretch: 112%; }
 :root {
   --wall-top: rgb(31 35 53 / 0);
   --wall: rgb(31 35 53 / 0.035);
-  --ledge-top: #eef0f7;
+  --ledge-top: #f1f2f6;
   --ledge-top-2: #dfe2ec;
-  --ledge-lip: #f8f9fc;
+  --ledge-lip: #fdfdfb;
   --ledge-edge: #cfd3e1;
   --ledge-edge-2: #b4bacd;
   --ledge-shadow: rgb(0 0 0 / 0.18);
@@ -247,8 +247,8 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
 /* Loading placeholder: a soft light sweeping left to right. On images it is the background, so the picture covers
    it as soon as it paints; no script needed. */
 .skeleton {
-  --sk: #e6e9f2;
-  --sk-hi: #f4f6fb;
+  --sk: #e9ebf1;
+  --sk-hi: #f7f8fa;
   background: linear-gradient(90deg, var(--sk) 40%, var(--sk-hi) 50%, var(--sk) 60%) var(--sk);
   background-size: 300% 100%;
   animation: skeleton 1.6s ease-in-out infinite;
@@ -267,7 +267,7 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
 .glass-under { isolation: isolate; }
 .glass-under::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; }
 .glass, .glass-under::before {
-  background: rgb(248 249 252 / 0.62);
+  background: rgb(253 253 251 / 0.62);
   box-shadow: 0 6px 14px -10px rgb(31 35 53 / 0.12);
   will-change: transform;
   -webkit-backdrop-filter: blur(18px) saturate(1.6);
@@ -309,7 +309,7 @@ html { scroll-padding-top: 5.5rem; }
 @keyframes reveal-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
 /* The filters panel is mostly text: a denser glass, so covers behind it don't show through the words. */
-#filters-panel { background: rgb(248 249 252 / 0.92); }
+#filters-panel { background: rgb(253 253 251 / 0.92); }
 .dark #filters-panel { background: rgb(36 40 59 / 0.92); }
 
 /* Controls follow one rule everywhere (2026-10-28):

@@ -52,9 +52,9 @@ Use **only** the CSS variables from `arva-tokens.css`. Do not write hex values i
 
 | Token | Light | Dark | Role |
 |---|---|---|---|
-| `--bg` | #F8F9FC Cool Paper | #1A1B26 Night | Page background |
+| `--bg` | #FDFDFB Paper | #1A1B26 Night | Page background |
 | `--surface` | #FFFFFF White | #24283B Storm | Cards, inputs, menus, modals |
-| `--sunken` | #EEF0F7 Mist | #292E42 | Alternating section bands, code blocks, wells, table stripes, popovers on dark |
+| `--sunken` | #F1F2F6 Mist | #292E42 | Alternating section bands, code blocks, wells, table stripes, popovers on dark |
 | `--line` | #D8DBE6 | #3B4261 | All borders and dividers (1px) |
 | `--text` | #1F2335 Ink | #C0CAF5 Moonlight | Headings and body text |
 | `--text-2` | #565F89 Slate | #9AA5CE | Captions, meta, placeholders, secondary text |
@@ -62,14 +62,14 @@ Use **only** the CSS variables from `arva-tokens.css`. Do not write hex values i
 | `--accent-hover` | #4B45B0 | #B7BDFF | Hover state of the accent |
 | `--on-accent` | #FFFFFF | #1A1B26 | Text and icons placed on an accent fill |
 | `--accent-tint` | #E4E8FF | #2F3058 | Tags, selected rows, info banners, text selection |
-| `--moss` | #1F7A66 Moss | #73DACA Lichen | Secondary: small heritage and nature details (see below) |
+| `--moss` | #237A50 Moss | #8BD8A9 Mint leaf | Secondary: small heritage and nature details (see below) |
 | `--success` | #2F7D3A | #9ECE6A | Success messages and icons |
 | `--warning` | #8A5D10 | #E0AF68 | Warning messages and icons |
 | `--error` | #C0394B | #F7768E | Error messages, invalid field borders |
 
 Every text colour above meets WCAG AA (4.5:1 or better) on `--bg`, `--surface` and `--sunken` in its theme (checked 2026-10-29).
 
-The dark theme is based on **Tokyo Night** (night background, storm surfaces, moonlight text); the light theme is a cool, fresh paper. Moss is the leaf: a teal-green from the same family as the accent, so the two sit together.
+The dark theme is based on **Tokyo Night** (night background, storm surfaces, moonlight text); the light theme is almost white with a slight hint of paper. Moss is the leaf: a fresh leaf-green chosen to sit opposite the indigo accent.
 
 **Proportions on any screen:** about 60% `--bg` and `--surface`, 30% `--text`, at most 10% `--accent`, under 3% `--moss`.
 
@@ -79,7 +79,7 @@ Rules:
 - `--moss` is allowed for: eyebrow labels (the mono uppercase labels above titles), one stamp-like detail, a "since" line, or editorial pull quotes. Never use it on buttons, links, form states, or large fills. It must not appear next to `--success`, so status colours stay readable as status.
 - **No gradients**, except for the subtle overlays on photos described in section 7.
 - **Green only as Moss.** The leaf colour is the teal-green `--moss`, never a bright grass or eco green. `--success` appears only in form or status feedback.
-- Pure black (#000) is never used. In the light theme, white is reserved for `--surface` and `--on-accent`; the page itself is Cool Paper.
+- Pure black (#000) is never used. In the light theme, white is reserved for `--surface` and `--on-accent`; the page itself is Paper (#FDFDFB).
 - Use `--sunken` (Mist) to alternate full-width sections in the light theme.
 - Shadows: avoid them. Separate surfaces with `--line` borders. If a floating element (menu, modal) truly needs one, use `0 8px 24px rgb(0 0 0 / .12)` in light and `0 8px 24px rgb(0 0 0 / .4)` in dark.
 
@@ -200,6 +200,8 @@ Rules:
   dark-theme text), russet mark → Moss #1F7A66 (`arva-mark-moss.svg`). File names keep "ink" / "washi" for the
   light / dark versions. Their embedded Content Credentials (C2PA) were removed: they certified the old colours.
   `favicon.svg` now switches ink → washi on dark browser tabs itself.
+- **2026-10-29 (later):** light page lightened to #FDFDFB (almost white, a hint of paper; sunken #F1F2F6); Moss moved
+  from teal to leaf-green: #237A50 light, #8BD8A9 dark (was #1F7A66 / #73DACA); `arva-mark-moss.svg` follows.
 - **Site note (ar-va.com):** the owner chose "identity only" for the site: logo, fonts and colours follow these
   rules, while the site keeps its frosted-glass pill header and toolbars, pill-shaped controls, and the music
   shelf's vinyl animations, which sections 5, 6, 8 and 9 would otherwise rule out.
