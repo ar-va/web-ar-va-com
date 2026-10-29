@@ -73,9 +73,9 @@ const viewBtn = 'ctl ctl-icon';
       <hr class="border-zinc-200 dark:border-zinc-800/80 my-8" />
 
       <section id="all-records">
-        <!-- Stays under the header (frosted) while scrolling through the records; lets go where the section ends. -->
-        <div class="glass-under sticky top-16 z-40 rounded-3xl sm:rounded-full flex flex-wrap items-center justify-center sm:justify-between gap-2 sm:gap-4 p-1.5">
-          <div class="flex flex-wrap items-center justify-center gap-2">
+        <!-- Two frosted pills, like the header (controls; search), stay under the header while scrolling through the records; lets go where the section ends. -->
+        <div class="sticky top-16 z-40 flex flex-wrap items-center justify-center sm:justify-between gap-2">
+          <div class="glass-under relative rounded-3xl sm:rounded-full flex flex-wrap items-center justify-center gap-2 p-1.5">
             <h2 class="m-0 shrink-0">
               <button type="button" id="filters-toggle" aria-expanded="false" aria-controls="filters-panel" title="Filter by added, released and genre"
                 class="ctl group pl-2.5">
@@ -97,11 +97,11 @@ const viewBtn = 'ctl ctl-icon';
               </button>
             </div>
           </div>
-          <div class="relative flex-1 min-w-32 sm:flex-none sm:w-64">
+          <div class="glass-under relative rounded-full p-1.5 w-full sm:w-72"><div class="relative">
             <input type="search" id="record-search" placeholder="Search" aria-label="Search records"
               class="w-full h-8 rounded-full bg-(--well) pl-3.5 pr-9 text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-violet-500/60 transition-shadow placeholder:text-zinc-500 [&::-webkit-search-cancel-button]:hidden" />
             <svg class="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-          </div>
+          </div></div>
 
           <!-- Filters drop down from "All records" (and travel with the bar); several can be picked before closing. -->
           <div id="filters-panel" hidden class="glass absolute left-0 right-0 top-full mt-2 rounded-3xl px-5 py-4 max-h-[70vh] overflow-y-auto space-y-1">
