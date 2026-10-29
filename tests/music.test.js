@@ -260,3 +260,16 @@ test('streaming matches, cover sources, gallery', async () => {
   assert.equal(shelfView(r, d, { cover: 'https://evil.example/a' }, m).cover, 'https://i.discogs.com/c');
   assert.equal(streamingSearch('a b', 'track').spotify, 'https://open.spotify.com/search/a%20b/tracks');
 });
+
+test('runtime and renumber', async () => {
+  const { runtime, renumber } = await import('../src/music/lib.ts');
+  const tr = (duration, heading = false) => ({ position: '', title: 'x', duration, heading });
+  assert.equal(runtime([tr('', true), tr('4:52'), tr('3:08')]), '8 min');
+  assert.equal(runtime([tr('45:00'), tr('30:00')]), '1 h 15 min');
+  assert.equal(runtime([tr('4:52'), tr('')]), null);
+  assert.equal(runtime([tr('abc')]), null);
+  assert.equal(runtime([]), null);
+  assert.deepEqual(renumber(['A2', 'A1', 'B1', 'A3', 'B2']), ['A1', 'A2', 'B1', 'A3', 'B2']);
+  assert.deepEqual(renumber(['3', '1', '2']), ['1', '2', '3']);
+  assert.deepEqual(renumber(['CD1-2', '', 'A5']), ['CD1-2', '', 'A1']);
+});
