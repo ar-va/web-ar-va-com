@@ -2,6 +2,7 @@
 // One record: Discogs details (with the owner's edits), public Discogs fields, tracklist with listening links, comments.
 export const prerender = false;
 import Layout from '../../../layouts/Layout.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import RecordHero from '../../../components/music/RecordHero.astro';
 import Gallery from '../../../components/music/Gallery.astro';
 import LoginButton from '../../../components/LoginButton.astro';
@@ -77,13 +78,14 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
 <Layout title={record ? `${v.title} by ${v.artist} - ARVA` : 'Not found - ARVA'} description={record ? `${v.artist} – ${v.title}${v.released ? ` (${displayDate(v.released)})` : ''}, on ${owner!.name}’s shelf.` : undefined}>
   {!record || !owner ? (
     <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
+      <Breadcrumbs class="mb-8" items={[{ label: 'Shelves', href: '/' }, ...(owner ? [{ label: owner.name, href: shelfPath }] : []), { label: 'Not found' }]} />
       <p class="text-zinc-500">This record isn’t on the shelf (any more). <a href={shelfPath} class={link}>Back to the shelf →</a></p>
     </div>
   ) : (
     <article class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
       <!-- The top row and the hero use the whole frame; details, tracklist and comments keep the reading measure. -->
       <div class="flex items-center justify-between gap-4 !max-w-none">
-        <a href={shelfPath} class="text-sm text-zinc-500 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">← {owner.name}’s records</a>
+        <Breadcrumbs class="min-w-0" items={[{ label: 'Shelves', href: '/' }, { label: owner.name, href: shelfPath }, { label: v.title }]} />
         {isOwner && (
           <a href={`${path}/edit`} class="ctl pl-2.5">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.9 4.1a2.1 2.1 0 0 1 3 3L8.5 18.5 4 20l1.5-4.5z" /></svg>

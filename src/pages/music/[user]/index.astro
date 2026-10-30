@@ -1,9 +1,49 @@
 ---
+// A collector's shelf. The owner can write a short note about the collection; everyone logged in can comment on the
+// shelf (forms post here and come back with a redirect, like record pages).
 export const prerender = false;
 import ShelfPage from '../../../components/music/ShelfPage.astro';
-import { shelfData } from '../../../music/store';
+import { cleanShelfNote, commentNotices, loginHref, musicPath } from '../../../music/lib';
+import { SHELF_THREAD, addComment, currentUser, deleteComment, editComment, setShelfNote, shelfData } from '../../../music/store';
+import { notify } from '../../../music/notify';
 
-const data = await shelfData(Astro.params.user!);
-if (!data.owner) Astro.response.status = 404;
+const [user, data] = await Promise.all([currentUser(Astro.cookies), shelfData(Astro.params.user!)]);
+const { owner } = data;
+const path = musicPath(Astro.url);
+const thread = { shelfId: owner?.id ?? 0, instanceId: SHELF_THREAD };
+
+let error: string | null = null;
+let draft = '';
+if (owner && Astro.request.method === 'POST') {
+  if (!user) return Astro.redirect(loginHref(Astro.url), 303);
+  const form = await Astro.request.formData();
+  const action = form.get('action');
+  const id = Number(form.get('id'));
+  if (action === 'note') {
+    if (user.id === owner.id) await setShelfNote(owner.id, cleanShelfNote(String(form.get('note') ?? '')));
+    return Astro.redirect(path, 303);
+  }
+  if (action === 'delete') {
+    await deleteComment(thread, id, user);
+    return Astro.redirect(`${path}#comments`, 303);
+  }
+  if (action === 'edit') {
+    error = await editComment(thread, id, user, String(form.get('body') ?? ''));
+    if (!error) return Astro.redirect(`${path}#comment-${id}`, 303);
+  } else {
+    draft = String(form.get('body') ?? '');
+    const saved = await addComment(thread, user, draft, Number(form.get('parent_id')) || null);
+    if ('error' in saved) {
+      error = saved.error;
+    } else {
+      Astro.locals.cfContext.waitUntil(notify(commentNotices({
+        authorId: user.id, authorName: user.name, ownerId: owner.id, parentAuthorId: saved.parentAuthorId,
+        title: `${owner.name}’s records`, body: draft.trim(), url: `${Astro.url.origin}${path}#comment-${saved.id}`,
+      })));
+      return Astro.redirect(`${path}#comment-${saved.id}`, 303);
+    }
+  }
+}
+if (!owner) Astro.response.status = 404;
 ---
-<ShelfPage {...data} />
+<ShelfPage {...data} user={user} error={error} draft={draft} editingNote={!!owner && user?.id === owner.id && Astro.url.searchParams.has('note')} />

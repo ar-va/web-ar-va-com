@@ -416,6 +416,10 @@ export function shelfView(r: ShelfRecord, d: ReleaseDetail | null, overrides: Ov
   };
 }
 
+/** The note on a shelf: at most this many characters, no more than one empty line in a row. */
+export const SHELF_NOTE_MAX = 280;
+export const cleanShelfNote = (text: string) => text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim().slice(0, SHELF_NOTE_MAX) || null;
+
 // ---- Comments: links and Telegram notifications ----
 
 /** Splits comment text into plain text and http(s) links, so links can be rendered clickable (text stays escaped). */
