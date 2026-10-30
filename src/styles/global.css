@@ -385,6 +385,10 @@ html { scroll-padding-top: 1.5rem; }
 .ctl[hidden] { display: none; }
 .ctl[aria-expanded="true"], .ctl[aria-pressed="true"] { background: var(--on-bg); color: var(--on-text); }
 .ctl[aria-expanded="true"]:hover, .ctl[aria-pressed="true"]:hover { background: var(--on-bg-hover); }
+/* A control that doesn't apply right now (the labels toggle in the list view): grey, whatever its state
+   (after the on-state rules, which it has to beat). */
+.ctl:disabled, .ctl:disabled:hover { background: var(--well); color: var(--color-zinc-400); cursor: not-allowed; }
+.dark .ctl:disabled { color: var(--color-zinc-600); }
 
 /* Filters panel: an open decade (shelf) or year (blog) and its years / months share one well-grey pill; picked
    filters are "on" pills. All 2rem tall; the group is a wrapping inline-flex so pills inside can be full height
