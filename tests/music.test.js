@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import {
-  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, toCsv, safeDay, tracklistToText, textToTracklist, safeStreamingUrl,
+  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, toCsv, safeDay, playCount, tracklistToText, textToTracklist, safeStreamingUrl,
 } from '../src/music/lib.ts';
 
 const BOT = '123:test-bot-token';
@@ -314,4 +314,12 @@ test('toCsv quotes what needs it, neutralises formulas, starts with a BOM; safeD
   assert.equal(safeDay('2023-02-29'), null);
   assert.equal(safeDay('2024-13-01'), null);
   assert.equal(safeDay('2024'), null);
+});
+
+test('playCount reads YouTube Music play counts', () => {
+  assert.equal(playCount('72M plays'), 72_000_000);
+  assert.equal(playCount('1.2K plays'), 1200);
+  assert.equal(playCount('950 plays'), 950);
+  assert.equal(playCount('1,234 plays'), 1234);
+  assert.equal(playCount(''), 0);
 });
