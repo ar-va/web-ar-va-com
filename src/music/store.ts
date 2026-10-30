@@ -91,16 +91,28 @@ const SESSION_DAYS = 30;
 // Browsers refuse Domain=localhost, so locally each host keeps its own cookie.
 const cookieDomain = (hostname: string) => (siteDomain(hostname) === 'localhost' ? undefined : siteDomain(hostname));
 
-// Readable by the header script on every page (pre-rendered ones too): first name and photo only, it grants nothing.
+// Readable by the header script on every page (pre-rendered ones too), it grants nothing: first name, photo, and for
+// collectors their shelf address (s) or that Discogs still needs connecting (d), for the account menu.
 const WHO_COOKIE = 'who';
+const cookieOptions = (hostname: string) => ({ secure: true, sameSite: 'lax', path: '/', maxAge: SESSION_DAYS * 86400, domain: cookieDomain(hostname) } as const);
+
+/** Writes the header's `who` cookie; settings refreshes it on each visit (after connecting Discogs, a new address…). */
+export function setWho(cookies: AstroCookies, user: User, hostname: string) {
+  const shelf = canCollect(user) ? (user.discogs_username ? { s: shelfSlug(user) } : { d: 1 }) : {};
+  cookies.set(WHO_COOKIE, JSON.stringify({ n: user.name.split(' ')[0], p: user.photo_url, ...shelf }), cookieOptions(hostname));
+}
 
 export async function startSession(cookies: AstroCookies, user: { id: number; name: string; photoUrl: string | null }, hostname: string) {
   const token = randomToken();
-  await (await db()).prepare('INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)')
-    .bind(await sha256(token), user.id, now() + SESSION_DAYS * 86400).run();
-  const opts = { secure: true, sameSite: 'lax', path: '/', maxAge: SESSION_DAYS * 86400, domain: cookieDomain(hostname) } as const;
-  cookies.set(COOKIE, token, { ...opts, httpOnly: true });
-  cookies.set(WHO_COOKIE, JSON.stringify({ n: user.name.split(' ')[0], p: user.photoUrl }), opts);
+  const d = await db();
+  const [, row] = await d.batch([
+    d.prepare('INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)').bind(await sha256(token), user.id, now() + SESSION_DAYS * 86400),
+    d.prepare('SELECT * FROM users WHERE id = ?').bind(user.id),
+  ]);
+  cookies.set(COOKIE, token, { ...cookieOptions(hostname), httpOnly: true });
+  // The row always exists: the Telegram callback saves the user before starting the session.
+  const saved = row.results[0] as User | undefined;
+  if (saved) setWho(cookies, saved, hostname);
 }
 
 export async function currentUser(cookies: AstroCookies): Promise<User | null> {

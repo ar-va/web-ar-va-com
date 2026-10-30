@@ -1,18 +1,19 @@
 ---
-// Your account: what Telegram shared + log out; Discogs connection and sync and invites for collectors; the collectors
-// list for the admin.
+// Your account, written to reassure rather than configure: a greeting; for a new collector a 3-step "fill your shelf"
+// card until Discogs is connected, then the shelf (sync, address, tips); invites; the Telegram account with what the
+// site knows folded away; the collectors list for the admin. Each visit refreshes the header's `who` cookie.
 export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import { loginHref, shelfName } from '../../music/lib';
-import { OPEN_INVITES_MAX, canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, listInvites, removeShelf, setShelfName, shelfSlug } from '../../music/store';
+import { OPEN_INVITES_MAX, canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, listInvites, removeShelf, setShelfName, setWho, shelfSlug } from '../../music/store';
 
 const user = await currentUser(Astro.cookies);
 if (!user) return Astro.redirect(loginHref(Astro.url));
 
 let inviteUrl: string | null = null;
 let notice: string | null = Astro.url.searchParams.get('error');
-if (Astro.url.searchParams.has('welcome')) notice = 'Welcome! Connect your Discogs account to fill your shelf.';
+if (Astro.url.searchParams.has('welcome')) notice = 'Welcome, you’re in! One step left: connect Discogs below and your shelf fills itself.';
 if (Astro.url.searchParams.has('named')) notice = 'Your shelf address is saved.';
 
 if (Astro.request.method === 'POST') {
@@ -56,122 +57,153 @@ const ago = (s: number | null) => {
   const min = Math.round((Date.now() / 1000 - s) / 60);
   return min < 1 ? 'just now' : min < 60 ? `${min} min ago` : min < 1440 ? `${Math.round(min / 60)} h ago` : `${Math.round(min / 1440)} days ago`;
 };
+setWho(Astro.cookies, user, Astro.url.hostname);
+const first = user.name.split(' ')[0];
 const since = new Date(user.created_at * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+const shelfUrl = `/${encodeURIComponent(shelfSlug(user))}`;
 const shared: [string, string][] = [
   ['Name', user.name],
   ['Username', user.username ? `@${user.username}` : 'none set in Telegram'],
   ['Profile photo', user.photo_url ? 'yes, shown next to your comments' : 'none set in Telegram'],
   ['Telegram ID', String(user.id)],
 ];
-const pill = 'inline-block bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 text-sm font-medium px-5 py-2 rounded-full hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 transition-colors disabled:opacity-60 disabled:cursor-wait';
-const quiet = 'text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 px-4 py-2 rounded-full transition-colors';
-const card = 'rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-6 shadow-sm dark:shadow-none';
-const h2 = 'flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-zinc-500 dark:text-zinc-400 mb-5';
+const primary = 'inline-flex items-center justify-center gap-2 h-10 px-5 rounded-full text-sm font-semibold bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 transition-colors disabled:opacity-60 disabled:cursor-wait';
+const quiet = 'text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4';
+const card = 'rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-6 sm:p-7';
+const cardTitle = 'text-xl font-bold text-zinc-900 dark:text-white';
+const lead = 'mt-1.5 text-zinc-600 dark:text-zinc-400 leading-relaxed';
+const tip = 'rounded-2xl bg-zinc-100/70 dark:bg-white/[0.04] px-4 py-3 text-sm';
+const summary = 'cursor-pointer list-none flex items-center justify-between gap-3 font-medium text-zinc-800 dark:text-zinc-200 [&::-webkit-details-marker]:hidden';
+const chevron = '<svg class="w-4 h-4 shrink-0 text-zinc-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>';
+const steps = [
+  { done: true, title: 'Logged in with Telegram', text: 'Done. That’s your account here: no password to remember.' },
+  { done: false, title: 'Connect Discogs', text: 'Discogs is the free catalogue where collectors keep a list of their records. Connecting lets this site read your list to show it; it never changes anything there.' },
+  { done: false, title: 'Your shelf appears', text: 'Covers first, then tracklists and listening links, usually within a minute or two. After that it keeps itself up to date.' },
+];
 ---
 <Layout title="Settings - ARVA">
-  <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl flex flex-col gap-8">
+  <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl flex flex-col gap-6">
     <Breadcrumbs items={[{ label: 'Shelves', href: '/' }, { label: 'Settings' }]} />
-    <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Settings</h1>
 
-    {notice && <p class="rounded-xl border border-blue-violet-200 dark:border-blue-violet-900 bg-blue-violet-50 dark:bg-blue-violet-500/10 px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300" role="status">{notice}</p>}
-
-    <section class={card} aria-labelledby="tg-heading">
-      <h2 id="tg-heading" class={h2}>
-        <svg class="w-4 h-4 text-[#2aabee]" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
-        Your Telegram account
-      </h2>
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-5 mb-6">
-        <div class="flex items-center gap-4 min-w-0">
-          {user.photo_url
-            ? <img src={user.photo_url} alt="" width="56" height="56" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover shrink-0" />
-            : <span class="w-14 h-14 rounded-full bg-(--on-bg) text-(--on-text) text-xl grid place-items-center shrink-0" aria-hidden="true">{user.name.charAt(0)}</span>}
-          <div class="min-w-0">
-            <p class="text-lg font-bold text-zinc-900 dark:text-white truncate">{user.name}</p>
-            <p class="text-sm text-zinc-500 truncate">
-              {user.username ? <a href={`https://t.me/${user.username}`} class="hover:text-blue-violet-500 transition-colors">@{user.username}</a> : 'Telegram user'}
-              <span class="mx-1">·</span>joined {since}
-            </p>
-          </div>
-        </div>
-        <form method="post" class="shrink-0">
-          <input type="hidden" name="action" value="logout" />
-          <button class="text-sm font-medium px-5 py-2 rounded-full border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:border-red-500 hover:text-red-600 dark:hover:text-red-400 transition-colors">Log out</button>
-        </form>
+    <header class="flex items-center gap-4 mt-2">
+      {user.photo_url?.startsWith('https://')
+        ? <img src={user.photo_url} alt="" width="56" height="56" referrerpolicy="no-referrer" class="w-14 h-14 rounded-full object-cover shrink-0" />
+        : <span class="w-14 h-14 rounded-full bg-(--on-bg) text-(--on-text) text-xl font-semibold grid place-items-center shrink-0" aria-hidden="true">{first.charAt(0)}</span>}
+      <div class="min-w-0">
+        <h1 class="text-3xl font-bold text-zinc-900 dark:text-white">Hi, {first}</h1>
+        <p class="mt-0.5 text-zinc-500">{canCollect(user) ? (connected ? 'Your shelf, your invites and your account, all in one place.' : 'Let’s get your records on the shelf.') : 'Your account on music.ar-va.com.'}</p>
       </div>
-      <dl class="grid grid-cols-1 sm:grid-cols-[9rem_1fr] gap-x-6 gap-y-1 sm:gap-y-2.5 text-sm border-t border-zinc-100 dark:border-zinc-800 pt-5">
-        {shared.map(([k, v]) => (
-          <>
-            <dt class="text-zinc-500 mt-2 sm:mt-0">{k}</dt>
-            <dd class="text-zinc-800 dark:text-zinc-200 break-words">{v}</dd>
-          </>
-        ))}
-        <dt class="text-zinc-500 mt-2 sm:mt-0">Not shared</dt>
-        <dd class="text-zinc-800 dark:text-zinc-200">Your phone number, contacts and chats. Telegram never gives those to sites.</dd>
-      </dl>
-      <p class="mt-5 text-xs text-zinc-500 leading-relaxed">This login works on ar-va.com and music.ar-va.com. Your name and photo update each time you log in. Logging out ends it on both sites.</p>
-    </section>
+    </header>
 
-    {canCollect(user) ? (
-      <section class={card} aria-labelledby="shelf-heading">
-        <h2 id="shelf-heading" class={h2}>Your shelf</h2>
-        {connected ? (
-          <div class="flex flex-col gap-4">
-            <p class="text-zinc-700 dark:text-zinc-300">
-              Connected to Discogs as <a href={`/${encodeURIComponent(shelfSlug(user))}`} class="text-blue-violet-600 dark:text-blue-violet-400 underline underline-offset-4">{user.discogs_username}</a>.
-              Last synced <span id="synced-ago">{ago(user.synced_at)}</span>.
-            </p>
-            <div class="flex flex-wrap items-center gap-3">
-              <button id="sync-now" type="button" class={pill}>Sync now</button>
-              <button type="button" data-connect class={quiet}>Reconnect Discogs</button>
-              <form method="post"><input type="hidden" name="action" value="disconnect" /><button class={quiet} onclick="return confirm('Disconnect Discogs and empty your shelf here? Your Discogs collection is not touched.')">Disconnect</button></form>
-            </div>
-            <p id="sync-status" class="text-sm text-zinc-600 dark:text-zinc-400 min-h-5" role="status" aria-live="polite"></p>
-            <form method="post" class="flex flex-col gap-2">
-              <input type="hidden" name="action" value="shelf-name" />
-              <label for="shelf-name" class="text-sm font-medium text-zinc-800 dark:text-zinc-200">Shelf address</label>
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="text-sm text-zinc-500">music.ar-va.com/</span>
-                <input id="shelf-name" name="shelf_name" value={user.shelf_name ?? ''} placeholder={user.discogs_username ?? ''} maxlength="30" autocomplete="off" spellcheck="false"
-                  class="w-44 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-3 py-1.5 text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 transition-colors" />
-                <button class={quiet}>Save</button>
+    {notice && <p class="rounded-2xl bg-(--on-bg) text-(--on-text) px-5 py-3.5 text-sm font-medium" role="status">{notice}</p>}
+
+    <!-- First visit as a collector: three steps, the middle one is the button. -->
+    {canCollect(user) && !connected && (
+      <section id="shelf" class={card} aria-labelledby="shelf-heading">
+        <h2 id="shelf-heading" class={cardTitle}>Let’s fill your shelf</h2>
+        <p class={lead}>You’re one click away; the rest happens by itself in about a minute.</p>
+        <ol class="mt-6 flex flex-col">
+          {steps.map((step, i) => (
+            <li class="relative flex gap-4 pb-6 last:pb-0">
+              {i < steps.length - 1 && <span aria-hidden="true" class="absolute left-4 top-9 bottom-1 w-px bg-zinc-200 dark:bg-zinc-800"></span>}
+              <span class:list={['relative shrink-0 w-8 h-8 rounded-full grid place-items-center text-sm font-semibold',
+                step.done ? 'bg-(--on-bg) text-(--on-text)' : i === 1 ? 'bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950' : 'bg-(--well) text-zinc-500']}>
+                {step.done
+                  ? <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 12.5 4.5 4.5L19 7.5" /></svg>
+                  : i + 1}
+              </span>
+              <div class="min-w-0 pt-1">
+                <p class:list={['font-medium', i === 2 ? 'text-zinc-500' : 'text-zinc-900 dark:text-white']}>{step.title}<span class="sr-only">{step.done ? ' (done)' : ''}</span></p>
+                <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{step.text}</p>
+                {i === 1 && (
+                  <div class="mt-4 flex flex-col gap-3 items-start">
+                    <button type="button" data-connect class={primary}>Connect Discogs</button>
+                    <p id="sync-status" class="text-sm text-zinc-600 dark:text-zinc-400 empty:hidden" role="status" aria-live="polite"></p>
+                    <p class="text-xs text-zinc-500 leading-relaxed">Discogs opens and asks you to allow access; you come straight back here. No Discogs account yet? <a href="https://www.discogs.com/users/create" target="_blank" rel="noopener noreferrer" class={quiet}>Create one for free</a>, add a few records (the Discogs app scans barcodes), then connect.</p>
+                  </div>
+                )}
               </div>
-              <p class="text-xs text-zinc-500">Your shelf’s main link. music.ar-va.com/{user.discogs_username} keeps working too. Leave it empty to use your Discogs name.</p>
-            </form>
-            <div class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
-              <p class="mb-2">To add a record, add it to your collection on Discogs (the app can scan the barcode). Your shelf catches up when you next open music.ar-va.com while logged in, or right away with “Sync now”.</p>
-              <p>Your Discogs collection fields (Discogs → Collection → Settings → custom fields) show on each record page <strong class="font-medium text-zinc-800 dark:text-zinc-200">only when the field is set to public</strong>. Fields like “Gifted by”, “Purchased”, “Note” or “Comment” work well.</p>
-            </div>
-          </div>
-        ) : (
-          <div class="flex flex-col gap-3 items-start">
-            <p class="text-zinc-700 dark:text-zinc-300">Connect your Discogs account and your collection appears on your own shelf.</p>
-            <button type="button" data-connect class={pill}>Connect Discogs</button>
-            <p id="sync-status" class="text-sm text-zinc-600 dark:text-zinc-400 min-h-5" role="status" aria-live="polite"></p>
-          </div>
-        )}
+            </li>
+          ))}
+        </ol>
       </section>
-    ) : (
-      <p class="text-sm text-zinc-600 dark:text-zinc-400">You can comment on every article and record. Shelves of your own are by invitation.</p>
+    )}
+
+    {canCollect(user) && connected && (
+      <section id="shelf" class={card} aria-labelledby="shelf-heading">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div class="min-w-0">
+            <h2 id="shelf-heading" class={cardTitle}>Your shelf</h2>
+            <p class={lead}>Live at <a href={shelfUrl} class={quiet}>music.ar-va.com{shelfUrl}</a>. Last updated from Discogs <span id="synced-ago">{ago(user.synced_at)}</span>.</p>
+          </div>
+          <a href={shelfUrl} class="ctl shrink-0">View your shelf →</a>
+        </div>
+        <div class="mt-5 flex flex-wrap items-center gap-3">
+          <button id="sync-now" type="button" class={primary}>Update now</button>
+          <p id="sync-status" class="text-sm text-zinc-600 dark:text-zinc-400" role="status" aria-live="polite">It also updates by itself when you open the site.</p>
+        </div>
+
+        <form method="post" class="mt-7 flex flex-col gap-2">
+          <input type="hidden" name="action" value="shelf-name" />
+          <label for="shelf-name" class="font-medium text-zinc-900 dark:text-white">Your shelf’s address</label>
+          <p class="text-sm text-zinc-500">The link you share. music.ar-va.com/{user.discogs_username} keeps working too; leave it empty to use your Discogs name.</p>
+          <div class="mt-1 flex flex-wrap items-center gap-2">
+            <span class="flex items-center rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus-within:border-blue-violet-500 transition-colors">
+              <span class="pl-3.5 text-sm text-zinc-500">music.ar-va.com/</span>
+              <input id="shelf-name" name="shelf_name" value={user.shelf_name ?? ''} placeholder={user.discogs_username ?? ''} maxlength="30" autocomplete="off" spellcheck="false"
+                class="w-40 bg-transparent py-2 pr-3.5 text-sm text-zinc-900 dark:text-white focus:outline-none" />
+            </span>
+            <button class="ctl">Save</button>
+          </div>
+        </form>
+
+        <div class="mt-7 flex flex-col gap-2">
+          <details class={`group ${tip}`}>
+            <summary class={summary}>How do I add a record? <Fragment set:html={chevron} /></summary>
+            <p class="mt-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">Add it to your collection on Discogs; the app can scan the barcode. Your shelf picks it up the next time you open music.ar-va.com while logged in, or right away with “Update now”.</p>
+          </details>
+          <details class={`group ${tip}`}>
+            <summary class={summary}>How do I show purchase dates or notes? <Fragment set:html={chevron} /></summary>
+            <p class="mt-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">Discogs collection fields (Discogs → Collection → Settings → custom fields) show on each record page <strong class="font-medium text-zinc-800 dark:text-zinc-200">when the field is set to public</strong>. “Gifted by”, “Purchased” or “Note” work well. You can also edit any record here: open it and press Edit.</p>
+          </details>
+          <details class={`group ${tip}`}>
+            <summary class={summary}>Discogs connection <Fragment set:html={chevron} /></summary>
+            <p class="mt-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">Connected as <strong class="font-medium text-zinc-800 dark:text-zinc-200">{user.discogs_username}</strong>. The site only reads your collection; nothing on Discogs is changed. If updates stop working, reconnect.</p>
+            <div class="mt-3 flex flex-wrap items-center gap-4">
+              <button type="button" data-connect class={quiet}>Reconnect Discogs</button>
+              <form method="post"><input type="hidden" name="action" value="disconnect" /><button class="text-sm font-medium text-zinc-500 hover:text-red-600 dark:hover:text-red-400 transition-colors" onclick="return confirm('Disconnect Discogs and empty your shelf here? Your Discogs collection is not touched.')">Disconnect and empty the shelf</button></form>
+            </div>
+          </details>
+        </div>
+      </section>
+    )}
+
+    {!canCollect(user) && (
+      <section class={card} aria-labelledby="shelf-heading">
+        <h2 id="shelf-heading" class={cardTitle}>Want a shelf of your own?</h2>
+        <p class={lead}>Shelves are by invitation. If a friend already has one, ask them for an invite link: they make it in their settings in a second. Until then, you can comment on every shelf and record.</p>
+        <a href="/" class="mt-5 ctl">Browse the shelves →</a>
+      </section>
     )}
 
     {canCollect(user) && (
       <section id="invites" class={card} aria-labelledby="invites-heading">
-        <h2 id="invites-heading" class={h2}>Invite a collector</h2>
-        <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-5">
-          Know someone with a record collection on Discogs? Send them a link: they log in with Telegram, connect Discogs, and
-          their shelf appears on music.ar-va.com. Each link works once, for 7 days{!isAdmin(user) && `; up to ${OPEN_INVITES_MAX} can wait to be used at a time`}.
+        <h2 id="invites-heading" class={cardTitle}>Invite a friend</h2>
+        <p class={lead}>
+          Know someone with records on Discogs? Send them a link: they log in with Telegram, connect Discogs, and their
+          shelf appears next to yours. Each link works once, for 7 days{!isAdmin(user) && `; up to ${OPEN_INVITES_MAX} can wait at a time`}.
         </p>
         {inviteUrl ? (
-          <div class="flex flex-col gap-2">
+          <div class="mt-5 flex flex-col gap-2">
             <label for="invite-url" class="text-sm text-zinc-500">Your invite link. It’s only shown now, so copy it:</label>
             <div class="flex gap-2">
               <input id="invite-url" readonly value={inviteUrl} onfocus="this.select()"
-                class="min-w-0 flex-1 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-4 py-2.5 text-sm text-zinc-900 dark:text-white" />
-              <button type="button" class={pill} onclick="navigator.clipboard.writeText(document.getElementById('invite-url').value).then(() => { this.textContent = 'Copied'; }, () => document.getElementById('invite-url').select())">Copy</button>
+                class="min-w-0 flex-1 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-4 py-2.5 text-sm text-zinc-900 dark:text-white" />
+              <button type="button" class={primary} onclick="navigator.clipboard.writeText(document.getElementById('invite-url').value).then(() => { this.textContent = 'Copied'; }, () => document.getElementById('invite-url').select())">Copy</button>
             </div>
           </div>
         ) : (
-          <form method="post"><input type="hidden" name="action" value="invite" /><button class={pill}>Create invite link</button></form>
+          <form method="post" class="mt-5"><input type="hidden" name="action" value="invite" /><button class={primary}>Create an invite link</button></form>
         )}
         {invites.length > 0 && (
           <ul class="mt-6 flex flex-col text-sm" aria-label="Your invite links">
@@ -186,10 +218,41 @@ const h2 = 'flex items-center gap-2 text-xs font-bold tracking-widest uppercase 
       </section>
     )}
 
+    <section class={card} aria-labelledby="account-heading">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <div class="min-w-0">
+          <h2 id="account-heading" class={cardTitle}>Your account</h2>
+          <p class="mt-1 flex items-center gap-1.5 text-sm text-zinc-500">
+            <svg class="w-3.5 h-3.5 text-[#2aabee]" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
+            Telegram{user.username && <> · <a href={`https://t.me/${user.username}`} class="hover:text-blue-violet-500 transition-colors">@{user.username}</a></>} · joined {since}
+          </p>
+        </div>
+        <form method="post" class="shrink-0">
+          <input type="hidden" name="action" value="logout" />
+          <button class="ctl hover:!text-red-600 dark:hover:!text-red-400">Log out</button>
+        </form>
+      </div>
+      <p class="mt-4 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">No password lives here: Telegram vouches for you. The same login works on ar-va.com and music.ar-va.com, and logging out ends it on both.</p>
+      <details class={`group mt-4 ${tip}`}>
+        <summary class={summary}>What this site knows about you <Fragment set:html={chevron} /></summary>
+        <dl class="mt-3 grid grid-cols-1 sm:grid-cols-[9rem_1fr] gap-x-6 gap-y-1 sm:gap-y-2">
+          {shared.map(([k, v]) => (
+            <>
+              <dt class="text-zinc-500 mt-2 sm:mt-0">{k}</dt>
+              <dd class="text-zinc-800 dark:text-zinc-200 break-words">{v}</dd>
+            </>
+          ))}
+          <dt class="text-zinc-500 mt-2 sm:mt-0">Never shared</dt>
+          <dd class="text-zinc-800 dark:text-zinc-200">Your phone number, contacts and chats. Telegram doesn’t give those to sites.</dd>
+        </dl>
+        <p class="mt-3 text-xs text-zinc-500">Your name and photo update each time you log in.</p>
+      </details>
+    </section>
+
     {isAdmin(user) && (
       <section class={card} aria-labelledby="collectors-heading">
-        <h2 id="collectors-heading" class={h2}>Collectors</h2>
-        <ul class="flex flex-col">
+        <h2 id="collectors-heading" class={cardTitle}>Collectors</h2>
+        <ul class="mt-4 flex flex-col">
           {collectors.map((c) => (
             <li class="flex items-center justify-between gap-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/40 last:border-none">
               <span class="min-w-0 truncate text-zinc-800 dark:text-zinc-200">
@@ -229,7 +292,7 @@ const h2 = 'flex items-center gap-2 text-xs font-bold tracking-widest uppercase 
       await syncShelf(say);
       document.getElementById('synced-ago')!.textContent = 'just now';
     } catch (e) {
-      say(`Sync stopped: ${(e as Error).message} If it says 401, try “Reconnect Discogs”.`);
+      say(`The update stopped: ${(e as Error).message} If it says 401, open “Discogs connection” below and reconnect.`);
     } finally {
       syncButton.disabled = false;
     }
