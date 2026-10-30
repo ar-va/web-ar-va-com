@@ -86,8 +86,11 @@ html { scrollbar-gutter: stable; }
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
   column-gap: var(--gap);
-  /* room above each row for a pulled-up record and its light, without reaching the ledge of the row above */
-  row-gap: 5rem;
+  /* room above each row for a pulled-up record and its light, without reaching the ledge of the row above; with
+     labels on (.labelled), the label's height more */
+  --row-gap: 5rem;
+  --label-h: 0px;
+  row-gap: calc(var(--row-gap) + var(--label-h));
   padding: 3.5rem calc(var(--gap) / 2) 1.5rem;
   isolation: isolate;
 }
@@ -98,7 +101,7 @@ html { scrollbar-gutter: stable; }
   position: relative;
   /* Everything a record does (light, notes, the pulled-up disc) stays inside its own shelf unit:
      from just under the ledge above, half a gap to each side, down past its own ledge and shadow. */
-  clip-path: inset(calc(-5rem + 22px) calc(var(--gap) / -2) -48px);
+  clip-path: inset(calc(22px - var(--row-gap)) calc(var(--gap) / -2) calc(-48px - var(--label-h)));
 }
 /* Each slot draws its piece of wall and ledge, reaching half a gap to both sides, so a row reads as one shelf. */
 .shelf-slot::before {
@@ -107,7 +110,7 @@ html { scrollbar-gutter: stable; }
   z-index: -1;
   /* the back of the shelf unit, from just under the ledge above (5rem gap − 21px of ledge) down to this ledge;
      light falls on it from above, darker towards the ledge */
-  inset: calc(-5rem + 22px) calc(var(--gap) / -2) 0;
+  inset: calc(22px - var(--row-gap)) calc(var(--gap) / -2) 0;
   background: linear-gradient(to bottom, var(--wall-top), var(--wall));
 }
 .shelf-slot::after {
@@ -122,6 +125,19 @@ html { scrollbar-gutter: stable; }
   background: linear-gradient(to bottom, var(--ledge-top), var(--ledge-top-2) 17px, var(--ledge-lip) 17px 18px, var(--ledge-edge) 18px, var(--ledge-edge-2));
   box-shadow: 0 20px 22px -14px var(--ledge-shadow);
 }
+
+/* Labels (Shelf.astro's toggle, on by default): title and artist under each record's ledge, like a shelf tag. */
+.shelf.labelled { --label-h: 2.5rem; }
+.shelf-label { display: none; }
+.shelf.labelled .shelf-label { display: block; position: absolute; top: calc(100% + 28px); left: 0; right: 0; line-height: 1.25; }
+.shelf-label > span { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.shelf-label > span:first-child { font-size: 0.8125rem; font-weight: 500; color: var(--color-zinc-800); transition: color 0.15s; }
+.dark .shelf-label > span:first-child { color: var(--color-zinc-200); }
+.shelf-label > span:last-child { font-size: 0.75rem; color: var(--color-zinc-500); }
+.shelf-record:hover .shelf-label > span:first-child,
+.shelf-record:focus-visible .shelf-label > span:first-child { color: var(--color-blue-violet-600); }
+.dark .shelf-record:hover .shelf-label > span:first-child,
+.dark .shelf-record:focus-visible .shelf-label > span:first-child { color: var(--color-blue-violet-400); }
 
 .sleeve {
   --vinyl: #131316;
@@ -357,6 +373,7 @@ html { scroll-padding-top: 1.5rem; }
 /* View switch (Shelf.astro): the knob slides under the list icon like the theme switch's does for the moon. */
 .view-switch[data-view-current="list"] .view-knob { transform: translateX(1.5rem); }
 .ctl:hover { background: var(--well-hover); }
+.ctl[hidden] { display: none; }
 .ctl[aria-expanded="true"], .ctl[aria-pressed="true"] { background: var(--on-bg); color: var(--on-text); }
 .ctl[aria-expanded="true"]:hover, .ctl[aria-pressed="true"]:hover { background: var(--on-bg-hover); }
 
