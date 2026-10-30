@@ -15,7 +15,7 @@ const thread = { shelfId: owner?.id ?? 0, instanceId: SHELF_THREAD };
 ---
 <Layout title={owner ? `${owner.name}’s records - ARVA` : 'Not found - ARVA'} description={owner ? (owner.shelf_note ?? `${records.length} vinyl records on ${owner.name}’s shelf.`) : undefined}>
   <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24">
-    <Breadcrumbs class="mb-8" items={[{ label: 'Shelves', href: '/' }, { label: owner?.name ?? 'Not found' }]} />
+    <Breadcrumbs class="mb-8" share={!!owner} items={[{ label: 'Shelves', href: '/' }, { label: owner?.name ?? 'Not found' }]} />
     {owner ? (
       <>
         <Shelf owner={{ name: owner.name, slug: shelfSlug(owner), discogs_username: owner.discogs_username!, telegram: owner.username, note: owner.shelf_note }}
