@@ -416,6 +416,13 @@ export function shelfView(r: ShelfRecord, d: ReleaseDetail | null, overrides: Ov
   };
 }
 
+/** How long until `at` (seconds), rounded up: "7 days", "5 hours", "25 minutes". For invite links. */
+export function timeLeft(at: number, nowSec = Date.now() / 1000) {
+  const s = Math.max(0, at - nowSec);
+  const [n, unit] = s >= 86400 ? [Math.ceil(s / 86400), 'day'] : s >= 3600 ? [Math.ceil(s / 3600), 'hour'] : [Math.max(1, Math.ceil(s / 60)), 'minute'];
+  return `${n} ${unit}${n === 1 ? '' : 's'}`;
+}
+
 /** The note on a shelf: at most this many characters, no more than one empty line in a row. */
 export const SHELF_NOTE_MAX = 280;
 export const cleanShelfNote = (text: string) => text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim().slice(0, SHELF_NOTE_MAX) || null;

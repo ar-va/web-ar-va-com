@@ -1,5 +1,5 @@
 // Click to copy, with a short tip: `data-copy` elements copy their text (album page: artist, title, track names);
-// `data-copy="page"` copies this page's address (the link icon by the breadcrumbs). Without a clipboard, the address is
+// `data-copy-text` copies that instead (invite links in settings); `data-copy="page"` copies this page's address (the link icon by the breadcrumbs). Without a clipboard, the address is
 // offered in a prompt.
 const tip = document.createElement('span');
 tip.setAttribute('role', 'status');
@@ -11,7 +11,7 @@ document.addEventListener('click', async (e) => {
   const el = (e.target as Element).closest<HTMLElement>('[data-copy]');
   if (!el) return;
   const page = el.dataset.copy === 'page';
-  const text = page ? location.origin + location.pathname : el.textContent!.trim();
+  const text = page ? location.origin + location.pathname : el.dataset.copyText ?? el.textContent!.trim();
   try { await navigator.clipboard.writeText(text); } catch { if (page) window.prompt('Copy this link:', text); return; }
   const box = el.getBoundingClientRect();
   tip.textContent = page ? 'Link copied' : 'Copied';

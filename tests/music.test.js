@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import {
-  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref, vinylColor, vinylPick, safeVinyl, tracklistToText, textToTracklist, safeStreamingUrl,
+  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, tracklistToText, textToTracklist, safeStreamingUrl,
 } from '../src/music/lib.ts';
 
 const BOT = '123:test-bot-token';
@@ -279,4 +279,12 @@ test('runtime and renumber', async () => {
   assert.deepEqual(renumber(['A2', 'A1', 'B1', 'A3', 'B2']), ['A1', 'A2', 'B1', 'A3', 'B2']);
   assert.deepEqual(renumber(['3', '1', '2']), ['1', '2', '3']);
   assert.deepEqual(renumber(['CD1-2', '', 'A5']), ['CD1-2', '', 'A1']);
+});
+
+test('timeLeft rounds up to days, hours or minutes', () => {
+  assert.equal(timeLeft(1000 + 7 * 86400, 1000), '7 days');
+  assert.equal(timeLeft(1000 + 86400, 1000), '1 day');
+  assert.equal(timeLeft(1000 + 5 * 3600 - 10, 1000), '5 hours');
+  assert.equal(timeLeft(1000 + 1800, 1000), '30 minutes');
+  assert.equal(timeLeft(1000, 1000), '1 minute');
 });
