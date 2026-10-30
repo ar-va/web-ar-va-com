@@ -11,7 +11,7 @@ const SCHEMA = [
     synced_at INTEGER, sync_error TEXT, created_at INTEGER NOT NULL, shelf_name TEXT)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS users_shelf_name ON users (shelf_name)`,
   `CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires_at INTEGER NOT NULL)`,
-  `CREATE TABLE IF NOT EXISTS invites (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, used_by INTEGER)`,
+  `CREATE TABLE IF NOT EXISTS invites (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, used_by INTEGER, created_by INTEGER)`,
   `CREATE TABLE IF NOT EXISTS oauth_pending (token TEXT PRIMARY KEY, secret TEXT NOT NULL, user_id INTEGER NOT NULL, created_at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS records (user_id INTEGER NOT NULL, instance_id INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY (user_id, instance_id))`,
   `CREATE TABLE IF NOT EXISTS releases (id INTEGER PRIMARY KEY, data TEXT NOT NULL, fetched_at INTEGER NOT NULL)`,
@@ -25,13 +25,19 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS overrides (user_id INTEGER NOT NULL, instance_id INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY (user_id, instance_id))`,
 ];
 
+// Columns added to existing tables after launch (also in the definitions above, for a fresh database). Each runs once
+// per Worker instance alongside the schema; "duplicate column" (or, on a fresh database, "no such table") is ignored.
+// (shelf_name, parent_id, edited_at got a one-off manual ALTER in October 2026.)
+const COLUMNS = ['ALTER TABLE invites ADD COLUMN created_by INTEGER'];
+
 let ready: Promise<unknown> | null = null;
 
 // One round trip per Worker instance: the database is far from most visitors (each trip ~0.3 s from North America).
-// Columns added later (shelf_name, parent_id, edited_at) are in the definitions above; production got them by
-// ALTER TABLE in October 2026. A new column for an existing table needs its own ALTER again.
 export async function db() {
-  ready ??= env.DB.batch(SCHEMA.map((s) => env.DB.prepare(s))).catch((e) => { ready = null; throw e; });
+  ready ??= Promise.all([
+    env.DB.batch(SCHEMA.map((s) => env.DB.prepare(s))),
+    ...COLUMNS.map((s) => env.DB.prepare(s).run().catch(() => null)),
+  ]).catch((e) => { ready = null; throw e; });
   await ready;
   const request = dbRequest.getStore();
   if (!request) return env.DB;
@@ -111,12 +117,38 @@ export async function endSession(cookies: AstroCookies, hostname: string) {
 
 // ---- Invites ----
 
-const INVITE_DAYS = 7;
+export const INVITE_DAYS = 7;
+/** Unused, unexpired invites a collector may have at once (the admin has no limit): keeps growth, and the bill, in check. */
+export const OPEN_INVITES_MAX = 5;
 
-export async function createInvite() {
+/** Every collector can invite: one-use links, 7 days. Returns the code, or null when `by` has too many open ones. */
+export async function createInvite(by: User) {
+  const d = await db();
+  if (!isAdmin(by)) {
+    const open = await d.prepare('SELECT COUNT(*) AS n FROM invites WHERE created_by = ? AND used_by IS NULL AND created_at > ?')
+      .bind(by.id, now() - INVITE_DAYS * 86400).first<{ n: number }>();
+    if ((open?.n ?? 0) >= OPEN_INVITES_MAX) return null;
+  }
   const code = randomToken();
-  await (await db()).prepare('INSERT INTO invites (id, created_at) VALUES (?, ?)').bind(await sha256(code), now()).run();
+  await d.prepare('INSERT INTO invites (id, created_at, created_by) VALUES (?, ?, ?)').bind(await sha256(code), now(), by.id).run();
   return code;
+}
+
+/** The invites someone made, newest first, with who used them. */
+export async function listInvites(by: User) {
+  const { results } = await (await db()).prepare(`SELECT invites.created_at, users.name AS used_by_name FROM invites
+    LEFT JOIN users ON users.id = invites.used_by WHERE created_by = ?${isAdmin(by) ? ' OR created_by IS NULL' : ''}
+    ORDER BY invites.created_at DESC LIMIT 10`).bind(by.id).all<{ created_at: number; used_by_name: string | null }>();
+  return results.map((r) => ({ ...r, expires_at: r.created_at + INVITE_DAYS * 86400 }));
+}
+
+/** Who sent an invite (null for a used, unknown or old admin invite: the page then speaks generally). */
+export async function inviteFrom(code: string) {
+  const row = await (await db()).prepare(`SELECT COALESCE(users.name, admin.name) AS name FROM invites
+    LEFT JOIN users ON users.id = invites.created_by LEFT JOIN users admin ON invites.created_by IS NULL AND admin.id = ?
+    WHERE invites.id = ? AND used_by IS NULL AND invites.created_at > ?`)
+    .bind(Number(env.ADMIN_TELEGRAM_ID) || 0, await sha256(code), now() - INVITE_DAYS * 86400).first<{ name: string | null }>();
+  return row?.name ?? null;
 }
 
 /** Makes the user a collector if the code is unused and fresh. Returns false otherwise. */
@@ -140,7 +172,7 @@ export async function removeShelf(userId: number, revoke: boolean) {
 
 // ---- Shelves ----
 
-const collectorSql = () => `(is_collector = 1 OR id = ${Number(env.ADMIN_TELEGRAM_ID) || 0})`;
+const collectorSql = (table = '') => `(${table}is_collector = 1 OR ${table}id = ${Number(env.ADMIN_TELEGRAM_ID) || 0})`;
 // The shelf at music.ar-va.com/<?1>: by its chosen name or its Discogs username.
 const ownerWhere = () => `(shelf_name = lower(?1) OR discogs_username = ?1) AND discogs_username IS NOT NULL AND ${collectorSql()}`;
 
@@ -163,16 +195,14 @@ const shelvesSql = () => `SELECT users.id, users.name, users.discogs_username, u
   WHERE discogs_username IS NOT NULL AND ${collectorSql()} GROUP BY users.id ORDER BY users.name`;
 
 /**
- * Everything a shelf page shows, in one round trip: the owner (by shelf name or Discogs username; null = the admin's
- * shelf), their records with edits, cached details and streaming matches, and the list of all shelves.
+ * Everything a shelf page shows, in one round trip: the owner (by shelf name or Discogs username), their records with
+ * edits, cached details and streaming matches, and the list of all shelves.
  */
-export async function shelfData(name: string | null) {
-  const owner = name === null
-    ? `(SELECT id FROM users WHERE id = ${Number(env.ADMIN_TELEGRAM_ID) || 0} AND discogs_username IS NOT NULL)`
-    : `(SELECT id FROM users WHERE ${ownerWhere()})`;
+export async function shelfData(name: string) {
+  const owner = `(SELECT id FROM users WHERE ${ownerWhere()})`;
   const releaseIds = `(SELECT json_extract(data, '$.releaseId') FROM records WHERE user_id = ${owner})`;
   const d = await db();
-  const q = (sql: string) => (name === null ? d.prepare(sql) : d.prepare(sql).bind(name));
+  const q = (sql: string) => d.prepare(sql).bind(name);
   const [users, records, overrides, releases, matches, shelves] = await d.batch([
     q(`SELECT * FROM users WHERE id = ${owner}`),
     q(`SELECT data FROM records WHERE user_id = ${owner}`),
@@ -224,9 +254,40 @@ export async function adminShelfOwner() {
   return (await db()).prepare('SELECT * FROM users WHERE id = ? AND discogs_username IS NOT NULL').bind(Number(env.ADMIN_TELEGRAM_ID) || 0).first<User>();
 }
 
+/** For the admin: every collector, with who invited them (invites made before created_by existed were the admin's). */
 export async function listCollectors() {
-  const { results } = await (await db()).prepare(`SELECT * FROM users WHERE ${collectorSql()} ORDER BY name`).all<User>();
+  const { results } = await (await db()).prepare(`SELECT users.*, CASE WHEN invites.id IS NULL THEN NULL ELSE COALESCE(inviter.name, 'you') END AS invited_by
+    FROM users LEFT JOIN invites ON invites.used_by = users.id LEFT JOIN users inviter ON inviter.id = invites.created_by
+    WHERE ${collectorSql('users.')} GROUP BY users.id ORDER BY users.name`).all<User & { invited_by: string | null }>();
   return results;
+}
+
+/**
+ * music.ar-va.com/: every shelf with its latest records, most recently added to first, in one round trip.
+ * shortcut: reads every record row on each visit (fine for dozens of shelves); past a few hundred collectors, keep a
+ * per-shelf summary row updated on sync instead.
+ */
+export async function directory(perShelf = 5) {
+  const latest = `SELECT user_id, instance_id, data FROM (SELECT user_id, instance_id, data,
+    ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY json_extract(data, '$.added') DESC) AS n FROM records) WHERE n <= ${perShelf}`;
+  const d = await db();
+  const [shelves, records, overrides] = await d.batch([
+    d.prepare(`SELECT users.id, users.name, users.username, users.discogs_username, users.shelf_name, COUNT(*) AS count,
+      MAX(json_extract(records.data, '$.added')) AS latest FROM users JOIN records ON records.user_id = users.id
+      WHERE discogs_username IS NOT NULL AND ${collectorSql('users.')} GROUP BY users.id ORDER BY latest DESC`),
+    d.prepare(latest),
+    d.prepare(`SELECT o.user_id, o.instance_id, o.data FROM overrides o JOIN (${latest}) l ON l.user_id = o.user_id AND l.instance_id = o.instance_id`),
+  ]);
+  const edits = new Map((overrides.results as { user_id: number; instance_id: number; data: string }[]).map((o) => [`${o.user_id}/${o.instance_id}`, JSON.parse(o.data) as Overrides]));
+  const byUser = new Map<number, ReturnType<typeof shelfView>[]>();
+  for (const row of records.results as { user_id: number; instance_id: number; data: string }[]) {
+    const r = JSON.parse(row.data) as ShelfRecord;
+    const list = byUser.get(row.user_id) ?? [];
+    list.push(shelfView(r, null, edits.get(`${row.user_id}/${row.instance_id}`) ?? {}));
+    byUser.set(row.user_id, list);
+  }
+  return (shelves.results as { id: number; name: string; username: string | null; discogs_username: string; shelf_name: string | null; count: number }[])
+    .map((s) => ({ ...s, records: (byUser.get(s.id) ?? []).sort((a, b) => b.added.localeCompare(a.added)) }));
 }
 
 export async function shelfRecords(userId: number) {

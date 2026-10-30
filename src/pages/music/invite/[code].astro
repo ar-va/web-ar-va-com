@@ -1,23 +1,25 @@
 ---
-// An invite link from the admin: logging in here makes you a collector.
+// An invite link from a collector: logging in here makes you one too (one use, 7 days).
 export const prerender = false;
 import Layout from '../../../layouts/Layout.astro';
 import LoginButton from '../../../components/LoginButton.astro';
-import { acceptInvite, canCollect, currentUser } from '../../../music/store';
+import { acceptInvite, canCollect, currentUser, inviteFrom } from '../../../music/store';
 import { loginHref } from '../../../music/lib';
 
 const user = await currentUser(Astro.cookies);
 if (user && canCollect(user)) return Astro.redirect('/settings');
 if (user && (await acceptInvite(Astro.params.code!, user))) return Astro.redirect('/settings?welcome');
+// Who sent it, for visitors not logged in yet; null means the link is used, expired or unknown.
+const from = user ? null : await inviteFrom(Astro.params.code!);
 ---
 <Layout title="Invitation - ARVA">
   <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
     <h1 class="text-2xl font-bold text-zinc-900 dark:text-white mb-2">Your own shelf</h1>
-    {user ? (
+    {user || !from ? (
       <p class="text-zinc-600 dark:text-zinc-400 max-w-md">This invitation has been used or has expired. Ask for a new link.</p>
     ) : (
       <>
-        <p class="text-zinc-600 dark:text-zinc-400 mb-6 max-w-md">You’ve been invited to show your record collection here. Log in with Telegram, then connect your Discogs account.</p>
+        <p class="text-zinc-600 dark:text-zinc-400 mb-6 max-w-md">{from} invited you to show your record collection on music.ar-va.com. Log in with Telegram, then connect your Discogs account.</p>
         <LoginButton href={loginHref(Astro.url)} />
       </>
     )}

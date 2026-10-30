@@ -1,5 +1,5 @@
 ---
-// A whole shelf page (music.ar-va.com/<name>, and / for the admin's shelf) from shelfData()'s single round trip.
+// A whole shelf page (music.ar-va.com/<name>) from shelfData()'s single round trip.
 import Layout from '../../layouts/Layout.astro';
 import Shelf from './Shelf.astro';
 import { shelfSlug, type shelfData } from '../../music/store';
@@ -12,7 +12,7 @@ const { owner, records, shelves } = Astro.props;
     {owner ? (
       <Shelf owner={{ name: owner.name, slug: shelfSlug(owner), discogs_username: owner.discogs_username!, telegram: owner.username }} records={records} shelves={shelves.map((s) => ({ ...s, slug: shelfSlug(s) }))} />
     ) : (
-      <p class="text-zinc-500">There’s no shelf here. <a href="/" class="text-blue-violet-600 dark:text-blue-violet-400 underline underline-offset-4">See all records →</a></p>
+      <p class="text-zinc-500">There’s no shelf here. <a href="/" class="text-blue-violet-600 dark:text-blue-violet-400 underline underline-offset-4">See all shelves →</a></p>
     )}
   </div>
 </Layout>

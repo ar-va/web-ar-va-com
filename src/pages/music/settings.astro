@@ -1,9 +1,10 @@
 ---
-// Your account: what Telegram shared + log out; Discogs connection and sync for collectors; invites for the admin.
+// Your account: what Telegram shared + log out; Discogs connection and sync and invites for collectors; the collectors
+// list for the admin.
 export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
 import { loginHref, shelfName } from '../../music/lib';
-import { canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, removeShelf, setShelfName, shelfSlug } from '../../music/store';
+import { OPEN_INVITES_MAX, canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, listInvites, removeShelf, setShelfName, shelfSlug } from '../../music/store';
 
 const user = await currentUser(Astro.cookies);
 if (!user) return Astro.redirect(loginHref(Astro.url));
@@ -32,8 +33,10 @@ if (Astro.request.method === 'POST') {
     await removeShelf(user.id, false);
     return Astro.redirect('/settings', 303);
   }
-  if (isAdmin(user) && action === 'invite') {
-    inviteUrl = `https://${Astro.url.host}/invite/${await createInvite()}`;
+  if (canCollect(user) && action === 'invite') {
+    const code = await createInvite(user);
+    if (code) inviteUrl = `https://${Astro.url.host}/invite/${code}`;
+    else notice = `You have ${OPEN_INVITES_MAX} invite links waiting to be used. You can make another once one is used or expires.`;
   }
   if (isAdmin(user) && action === 'revoke') {
     const id = Number(form.get('id'));
@@ -42,7 +45,10 @@ if (Astro.request.method === 'POST') {
   }
 }
 
-const collectors = isAdmin(user) ? await listCollectors() : [];
+const [collectors, invites] = await Promise.all([isAdmin(user) ? listCollectors() : [], canCollect(user) ? listInvites(user) : []]);
+const day = (s: number) => new Date(s * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+const inviteStatus = (i: (typeof invites)[number]) =>
+  i.used_by_name ? `Used by ${i.used_by_name}` : i.expires_at > Date.now() / 1000 ? `Waiting · until ${day(i.expires_at)}` : 'Expired';
 const connected = !!(user.discogs_username && user.discogs_token);
 const ago = (s: number | null) => {
   if (!s) return 'not yet';
@@ -146,15 +152,47 @@ const h2 = 'flex items-center gap-2 text-xs font-bold tracking-widest uppercase 
       <p class="text-sm text-zinc-600 dark:text-zinc-400">You can comment on every article and record. Shelves of your own are by invitation.</p>
     )}
 
+    {canCollect(user) && (
+      <section id="invites" class={card} aria-labelledby="invites-heading">
+        <h2 id="invites-heading" class={h2}>Invite a collector</h2>
+        <p class="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-5">
+          Know someone with a record collection on Discogs? Send them a link: they log in with Telegram, connect Discogs, and
+          their shelf appears on music.ar-va.com. Each link works once, for 7 days{!isAdmin(user) && `; up to ${OPEN_INVITES_MAX} can wait to be used at a time`}.
+        </p>
+        {inviteUrl ? (
+          <div class="flex flex-col gap-2">
+            <label for="invite-url" class="text-sm text-zinc-500">Your invite link. It’s only shown now, so copy it:</label>
+            <div class="flex gap-2">
+              <input id="invite-url" readonly value={inviteUrl} onfocus="this.select()"
+                class="min-w-0 flex-1 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-4 py-2.5 text-sm text-zinc-900 dark:text-white" />
+              <button type="button" class={pill} onclick="navigator.clipboard.writeText(document.getElementById('invite-url').value).then(() => { this.textContent = 'Copied'; }, () => document.getElementById('invite-url').select())">Copy</button>
+            </div>
+          </div>
+        ) : (
+          <form method="post"><input type="hidden" name="action" value="invite" /><button class={pill}>Create invite link</button></form>
+        )}
+        {invites.length > 0 && (
+          <ul class="mt-6 flex flex-col text-sm" aria-label="Your invite links">
+            {invites.map((i) => (
+              <li class="flex items-center justify-between gap-4 py-2 border-b border-zinc-100 dark:border-zinc-800/40 last:border-none">
+                <span class="text-zinc-700 dark:text-zinc-300">{inviteStatus(i)}</span>
+                <span class="text-zinc-500">made {day(i.created_at)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    )}
+
     {isAdmin(user) && (
       <section class={card} aria-labelledby="collectors-heading">
         <h2 id="collectors-heading" class={h2}>Collectors</h2>
-        <ul class="flex flex-col mb-6">
+        <ul class="flex flex-col">
           {collectors.map((c) => (
             <li class="flex items-center justify-between gap-4 py-2.5 border-b border-zinc-100 dark:border-zinc-800/40 last:border-none">
               <span class="min-w-0 truncate text-zinc-800 dark:text-zinc-200">
                 {c.name}{c.username && <span class="text-zinc-500"> @{c.username}</span>}
-                <span class="text-sm text-zinc-500"> · {c.discogs_username ? `Discogs: ${c.discogs_username}, synced ${ago(c.synced_at)}` : 'Discogs not connected'}</span>
+                <span class="text-sm text-zinc-500"> · {c.discogs_username ? `Discogs: ${c.discogs_username}, synced ${ago(c.synced_at)}` : 'Discogs not connected'}{c.invited_by && ` · invited by ${c.invited_by}`}</span>
               </span>
               {c.id !== user.id && (
                 <form method="post">
@@ -165,15 +203,6 @@ const h2 = 'flex items-center gap-2 text-xs font-bold tracking-widest uppercase 
             </li>
           ))}
         </ul>
-        {inviteUrl ? (
-          <div class="flex flex-col gap-2">
-            <label for="invite-url" class="text-sm text-zinc-500">Invite link (works once, for 7 days; it’s only shown now):</label>
-            <input id="invite-url" readonly value={inviteUrl} onfocus="this.select()"
-              class="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-4 py-2.5 text-sm text-zinc-900 dark:text-white" />
-          </div>
-        ) : (
-          <form method="post"><input type="hidden" name="action" value="invite" /><button class={pill}>Create invite link</button></form>
-        )}
       </section>
     )}
   </div>
