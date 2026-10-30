@@ -2,7 +2,7 @@
 import type { APIRoute } from 'astro';
 import { canCollect, currentUser } from '../../../music/store';
 import {
-  accessTokenRequest, missingReleases, requestTokenRequest, saveCollection, saveMatch, savePending, saveRelease, saveToken, setUsername, signFor, unmatchedReleases,
+  accessTokenRequest, backfillYoutube, missingReleases, requestTokenRequest, saveCollection, saveMatch, savePending, saveRelease, saveToken, setUsername, signFor, unmatchedReleases,
 } from '../../../music/discogs';
 
 export const prerender = false;
@@ -10,7 +10,7 @@ export const prerender = false;
 const json = (data: unknown, status = 200) => Response.json(data, { status });
 const str = (v: unknown) => (typeof v === 'string' ? v : '');
 
-export const POST: APIRoute = async ({ request, cookies, url }) => {
+export const POST: APIRoute = async ({ request, cookies, url, locals }) => {
   // JSON bodies aren't covered by Astro's checkOrigin; cross-site callers are refused here.
   if (request.headers.get('origin') !== url.origin) return json({ error: 'Forbidden' }, 403);
   const user = await currentUser(cookies);
@@ -22,6 +22,8 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
       case 'status':
         return json({ username: user.discogs_token ? user.discogs_username : null, syncedAt: user.synced_at });
       case 'missing':
+        // Meanwhile, quietly give a few already matched records their YouTube tracks.
+        if (user.discogs_username) locals.cfContext.waitUntil(backfillYoutube(user));
         return json({ missing: user.discogs_username ? await missingReleases(user) : [], unmatched: user.discogs_username ? await unmatchedReleases(user) : [] });
       case 'match':
         return (await saveMatch(user, Number(body.releaseId), body.apple, body.artist, body.title)) ? json({ ok: true }) : json({ error: 'Not on your shelf.' }, 400);

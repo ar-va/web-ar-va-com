@@ -384,6 +384,8 @@ export function recordDefaults(r: ShelfRecord, d: ReleaseDetail | null, m: Match
     spotify: m?.spotify?.url ?? '',
     apple: m?.apple?.url ?? '',
     youtube: '',
+    // Track titles the owner marked as favourites, one per line (matched by title, so reordering keeps them).
+    favorites: '',
     cover: r.cover ?? '',
     vinyl: r.vinyl ?? VINYL_SWATCHES[0][1],
     ...Object.fromEntries(r.fields.map((f) => [`field:${f.name}`, f.value])),
@@ -463,6 +465,9 @@ export function commentNotices(c: { authorId: number; authorName: string; ownerI
 export interface Match {
   apple?: { url: string; artwork: string | null; tracks: { title: string; url: string }[] };
   spotify?: { url: string; tracks: { title: string; url: string }[] };
+  /** Tracks from the artist's YouTube "Topic" channel with their plays (no album page: the API can't see those).
+   *  null = looked, nothing found; missing = not looked yet (filled in later, see backfillYoutube). */
+  youtube?: { tracks: { title: string; url: string; views: number }[] } | null;
 }
 
 /** For comparing names across catalogues: no accents, case, punctuation or "(Deluxe…)"-style suffixes. */
@@ -474,7 +479,7 @@ export const normalizeName = (s: string) => s.normalize('NFKD').replace(/\p{M}/g
 
 // Artists compared without the words joining them: "Denzel Curry X Kenny Beats" on Discogs is "Denzel Curry & Kenny
 // Beats" on Apple Music ("&" already drops out as punctuation).
-const artistKey = (s: string) => normalizeName(s).replace(/(?<=\s|^)(x|and|feat|ft|with)(?=\s|$)/g, ' ').replace(/\s+/g, ' ').trim();
+export const artistKey = (s: string) => normalizeName(s).replace(/(?<=\s|^)(x|and|feat|ft|with)(?=\s|$)/g, ' ').replace(/\s+/g, ' ').trim();
 
 /** The first of several credited artists: "Louis Armstrong And Eddie Condon" → "Louis Armstrong". */
 export const firstArtist = (s: string) => s.split(/\s+(?:x|&|and|feat\.?|ft\.?|with|vs\.?)\s+|\s*[,•/]\s*/i)[0].trim();
@@ -498,19 +503,45 @@ export function pickAlbum<T extends { title: string; artist: string }>(candidate
   return best;
 }
 
+/** A track's identity for marks (popular, favourite): its normalized title, or the title itself for "★"-like ones. */
+export const titleKey = (title: string) => normalizeName(title) || title.trim();
+
+/**
+ * The entry in a service's track list with this title: the same name, else one that starts like it. Titles of
+ * symbols only ("★") normalize to nothing: those match only exactly, or they would start every title.
+ */
+function byTitle<T extends { title: string }>(list: T[] | undefined, title: string) {
+  const n = normalizeName(title);
+  if (!n) return list?.find((x) => x.title.trim() === title.trim());
+  return list?.find((x) => normalizeName(x.title) === n) ?? list?.find((x) => { const xn = normalizeName(x.title); return !!xn && (xn.startsWith(n) || n.startsWith(xn)); });
+}
+
 /** Discogs tracks with the matched services' links added by title (a link the owner typed is kept). */
 export function withMatchLinks(tracks: Track[], m: Match | null): Track[] {
   if (!m) return tracks;
-  const find = (list: { title: string; url: string }[] | undefined, title: string) => {
-    const n = normalizeName(title);
-    return list?.find((x) => normalizeName(x.title) === n)?.url ?? list?.find((x) => { const xn = normalizeName(x.title); return xn.startsWith(n) || n.startsWith(xn); })?.url;
-  };
   return tracks.map((t) => {
     if (t.heading) return t;
-    const links = { ...Object.fromEntries(Object.entries({ apple: find(m.apple?.tracks, t.title), spotify: find(m.spotify?.tracks, t.title) }).filter(([, v]) => v)), ...t.links };
+    const found = { apple: byTitle(m.apple?.tracks, t.title)?.url, spotify: byTitle(m.spotify?.tracks, t.title)?.url, youtube: byTitle(m.youtube?.tracks, t.title)?.url };
+    const links = { ...Object.fromEntries(Object.entries(found).filter(([, v]) => v)), ...t.links };
     return Object.keys(links).length ? { ...t, links } : t;
   });
 }
+
+/**
+ * The album's most played tracks on YouTube (normalized titles), with their plays: at most 3, and only tracks
+ * clearly ahead of the rest (at least twice the plays of the album's middle track), so an evenly played album gets none.
+ */
+export function popularTracks(tracks: Track[], m: Match | null) {
+  const songs = tracks.filter((t) => !t.heading)
+    .map((t) => ({ key: titleKey(t.title), views: byTitle(m?.youtube?.tracks, t.title)?.views ?? null }))
+    .filter((s): s is { key: string; views: number } => s.views !== null);
+  if (songs.length < 3) return new Map<string, number>();
+  const middle = songs.map((s) => s.views).sort((a, b) => a - b)[Math.floor(songs.length / 2)];
+  return new Map(songs.filter((s) => s.views > 0 && s.views >= 2 * middle).sort((a, b) => b.views - a.views).slice(0, 3).map((s) => [s.key, s.views]));
+}
+
+/** "4.5M", "820K", "950": plays, short. */
+export const shortCount = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : String(n));
 
 /** Cover images come only from Discogs or Apple's artwork servers. */
 export function safeCoverUrl(value: string | null | undefined) {
