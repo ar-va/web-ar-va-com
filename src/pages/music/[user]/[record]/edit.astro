@@ -214,7 +214,7 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
                         <div class="flex gap-2">
                           <input id={`f-${key}`} name={key} value={values[key]} class={input} placeholder={key === 'added' ? 'YYYY-MM-DD' : 'YYYY-MM-DD, or just a year'} aria-invalid={errors[key] ? 'true' : undefined} />
                           <!-- A calendar for picking the date; typing stays possible (a year alone, "around 1975"). -->
-                          <label class="relative shrink-0 grid place-items-center w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-blue-violet-500 hover:border-blue-violet-500 transition-colors cursor-pointer" title="Pick a date">
+                          <label class="relative shrink-0 grid place-items-center w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-blue-violet-500 hover:border-blue-violet-500 focus-within:text-blue-violet-500 focus-within:border-blue-violet-500 focus-within:ring-2 focus-within:ring-blue-violet-500/30 transition-colors cursor-pointer" title="Pick a date">
                             <svg class="w-5 h-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2" /><path d="M3.5 9.5h17M8 3v4M16 3v4" stroke-linecap="round" /></svg>
                             <input type="date" data-date-for={`f-${key}`} class="absolute inset-0 opacity-0 cursor-pointer" aria-label={`Pick the ${f.label.toLowerCase()} date`}
                               value={/^\d{4}-\d{2}-\d{2}$/.test(values[key]) ? values[key] : undefined} />
@@ -328,10 +328,18 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
     } catch {}
   }
 
-  // Calendar buttons fill the text field next to them.
-  document.querySelectorAll<HTMLInputElement>('input[data-date-for]').forEach((picker) => picker.addEventListener('change', () => {
-    if (picker.value) (document.getElementById(picker.dataset.dateFor!) as HTMLInputElement).value = picker.value;
-  }));
+  // Calendar buttons: the whole button opens the calendar (browsers otherwise only open it from the hidden date
+  // input's own little icon), starting at the date already typed, and the pick fills the text field next to it.
+  document.querySelectorAll<HTMLInputElement>('input[data-date-for]').forEach((picker) => {
+    const field = document.getElementById(picker.dataset.dateFor!) as HTMLInputElement;
+    const open = () => {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(field.value.trim())) picker.value = field.value.trim();
+      try { picker.showPicker(); } catch {} // already open, or an older browser: its own icon still works
+    };
+    picker.addEventListener('click', (e) => { e.preventDefault(); open(); });
+    picker.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } });
+    picker.addEventListener('change', () => { if (picker.value) field.value = picker.value; });
+  });
 
   // Row-by-row tracklist editor; the textarea underneath stays what the form sends (and the fallback without JS).
   // Rows reorder by dragging the handle (mouse or touch) or with ↑ ↓ on a focused handle; positions renumber after.
