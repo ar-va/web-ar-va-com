@@ -103,6 +103,11 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
                 <span class="sr-only">List view</span>
               </button>
             </div>
+            <!-- Labels under the records on the shelf (on by default; the list view always names them). -->
+            <button type="button" id="labels-toggle" aria-pressed="true" title="Labels" class="ctl !px-2 min-w-8 justify-center">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12.1V4.6a1.1 1.1 0 0 1 1.1-1.1h7.5l8.4 8.4a1.1 1.1 0 0 1 0 1.6l-6.9 6.9a1.1 1.1 0 0 1-1.6 0z" /><circle cx="8" cy="8" r="1.4" /></svg>
+              <span class="sr-only">Show labels</span>
+            </button>
             <!-- Search: a round icon like the other controls that widens into a field when used (.search-field). -->
             <label class="search-field">
               <input type="search" id="record-search" placeholder="Search" aria-label="Search records" autocomplete="off"
@@ -150,7 +155,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
           </div>
         </div>
 
-        <ul id="records-shelf" class="shelf" role="list">
+        <ul id="records-shelf" class="shelf labelled" role="list">
           {records.map((r, i) => (
             <li class="shelf-slot" data-record={r.instanceId}
               data-added={r.added}
@@ -162,6 +167,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
               <a href={`${base}/${r.instanceId}`} class="shelf-record block" title={`${r.artist} – ${r.title}`}>
                 <Cover record={r} eager={i < 12} />
                 <span class="sr-only">{r.artist} – {r.title}</span>
+                <span class="shelf-label" aria-hidden="true"><span>{r.title}</span><span>{r.artist}</span></span>
               </a>
             </li>
           ))}
@@ -332,7 +338,18 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
   // display: grid outranks Tailwind's `hidden` class.)
   filtersPanel();
 
+  // Labels under the records: on unless turned off in this browser.
+  const labels = document.getElementById('labels-toggle');
+  const setLabels = (on: boolean) => { grid?.classList.toggle('labelled', on); labels?.setAttribute('aria-pressed', String(on)); };
+  labels?.addEventListener('click', () => {
+    const on = labels.getAttribute('aria-pressed') !== 'true';
+    setLabels(on);
+    try { localStorage.setItem('records-labels', on ? 'on' : 'off'); } catch {}
+  });
+  try { if (localStorage.getItem('records-labels') === 'off') setLabels(false); } catch {}
+
   function setView(view: string) {
+    if (labels) labels.hidden = view === 'list';
     if (grid) grid.hidden = view === 'list';
     if (list) list.hidden = view !== 'list';
     document.querySelectorAll<HTMLElement>('.view-btn').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.view === view)));
