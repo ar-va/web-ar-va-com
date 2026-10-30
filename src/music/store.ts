@@ -144,13 +144,17 @@ export async function listInvites(by: User) {
   return results.map((r) => ({ ...r, expires_at: r.created_at + INVITE_DAYS * 86400 }));
 }
 
-/** Who sent an invite (null for a used, unknown or old admin invite: the page then speaks generally). */
-export async function inviteFrom(code: string) {
-  const row = await (await db()).prepare(`SELECT COALESCE(users.name, admin.name) AS name FROM invites
-    LEFT JOIN users ON users.id = invites.created_by LEFT JOIN users admin ON invites.created_by IS NULL AND admin.id = ?
+/**
+ * An open invite: who sent it (invites from before `created_by` existed were the admin's), their shelf address, and
+ * when it expires. Null when the code is used, expired or unknown.
+ */
+export async function inviteDetails(code: string) {
+  return (await db()).prepare(`SELECT users.id, users.name, users.photo_url, users.shelf_name, users.discogs_username,
+    invites.created_at + ${INVITE_DAYS * 86400} AS expires_at FROM invites
+    JOIN users ON users.id = COALESCE(invites.created_by, ?)
     WHERE invites.id = ? AND used_by IS NULL AND invites.created_at > ?`)
-    .bind(Number(env.ADMIN_TELEGRAM_ID) || 0, await sha256(code), now() - INVITE_DAYS * 86400).first<{ name: string | null }>();
-  return row?.name ?? null;
+    .bind(Number(env.ADMIN_TELEGRAM_ID) || 0, await sha256(code), now() - INVITE_DAYS * 86400)
+    .first<{ id: number; name: string; photo_url: string | null; shelf_name: string | null; discogs_username: string | null; expires_at: number }>();
 }
 
 /** Makes the user a collector if the code is unused and fresh. Returns false otherwise. */
