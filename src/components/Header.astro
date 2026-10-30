@@ -41,7 +41,8 @@ const home = MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https://music.ar-v
       <span class:list={['whitespace-nowrap', { 'max-sm:sr-only': MAIN_SITE_PUBLIC }]}>Log in</span>
     </a>
     <!-- Logged in, the avatar opens this menu (script below fills it from the `who` cookie): the next step first when
-         Discogs isn't connected yet, then the shelf, settings, and log out (on the music site, where the form posts). -->
+         Discogs isn't connected yet, then the shelf, updating from Discogs (opens settings, which shows the progress),
+         settings, and log out (on the music site, where the form posts). -->
     <div id="account-menu" hidden class="glass absolute right-6 top-full mt-1 w-72 max-w-[calc(100vw-3rem)] rounded-2xl p-2 z-50 text-sm">
       <p class="px-3 pt-2 pb-2.5 text-xs text-zinc-500">Logged in with Telegram as <span data-who-name class="font-medium text-zinc-700 dark:text-zinc-300"></span></p>
       <a data-menu="connect" hidden href="/settings#shelf" class="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl bg-(--on-bg) text-(--on-text) hover:bg-(--on-bg-hover) focus-visible:outline-2 focus-visible:outline-blue-violet-500 transition-colors">
@@ -51,6 +52,10 @@ const home = MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https://music.ar-v
       <a data-menu="shelf" hidden href="/" class="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl text-left hover:bg-(--well) focus-visible:outline-2 focus-visible:outline-blue-violet-500 transition-colors">
         <span class="font-medium text-zinc-900 dark:text-white">Your shelf</span>
         <span class="text-xs text-zinc-500">See it the way visitors do</span>
+      </a>
+      <a data-menu="update" hidden href="/settings?update#shelf" class="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl text-left hover:bg-(--well) focus-visible:outline-2 focus-visible:outline-blue-violet-500 transition-colors">
+        <span class="font-medium text-zinc-900 dark:text-white">Update from Discogs</span>
+        <span class="text-xs text-zinc-500">Bring in new records and changes now</span>
       </a>
       <a data-menu="settings" href="/settings" class="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl text-left hover:bg-(--well) focus-visible:outline-2 focus-visible:outline-blue-violet-500 transition-colors">
         <span class="font-medium text-zinc-900 dark:text-white">Settings</span>
@@ -100,7 +105,10 @@ const home = MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https://music.ar-v
     const item = (k) => menu.querySelector(`[data-menu="${k}"]`);
     menu.querySelector('[data-who-name]').textContent = who.n;
     if (who.d) Object.assign(item('connect'), { href: `${music}/settings#shelf`, hidden: false });
-    if (typeof who.s === 'string') Object.assign(item('shelf'), { href: `${music}/${encodeURIComponent(who.s)}`, hidden: false });
+    if (typeof who.s === 'string') {
+      Object.assign(item('shelf'), { href: `${music}/${encodeURIComponent(who.s)}`, hidden: false });
+      Object.assign(item('update'), { href: `${music}/settings?update#shelf`, hidden: false });
+    }
     item('settings').href = `${music}/settings`;
     // Log out is a form post to settings, so only on the music site (Astro refuses cross-site posts).
     if (location.host === `music.${base}`) item('logout').hidden = false;
