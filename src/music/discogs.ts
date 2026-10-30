@@ -130,16 +130,17 @@ export async function unmatchedReleases(user: User) {
 }
 
 /**
- * Matches made before YouTube was set up (or when its quota ran out) get their YouTube tracks here, a few per call:
- * run in the background when the owner's shelf asks for missing details. Stops at the first failure (quota).
+ * Matches made before YouTube was set up (or when its quota ran out) get their YouTube tracks here, newest records
+ * first (the ones on top of the shelf), a few per call: run in the background when the owner's shelf asks for missing
+ * details. Stops at the first failure (quota).
  */
-export async function backfillYoutube(user: User, limit = 5) {
+export async function backfillYoutube(user: User, limit = 8) {
   if (!youtubeConfigured()) return;
   const d = await db();
   const { results } = await d.prepare(
     `SELECT DISTINCT m.release_id AS releaseId, json_extract(r.data, '$.artist') AS artist, json_extract(r.data, '$.title') AS title
      FROM matches m JOIN records r ON json_extract(r.data, '$.releaseId') = m.release_id AND r.user_id = ?
-     WHERE json_type(m.data, '$.youtube') IS NULL LIMIT ?`,
+     WHERE json_type(m.data, '$.youtube') IS NULL ORDER BY json_extract(r.data, '$.added') DESC LIMIT ?`,
   ).bind(user.id, limit).all<{ releaseId: number; artist: string; title: string }>();
   for (const r of results) {
     const youtube = await youtubeMatch(r.artist, r.title);
