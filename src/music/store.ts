@@ -270,11 +270,32 @@ export async function shelfData(name: string) {
   const found = byId<Match>(matches.results, 'release_id');
   return {
     owner: (users.results[0] as User | undefined) ?? null,
+    // Sorted after the owner's edits are applied: their own "Added on" dates count.
     records: (records.results as { data: string }[]).map((r) => JSON.parse(r.data) as ShelfRecord)
-      .sort((a, b) => b.added.localeCompare(a.added))
-      .map((r) => shelfView(r, details.get(r.releaseId) ?? null, edits.get(r.instanceId) ?? {}, found.get(r.releaseId) ?? null)),
+      .map((r) => shelfView(r, details.get(r.releaseId) ?? null, edits.get(r.instanceId) ?? {}, found.get(r.releaseId) ?? null))
+      .sort((a, b) => b.added.localeCompare(a.added)),
     comments: comments.results as Comment[],
   };
+}
+
+/** Everything for the owner's CSV export, in one round trip: each record with its cached details, match and edits. */
+export async function collectionExport(userId: number) {
+  const releaseIds = `(SELECT json_extract(data, '$.releaseId') FROM records WHERE user_id = ?1)`;
+  const d = await db();
+  const [records, overrides, releases, matches] = await d.batch([
+    d.prepare('SELECT data FROM records WHERE user_id = ?1').bind(userId),
+    d.prepare('SELECT instance_id, data FROM overrides WHERE user_id = ?1').bind(userId),
+    d.prepare(`SELECT id, data FROM releases WHERE id IN ${releaseIds}`).bind(userId),
+    d.prepare(`SELECT release_id, data FROM matches WHERE release_id IN ${releaseIds}`).bind(userId),
+  ]);
+  const byId = <T>(rows: unknown[], key: string) => new Map((rows as Record<string, any>[]).map((r) => [r[key] as number, JSON.parse(r.data) as T]));
+  const details = byId<ReleaseDetail>(releases.results, 'id');
+  const edits = byId<Overrides>(overrides.results, 'instance_id');
+  const found = byId<Match>(matches.results, 'release_id');
+  return (records.results as { data: string }[]).map((row) => {
+    const record = JSON.parse(row.data) as ShelfRecord;
+    return { record, detail: details.get(record.releaseId) ?? null, match: found.get(record.releaseId) ?? null, overrides: edits.get(record.instanceId) ?? {} };
+  });
 }
 
 export async function setShelfNote(userId: number, note: string | null) {

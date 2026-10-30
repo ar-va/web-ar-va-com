@@ -5,11 +5,12 @@ import Layout from '../../../layouts/Layout.astro';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import RecordHero from '../../../components/music/RecordHero.astro';
 import Gallery from '../../../components/music/Gallery.astro';
+import Note from '../../../components/music/Note.astro';
 import LoginButton from '../../../components/LoginButton.astro';
 import CommentThread from '../../../components/CommentThread.astro';
 import Listen from '../../../components/music/Listen.astro';
-import { commentNotices, displayDate, formatReleased, gallery, loginHref, musicPath, popularTracks, recordDefaults, shortCount, recordValues, shelfView, textToTracklist, titleKey, withSideHeadings } from '../../../music/lib';
-import { addComment, canDeleteComment, currentUser, deleteComment, editComment, recordData, shelfSlug } from '../../../music/store';
+import { cleanNote, commentNotices, displayDate, formatReleased, gallery, loginHref, musicPath, popularTracks, recordDefaults, shortCount, recordValues, shelfView, textToTracklist, titleKey, withSideHeadings } from '../../../music/lib';
+import { addComment, canDeleteComment, currentUser, deleteComment, editComment, recordData, saveOverrides, shelfSlug } from '../../../music/store';
 import { notify } from '../../../music/notify';
 
 const instanceId = Number(Astro.params.record);
@@ -27,6 +28,15 @@ if (owner && record && Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
   const action = form.get('action');
   const id = Number(form.get('id'));
+  // The owner's note under the album: one override key, the other edits stay as they are.
+  if (action === 'note') {
+    if (user.id === owner.id) {
+      const { note: _, ...rest } = overrides;
+      const note = cleanNote(String(form.get('note') ?? ''));
+      await saveOverrides(owner.id, instanceId, note ? { ...rest, note } : rest);
+    }
+    return Astro.redirect(`${path}#note`, 303);
+  }
   if (action === 'delete') {
     await deleteComment(thread, id, user);
     return Astro.redirect(`${path}#comments`, 303);
@@ -72,7 +82,7 @@ const rows: [string, string | null | undefined][] = record ? [
   ['Label', v.label],
   ['Format', v.format],
   ['Country', v.country],
-  ['Added to collection', formatReleased(record.added.slice(0, 10))],
+  ['Added to collection', formatReleased(v.added)],
   ...Object.entries(v).filter(([k]) => k.startsWith('field:')).map(([k, value]) => [k.slice(6), value] as [string, string]),
 ] : [];
 // What the closed details card shows: the pressing at a glance.
@@ -104,6 +114,11 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
           <Gallery images={photos} title={hero!.title} />
         </RecordHero>
       </header>
+
+      <Note class="mb-10" note={v.note || null} by={owner.name.split(' ')[0]} about="this record" base={path} canEdit={isOwner}
+        editing={isOwner && Astro.url.searchParams.has('note')}
+        addText="Add a note about this record: where you found it, why it matters, a favourite moment."
+        placeholder="Where you found it, why it matters, what to listen for…" />
 
       <!-- Details fold into a card at the tracklist's width: closed it previews the pressing (label · format · country).
            Native <details>: keyboard and screen readers included. -->
