@@ -8,7 +8,7 @@ import Gallery from '../../../components/music/Gallery.astro';
 import LoginButton from '../../../components/LoginButton.astro';
 import CommentThread from '../../../components/CommentThread.astro';
 import Listen from '../../../components/music/Listen.astro';
-import { commentNotices, displayDate, formatReleased, gallery, loginHref, musicPath, recordDefaults, recordValues, shelfView, textToTracklist, withSideHeadings } from '../../../music/lib';
+import { commentNotices, displayDate, formatReleased, gallery, loginHref, musicPath, popularTracks, recordDefaults, shortCount, recordValues, shelfView, textToTracklist, titleKey, withSideHeadings } from '../../../music/lib';
 import { addComment, canDeleteComment, currentUser, deleteComment, editComment, recordData, shelfSlug } from '../../../music/store';
 import { notify } from '../../../music/notify';
 
@@ -53,6 +53,10 @@ if (owner && record && Astro.request.method === 'POST') {
 if (!owner || !record) Astro.response.status = 404;
 const v = record ? recordValues(recordDefaults(record, detail, match), overrides) : {};
 const tracks = record ? withSideHeadings(textToTracklist(v.tracklist)) : [];
+// Marks in the tracklist: the most played on YouTube (objective) and the owner's favourites (their pick).
+const popular = popularTracks(tracks, match);
+const favorites = new Set((v.favorites ?? '').split('\n').filter((x) => x.trim()).map(titleKey));
+const ownerFirst = owner?.name.split(' ')[0] ?? '';
 const hero = record ? shelfView(record, detail, overrides, match) : null;
 const photos = record ? gallery(hero!.cover, record.cover, detail?.images) : [];
 const isOwner = !!user && user.id === owner?.id;
@@ -126,6 +130,12 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
       {tracks.length > 0 ? (
         <section class="mt-14">
           <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Tracklist</h2>
+          {(popular.size > 0 || favorites.size > 0) && (
+            <p class="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-zinc-500">
+              {popular.size > 0 && <span class="inline-flex items-center gap-1.5"><svg class="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z" /></svg>Most played on YouTube</span>}
+              {favorites.size > 0 && <span class="inline-flex items-center gap-1.5"><svg class="w-4 h-4 text-blue-violet-600 dark:text-blue-violet-400" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>{ownerFirst}’s favourites</span>}
+            </p>
+          )}
           <!-- Rows light up on hover; their listening icons show on hover or focus (always on touch screens). -->
           <ol class="mt-4 -mx-3">
             {tracks.map((t) => t.heading ? (
@@ -133,7 +143,18 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
             ) : (
               <li class="group flex items-center gap-4 px-3 py-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/[0.04] focus-within:bg-zinc-100 dark:focus-within:bg-white/[0.04] transition-colors">
                 <span class="w-7 shrink-0 font-mono text-sm text-zinc-500 tabular-nums">{t.position}</span>
-                <span class="flex-grow min-w-0 text-zinc-800 dark:text-zinc-200"><button type="button" data-copy title="Click to copy" class="cursor-copy text-left rounded-sm hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-violet-500 transition-opacity">{t.title}</button></span>
+                <span class="flex-grow min-w-0 text-zinc-800 dark:text-zinc-200"><button type="button" data-copy title="Click to copy" class="cursor-copy text-left rounded-sm hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-violet-500 transition-opacity">{t.title}</button>
+                  {popular.has(titleKey(t.title)) && (
+                    <span title={`Most played: ${shortCount(popular.get(titleKey(t.title))!)} plays on YouTube`} class="ml-2 inline-flex align-[-2px] text-zinc-400">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z" /></svg><span class="sr-only">(one of the most played)</span>
+                    </span>
+                  )}
+                  {favorites.has(titleKey(t.title)) && (
+                    <span title={`${ownerFirst}’s favourite`} class="ml-1.5 inline-flex align-[-2px] text-blue-violet-600 dark:text-blue-violet-400">
+                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg><span class="sr-only">({ownerFirst}’s favourite)</span>
+                    </span>
+                  )}
+                </span>
                 <span class="sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
                   <Listen query={`${v.artist} ${t.title}`} label={`Listen to ${t.title}`} links={t.links} kind="track" />
                 </span>

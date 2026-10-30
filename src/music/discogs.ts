@@ -4,6 +4,7 @@
 import { env } from 'cloudflare:workers';
 import { oauthHeader, safeCoverUrl, safeStreamingUrl, seal, signablePath, toReleaseDetail, toShelfRecord, unseal, type CollectionField, type Match, type ReleaseDetail } from './lib';
 import { spotifyMatch } from './spotify';
+import { youtubeConfigured, youtubeMatch } from './youtube';
 import { db, type User } from './store';
 
 type Token = { key: string; secret: string };
@@ -128,6 +129,25 @@ export async function unmatchedReleases(user: User) {
   return results;
 }
 
+/**
+ * Matches made before YouTube was set up (or when its quota ran out) get their YouTube tracks here, a few per call:
+ * run in the background when the owner's shelf asks for missing details. Stops at the first failure (quota).
+ */
+export async function backfillYoutube(user: User, limit = 5) {
+  if (!youtubeConfigured()) return;
+  const d = await db();
+  const { results } = await d.prepare(
+    `SELECT DISTINCT m.release_id AS releaseId, json_extract(r.data, '$.artist') AS artist, json_extract(r.data, '$.title') AS title
+     FROM matches m JOIN records r ON json_extract(r.data, '$.releaseId') = m.release_id AND r.user_id = ?
+     WHERE json_type(m.data, '$.youtube') IS NULL LIMIT ?`,
+  ).bind(user.id, limit).all<{ releaseId: number; artist: string; title: string }>();
+  for (const r of results) {
+    const youtube = await youtubeMatch(r.artist, r.title);
+    if (youtube === undefined) return;
+    await d.prepare(`UPDATE matches SET data = json_set(data, '$.youtube', json(?)) WHERE release_id = ?`).bind(JSON.stringify(youtube), r.releaseId).run();
+  }
+}
+
 /** Stores what the browser found on Apple Music (checked) plus a Spotify lookup; only for releases on the user's shelf. */
 export async function saveMatch(user: User, releaseId: number, apple: any, artist?: unknown, title?: unknown) {
   const d = await db();
@@ -146,14 +166,15 @@ export async function saveMatch(user: User, releaseId: number, apple: any, artis
         .filter((t: { title: string; url: string | null }) => t.title && t.url),
     };
   }
-  try {
-    // The owner's edited artist and title when re-matching from the edit page (Discogs' spelling otherwise).
-    const name = (v: unknown, fallback: string) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 300) : fallback);
-    const spotify = await spotifyMatch(name(artist, record.artist), name(title, record.title));
-    if (spotify) match.spotify = spotify;
-  } catch (e) {
-    console.log(`spotify match failed for ${releaseId}: ${e instanceof Error ? e.message : e}`);
-  }
+  // The owner's edited artist and title when re-matching from the edit page (Discogs' spelling otherwise).
+  const name = (v: unknown, fallback: string) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 300) : fallback);
+  const [a, t] = [name(artist, record.artist), name(title, record.title)];
+  const [spotify, youtube] = await Promise.all([
+    spotifyMatch(a, t).catch((e) => { console.log(`spotify match failed for ${releaseId}: ${e instanceof Error ? e.message : e}`); return undefined; }),
+    youtubeMatch(a, t),
+  ]);
+  if (spotify) match.spotify = spotify;
+  if (youtube !== undefined) match.youtube = youtube;
   await d.prepare('INSERT OR REPLACE INTO matches (release_id, data, matched_at) VALUES (?, ?, ?)').bind(releaseId, JSON.stringify(match), now()).run();
   return true;
 }

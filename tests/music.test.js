@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import {
-  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, tracklistToText, textToTracklist, safeStreamingUrl,
+  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, tracklistToText, textToTracklist, safeStreamingUrl,
 } from '../src/music/lib.ts';
 
 const BOT = '123:test-bot-token';
@@ -287,4 +287,21 @@ test('timeLeft rounds up to days, hours or minutes', () => {
   assert.equal(timeLeft(1000 + 5 * 3600 - 10, 1000), '5 hours');
   assert.equal(timeLeft(1000 + 1800, 1000), '30 minutes');
   assert.equal(timeLeft(1000, 1000), '1 minute');
+});
+
+test('popularTracks marks up to 3 tracks clearly ahead in YouTube plays; withMatchLinks adds YouTube links', () => {
+  const t = (title) => ({ position: '', title, duration: '', heading: false });
+  const tracks = ['★', 'Lazarus', 'Sue', 'Girl Loves Me', 'Dollar Days'].map(t);
+  const yt = (pairs) => ({ youtube: { tracks: pairs.map(([title, views]) => ({ title, views, url: `https://music.youtube.com/watch?v=${title}` })) } });
+  const m = yt([['★', 1094617], ['Lazarus', 1985839], ['Sue (Or In A Season Of Crime)', 297436], ['Girl Loves Me', 311979], ['Dollar Days', 447650]]);
+  assert.deepEqual([...popularTracks(tracks, m).keys()], ['lazarus', '★']); // titleKey keeps "★"
+  // evenly played: no marks; too few matched tracks: no marks
+  assert.equal(popularTracks(tracks, yt([['★', 100], ['Lazarus', 120], ['Sue', 90], ['Girl Loves Me', 110]])).size, 0);
+  assert.equal(popularTracks(tracks, yt([['★', 9000], ['Lazarus', 10]])).size, 0);
+  assert.equal(withMatchLinks([t('Sue')], m)[0].links.youtube, 'https://music.youtube.com/watch?v=Sue (Or In A Season Of Crime)');
+  // a symbols-only title (★) matches only itself, not the start of every title
+  assert.equal(withMatchLinks([t('★')], m)[0].links.youtube, 'https://music.youtube.com/watch?v=★');
+  assert.equal(withMatchLinks([t('Unlisted')], m)[0].links, undefined);
+  // the owner's own link wins
+  assert.equal(withMatchLinks([{ ...t('Sue'), links: { youtube: 'https://music.youtube.com/watch?v=mine' } }], m)[0].links.youtube, 'https://music.youtube.com/watch?v=mine');
 });
