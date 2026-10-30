@@ -108,6 +108,8 @@ Rules of thumb:
 2. **Never both on one element**, and never Moss and purple side by side as two equal choices.
 3. **Proportion:** purple up to about 10% of a screen, Moss under 3%. Moss is a signature, not a second accent.
 4. **Moss is not "success".** Status messages ("Saved", "Synced") use `--success`. Keep a Moss label and a success message apart: in the dark theme they are close in colour.
+   *Exception (owner's choice, 2026-10-30):* the freshness of the shelf in settings ("Last updated … just now") is in
+   Moss, as a quiet "alive" mark rather than a success message.
 5. **Moss never fills large areas or buttons**; it is always text-sized, or the leaf.
 
 ### Theme switching
@@ -240,6 +242,8 @@ On the site, Archivo is applied to `h1`–`h4` in the CSS base layer, so an elem
 
 ## Changelog
 
+- **2026-10-30:** Moss allowed for the shelf's freshness in settings ("just now"), an exception to "Moss is not
+  success" chosen by the owner.
 - **2026-10-30:** avatars: 18 square profile pictures in `brand/avatars/` (SVG + 1024 px PNG), generated from the
   logo paths in the palette.
 - **2026-10-29:** colours refreshed. The first warm neutrals (Paper White, Washi, Bark, Night Ink) and the russet

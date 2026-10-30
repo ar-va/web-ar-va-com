@@ -388,7 +388,7 @@ export function recordDefaults(r: ShelfRecord, d: ReleaseDetail | null, m: Match
     tracklist: tracklistToText(withMatchLinks(d?.tracklist ?? [], m)),
     spotify: m?.spotify?.url ?? '',
     apple: m?.apple?.url ?? '',
-    youtube: '',
+    youtube: m?.youtube?.url ?? '',
     // Track titles the owner marked as favourites, one per line (matched by title, so reordering keeps them).
     favorites: '',
     cover: r.cover ?? '',
@@ -489,9 +489,10 @@ export function commentNotices(c: { authorId: number; authorName: string; ownerI
 export interface Match {
   apple?: { url: string; artwork: string | null; tracks: { title: string; url: string }[] };
   spotify?: { url: string; tracks: { title: string; url: string }[] };
-  /** Tracks from the artist's YouTube "Topic" channel with their plays (no album page: the API can't see those).
+  /** Tracks from the artist's YouTube "Topic" channel with their plays, and the album's page from YouTube Music's own
+   *  search (url; null = not found there, missing = not looked yet).
    *  null = looked, nothing found; missing = not looked yet (filled in later, see backfillYoutube). */
-  youtube?: { tracks: { title: string; url: string; views: number }[] } | null;
+  youtube?: { url?: string | null; tracks: { title: string; url: string; views: number }[] } | null;
 }
 
 /** For comparing names across catalogues: no accents, case, punctuation or "(Deluxe…)"-style suffixes. */
