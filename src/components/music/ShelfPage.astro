@@ -8,7 +8,7 @@ type Props = Awaited<ReturnType<typeof shelfData>>;
 const { owner, records, shelves } = Astro.props;
 ---
 <Layout title={owner ? `${owner.name}’s records - ARVA` : 'Not found - ARVA'} description={owner ? `${records.length} vinyl records on ${owner.name}’s shelf.` : undefined}>
-  <div class="max-w-5xl mx-auto px-6 w-full flex-grow py-24">
+  <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24">
     {owner ? (
       <Shelf owner={{ name: owner.name, slug: shelfSlug(owner), discogs_username: owner.discogs_username!, telegram: owner.username }} records={records} shelves={shelves.map((s) => ({ ...s, slug: shelfSlug(s) }))} />
     ) : (
