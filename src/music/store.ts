@@ -11,7 +11,6 @@ const SCHEMA = [
     synced_at INTEGER, sync_error TEXT, created_at INTEGER NOT NULL, shelf_name TEXT, shelf_note TEXT, invited_by INTEGER)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS users_shelf_name ON users (shelf_name)`,
   `CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires_at INTEGER NOT NULL)`,
-  `CREATE TABLE IF NOT EXISTS invites (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, used_by INTEGER, created_by INTEGER)`,
   // Invite links since 2026-10-30, like Discord's: expiry and number of uses chosen by the creator; the code is kept
   // encrypted (TOKEN_KEY) so its creator can copy it again, and looked up by its hash (id).
   `CREATE TABLE IF NOT EXISTS invite_links (id TEXT PRIMARY KEY, code TEXT NOT NULL, created_by INTEGER NOT NULL, created_at INTEGER NOT NULL,
@@ -30,10 +29,11 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS overrides (user_id INTEGER NOT NULL, instance_id INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY (user_id, instance_id))`,
 ];
 
-// Columns added to existing tables after launch (also in the definitions above, for a fresh database). Each runs once
-// per Worker instance alongside the schema; "duplicate column" (or, on a fresh database, "no such table") is ignored.
-// (shelf_name, parent_id, edited_at got a one-off manual ALTER in October 2026.)
-const COLUMNS = ['ALTER TABLE invites ADD COLUMN created_by INTEGER', 'ALTER TABLE users ADD COLUMN shelf_note TEXT', 'ALTER TABLE users ADD COLUMN invited_by INTEGER'];
+// Changes to existing tables after launch (new columns are also in the definitions above, for a fresh database). Each
+// runs once per Worker instance alongside the schema; "duplicate column" errors are ignored. (shelf_name, parent_id,
+// edited_at got a one-off manual ALTER in October 2026.) The one-use `invites` table was replaced by invite_links on
+// 2026-10-30 and is dropped (user: fine to delete the old links).
+const COLUMNS = ['ALTER TABLE users ADD COLUMN shelf_note TEXT', 'ALTER TABLE users ADD COLUMN invited_by INTEGER', 'DROP TABLE IF EXISTS invites'];
 
 let ready: Promise<unknown> | null = null;
 
@@ -138,19 +138,31 @@ export async function endSession(cookies: AstroCookies, hostname: string) {
 
 // ---- Invites ----
 
-/** Discord's choices, Discord's defaults (7 days, no limit). 0 = never / no limit. */
+/** Discord's choices (0 = never / no limit). "Never" and "No limit" are the admin's only (user, 2026-10-30). */
 export const INVITE_EXPIRY = [['30 minutes', 1800], ['1 hour', 3600], ['6 hours', 21600], ['12 hours', 43200], ['1 day', 86400], ['7 days', 604800], ['Never', 0]] as const;
 export const INVITE_USES = [['No limit', 0], ['1 use', 1], ['5 uses', 5], ['10 uses', 10], ['25 uses', 25], ['50 uses', 50], ['100 uses', 100]] as const;
+/** What `user` may pick, and their defaults: Discord's (7 days, no limit) for the admin, 7 days and 10 uses otherwise. */
+export function inviteOptions(user: User) {
+  const admin = isAdmin(user);
+  return {
+    expiry: INVITE_EXPIRY.filter(([, v]) => admin || v > 0),
+    uses: INVITE_USES.filter(([, v]) => admin || v > 0),
+    defaults: { expiresIn: 604800, maxUses: admin ? 0 : 10 },
+  };
+}
 /** Active invite links a collector may have at once (the admin has no limit): keeps growth, and the bill, in check. */
 export const OPEN_INVITES_MAX = 5;
-// The one-use, 7-day links in the old `invites` table (before 2026-10-30) still work until they run out.
-const INVITE_DAYS = 7;
-const adminId = () => Number(env.ADMIN_TELEGRAM_ID) || 0;
 // A link that still works; ?1 is the current time.
 const activeLink = (t = '') => `${t}revoked_at IS NULL AND (${t}expires_at IS NULL OR ${t}expires_at > ?1) AND (${t}max_uses IS NULL OR ${t}uses < ${t}max_uses)`;
 
-/** A new invite link (`expiresIn` seconds, `maxUses`; 0 = never / no limit). Null when `by` already has too many. */
+/**
+ * A new invite link (`expiresIn` seconds, `maxUses`; 0 = never / no limit). Values `by` may not pick become their
+ * defaults. Null when `by` already has too many working links.
+ */
 export async function createInvite(by: User, expiresIn: number, maxUses: number) {
+  const { expiry, uses, defaults } = inviteOptions(by);
+  if (!expiry.some(([, v]) => v === expiresIn)) expiresIn = defaults.expiresIn;
+  if (!uses.some(([, v]) => v === maxUses)) maxUses = defaults.maxUses;
   const d = await db();
   if (!isAdmin(by)) {
     const open = await d.prepare(`SELECT COUNT(*) AS n FROM invite_links WHERE created_by = ?2 AND ${activeLink()}`).bind(now(), by.id).first<{ n: number }>();
@@ -186,29 +198,18 @@ export async function revokeInvite(by: User, id: string) {
  * never / no limit). Null when the code is used up, expired, revoked or unknown.
  */
 export async function inviteDetails(code: string) {
-  type Details = { id: number; name: string; photo_url: string | null; shelf_name: string | null; discogs_username: string | null; expires_at: number | null; uses_left: number | null };
-  const d = await db();
-  const id = await sha256(code);
-  const [link, old] = await d.batch([
-    d.prepare(`SELECT users.id, users.name, users.photo_url, users.shelf_name, users.discogs_username, l.expires_at, l.max_uses - l.uses AS uses_left
-      FROM invite_links l JOIN users ON users.id = l.created_by WHERE l.id = ?2 AND ${activeLink('l.')}`).bind(now(), id),
-    d.prepare(`SELECT users.id, users.name, users.photo_url, users.shelf_name, users.discogs_username, invites.created_at + ${INVITE_DAYS * 86400} AS expires_at, 1 AS uses_left
-      FROM invites JOIN users ON users.id = COALESCE(invites.created_by, ?1) WHERE invites.id = ?2 AND used_by IS NULL AND invites.created_at > ?3`)
-      .bind(adminId(), id, now() - INVITE_DAYS * 86400),
-  ]);
-  return ((link.results[0] ?? old.results[0]) as Details | undefined) ?? null;
+  return (await db()).prepare(`SELECT users.id, users.name, users.photo_url, users.shelf_name, users.discogs_username, l.expires_at, l.max_uses - l.uses AS uses_left
+    FROM invite_links l JOIN users ON users.id = l.created_by WHERE l.id = ?2 AND ${activeLink('l.')}`).bind(now(), await sha256(code))
+    .first<{ id: number; name: string; photo_url: string | null; shelf_name: string | null; discogs_username: string | null; expires_at: number | null; uses_left: number | null }>();
 }
 
 /** Makes the user a collector (and remembers who invited them) if the link still works. Returns false otherwise. */
 export async function acceptInvite(code: string, user: User) {
   const d = await db();
-  const id = await sha256(code);
   const link = await d.prepare(`UPDATE invite_links SET uses = uses + 1 WHERE id = ?2 AND ${activeLink()} RETURNING created_by`)
-    .bind(now(), id).first<{ created_by: number }>();
-  const inviter = link?.created_by ?? (await d.prepare(`UPDATE invites SET used_by = ?1 WHERE id = ?2 AND used_by IS NULL AND created_at > ?3
-    RETURNING COALESCE(created_by, ?4) AS created_by`).bind(user.id, id, now() - INVITE_DAYS * 86400, adminId()).first<{ created_by: number }>())?.created_by;
-  if (inviter === undefined) return false;
-  await d.prepare('UPDATE users SET is_collector = 1, invited_by = ? WHERE id = ?').bind(inviter, user.id).run();
+    .bind(now(), await sha256(code)).first<{ created_by: number }>();
+  if (!link) return false;
+  await d.prepare('UPDATE users SET is_collector = 1, invited_by = ? WHERE id = ?').bind(link.created_by, user.id).run();
   return true;
 }
 
@@ -309,13 +310,11 @@ export async function adminShelfOwner() {
   return (await db()).prepare('SELECT * FROM users WHERE id = ? AND discogs_username IS NOT NULL').bind(Number(env.ADMIN_TELEGRAM_ID) || 0).first<User>();
 }
 
-/** For the admin: every collector, with who invited them (older invites without a creator were the admin's). */
+/** For the admin: every collector, with who invited them. */
 export async function listCollectors() {
-  const { results } = await (await db()).prepare(`SELECT users.*, COALESCE(referrer.name,
-      CASE WHEN invites.id IS NULL THEN NULL ELSE COALESCE(inviter.name, 'you') END) AS invited_by_name
+  const { results } = await (await db()).prepare(`SELECT users.*, referrer.name AS invited_by_name
     FROM users LEFT JOIN users referrer ON referrer.id = users.invited_by
-    LEFT JOIN invites ON invites.used_by = users.id LEFT JOIN users inviter ON inviter.id = invites.created_by
-    WHERE ${collectorSql('users.')} GROUP BY users.id ORDER BY users.name`).all<User & { invited_by_name: string | null }>();
+    WHERE ${collectorSql('users.')} ORDER BY users.name`).all<User & { invited_by_name: string | null }>();
   return results;
 }
 
