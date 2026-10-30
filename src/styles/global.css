@@ -139,6 +139,15 @@ html { scrollbar-gutter: stable; }
 .dark .shelf-record:hover .shelf-label > span:first-child,
 .dark .shelf-record:focus-visible .shelf-label > span:first-child { color: var(--color-blue-violet-400); }
 
+/* Shelves directory: "+N more" at the end of a collector's row, a stack of sleeves standing on the ledge. */
+.more-stack {
+  position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.125rem;
+  aspect-ratio: 1; background: var(--ledge-top);
+  box-shadow: 5px -5px 0 -1px var(--ledge-top-2), 10px -10px 0 -2px var(--ledge-edge), 0 5px 6px -3px rgb(0 0 0 / 0.3);
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.more-stack:hover { transform: translateY(-3px); }
+
 .sleeve {
   --vinyl: #131316;
   --glow: color-mix(in srgb, var(--vinyl) 40%, var(--color-blue-violet-400));

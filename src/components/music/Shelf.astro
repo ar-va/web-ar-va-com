@@ -4,14 +4,17 @@
 import Cover from './Cover.astro';
 import SortMenu from '../SortMenu.astro';
 import RecordHero from './RecordHero.astro';
-import type { shelfView } from '../../music/lib';
+import { SHELF_NOTE_MAX, type shelfView } from '../../music/lib';
 
 interface Props {
-  owner: { name: string; slug: string; discogs_username: string; telegram: string | null };
+  owner: { name: string; slug: string; discogs_username: string; telegram: string | null; note: string | null };
   records: ReturnType<typeof shelfView>[];
-  shelves: { name: string; slug: string; count: number }[];
+  commentCount: number;
+  /** The visitor owns this shelf: they can write its note (`?note` opens the editor). */
+  canEdit: boolean;
+  editingNote: boolean;
 }
-const { owner, records, shelves } = Astro.props;
+const { owner, records, commentCount, canEdit, editingNote } = Astro.props;
 const base = `/${encodeURIComponent(owner.slug)}`;
 const latest = records[0];
 
@@ -26,7 +29,6 @@ const decadeOf = (y: number) => `${Math.floor(y / 10) * 10}s`;
 const decades = [...count(records.filter((r) => r.releasedYear).map((r) => decadeOf(r.releasedYear!)))].sort(([a], [b]) => a.localeCompare(b));
 const releasedYears = (decade: string) => [...count(records.filter((r) => r.releasedYear && decadeOf(r.releasedYear) === decade).map((r) => String(r.releasedYear)))].sort(([a], [b]) => a.localeCompare(b));
 const genres = [...count(records.flatMap((r) => r.genres.map((g) => g.toLowerCase())))].sort(([a], [b]) => a.localeCompare(b));
-const others = shelves.filter((s) => s.slug !== owner.slug);
 
 // Filter buttons: the exact classes Writing.astro uses for tags and years.
 const btn = 'group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white';
@@ -43,16 +45,18 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
     <h1 class="text-3xl font-bold leading-tight text-zinc-900 dark:text-white">{owner.name}’s records</h1>
     <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-500">
       {records.length > 0 && <a href="#all-records" class="relative inline-flex items-center gap-1.5 py-1 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{records.length} record{records.length === 1 ? '' : 's'} <span aria-hidden="true">↓</span></a>}
+      {records.length > 0 && <span aria-hidden="true" class="text-zinc-300 dark:text-zinc-700">·</span>}
+      <a href="#comments" class="relative inline-flex items-center gap-1.5 py-1 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{commentCount} comment{commentCount === 1 ? '' : 's'} <span aria-hidden="true">↓</span></a>
       {owner.telegram && (
         <>
-          {records.length > 0 && <span aria-hidden="true" class="text-zinc-300 dark:text-zinc-700">·</span>}
+          <span aria-hidden="true" class="text-zinc-300 dark:text-zinc-700">·</span>
           <a href={`https://t.me/${owner.telegram}`} target="_blank" rel="noopener noreferrer" title={`${owner.name} on Telegram`} class="relative inline-flex items-center gap-1.5 py-1 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">
             <svg class="w-3.5 h-3.5" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
             @{owner.telegram}
           </a>
         </>
       )}
-      {(records.length > 0 || owner.telegram) && <span aria-hidden="true" class="text-zinc-300 dark:text-zinc-700">·</span>}
+      <span aria-hidden="true" class="text-zinc-300 dark:text-zinc-700">·</span>
       <button type="button" id="share-shelf" data-url={`${Astro.url.origin}${base}`} title="Copy the link to this collection" class="relative inline-flex items-center gap-1.5 py-1 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" /></svg>
         Copy link
@@ -61,6 +65,38 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
     </p>
     <p id="sync-progress" class="mt-1 text-xs text-zinc-500 empty:hidden" role="status" aria-live="polite"></p>
   </div>
+
+  <!-- The collector's note about their collection (at most SHELF_NOTE_MAX characters). The owner edits it in place:
+       "Edit" opens ?note, which renders the form (no script needed). -->
+  {editingNote ? (
+    <form method="post" class="mt-6 max-w-2xl rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-4 sm:p-5">
+      <input type="hidden" name="action" value="note" />
+      <label for="shelf-note" class="block text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-2">About your collection</label>
+      <textarea id="shelf-note" name="note" rows="3" maxlength={SHELF_NOTE_MAX} autofocus placeholder="What you collect, how it started, what you’re hunting for…"
+        oninput="this.form.querySelector('[data-left]').textContent = this.maxLength - this.value.length"
+        class="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2.5 text-zinc-900 dark:text-white leading-relaxed focus:outline-none focus:border-blue-violet-500 transition-colors">{owner.note ?? ''}</textarea>
+      <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <span class="text-xs text-zinc-500"><span data-left>{SHELF_NOTE_MAX - (owner.note?.length ?? 0)}</span> characters left</span>
+        <span class="flex items-center gap-2">
+          <a href={base} class="ctl">Cancel</a>
+          <button class="inline-flex items-center h-8 px-4 rounded-full text-sm font-medium bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 transition-colors">Save</button>
+        </span>
+      </div>
+    </form>
+  ) : owner.note ? (
+    <div class="mt-6 max-w-2xl rounded-2xl bg-zinc-100/70 dark:bg-white/[0.04] px-5 py-4">
+      <div class="flex items-center justify-between gap-3 mb-1.5">
+        <span class="text-xs text-zinc-500">About the collection</span>
+        {canEdit && <a href={`${base}?note`} class="text-xs font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Edit</a>}
+      </div>
+      <p class="text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-line break-words">{owner.note}</p>
+    </div>
+  ) : canEdit && (
+    <a href={`${base}?note`} class="mt-6 max-w-2xl flex items-center gap-3 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 px-5 py-4 text-sm text-zinc-500 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 hover:border-blue-violet-400 transition-colors">
+      <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.9 4.1a2.1 2.1 0 0 1 3 3L8.5 18.5 4 20l1.5-4.5z" /></svg>
+      Add a short note about your collection: what you collect, how it started. Visitors see it here.
+    </a>
+  )}
 
   {records.length === 0 ? (
     <p class="text-zinc-500 py-12">The shelf is still empty. Records appear here a few minutes after they’re added on Discogs.</p>
@@ -201,19 +237,6 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
     </>
   )}
 
-  {others.length > 0 && (
-    <>
-      <hr class="border-zinc-200 dark:border-zinc-800/80 my-6" />
-      <section>
-        <h2 class="font-sans text-zinc-500 text-sm">Other shelves</h2>
-        <p class="leading-8">
-          {others.map((s, i) => (
-            <span class="whitespace-nowrap"><a href={`/${encodeURIComponent(s.slug)}`} class="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white underline decoration-zinc-300 dark:decoration-zinc-700 hover:decoration-zinc-500 underline-offset-4 transition-colors">{s.name}</a><span class="text-zinc-500"> ({s.count})</span>{i < others.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
-          ))}
-        </p>
-      </section>
-    </>
-  )}
 </div>
 
 <script>

@@ -1,0 +1,18 @@
+---
+// Where you are on music.ar-va.com, above each page's title: Shelves / Artur / Blackstar / Edit. The last item is the
+// current page (not a link). Long names are cut short; the full name is in the page title below anyway.
+interface Props { items: { label: string; href?: string }[]; class?: string }
+const { items, class: className = '' } = Astro.props;
+---
+<nav aria-label="Breadcrumb" class={`text-sm ${className}`}>
+  <ol class="flex flex-wrap items-center gap-x-2 gap-y-1 text-zinc-500">
+    {items.map((item, i) => (
+      <li class="flex items-center gap-2 min-w-0">
+        {i > 0 && <span aria-hidden="true" class="text-zinc-300 dark:text-zinc-700">/</span>}
+        {item.href && i < items.length - 1
+          ? <a href={item.href} class="truncate max-w-[14rem] hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{item.label}</a>
+          : <span aria-current="page" class="truncate max-w-[14rem] text-zinc-700 dark:text-zinc-300">{item.label}</span>}
+      </li>
+    ))}
+  </ol>
+</nav>

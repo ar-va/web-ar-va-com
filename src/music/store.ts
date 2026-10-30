@@ -8,7 +8,7 @@ import { randomToken, sha256, shelfView, siteDomain, type Match, type Overrides,
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, username TEXT, photo_url TEXT,
     is_collector INTEGER NOT NULL DEFAULT 0, discogs_username TEXT UNIQUE COLLATE NOCASE, discogs_token TEXT,
-    synced_at INTEGER, sync_error TEXT, created_at INTEGER NOT NULL, shelf_name TEXT)`,
+    synced_at INTEGER, sync_error TEXT, created_at INTEGER NOT NULL, shelf_name TEXT, shelf_note TEXT)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS users_shelf_name ON users (shelf_name)`,
   `CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires_at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS invites (id TEXT PRIMARY KEY, created_at INTEGER NOT NULL, used_by INTEGER, created_by INTEGER)`,
@@ -28,7 +28,7 @@ const SCHEMA = [
 // Columns added to existing tables after launch (also in the definitions above, for a fresh database). Each runs once
 // per Worker instance alongside the schema; "duplicate column" (or, on a fresh database, "no such table") is ignored.
 // (shelf_name, parent_id, edited_at got a one-off manual ALTER in October 2026.)
-const COLUMNS = ['ALTER TABLE invites ADD COLUMN created_by INTEGER'];
+const COLUMNS = ['ALTER TABLE invites ADD COLUMN created_by INTEGER', 'ALTER TABLE users ADD COLUMN shelf_note TEXT'];
 
 let ready: Promise<unknown> | null = null;
 
@@ -66,6 +66,8 @@ export interface User {
   created_at: number;
   /** The owner's chosen shelf address (music.ar-va.com/<shelf_name>); the Discogs username always works too. */
   shelf_name: string | null;
+  /** The owner's short note about their collection, shown on their shelf and in the directory. */
+  shelf_note: string | null;
 }
 
 /** The address a shelf is linked under: the chosen name, else the Discogs username. */
@@ -190,26 +192,27 @@ export async function setShelfName(user: User, name: string | null) {
   return null;
 }
 
-const shelvesSql = () => `SELECT users.id, users.name, users.discogs_username, users.shelf_name, COUNT(records.instance_id) AS count FROM users
-  LEFT JOIN records ON records.user_id = users.id
-  WHERE discogs_username IS NOT NULL AND ${collectorSql()} GROUP BY users.id ORDER BY users.name`;
+/** Shelf comments live in the comments table under instance_id 0 (Discogs collection instance ids start at 1). */
+export const SHELF_THREAD = 0;
+const commentsSql = `SELECT c.id, body, c.created_at, c.edited_at, c.parent_id, author_id, users.name, users.username, users.photo_url
+  FROM comments c JOIN users ON users.id = c.author_id`;
 
 /**
  * Everything a shelf page shows, in one round trip: the owner (by shelf name or Discogs username), their records with
- * edits, cached details and streaming matches, and the list of all shelves.
+ * edits, cached details and streaming matches, and the comments on the shelf itself.
  */
 export async function shelfData(name: string) {
   const owner = `(SELECT id FROM users WHERE ${ownerWhere()})`;
   const releaseIds = `(SELECT json_extract(data, '$.releaseId') FROM records WHERE user_id = ${owner})`;
   const d = await db();
   const q = (sql: string) => d.prepare(sql).bind(name);
-  const [users, records, overrides, releases, matches, shelves] = await d.batch([
+  const [users, records, overrides, releases, matches, comments] = await d.batch([
     q(`SELECT * FROM users WHERE id = ${owner}`),
     q(`SELECT data FROM records WHERE user_id = ${owner}`),
     q(`SELECT instance_id, data FROM overrides WHERE user_id = ${owner}`),
     q(`SELECT id, data FROM releases WHERE id IN ${releaseIds}`),
     q(`SELECT release_id, data FROM matches WHERE release_id IN ${releaseIds}`),
-    d.prepare(shelvesSql()),
+    q(`${commentsSql} WHERE shelf_id = ${owner} AND instance_id = ${SHELF_THREAD} ORDER BY c.id`),
   ]);
   const byId = <T>(rows: unknown[], key: string) => new Map((rows as Record<string, any>[]).map((r) => [r[key] as number, JSON.parse(r.data) as T]));
   const details = byId<ReleaseDetail>(releases.results, 'id');
@@ -220,8 +223,12 @@ export async function shelfData(name: string) {
     records: (records.results as { data: string }[]).map((r) => JSON.parse(r.data) as ShelfRecord)
       .sort((a, b) => b.added.localeCompare(a.added))
       .map((r) => shelfView(r, details.get(r.releaseId) ?? null, edits.get(r.instanceId) ?? {}, found.get(r.releaseId) ?? null)),
-    shelves: shelves.results as { id: number; name: string; discogs_username: string; shelf_name: string | null; count: number }[],
+    comments: comments.results as Comment[],
   };
+}
+
+export async function setShelfNote(userId: number, note: string | null) {
+  await (await db()).prepare('UPDATE users SET shelf_note = ? WHERE id = ?').bind(note, userId).run();
 }
 
 /** Everything a record page shows, in one round trip: owner, record, the owner's edits, cached details, match, comments. */
@@ -236,8 +243,7 @@ export async function recordData(name: string, instanceId: number) {
     q(`SELECT data FROM overrides WHERE user_id = ${owner} AND instance_id = ?2`),
     q(`SELECT data FROM releases WHERE id = ${releaseId}`),
     q(`SELECT data FROM matches WHERE release_id = ${releaseId}`),
-    q(`SELECT c.id, body, c.created_at, c.edited_at, c.parent_id, author_id, users.name, users.username, users.photo_url FROM comments c
-       JOIN users ON users.id = c.author_id WHERE shelf_id = ${owner} AND instance_id = ?2 ORDER BY c.id`),
+    q(`${commentsSql} WHERE shelf_id = ${owner} AND instance_id = ?2 ORDER BY c.id`),
   ]);
   const one = <T>(r: { results: unknown[] }) => (r.results[0] ? (JSON.parse((r.results[0] as { data: string }).data) as T) : null);
   return {
@@ -272,8 +278,10 @@ export async function directory(perShelf = 5) {
     ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY json_extract(data, '$.added') DESC) AS n FROM records) WHERE n <= ${perShelf}`;
   const d = await db();
   const [shelves, records, overrides] = await d.batch([
-    d.prepare(`SELECT users.id, users.name, users.username, users.discogs_username, users.shelf_name, COUNT(*) AS count,
-      MAX(json_extract(records.data, '$.added')) AS latest FROM users JOIN records ON records.user_id = users.id
+    d.prepare(`SELECT users.id, users.name, users.username, users.photo_url, users.discogs_username, users.shelf_name, users.shelf_note,
+      COUNT(*) AS count, MAX(json_extract(records.data, '$.added')) AS latest,
+      (SELECT COUNT(*) FROM comments WHERE shelf_id = users.id AND instance_id = ${SHELF_THREAD}) AS comments
+      FROM users JOIN records ON records.user_id = users.id
       WHERE discogs_username IS NOT NULL AND ${collectorSql('users.')} GROUP BY users.id ORDER BY latest DESC`),
     d.prepare(latest),
     d.prepare(`SELECT o.user_id, o.instance_id, o.data FROM overrides o JOIN (${latest}) l ON l.user_id = o.user_id AND l.instance_id = o.instance_id`),
@@ -286,7 +294,8 @@ export async function directory(perShelf = 5) {
     list.push(shelfView(r, null, edits.get(`${row.user_id}/${row.instance_id}`) ?? {}));
     byUser.set(row.user_id, list);
   }
-  return (shelves.results as { id: number; name: string; username: string | null; discogs_username: string; shelf_name: string | null; count: number }[])
+  return (shelves.results as { id: number; name: string; username: string | null; photo_url: string | null; discogs_username: string;
+    shelf_name: string | null; shelf_note: string | null; count: number; comments: number }[])
     .map((s) => ({ ...s, records: (byUser.get(s.id) ?? []).sort((a, b) => b.added.localeCompare(a.added)) }));
 }
 
