@@ -144,14 +144,12 @@ const steps = [
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div class="min-w-0">
             <h2 id="shelf-heading" class={cardTitle}>Your shelf</h2>
-            <p class={lead}>Live at <a href={shelfUrl} class={quiet}>music.ar-va.com{shelfUrl}</a>. Last updated from Discogs <span id="synced-ago">{ago(user.synced_at)}</span>.</p>
+            <p class={lead}>Live at <a href={shelfUrl} class={quiet}>music.ar-va.com{shelfUrl}</a>. Last updated from Discogs <span id="synced-ago">{ago(user.synced_at)}</span> · <button id="sync-now" type="button" class={`${quiet} disabled:opacity-60 disabled:no-underline disabled:cursor-wait`}>Update now</button></p>
           </div>
           <a href={shelfUrl} class="ctl shrink-0">View your shelf →</a>
         </div>
-        <div class="mt-5 flex flex-wrap items-center gap-3">
-          <button id="sync-now" type="button" class={primary}>Update now</button>
-          <p id="sync-status" class="text-sm text-zinc-600 dark:text-zinc-400" role="status" aria-live="polite">It also updates by itself when you open the site.</p>
-        </div>
+        <!-- Updating is mainly in the account menu ("Update from Discogs" opens settings?update); progress shows here. -->
+        <p id="sync-status" class="mt-3 text-sm text-zinc-600 dark:text-zinc-400" role="status" aria-live="polite">It also updates by itself when you open the site.</p>
 
         <form method="post" class="mt-7 flex flex-col gap-2">
           <input type="hidden" name="action" value="shelf-name" />
@@ -374,8 +372,10 @@ const steps = [
     }
   }
   syncButton?.addEventListener('click', sync);
-  if (new URLSearchParams(location.search).has('connected')) {
-    history.replaceState(null, '', '/settings');
+  // Just connected, or "Update from Discogs" in the account menu: start right away.
+  const params = new URLSearchParams(location.search);
+  if (params.has('connected') || params.has('update')) {
+    history.replaceState(null, '', `/settings${location.hash}`);
     sync();
   }
 </script>
