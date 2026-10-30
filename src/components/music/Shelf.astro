@@ -139,7 +139,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
                 <span class="sr-only">List view</span>
               </button>
             </div>
-            <!-- Labels under the records on the shelf (on by default; the list view always names them). -->
+            <!-- Labels under the records on the shelf (on by default; greyed out in the list view, which always names them). -->
             <button type="button" id="labels-toggle" aria-pressed="true" title="Labels" class="ctl !px-2 min-w-8 justify-center">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12.1V4.6a1.1 1.1 0 0 1 1.1-1.1h7.5l8.4 8.4a1.1 1.1 0 0 1 0 1.6l-6.9 6.9a1.1 1.1 0 0 1-1.6 0z" /><circle cx="8" cy="8" r="1.4" /></svg>
               <span class="sr-only">Show labels</span>
@@ -372,7 +372,11 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
   try { if (localStorage.getItem('records-labels') === 'off') setLabels(false); } catch {}
 
   function setView(view: string) {
-    if (labels) labels.hidden = view === 'list';
+    // Labels are a shelf-view thing: the toggle stays in place but greys out in the list view.
+    if (labels) {
+      (labels as HTMLButtonElement).disabled = view === 'list';
+      labels.title = view === 'list' ? 'Labels show in the shelf view' : 'Labels';
+    }
     if (grid) grid.hidden = view === 'list';
     if (list) list.hidden = view !== 'list';
     document.querySelectorAll<HTMLElement>('.view-btn').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.view === view)));
