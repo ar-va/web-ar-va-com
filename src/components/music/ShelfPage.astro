@@ -20,7 +20,7 @@ const thread = { shelfId: owner?.id ?? 0, instanceId: SHELF_THREAD };
       <>
         <Shelf owner={{ name: owner.name, slug: shelfSlug(owner), discogs_username: owner.discogs_username!, telegram: owner.username, note: owner.shelf_note }}
           records={records} commentCount={comments.length} canEdit={user?.id === owner.id} editingNote={editingNote} />
-        <section id="comments" class="mt-16 pt-10 border-t border-zinc-200 dark:border-zinc-800/80 max-w-3xl">
+        <section id="comments" class="mt-16 max-w-3xl">
           <CommentThread comments={comments} user={user} canDelete={(id) => canDeleteComment(thread, id, user)} error={error} draft={draft}>
             <LoginButton slot="login" href={loginHref(Astro.url, `${Astro.url.origin}${path}#comments`)} />
           </CommentThread>

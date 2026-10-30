@@ -21,7 +21,7 @@ if (owner && Astro.request.method === 'POST') {
   const id = Number(form.get('id'));
   if (action === 'note') {
     if (user.id === owner.id) await setShelfNote(owner.id, cleanShelfNote(String(form.get('note') ?? '')));
-    return Astro.redirect(path, 303);
+    return Astro.redirect(`${path}#note`, 303);
   }
   if (action === 'delete') {
     await deleteComment(thread, id, user);
