@@ -36,6 +36,9 @@
   --color-zinc-950: #15161c;
 
   --color-paper: #fdfdfb;
+  /* Status feedback only ("Synced", "Saved"), never Moss: --success in brand/arva-tokens.css. */
+  --color-success: #2f7d3a;
+  --color-success-light: #9ece6a;
   --color-night-surface: #1e2029;
   --color-moss: #237a50;
   --color-moss-light: #8bd8a9;
