@@ -15,6 +15,7 @@ interface Props {
   editingNote: boolean;
 }
 const { owner, records, commentCount, canEdit, editingNote } = Astro.props;
+const meta = 'inline-flex items-center gap-1.5 py-1 tabular-nums hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors';
 const base = `/${encodeURIComponent(owner.slug)}`;
 const latest = records[0];
 
@@ -39,32 +40,30 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
 ---
 
 <div id="shelf" class="font-normal">
-  <!-- Title, then one quiet meta line (like the hero's facts line): the record count jumps to the list, the owner's
-       Telegram, and Copy link. The same on phones and desktop (user, 2026-10-29: the pill cluster looked off). -->
   <!-- Wide screens: title + meta on the left, the collector's note beside them, so Latest stays near the top.
        Narrower: the note follows the meta line, three lines at most until "More". -->
   <div class="mb-2 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] lg:gap-x-14 lg:items-start">
   <div>
     <h1 class="text-3xl font-bold leading-tight text-zinc-900 dark:text-white">{owner.name}’s records</h1>
-    <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-500">
-      {records.length > 0 && <a href="#all-records" class="relative inline-flex items-center gap-1.5 py-1 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{records.length} record{records.length === 1 ? '' : 's'} <span aria-hidden="true">↓</span></a>}
-      {records.length > 0 && <span aria-hidden="true" class="text-zinc-300 dark:text-zinc-700">·</span>}
-      <a href="#comments" class="relative inline-flex items-center gap-1.5 py-1 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{commentCount} comment{commentCount === 1 ? '' : 's'} <span aria-hidden="true">↓</span></a>
-      {owner.telegram && (
-        <>
-          <span aria-hidden="true" class="text-zinc-300 dark:text-zinc-700">·</span>
-          <a href={`https://t.me/${owner.telegram}`} target="_blank" rel="noopener noreferrer" title={`${owner.name} on Telegram`} class="relative inline-flex items-center gap-1.5 py-1 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">
-            <svg class="w-3.5 h-3.5" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
-            @{owner.telegram}
-          </a>
-        </>
+    <!-- Icons and numbers, like the Telegram link: records (jumps to the list), comments (jumps to them), Telegram.
+         The page's link is copied from the icon by the breadcrumbs. -->
+    <p class="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-zinc-500">
+      {records.length > 0 && (
+        <a href="#all-records" title="Records: jump to the list" aria-label={`${records.length} record${records.length === 1 ? '' : 's'}, jump to the list`} class={meta}>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /><path d="M12 5.5a6.5 6.5 0 0 0-6.5 6.5" stroke-linecap="round" /></svg>
+          {records.length}
+        </a>
       )}
-      <span aria-hidden="true" class="text-zinc-300 dark:text-zinc-700">·</span>
-      <button type="button" id="share-shelf" data-url={`${Astro.url.origin}${base}`} title="Copy the link to this collection" class="relative inline-flex items-center gap-1.5 py-1 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" /></svg>
-        Copy link
-        <span id="share-done" role="status" class="glass pointer-events-none absolute left-1/2 top-full mt-2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium text-zinc-900 dark:text-white opacity-0 transition-opacity"></span>
-      </button>
+      <a href="#comments" title="Comments: jump to them" aria-label={`${commentCount} comment${commentCount === 1 ? '' : 's'}, jump to them`} class={meta}>
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 18.5V6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8z" /></svg>
+        {commentCount}
+      </a>
+      {owner.telegram && (
+        <a href={`https://t.me/${owner.telegram}`} target="_blank" rel="noopener noreferrer" title={`${owner.name} on Telegram`} class={meta}>
+          <svg class="w-4 h-4" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
+          @{owner.telegram}
+        </a>
+      )}
     </p>
     <p id="sync-progress" class="mt-1 text-xs text-zinc-500 empty:hidden" role="status" aria-live="polite"></p>
   </div>
@@ -289,19 +288,6 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
     }
   }
 
-  // Share: copy the collection's link and say so for a moment.
-  const share = document.getElementById('share-shelf');
-  const done = document.getElementById('share-done');
-  share?.addEventListener('click', async () => {
-    const url = share.dataset.url!;
-    let ok = true;
-    try { await navigator.clipboard.writeText(url); } catch { ok = false; window.prompt('Copy this link:', url); }
-    if (ok && done) {
-      done.textContent = 'Link copied';
-      done.classList.replace('opacity-0', 'opacity-100');
-      setTimeout(() => done.classList.replace('opacity-100', 'opacity-0'), 1600);
-    }
-  });
   const progress = document.getElementById('sync-progress');
   autoSync((message) => { if (progress) progress.textContent = message; });
 

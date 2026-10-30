@@ -15,7 +15,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 ---
 <Layout title="Record shelves - ARVA" description={`${plural(shelves.length, 'collector')} and ${plural(total, 'vinyl record')} on music.ar-va.com.`}>
   <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24">
-    <Breadcrumbs class="mb-8" items={[{ label: 'Shelves' }]} />
+    <Breadcrumbs class="mb-8" share items={[{ label: 'Shelves' }]} />
     <h1 class="text-3xl font-bold text-zinc-900 dark:text-white">Record shelves</h1>
     <p class="mt-3 max-w-xl text-zinc-600 dark:text-zinc-400">Vinyl collections, straight from their owners’ Discogs. Pick a shelf to browse every record, its tracklist and where to listen.</p>
     <p class="mt-2 text-sm text-zinc-500">{plural(shelves.length, 'collector')} · {plural(total, 'record')}</p>

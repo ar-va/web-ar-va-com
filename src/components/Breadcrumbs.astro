@@ -1,8 +1,9 @@
 ---
 // Where you are on music.ar-va.com, above each page's title: Shelves / Artur / Blackstar / Edit. The last item is the
-// current page (not a link). Long names are cut short; the full name is in the page title below anyway.
-interface Props { items: { label: string; href?: string }[]; class?: string }
-const { items, class: className = '' } = Astro.props;
+// current page (not a link). Long names are cut short; the full name is in the page title below anyway. `share` adds
+// a link icon after the trail that copies the page's address (on pages worth sharing: shelves, a shelf, an album).
+interface Props { items: { label: string; href?: string }[]; share?: boolean; class?: string }
+const { items, share = false, class: className = '' } = Astro.props;
 ---
 <nav aria-label="Breadcrumb" class={`text-sm ${className}`}>
   <ol class="flex flex-wrap items-center gap-x-2 gap-y-1 text-zinc-500">
@@ -14,5 +15,15 @@ const { items, class: className = '' } = Astro.props;
           : <span aria-current="page" class="truncate max-w-[14rem] text-zinc-700 dark:text-zinc-300">{item.label}</span>}
       </li>
     ))}
+    {share && (
+      <li class="flex items-center">
+        <button type="button" data-copy="page" title="Copy the link to this page" aria-label="Copy the link to this page"
+          class="w-7 h-7 -my-1 grid place-items-center rounded-full text-zinc-400 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 hover:bg-(--well) focus-visible:outline-2 focus-visible:outline-blue-violet-500 transition-colors">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" /></svg>
+        </button>
+      </li>
+    )}
   </ol>
 </nav>
+
+<script>import '../scripts/copy';</script>
