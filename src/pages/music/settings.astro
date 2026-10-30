@@ -61,6 +61,8 @@ const options = inviteOptions(user);
 const expiresText = (at: number | null) => (at ? `expires in ${timeLeft(at)}` : 'never expires');
 const usesText = (i: { max_uses: number | null; uses: number }) => (i.max_uses ? `${i.max_uses - i.uses} of ${i.max_uses} uses left` : 'no limit on uses');
 const connected = !!(user.discogs_username && user.discogs_token);
+// Updated within the hour: the time shows in the success green (status, so not Moss).
+const fresh = !!user.synced_at && Date.now() / 1000 - user.synced_at < 3600;
 const ago = (s: number | null) => {
   if (!s) return 'not yet';
   const min = Math.round((Date.now() / 1000 - s) / 60);
@@ -144,7 +146,7 @@ const steps = [
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div class="min-w-0">
             <h2 id="shelf-heading" class={cardTitle}>Your shelf</h2>
-            <p class={lead}>Live at <a href={shelfUrl} class={quiet}>music.ar-va.com{shelfUrl}</a>. Last updated from Discogs <span id="synced-ago">{ago(user.synced_at)}</span> · <button id="sync-now" type="button" class={`${quiet} disabled:opacity-60 disabled:no-underline disabled:cursor-wait`}>Update now</button></p>
+            <p class={lead}>Live at <a href={shelfUrl} class={quiet}>music.ar-va.com{shelfUrl}</a>. Last updated from Discogs <span id="synced-ago" class:list={[{ 'font-medium text-success dark:text-success-light': fresh }]}>{ago(user.synced_at)}</span> · <button id="sync-now" type="button" class={`${quiet} disabled:opacity-60 disabled:no-underline disabled:cursor-wait`}>Update now</button></p>
           </div>
           <a href={shelfUrl} class="ctl shrink-0">View your shelf →</a>
         </div>
@@ -364,7 +366,9 @@ const steps = [
     syncButton.disabled = true;
     try {
       await syncShelf(say);
-      document.getElementById('synced-ago')!.textContent = 'just now';
+      const ago = document.getElementById('synced-ago')!;
+      ago.textContent = 'just now';
+      ago.classList.add('font-medium', 'text-success', 'dark:text-success-light');
     } catch (e) {
       say(`The update stopped: ${(e as Error).message} If it says 401, open “Discogs connection” below and reconnect.`);
     } finally {
