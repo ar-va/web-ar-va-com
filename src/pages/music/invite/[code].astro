@@ -11,7 +11,7 @@ if (user && canCollect(user)) return Astro.redirect('/settings');
 if (user && (await acceptInvite(Astro.params.code!, user))) return Astro.redirect('/settings?welcome');
 ---
 <Layout title="Invitation - ARVA">
-  <div class="max-w-5xl mx-auto px-6 w-full flex-grow py-24 *:max-w-3xl">
+  <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
     <h1 class="text-2xl font-bold text-zinc-900 dark:text-white mb-2">Your own shelf</h1>
     {user ? (
       <p class="text-zinc-600 dark:text-zinc-400 max-w-md">This invitation has been used or has expired. Ask for a new link.</p>

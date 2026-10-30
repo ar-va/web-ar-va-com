@@ -76,11 +76,11 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
 ---
 <Layout title={record ? `${v.title} by ${v.artist} - ARVA` : 'Not found - ARVA'} description={record ? `${v.artist} – ${v.title}${v.released ? ` (${displayDate(v.released)})` : ''}, on ${owner!.name}’s shelf.` : undefined}>
   {!record || !owner ? (
-    <div class="max-w-5xl mx-auto px-6 w-full flex-grow py-24 *:max-w-3xl">
+    <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
       <p class="text-zinc-500">This record isn’t on the shelf (any more). <a href={shelfPath} class={link}>Back to the shelf →</a></p>
     </div>
   ) : (
-    <article class="max-w-5xl mx-auto px-6 w-full flex-grow py-24 *:max-w-3xl">
+    <article class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
       <!-- The top row and the hero use the whole frame; details, tracklist and comments keep the reading measure. -->
       <div class="flex items-center justify-between gap-4 !max-w-none">
         <a href={shelfPath} class="text-sm text-zinc-500 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">← {owner.name}’s records</a>
