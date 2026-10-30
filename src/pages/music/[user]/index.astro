@@ -3,7 +3,7 @@
 // shelf (forms post here and come back with a redirect, like record pages).
 export const prerender = false;
 import ShelfPage from '../../../components/music/ShelfPage.astro';
-import { cleanShelfNote, commentNotices, loginHref, musicPath } from '../../../music/lib';
+import { cleanNote, commentNotices, loginHref, musicPath } from '../../../music/lib';
 import { SHELF_THREAD, addComment, currentUser, deleteComment, editComment, setShelfNote, shelfData } from '../../../music/store';
 import { notify } from '../../../music/notify';
 
@@ -20,7 +20,7 @@ if (owner && Astro.request.method === 'POST') {
   const action = form.get('action');
   const id = Number(form.get('id'));
   if (action === 'note') {
-    if (user.id === owner.id) await setShelfNote(owner.id, cleanShelfNote(String(form.get('note') ?? '')));
+    if (user.id === owner.id) await setShelfNote(owner.id, cleanNote(String(form.get('note') ?? '')));
     return Astro.redirect(`${path}#note`, 303);
   }
   if (action === 'delete') {

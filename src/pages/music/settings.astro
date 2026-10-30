@@ -167,6 +167,17 @@ const steps = [
           </div>
         </form>
 
+        <div class="mt-7 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 px-4 py-3.5">
+          <div class="min-w-0">
+            <p class="font-medium text-zinc-900 dark:text-white">Download your collection</p>
+            <p class="text-sm text-zinc-500">A spreadsheet (CSV) of every record the way you set it up here, edits and notes included. Opens in Excel, Numbers or Google Sheets.</p>
+          </div>
+          <a href="/export.csv" download class="ctl shrink-0">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 19h14" /></svg>
+            Download CSV
+          </a>
+        </div>
+
         <div class="mt-7 flex flex-col gap-2">
           <details class={`group ${tip}`}>
             <summary class={summary}>How do I add a record? <Fragment set:html={chevron} /></summary>

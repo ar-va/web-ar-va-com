@@ -240,6 +240,11 @@ export const VINYL_SWATCHES: [string, string][] = [
   ['Purple', '#7f4bc4'], ['Navy', '#1e2f6b'], ['Blue', '#2f5fd0'], ['Sky blue', '#6bb3e8'], ['Forest green', '#1f5f3a'],
   ['Green', '#2f9e5b'], ['Yellow', '#efc531'], ['Gold', '#c9a43c'], ['Orange', '#ec7a2c'], ['Brown', '#7a4e2d'], ['Clear', CLEAR_VINYL],
 ];
+/** A disc colour in words: "Red", "Red, see-through", "a custom colour". */
+export function vinylName(hex: string) {
+  const name = VINYL_SWATCHES.find(([, h]) => h === (hex === CLEAR_VINYL ? hex : hex.slice(0, 7)))?.[0] ?? 'a custom colour';
+  return hex.length === 9 && hex !== CLEAR_VINYL ? `${name}, see-through` : name;
+}
 /** A disc colour safe for a `style` attribute: #rrggbb, or #rrggbbaa for a see-through pressing. */
 export const safeVinyl = (value: string | null | undefined) => (value && /^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(value) ? value.toLowerCase() : null);
 /** The edit form's pick: a swatch or the custom colour, made see-through when ticked (Clear already is). */
@@ -387,6 +392,9 @@ export function recordDefaults(r: ShelfRecord, d: ReleaseDetail | null, m: Match
     // Track titles the owner marked as favourites, one per line (matched by title, so reordering keeps them).
     favorites: '',
     cover: r.cover ?? '',
+    added: r.added.slice(0, 10),
+    // The owner's note about this record, shown under the album (at most NOTE_MAX characters).
+    note: '',
     vinyl: r.vinyl ?? VINYL_SWATCHES[0][1],
     ...Object.fromEntries(r.fields.map((f) => [`field:${f.name}`, f.value])),
   };
@@ -405,6 +413,8 @@ export function shelfView(r: ShelfRecord, d: ReleaseDetail | null, overrides: Ov
   return {
     ...r,
     cover: safeCoverUrl(v.cover) ?? r.cover,
+    // The owner's own "Added on" date wins over Discogs' (sorting, the Added filter, "Added to the shelf").
+    added: safeDay(v.added) ?? r.added,
     vinyl: safeVinyl(v.vinyl) ?? r.vinyl,
     artist: v.artist,
     title: v.title,
@@ -425,9 +435,23 @@ export function timeLeft(at: number, nowSec = Date.now() / 1000) {
   return `${n} ${unit}${n === 1 ? '' : 's'}`;
 }
 
-/** The note on a shelf: at most this many characters, no more than one empty line in a row. */
-export const SHELF_NOTE_MAX = 280;
-export const cleanShelfNote = (text: string) => text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim().slice(0, SHELF_NOTE_MAX) || null;
+/** The owner's notes, on a shelf and on each record: at most this many characters, no more than one empty line in a row. */
+export const NOTE_MAX = 280;
+export const cleanNote = (text: string) => text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim().slice(0, NOTE_MAX) || null;
+
+/** A date the owner typed for "Added on": a real YYYY-MM-DD day, or null. */
+export const safeDay = (value: string | null | undefined) =>
+  value && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`)) && new Date(`${value}T00:00:00Z`).toISOString().startsWith(value) ? value : null;
+
+/** CSV for spreadsheets: quoted where needed, a BOM so Excel reads UTF-8, and cells that would start a formula
+ *  (=, +, -, @) made plain text with a leading apostrophe. */
+export function toCsv(rows: string[][]) {
+  const cell = (v: string) => {
+    const s = /^[=+\-@\t\r]/.test(v) ? `'${v}` : v;
+    return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  return '\uFEFF' + rows.map((r) => r.map(cell).join(',')).join('\r\n') + '\r\n';
+}
 
 // ---- Comments: links and Telegram notifications ----
 

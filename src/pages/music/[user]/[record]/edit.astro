@@ -4,7 +4,7 @@
 export const prerender = false;
 import Layout from '../../../../layouts/Layout.astro';
 import Breadcrumbs from '../../../../components/Breadcrumbs.astro';
-import { CLEAR_VINYL, VINYL_SWATCHES, loginHref, musicPath, recordDefaults, safeCoverUrl, safeStreamingUrl, vinylPick, type Overrides } from '../../../../music/lib';
+import { CLEAR_VINYL, NOTE_MAX, VINYL_SWATCHES, cleanNote, loginHref, musicPath, recordDefaults, safeCoverUrl, safeDay, safeStreamingUrl, vinylName, vinylPick, type Overrides } from '../../../../music/lib';
 import { currentUser, recordData, saveOverrides } from '../../../../music/store';
 
 const instanceId = Number(Astro.params.record);
@@ -29,9 +29,14 @@ if (Astro.request.method === 'POST') {
   if (revert !== '*') {
     for (const key of Object.keys(defaults)) {
       const raw = key === 'vinyl' ? vinylPick(String(form.get('vinyl') ?? ''), String(form.get('vinylCustom') ?? ''), form.has('vinylSeeThrough')) : form.get(key);
-      const value = String(raw ?? '').replace(/\r\n/g, '\n').trim().slice(0, 5000);
+      const typed = String(raw ?? '').replace(/\r\n/g, '\n').trim().slice(0, 5000);
+      const value = key === 'note' ? cleanNote(typed) ?? '' : typed;
       if (!value || value === defaults[key] || key === revert) continue;
       if (key === 'cover' && !safeCoverUrl(value)) continue;
+      if (key === 'added' && !safeDay(value)) {
+        errors[key] = 'Pick a day from the calendar, or type it as YYYY-MM-DD.';
+        continue;
+      }
       if (key in links && !safeStreamingUrl(value, key as keyof typeof links)) {
         errors[key] = `Paste a link from ${links[key as keyof typeof links]} (https://…).`;
         continue;
@@ -62,10 +67,6 @@ const coverNote = !match
 // Vinyl: a swatch (or the custom colour) plus "see-through" (the colour's alpha); Clear is its own swatch.
 const vinylBase = values.vinyl === CLEAR_VINYL ? CLEAR_VINYL : values.vinyl.slice(0, 7);
 const vinylCustom = !VINYL_SWATCHES.some(([, hex]) => hex === vinylBase);
-const vinylName = (hex: string) => {
-  const name = VINYL_SWATCHES.find(([, h]) => h === (hex === CLEAR_VINYL ? hex : hex.slice(0, 7)))?.[0] ?? 'a custom colour';
-  return hex.length === 9 && hex !== CLEAR_VINYL ? `${name}, see-through` : name;
-};
 // A newly saved Apple Music link that isn't the matched album yet: the page fetches that album's cover and tracks.
 const albumId = (url?: string | null) => url?.match(/\/album\/(?:[^/?#]+\/)?(\d+)/)?.[1] ?? null;
 const autoRematch = Astro.request.method === 'GET' && !!overrides.apple && albumId(overrides.apple) !== albumId(match?.apple?.url);
@@ -74,11 +75,13 @@ const fields: { key: string; label: string; hint?: string; multiline?: boolean }
   { key: 'title', label: 'Album' },
   { key: 'released', label: 'Released', hint: 'When the album first came out. A date like 2016-01-08 is shown as “January 8, 2016”; anything else as typed.' },
   { key: 'vinylRelease', label: 'Vinyl release', hint: 'When this pressing came out.' },
+  { key: 'added', label: 'Added on', hint: 'When the record joined your collection: it orders your shelf and the “Added” filter. Discogs’ date by default; change it if that’s not right.' },
   { key: 'genre', label: 'Genre', hint: 'Comma-separated; used by the Genres filter on the shelf.' },
   { key: 'style', label: 'Style' },
   { key: 'label', label: 'Label' },
   { key: 'format', label: 'Format' },
   { key: 'country', label: 'Country' },
+  { key: 'note', label: 'Your note', hint: `Shown under the album, up to ${NOTE_MAX} characters: where you found it, why it matters.`, multiline: true },
   ...Object.keys(defaults).filter((k) => k.startsWith('field:')).map((k) => ({ key: k, label: k.slice(6), hint: 'One of your Discogs collection fields.', multiline: defaults[k].length > 60 })),
   { key: 'tracklist', label: 'Tracklist', hint: 'Position, title, length and, under “Links”, the track on each service. Positions like A1, B1 are shown as Side A, Side B.', multiline: true },
   ...Object.entries(links).map(([key, name]) => ({ key, label: `${name} link`, hint: defaults[key] ? `Found automatically. Paste another ${name} album link if it’s the wrong one.` : `The album on ${name}. Empty: the ${name} icon searches for it.` })),
@@ -87,8 +90,8 @@ const input = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-
 // The form in cards: what the record is, the owner's Discogs notes, the tracklist, where to listen.
 const byKey = Object.fromEntries(fields.map((f) => [f.key, f]));
 const groups = [
-  { id: 'album', title: 'Album', intro: null, keys: ['artist', 'title', 'released', 'vinylRelease', 'genre', 'style', 'label', 'format', 'country'], wide: ['artist', 'title'] },
-  { id: 'notes', title: 'Your notes', intro: 'Your Discogs collection fields.', keys: fields.filter((f) => f.key.startsWith('field:')).map((f) => f.key), wide: fields.filter((f) => f.key.startsWith('field:')).map((f) => f.key) },
+  { id: 'album', title: 'Album', intro: null, keys: ['artist', 'title', 'released', 'vinylRelease', 'added', 'genre', 'style', 'label', 'format', 'country'], wide: ['artist', 'title'] },
+  { id: 'notes', title: 'Your notes', intro: 'Your note shows under the album; the others are your Discogs collection fields.', keys: ['note', ...fields.filter((f) => f.key.startsWith('field:')).map((f) => f.key)], wide: ['note', ...fields.filter((f) => f.key.startsWith('field:')).map((f) => f.key)] },
   { id: 'tracklist', title: 'Tracklist', intro: 'Drag a row by its handle (or focus the handle and use ↑ ↓) to reorder; positions like A1, B2 renumber within their side.', keys: ['tracklist'], wide: ['tracklist'] },
   { id: 'listen', title: 'Listen', intro: null, keys: Object.keys(links), wide: Object.keys(links) },
 ].filter((g) => g.keys.length);
@@ -96,7 +99,7 @@ const card = 'rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white d
 const cardTitle = 'text-lg font-bold text-zinc-900 dark:text-white';
 const primary = 'inline-flex items-center h-8 px-4 rounded-full text-sm font-medium bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 transition-colors';
 const edited = Object.keys(overrides).length;
-const dated = new Set(['released', 'vinylRelease']);
+const dated = new Set(['released', 'vinylRelease', 'added']);
 ---
 <Layout title={`Edit ${values.title} - ARVA`}>
   <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
@@ -205,11 +208,11 @@ const dated = new Set(['released', 'vinylRelease']);
                     {changed && <button name="revert" value={key} class="text-xs font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Revert</button>}
                   </div>
                   {f.multiline
-                    ? <textarea id={`f-${key}`} name={key} rows={key === 'tracklist' ? Math.min(24, Math.max(6, values[key].split('\n').length + 1)) : 4} class={`${input} leading-relaxed ${key === 'tracklist' ? 'font-mono text-sm' : ''}`}>{values[key]}</textarea>
+                    ? <textarea id={`f-${key}`} name={key} maxlength={key === 'note' ? NOTE_MAX : undefined} rows={key === 'tracklist' ? Math.min(24, Math.max(6, values[key].split('\n').length + 1)) : 4} class={`${input} leading-relaxed ${key === 'tracklist' ? 'font-mono text-sm' : ''}`}>{values[key]}</textarea>
                     : dated.has(key)
                       ? (
                         <div class="flex gap-2">
-                          <input id={`f-${key}`} name={key} value={values[key]} class={input} placeholder="YYYY-MM-DD, or just a year" />
+                          <input id={`f-${key}`} name={key} value={values[key]} class={input} placeholder={key === 'added' ? 'YYYY-MM-DD' : 'YYYY-MM-DD, or just a year'} aria-invalid={errors[key] ? 'true' : undefined} />
                           <!-- A calendar for picking the date; typing stays possible (a year alone, "around 1975"). -->
                           <label class="relative shrink-0 grid place-items-center w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-blue-violet-500 hover:border-blue-violet-500 transition-colors cursor-pointer" title="Pick a date">
                             <svg class="w-5 h-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2" /><path d="M3.5 9.5h17M8 3v4M16 3v4" stroke-linecap="round" /></svg>

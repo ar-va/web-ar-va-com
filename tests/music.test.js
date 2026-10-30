@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import {
-  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, tracklistToText, textToTracklist, safeStreamingUrl,
+  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, toCsv, safeDay, tracklistToText, textToTracklist, safeStreamingUrl,
 } from '../src/music/lib.ts';
 
 const BOT = '123:test-bot-token';
@@ -304,4 +304,14 @@ test('popularTracks marks up to 3 tracks clearly ahead in YouTube plays; withMat
   assert.equal(withMatchLinks([t('Unlisted')], m)[0].links, undefined);
   // the owner's own link wins
   assert.equal(withMatchLinks([{ ...t('Sue'), links: { youtube: 'https://music.youtube.com/watch?v=mine' } }], m)[0].links.youtube, 'https://music.youtube.com/watch?v=mine');
+});
+
+test('toCsv quotes what needs it, neutralises formulas, starts with a BOM; safeDay takes real days only', () => {
+  const csv = toCsv([['Artist', 'Album'], ['Chet Baker', 'Sings, "Vol. 1"'], ['=HYPERLINK("x")', 'line\nbreak']]);
+  assert.ok(csv.startsWith('﻿'));
+  assert.equal(csv.slice(1), 'Artist,Album\r\nChet Baker,"Sings, ""Vol. 1"""\r\n"\'=HYPERLINK(""x"")","line\nbreak"\r\n');
+  assert.equal(safeDay('2024-02-29'), '2024-02-29');
+  assert.equal(safeDay('2023-02-29'), null);
+  assert.equal(safeDay('2024-13-01'), null);
+  assert.equal(safeDay('2024'), null);
 });
