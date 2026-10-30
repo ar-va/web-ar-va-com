@@ -4,7 +4,7 @@
 import { env } from 'cloudflare:workers';
 import { oauthHeader, safeCoverUrl, safeStreamingUrl, seal, signablePath, toReleaseDetail, toShelfRecord, unseal, type CollectionField, type Match, type ReleaseDetail } from './lib';
 import { spotifyMatch } from './spotify';
-import { youtubeAlbum, youtubeConfigured, youtubeMatch } from './youtube';
+import { youtubeMatch } from './youtube';
 import { db, type User } from './store';
 
 type Token = { key: string; secret: string };
@@ -130,33 +130,23 @@ export async function unmatchedReleases(user: User) {
 }
 
 /**
- * Matches made before YouTube was set up (or when its quota ran out) get their YouTube tracks here, newest records
- * first (the ones on top of the shelf), a few per call: run in the background when the owner's shelf asks for missing
- * details. Stops at the first failure (quota).
+ * Records matched before YouTube (or before YouTube Music's album pages were used, 2026-10-30: no `url` key) get their
+ * YouTube tracks and album page here, newest records first (the ones on top of the shelf), a few per call: run in the
+ * background when the owner's shelf asks for missing details. An album that fails is retried on a later visit.
  */
-export async function backfillYoutube(user: User, limit = 8) {
-  if (!youtubeConfigured()) return;
+export async function backfillYoutube(user: User, limit = 10) {
   const d = await db();
   const { results } = await d.prepare(
     `SELECT DISTINCT m.release_id AS releaseId, json_extract(r.data, '$.artist') AS artist, json_extract(r.data, '$.title') AS title
      FROM matches m JOIN records r ON json_extract(r.data, '$.releaseId') = m.release_id AND r.user_id = ?
-     WHERE json_type(m.data, '$.youtube') IS NULL ORDER BY json_extract(r.data, '$.added') DESC LIMIT ?`,
+     WHERE json_type(m.data, '$.youtube') IS NULL OR (json_type(m.data, '$.youtube') = 'object' AND json_type(m.data, '$.youtube.url') IS NULL)
+     ORDER BY json_extract(r.data, '$.added') DESC LIMIT ?`,
   ).bind(user.id, limit).all<{ releaseId: number; artist: string; title: string }>();
   for (const r of results) {
     const youtube = await youtubeMatch(r.artist, r.title);
-    if (youtube === undefined) return;
+    // Failed (YouTube Music blocked and the API out of quota): try that one again on a later visit, go on with the rest.
+    if (youtube === undefined) continue;
     await d.prepare(`UPDATE matches SET data = json_set(data, '$.youtube', json(?)) WHERE release_id = ?`).bind(JSON.stringify(youtube), r.releaseId).run();
-  }
-  // Tracks found before album pages were looked up (2026-10-30): just the album page (no API quota involved).
-  const { results: albums } = await d.prepare(
-    `SELECT DISTINCT m.release_id AS releaseId, json_extract(r.data, '$.artist') AS artist, json_extract(r.data, '$.title') AS title
-     FROM matches m JOIN records r ON json_extract(r.data, '$.releaseId') = m.release_id AND r.user_id = ?
-     WHERE json_type(m.data, '$.youtube') = 'object' AND json_type(m.data, '$.youtube.url') IS NULL ORDER BY json_extract(r.data, '$.added') DESC LIMIT 15`,
-  ).bind(user.id).all<{ releaseId: number; artist: string; title: string }>();
-  for (const r of albums) {
-    const url = await youtubeAlbum(r.artist, r.title);
-    if (url === undefined) return;
-    await d.prepare(`UPDATE matches SET data = json_set(data, '$.youtube.url', ?) WHERE release_id = ?`).bind(url, r.releaseId).run();
   }
 }
 

@@ -565,6 +565,12 @@ export function popularTracks(tracks: Track[], m: Match | null) {
   return new Map(songs.filter((s) => s.views > 0 && s.views >= 2 * middle).sort((a, b) => b.views - a.views).slice(0, 3).map((s) => [s.key, s.views]));
 }
 
+/** YouTube Music's "72M plays", "1.2K plays", "950 plays" → a number (0 when there's none). */
+export const playCount = (text: string) => {
+  const m = text.match(/([\d.,]+)\s*([KMB]?)\s*plays?\b/i);
+  return m ? Math.round(parseFloat(m[1].replace(/,/g, '')) * ({ '': 1, K: 1e3, M: 1e6, B: 1e9 } as Record<string, number>)[m[2].toUpperCase()]) : 0;
+};
+
 /** "4.5M", "820K", "950": plays, short. */
 export const shortCount = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : String(n));
 
