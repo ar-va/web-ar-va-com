@@ -41,7 +41,10 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
 <div id="shelf" class="font-normal">
   <!-- Title, then one quiet meta line (like the hero's facts line): the record count jumps to the list, the owner's
        Telegram, and Copy link. The same on phones and desktop (user, 2026-10-29: the pill cluster looked off). -->
-  <div class="mb-2">
+  <!-- Wide screens: title + meta on the left, the collector's note beside them, so Latest stays near the top.
+       Narrower: the note follows the meta line, three lines at most until "More". -->
+  <div class="mb-2 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] lg:gap-x-14 lg:items-start">
+  <div>
     <h1 class="text-3xl font-bold leading-tight text-zinc-900 dark:text-white">{owner.name}’s records</h1>
     <p class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-500">
       {records.length > 0 && <a href="#all-records" class="relative inline-flex items-center gap-1.5 py-1 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{records.length} record{records.length === 1 ? '' : 's'} <span aria-hidden="true">↓</span></a>}
@@ -66,9 +69,27 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
     <p id="sync-progress" class="mt-1 text-xs text-zinc-500 empty:hidden" role="status" aria-live="polite"></p>
   </div>
 
-  <!-- The collector's note about their collection (at most SHELF_NOTE_MAX characters). The owner edits it in place:
-       "Edit" opens ?note, which renders the form (no script needed). -->
-  {editingNote ? (
+  <!-- The collector's note (at most SHELF_NOTE_MAX characters), signed with their first name. The owner's "Edit" opens
+       ?note, a form rendered by the server below the header (no script needed). -->
+  {!editingNote && (owner.note ? (
+    <figure data-note class="mt-6 lg:mt-1 max-w-2xl">
+      <blockquote class="border-l-2 border-zinc-200 dark:border-zinc-800 pl-4">
+        <p data-note-text class="text-[0.9375rem] leading-relaxed text-zinc-600 dark:text-zinc-400 whitespace-pre-line break-words max-lg:line-clamp-3">{owner.note}</p>
+        <button type="button" data-note-more hidden class="mt-1 text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">More</button>
+      </blockquote>
+      <figcaption class="mt-2 pl-4 text-xs text-zinc-500">
+        — {owner.name.split(' ')[0]}, about the collection{canEdit && <> · <a href={`${base}?note`} class="font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Edit</a></>}
+      </figcaption>
+    </figure>
+  ) : canEdit && (
+    <a href={`${base}?note`} class="mt-6 lg:mt-1 flex items-start gap-3 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-500 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 hover:border-blue-violet-400 transition-colors">
+      <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.9 4.1a2.1 2.1 0 0 1 3 3L8.5 18.5 4 20l1.5-4.5z" /></svg>
+      Add a short note about your collection: what you collect, how it started. Visitors see it here.
+    </a>
+  ))}
+  </div>
+
+  {editingNote && (
     <form method="post" class="mt-6 max-w-2xl rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-4 sm:p-5">
       <input type="hidden" name="action" value="note" />
       <label for="shelf-note" class="block text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-2">About your collection</label>
@@ -83,20 +104,8 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
         </span>
       </div>
     </form>
-  ) : owner.note ? (
-    <div class="mt-6 max-w-2xl rounded-2xl bg-zinc-100/70 dark:bg-white/[0.04] px-5 py-4">
-      <div class="flex items-center justify-between gap-3 mb-1.5">
-        <span class="text-xs text-zinc-500">About the collection</span>
-        {canEdit && <a href={`${base}?note`} class="text-xs font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Edit</a>}
-      </div>
-      <p class="text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-line break-words">{owner.note}</p>
-    </div>
-  ) : canEdit && (
-    <a href={`${base}?note`} class="mt-6 max-w-2xl flex items-center gap-3 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 px-5 py-4 text-sm text-zinc-500 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 hover:border-blue-violet-400 transition-colors">
-      <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.9 4.1a2.1 2.1 0 0 1 3 3L8.5 18.5 4 20l1.5-4.5z" /></svg>
-      Add a short note about your collection: what you collect, how it started. Visitors see it here.
-    </a>
   )}
+
 
   {records.length === 0 ? (
     <p class="text-zinc-500 py-12">The shelf is still empty. Records appear here a few minutes after they’re added on Discogs.</p>
@@ -244,6 +253,14 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
   import { notesOnHover } from '../../scripts/notes';
   import { filtersCount, filtersPanel } from '../../scripts/filters-panel';
   notesOnHover('#records-shelf .shelf-record');
+
+  // The note is cut to three lines below the wide layout; "More" shows the rest (only when something was cut).
+  const noteText = document.querySelector<HTMLElement>('[data-note-text]');
+  const noteMore = document.querySelector<HTMLButtonElement>('[data-note-more]');
+  if (noteText && noteMore && noteText.scrollHeight > noteText.clientHeight + 1) {
+    noteMore.hidden = false;
+    noteMore.addEventListener('click', () => { noteText.classList.remove('max-lg:line-clamp-3'); noteMore.hidden = true; });
+  }
 
   // Records rise onto their shelf the first time they scroll into view (left to right along a row); whatever is
   // on screen when the page opens just shows. Rows in the list view the same. None with reduced motion.
