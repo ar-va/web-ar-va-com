@@ -38,6 +38,7 @@ Files are in `logo/`. Never redraw or retype the logo; always use the files. **L
 | `arva-stacked-ink-moss.svg` / `-washi-moss.svg` | Square spaces on screen, two-tone |
 | `arva-mark-small-ink-moss.svg` / `-washi-moss.svg` | Leaf alone below 32 px on screen (phone header) |
 | `favicon.svg` | Browser favicon: the Moss leaf, switching to mint on dark tabs |
+| `../avatars/arva-avatar-{full,wordmark,leaf}-{scheme}.svg` / `.png` | Profile pictures (1:1, 1024 px PNG): full logo (stacked), wordmark or leaf on a solid ground. Schemes: `paper` (Moss leaf, ink), `night` (mint, washi), `ink` (mint, paper), `moss` / `indigo` (all paper), `periwinkle` (all ink). Sized to keep the clear space and to survive a circle crop. Prefer `full-paper` / `full-night`; the leaf alone where the name shows next to it anyway |
 
 Rules:
 - Header logo height is 24–32 px on desktop and 22–26 px on mobile.
@@ -239,6 +240,8 @@ On the site, Archivo is applied to `h1`–`h4` in the CSS base layer, so an elem
 
 ## Changelog
 
+- **2026-10-30:** avatars: 18 square profile pictures in `brand/avatars/` (SVG + 1024 px PNG), generated from the
+  logo paths in the palette.
 - **2026-10-29:** colours refreshed. The first warm neutrals (Paper White, Washi, Bark, Night Ink) and the russet
   heritage colour read as burnt and brownish; the dark theme now follows Tokyo Night, the light theme is a cool
   paper, and the secondary is Moss (teal-green) instead of russet. Accent unchanged.
