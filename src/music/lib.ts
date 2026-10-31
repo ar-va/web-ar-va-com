@@ -356,13 +356,54 @@ export function withSideHeadings(tracks: Track[]): Track[] {
   return out;
 }
 
-const RESERVED = new Set(['settings', 'login', 'logout', 'auth', 'invite', 'api', 'music', 'edit', 'admin', 'about', 'blog', 'records', 'shelf', 'new']);
+// ---- Shelf addresses (music.ar-va.com/<name>): safety rules (2026-10-31) ----
 
-/** A shelf address (music.ar-va.com/<name>): 2–30 of a–z, 0–9 and "-", not at the ends; null if not allowed. */
-export function shelfName(value: string) {
+// The site's own pages and words it may use some day: never a shelf address.
+const RESERVED = new Set(('settings login logout auth invite invites api music edit admin about blog records record shelf shelves new '
+  + 'export brand favicon static assets help support contact terms privacy legal search explore discover home index www mail email '
+  + 'root system null undefined me you user users account accounts profile join signup register request requests feed rss sitemap '
+  + 'robots status health test demo').split(' '));
+// Authority and brand words: only the admin may use them, so nobody looks official or like a service's own shelf.
+// Short ones count only as a whole word between dashes ("team-x" no, "steamboat" yes).
+const AUTHORITY = ['admin', 'administrator', 'moderator', 'official', 'support', 'telegram', 'discogs', 'spotify', 'youtube'];
+const AUTHORITY_WORDS = ['mod', 'mods', 'staff', 'team', 'arva', 'apple', 'owner', 'verified'];
+// Slurs, hate and explicit words, checked with digits read as letters (n1gg3r) and dashes removed. Short or
+// ambiguous ones only as whole words, so ordinary names that contain them pass (raccoon, cocktail, grapefruit, torpedo).
+const BLOCKED = ['nigger', 'nigga', 'faggot', 'retard', 'tranny', 'wetback', 'kike', 'chink', 'beaner', 'nazi', 'hitler', 'siegheil',
+  'kkk', 'whitepower', 'fuck', 'shit', 'cunt', 'whore', 'slut', 'bitch', 'rapist', 'porn', 'pussy', 'paedo', 'molest', 'incest'];
+const BLOCKED_WORDS = ['fag', 'fags', 'dyke', 'spic', 'gook', 'coon', 'paki', 'dick', 'cock', 'cum', 'sex', 'xxx', 'anal', 'nude', 'nudes',
+  'rape', 'pedo', 'pedos', '1488'];
+const unleet = (s: string) => s.replace(/[0134578@$]/g, (c) => ({ '0': 'o', '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't', '8': 'b', '@': 'a', $: 's' })[c]!);
+
+/**
+ * A shelf address someone typed: the cleaned name, or why it can't be used. 3–30 of a–z, 0–9 and single dashes,
+ * starting and ending with a letter or digit, at least one letter; not a reserved word; for everyone but the admin,
+ * no authority or brand word; for everyone, nothing offensive. (Look-alikes of other shelves: setShelfName.)
+ */
+export function checkShelfName(value: string, admin = false): { name: string } | { error: string } {
   const v = value.trim().toLowerCase();
-  return /^[a-z0-9](?:[a-z0-9-]{0,28}[a-z0-9])?$/.test(v) && v.length >= 2 && !RESERVED.has(v) ? v : null;
+  if (!/^[a-z0-9](?:[a-z0-9-]{1,28}[a-z0-9])$/.test(v) || v.includes('--')) {
+    return { error: 'Use 3–30 letters, numbers and single dashes, starting and ending with a letter or number.' };
+  }
+  if (!/[a-z]/.test(v)) return { error: 'Use at least one letter (numbers alone look like record links).' };
+  if (RESERVED.has(v)) return { error: `“${v}” is one of the site’s own addresses. Please pick another.` };
+  const words = v.split('-');
+  const joined = unleet(v.replace(/-/g, ''));
+  const loose = words.map(unleet);
+  if (BLOCKED.some((w) => joined.includes(w)) || BLOCKED_WORDS.some((w) => words.includes(w) || loose.includes(w))) {
+    return { error: 'That address isn’t allowed here. Please pick another.' };
+  }
+  if (!admin && (AUTHORITY.some((w) => joined.includes(w)) || AUTHORITY_WORDS.some((w) => words.includes(w) || loose.includes(w)))) {
+    return { error: 'Words like “admin”, “official”, “support” or a service’s name can’t be used, so nobody is mistaken for the site or a service.' };
+  }
+  return { name: v };
 }
+
+/** The shelf address if it passes checkShelfName (for an ordinary collector), else null. */
+export const shelfName = (value: string) => { const r = checkShelfName(value); return 'name' in r ? r.name : null; };
+
+/** How an address is compared with others for look-alikes: no dashes, underscores or dots ("a-r-a-b-o-r" = "arabor"). */
+export const nameKey = (s: string) => s.toLowerCase().replace(/[-_.]/g, '');
 
 /** Only Spotify / Apple Music / YouTube (Music) pages are accepted as album links. */
 export function safeStreamingUrl(value: string, service: 'spotify' | 'apple' | 'youtube') {
