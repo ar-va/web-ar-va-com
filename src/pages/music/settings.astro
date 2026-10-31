@@ -5,7 +5,7 @@
 export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
-import { escapeHtml, loginHref, shelfName, timeLeft } from '../../music/lib';
+import { checkShelfName, escapeHtml, loginHref, timeLeft } from '../../music/lib';
 import { notify } from '../../music/notify';
 import { OPEN_INVITES_MAX, adminTelegramId, inviteOptions, requestShelf, canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, listInvites, removeShelf, revokeInvite, setShelfName, setWho, shelfSlug } from '../../music/store';
 
@@ -45,11 +45,10 @@ if (Astro.request.method === 'POST') {
     return Astro.redirect(result === 'collector' ? '/settings' : `/settings?${result === 'sent' ? 'requested' : 'asked'}#shelf`, 303);
   }
   if (action === 'shelf-name' && canCollect(user)) {
+    // Empty = back to the Discogs name; otherwise the safety rules (checkShelfName), then taken / look-alike (setShelfName).
     const raw = String(form.get('shelf_name') ?? '').trim();
-    const name = raw ? shelfName(raw) : null;
-    const problem = raw && !name
-      ? 'Use 2–30 letters, numbers or dashes (not at the start or end); some words like “settings” are reserved.'
-      : await setShelfName(user, name);
+    const checked = raw ? checkShelfName(raw, isAdmin(user)) : { name: null };
+    const problem = 'error' in checked ? checked.error : await setShelfName(user, checked.name);
     return Astro.redirect(problem ? `/settings?error=${encodeURIComponent(problem)}` : '/settings?named', 303);
   }
   if (action === 'disconnect' && user.discogs_username) {
@@ -177,11 +176,12 @@ const steps = [
         <form method="post" class="mt-7 flex flex-col gap-2">
           <input type="hidden" name="action" value="shelf-name" />
           <label for="shelf-name" class="font-medium text-zinc-900 dark:text-white">Your shelf’s address</label>
-          <p class="text-sm text-zinc-500">The link you share. music.ar-va.com/{user.discogs_username} keeps working too; leave it empty to use your Discogs name.</p>
+          <p class="text-sm text-zinc-500">The link you share: 3–30 letters, numbers and dashes. music.ar-va.com/{user.discogs_username} keeps working too; leave it empty to use your Discogs name.</p>
           <div class="mt-1 flex flex-wrap items-center gap-2">
             <span class="flex items-center rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 focus-within:border-blue-violet-500 transition-colors">
               <span class="pl-3.5 text-sm text-zinc-500">music.ar-va.com/</span>
               <input id="shelf-name" name="shelf_name" value={user.shelf_name ?? ''} placeholder={user.discogs_username ?? ''} maxlength="30" autocomplete="off" spellcheck="false"
+                pattern="[a-zA-Z0-9](?:[a-zA-Z0-9\-]{1,28}[a-zA-Z0-9])" title="3–30 letters, numbers and single dashes"
                 class="w-40 bg-transparent py-2 pr-3.5 text-sm text-zinc-900 dark:text-white focus:outline-none" />
             </span>
             <button class="ctl">Save</button>

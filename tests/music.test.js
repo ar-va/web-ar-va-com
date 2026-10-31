@@ -202,8 +202,8 @@ test('tracklist: per-track links, side headings, shelf names', async () => {
   assert.deepEqual(withSideHeadings(own), own);
 
   assert.equal(shelfName(' Artur '), 'artur');
-  assert.equal(shelfName('a-r'), 'a-r');
-  for (const bad of ['a', '-ab', 'ab-', 'settings', 'Login', 'a b', 'ar.va', 'x'.repeat(31), '']) assert.equal(shelfName(bad), null, bad);
+  assert.equal(shelfName('a-r-t'), 'a-r-t');
+  for (const bad of ['ab', '-ab', 'ab-', 'a--b', '1234', 'settings', 'Login', 'export', 'a b', 'ar.va', 'x'.repeat(31), '']) assert.equal(shelfName(bad), null, bad);
 });
 
 test('comment links and notifications', async () => {
@@ -340,4 +340,20 @@ test('telegramAuthUrl: Telegram login window for the bot domain, back to /auth/d
   const back = new URL(u.searchParams.get('return_to'));
   assert.equal(back.origin + back.pathname, 'https://ar-va.com/auth/done');
   assert.equal(back.searchParams.get('next'), 'https://music.ar-va.com/invite/abc?accept');
+});
+
+test('checkShelfName: offensive and look-official names refused, ordinary ones fine', async () => {
+  const { checkShelfName, nameKey } = await import('../src/music/lib.ts');
+  const ok = (v, admin = false) => 'name' in checkShelfName(v, admin);
+  // offensive, also with digits for letters or split by dashes
+  for (const v of ['n1gg3r-fan', 'fu-ck-this', 'sh1t', 'nazi-records', 'kkk-vinyl', 'rape', 'jazz-1488', 'big-dick']) assert.equal(ok(v), false, v);
+  // ordinary names that merely contain a short word
+  for (const v of ['raccoon-records', 'cocktail-jazz', 'grapefruit', 'torpedo', 'classic-rock', 'steamboat', 'marvaldo', 'sussex-sounds']) assert.equal(ok(v), true, v);
+  // authority / brand words: the admin only
+  for (const v of ['arva', 'official-arva', 'admin-records', 'discogs-shelf', 'team-vinyl', 'spotify']) {
+    assert.equal(ok(v), false, v);
+    assert.equal(ok(v, true), true, `admin ${v}`);
+  }
+  assert.equal(ok('settings', true), false); // the site's own addresses: not even for the admin
+  assert.equal(nameKey('A-r_a.b-o-r'), 'arabor');
 });

@@ -2,7 +2,7 @@
 import { env } from 'cloudflare:workers';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { AstroCookies } from 'astro';
-import { randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
+import { nameKey, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
 
 // Tables are created lazily (no migration step in the deploy).
 const SCHEMA = [
@@ -247,8 +247,10 @@ export async function shelfOwner(name: string) {
 /** Sets (or clears, with null) the user's shelf address. Returns an error message or null. */
 export async function setShelfName(user: User, name: string | null) {
   const d = await db();
-  if (name && await d.prepare('SELECT id FROM users WHERE id != ?2 AND (shelf_name = ?1 OR discogs_username = ?1)').bind(name, user.id).first()) {
-    return 'That address is already taken.';
+  // Taken, or a look-alike of another collector's address or Discogs name (dashes, underscores and dots ignored).
+  const key = (col: string) => `replace(replace(replace(lower(${col}), '-', ''), '_', ''), '.', '')`;
+  if (name && await d.prepare(`SELECT id FROM users WHERE id != ?2 AND (${key('shelf_name')} = ?1 OR ${key('discogs_username')} = ?1)`).bind(nameKey(name), user.id).first()) {
+    return 'That address is taken, or too close to another collector’s. Please pick another.';
   }
   await d.prepare('UPDATE users SET shelf_name = ? WHERE id = ?').bind(name, user.id).run();
   return null;
