@@ -144,7 +144,7 @@ export function toShelfRecord(item: any, fields: CollectionField[]): ShelfRecord
     vinyl: vinylColor((b.formats ?? []).map((f: any) => f.text ?? '').join(', ')),
     genres: b.genres ?? [],
     styles: b.styles ?? [],
-    added: item.date_added,
+    added: item.date_added ?? '', // other collectors' Discogs records may come without one
     rating: item.rating || 0,
     fields: fields
       .filter((f) => f.public && byId.get(f.id))
@@ -438,6 +438,15 @@ export function timeLeft(at: number, nowSec = Date.now() / 1000) {
 /** The owner's notes, on a shelf and on each record: at most this many characters, no more than one empty line in a row. */
 export const NOTE_MAX = 280;
 export const cleanNote = (text: string) => text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim().slice(0, NOTE_MAX) || null;
+
+/**
+ * When a record's "Added on" date is missing, for the owner to fill in on the album page: Discogs gave none, or its day
+ * is shared by this many of the shelf's records (a bulk-entry day: when they went into Discogs, not when they were
+ * bought). Settled once the owner picks a day or confirms Discogs' (`addedChecked`).
+ */
+export const BULK_DAY = 5;
+export const addedNeedsDate = (discogsAdded: string, overrides: Overrides, sameDay: number) =>
+  !overrides.added && !overrides.addedChecked && (!discogsAdded || sameDay >= BULK_DAY);
 
 /** A date the owner typed for "Added on": a real YYYY-MM-DD day, or null. */
 export const safeDay = (value: string | null | undefined) =>

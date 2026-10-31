@@ -36,6 +36,9 @@
   --color-zinc-950: #15161c;
 
   --color-paper: #fdfdfb;
+  /* Notices that need the owner (a missing "Added on" date): --warning in brand/arva-tokens.css. */
+  --color-warning: #8a5d10;
+  --color-warning-light: #e0af68;
   --color-night-surface: #1e2029;
   --color-moss: #237a50;
   --color-moss-light: #8bd8a9;
