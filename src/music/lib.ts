@@ -187,6 +187,15 @@ export function formatReleased(value: string | null) {
   return new Date(Date.UTC(y, m - 1, d || 1)).toLocaleDateString('en-US', opts);
 }
 
+/**
+ * Telegram's own login window, for pages off the bot's domain (music.ar-va.com: Telegram's button there says "Bot
+ * domain invalid", checked 2026-10-31). It runs as ar-va.com and comes back to ar-va.com/auth/done, which logs the
+ * person in for both sites; `next` is where to go after (the page that opened it, which notices the login itself).
+ */
+export const telegramAuthUrl = (botId: string, siteOrigin: string, next: string) =>
+  `https://oauth.telegram.org/auth?bot_id=${encodeURIComponent(botId)}&origin=${encodeURIComponent(siteOrigin)}&request_access=write` +
+  `&return_to=${encodeURIComponent(`${siteOrigin}/auth/done?next=${encodeURIComponent(next)}`)}`;
+
 /** The site both hosts share: "ar-va.com" for music.ar-va.com and ar-va.com (locally "localhost"). */
 export const siteDomain = (hostname: string) => hostname.replace(/^music\./, '');
 
@@ -477,7 +486,7 @@ export function linkify(text: string): ({ text: string } | { url: string })[] {
   return parts;
 }
 
-const escapeHtml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+export const escapeHtml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
 /**
  * Telegram messages for a new comment: the person replied to hears "replied to your comment", the owner of the

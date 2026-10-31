@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import {
-  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, toCsv, safeDay, playCount, addedNeedsDate, tracklistToText, textToTracklist, safeStreamingUrl,
+  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, toCsv, safeDay, playCount, addedNeedsDate, telegramAuthUrl, tracklistToText, textToTracklist, safeStreamingUrl,
 } from '../src/music/lib.ts';
 
 const BOT = '123:test-bot-token';
@@ -330,4 +330,14 @@ test('addedNeedsDate: missing or bulk-entry Discogs dates ask, until set or conf
   assert.equal(addedNeedsDate('2026-01-25T10:00:00-08:00', {}, 4), false);
   assert.equal(addedNeedsDate('2026-01-25T10:00:00-08:00', { added: '2019-05-01' }, 24), false);
   assert.equal(addedNeedsDate('', { addedChecked: '1' }, 1), false);
+});
+
+test('telegramAuthUrl: Telegram login window for the bot domain, back to /auth/done with where to go next', () => {
+  const u = new URL(telegramAuthUrl('123', 'https://ar-va.com', 'https://music.ar-va.com/invite/abc?accept'));
+  assert.equal(u.origin + u.pathname, 'https://oauth.telegram.org/auth');
+  assert.equal(u.searchParams.get('bot_id'), '123');
+  assert.equal(u.searchParams.get('origin'), 'https://ar-va.com');
+  const back = new URL(u.searchParams.get('return_to'));
+  assert.equal(back.origin + back.pathname, 'https://ar-va.com/auth/done');
+  assert.equal(back.searchParams.get('next'), 'https://music.ar-va.com/invite/abc?accept');
 });

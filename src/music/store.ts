@@ -8,7 +8,7 @@ import { randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, t
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, username TEXT, photo_url TEXT,
     is_collector INTEGER NOT NULL DEFAULT 0, discogs_username TEXT UNIQUE COLLATE NOCASE, discogs_token TEXT,
-    synced_at INTEGER, sync_error TEXT, created_at INTEGER NOT NULL, shelf_name TEXT, shelf_note TEXT, invited_by INTEGER)`,
+    synced_at INTEGER, sync_error TEXT, created_at INTEGER NOT NULL, shelf_name TEXT, shelf_note TEXT, invited_by INTEGER, shelf_request_at INTEGER)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS users_shelf_name ON users (shelf_name)`,
   `CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires_at INTEGER NOT NULL)`,
   // Invite links since 2026-10-30, like Discord's: expiry and number of uses chosen by the creator; the code is kept
@@ -33,7 +33,7 @@ const SCHEMA = [
 // runs once per Worker instance alongside the schema; "duplicate column" errors are ignored. (shelf_name, parent_id,
 // edited_at got a one-off manual ALTER in October 2026.) The one-use `invites` table was replaced by invite_links on
 // 2026-10-30 and is dropped (user: fine to delete the old links).
-const COLUMNS = ['ALTER TABLE users ADD COLUMN shelf_note TEXT', 'ALTER TABLE users ADD COLUMN invited_by INTEGER', 'DROP TABLE IF EXISTS invites'];
+const COLUMNS = ['ALTER TABLE users ADD COLUMN shelf_note TEXT', 'ALTER TABLE users ADD COLUMN invited_by INTEGER', 'ALTER TABLE users ADD COLUMN shelf_request_at INTEGER', 'DROP TABLE IF EXISTS invites'];
 
 let ready: Promise<unknown> | null = null;
 
@@ -75,6 +75,8 @@ export interface User {
   shelf_note: string | null;
   /** Who invited them (invite links since 2026-10-30). */
   invited_by: number | null;
+  /** When they last asked for a shelf ("Request a shelf"), unix seconds. */
+  shelf_request_at: number | null;
 }
 
 /** The address a shelf is linked under: the chosen name, else the Discogs username. */
@@ -137,6 +139,16 @@ export async function endSession(cookies: AstroCookies, hostname: string) {
 }
 
 // ---- Invites ----
+
+/** "Request a shelf": once a week at most; the admin gets a Telegram message (settings sends it). */
+export const REQUEST_EVERY_DAYS = 7;
+export async function requestShelf(user: User): Promise<'sent' | 'recent' | 'collector'> {
+  if (canCollect(user)) return 'collector';
+  const res = await (await db()).prepare('UPDATE users SET shelf_request_at = ?1 WHERE id = ?2 AND (shelf_request_at IS NULL OR shelf_request_at < ?3)')
+    .bind(now(), user.id, now() - REQUEST_EVERY_DAYS * 86400).run();
+  return res.meta.changes ? 'sent' : 'recent';
+}
+export const adminTelegramId = () => Number(env.ADMIN_TELEGRAM_ID) || 0;
 
 /** Discord's choices (0 = never / no limit). "Never" and "No limit" are the admin's only (user, 2026-10-30). */
 export const INVITE_EXPIRY = [['30 minutes', 1800], ['1 hour', 3600], ['6 hours', 21600], ['12 hours', 43200], ['1 day', 86400], ['7 days', 604800], ['Never', 0]] as const;
