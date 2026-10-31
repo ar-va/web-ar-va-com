@@ -308,13 +308,16 @@ export async function recordData(name: string, instanceId: number) {
   const releaseId = `(SELECT json_extract(data, '$.releaseId') FROM records WHERE user_id = ${owner} AND instance_id = ?2)`;
   const d = await db();
   const q = (sql: string) => d.prepare(sql).bind(name, instanceId);
-  const [users, records, overrides, releases, matches, comments] = await d.batch([
+  const [users, records, overrides, releases, matches, comments, sameDay] = await d.batch([
     d.prepare(`SELECT * FROM users WHERE ${ownerWhere()}`).bind(name),
     q(`SELECT data FROM records WHERE user_id = ${owner} AND instance_id = ?2`),
     q(`SELECT data FROM overrides WHERE user_id = ${owner} AND instance_id = ?2`),
     q(`SELECT data FROM releases WHERE id = ${releaseId}`),
     q(`SELECT data FROM matches WHERE release_id = ${releaseId}`),
     q(`${commentsSql} WHERE shelf_id = ${owner} AND instance_id = ?2 ORDER BY c.id`),
+    // How many of the owner's records Discogs dated on this record's day (a bulk-entry day means the date is doubtful).
+    q(`SELECT COUNT(*) AS n FROM records WHERE user_id = ${owner} AND substr(json_extract(data, '$.added'), 1, 10) =
+       (SELECT substr(json_extract(data, '$.added'), 1, 10) FROM records WHERE user_id = ${owner} AND instance_id = ?2)`),
   ]);
   const one = <T>(r: { results: unknown[] }) => (r.results[0] ? (JSON.parse((r.results[0] as { data: string }).data) as T) : null);
   return {
@@ -324,6 +327,7 @@ export async function recordData(name: string, instanceId: number) {
     detail: one<ReleaseDetail>(releases),
     match: one<Match>(matches),
     comments: comments.results as Comment[],
+    sameDay: (sameDay.results[0] as { n: number } | undefined)?.n ?? 0,
   };
 }
 

@@ -18,10 +18,14 @@ interface Props {
   href?: string;
   /** Total running time, e.g. "42 min" (the album page). */
   runtime?: string;
+  /** For the owner when the "Added on" date is missing (addedNeedsDate): an icon that opens a popup to set it.
+   *  `sameDay` = how many of their records Discogs dated on this record's day. */
+  askAdded?: { sameDay: number };
 }
-const { record, artist, title, released, genres, trackCount, links, href, runtime } = Astro.props;
+const { record, artist, title, released, genres, trackCount, links, href, runtime, askAdded } = Astro.props;
 // Discogs' added date is in the collector's local time: show that day, not the UTC one.
-const added = `Added to the shelf ${formatReleased(record.added.slice(0, 10))}`;
+const day = record.added.slice(0, 10);
+const added = day ? `Added to the shelf ${formatReleased(day)}` : 'Added date unknown';
 const facts = [
   released && displayDate(released),
   genres.join(', '),
@@ -33,7 +37,9 @@ const Heading = href ? 'h2' : 'h1';
 const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-violet-500 transition-opacity';
 ---
 <!-- The rolled-out disc sticks out 38 % of the sleeve's width: the gap leaves it ~60 px clear of the text. -->
-<div class="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-36">
+<!-- overflow-x: clip, with the page's 24 px side margin to spare: the light behind the rolled-out record reaches 120 % of
+     the cover past it, which made phones scroll sideways (446 px on a 390 px screen); now it fades out at the screen edge. -->
+<div class="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-36 overflow-x-clip [overflow-clip-margin:1.5rem]">
   <div data-turntable class="relative shrink-0 self-start sm:self-auto">
     <!-- Shelf: the cover links too (for mouse and touch; keyboards and screen readers use the title's link). -->
     {href ? (
@@ -53,7 +59,37 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       {href ? <a href={href} class="hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{title}</a> : <button type="button" data-copy title="Click to copy" class={copy}>{title}</button>}
     </Heading>
     {facts.length > 0 && <p class="mt-4 text-zinc-700 dark:text-zinc-300">{facts.join(' · ')}</p>}
-    <p class="mt-1 text-sm text-zinc-500">{added}</p>
+    <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-500">
+      {added}
+      {askAdded && (
+        <button type="button" popovertarget="added-ask" title="Set the day this record joined your collection"
+          class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-warning dark:text-warning-light bg-warning/10 dark:bg-warning-light/15 hover:bg-warning/20 dark:hover:bg-warning-light/25 focus-visible:outline-2 focus-visible:outline-blue-violet-500 transition-colors">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5h.01" /></svg>{day ? 'Is this date right?' : 'Add the date'}
+        </button>
+      )}
+    </p>
+    {askAdded && (
+      <div id="added-ask" popover class="m-auto w-[min(27rem,calc(100vw-2rem))] rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-6 text-left text-zinc-700 dark:text-zinc-300 shadow-2xl backdrop:bg-black/40">
+        <h2 class="text-lg font-bold text-zinc-900 dark:text-white">When did this record join your collection?</h2>
+        <p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          {day ? `Discogs says ${formatReleased(day)}, the same day as ${askAdded.sameDay - 1} other records of yours: probably when they went into Discogs, not when you got them.` : 'Discogs didn’t give a date for this one.'}
+          {' '}Your date orders the shelf and the “Added” filter.
+        </p>
+        <form method="post" class="mt-5 flex flex-col gap-4">
+          <label class="flex flex-col gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+            Added on
+            <input type="date" name="added" value={day || undefined} max={new Date().toISOString().slice(0, 10)} required onclick="try { this.showPicker() } catch {}"
+              class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2.5 font-normal text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 [color-scheme:light] dark:[color-scheme:dark]" />
+          </label>
+          <!-- Save comes first in the form, so Enter saves; the row shows it rightmost. -->
+          <div class="flex flex-row-reverse flex-wrap justify-start gap-2">
+            <button name="action" value="added" class="inline-flex items-center h-8 px-4 rounded-full text-sm font-medium bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 transition-colors">Save date</button>
+            {day && <button name="action" value="added-ok" formnovalidate class="ctl">Discogs’ date is right</button>}
+            <button type="button" popovertarget="added-ask" popovertargetaction="hide" class="ctl">Later</button>
+          </div>
+        </form>
+      </div>
+    )}
     <div class="mt-6">
       <Listen buttons query={`${artist} ${title}`} label={`Listen to ${title}`} links={links} />
     </div>

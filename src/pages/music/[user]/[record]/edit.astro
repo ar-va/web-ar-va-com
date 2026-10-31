@@ -44,6 +44,8 @@ if (Astro.request.method === 'POST') {
       next[key] = value;
     }
   }
+  // "Discogs’ date is right" (from the album page's popup) isn't a field here: keep it unless the date was changed.
+  if (revert !== '*' && overrides.addedChecked && !next.added) next.addedChecked = overrides.addedChecked;
   if (Object.keys(errors).length === 0) {
     await saveOverrides(owner!.id, instanceId, next);
     return Astro.redirect(`${recordPath}/edit?saved`, 303);

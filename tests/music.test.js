@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import {
-  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, toCsv, safeDay, playCount, tracklistToText, textToTracklist, safeStreamingUrl,
+  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, musicPath, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, toCsv, safeDay, playCount, addedNeedsDate, tracklistToText, textToTracklist, safeStreamingUrl,
 } from '../src/music/lib.ts';
 
 const BOT = '123:test-bot-token';
@@ -322,4 +322,12 @@ test('playCount reads YouTube Music play counts', () => {
   assert.equal(playCount('950 plays'), 950);
   assert.equal(playCount('1,234 plays'), 1234);
   assert.equal(playCount(''), 0);
+});
+
+test('addedNeedsDate: missing or bulk-entry Discogs dates ask, until set or confirmed', () => {
+  assert.equal(addedNeedsDate('', {}, 1), true);
+  assert.equal(addedNeedsDate('2026-01-25T10:00:00-08:00', {}, 24), true);
+  assert.equal(addedNeedsDate('2026-01-25T10:00:00-08:00', {}, 4), false);
+  assert.equal(addedNeedsDate('2026-01-25T10:00:00-08:00', { added: '2019-05-01' }, 24), false);
+  assert.equal(addedNeedsDate('', { addedChecked: '1' }, 1), false);
 });
