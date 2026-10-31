@@ -87,7 +87,9 @@ html { scrollbar-gutter: stable; }
 .shelf {
   --gap: 1.5rem;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  /* At least two records a row on any phone: the 8.5rem minimum shrinks to half the row when a phone is narrower
+     (360 px Androids, larger text settings) instead of dropping to one record per row. */
+  grid-template-columns: repeat(auto-fill, minmax(min(8.5rem, calc((100% - var(--gap)) / 2)), 1fr));
   column-gap: var(--gap);
   /* room above each row for a pulled-up record and its light, without reaching the ledge of the row above; with
      labels on (.labelled), the label's height more */
