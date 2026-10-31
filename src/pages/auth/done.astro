@@ -1,0 +1,50 @@
+---
+// ar-va.com/auth/done: where Telegram's login window lands when a page off the bot's domain opened it (telegramAuthUrl
+// in lib.ts; the invite page and the login page's "Request a shelf"). Telegram adds #tgAuthResult=<base64 JSON>; this
+// page hands it to /auth/telegram (which checks Telegram's signature and logs the person in on both sites) and comes
+// back here with ?ok. Then it closes the window: the page that opened it notices the new login by itself. Opened as a
+// tab instead (phones, blocked windows), it goes on to `next`.
+export const prerender = false;
+import Layout from '../../layouts/Layout.astro';
+---
+<Layout title="Logging in - ARVA">
+  <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-24 pb-24 grid place-items-center text-center">
+    <div>
+      <p id="done-status" class="text-lg text-zinc-700 dark:text-zinc-300" role="status">Logging you in…</p>
+      <p id="done-close" hidden class="mt-2 text-sm text-zinc-500">You can close this window.</p>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  const next = params.get('next') ?? '';
+  // Only on to this site's own pages.
+  const safeNext = (() => {
+    try {
+      const u = new URL(next);
+      return u.protocol === 'https:' && (u.hostname === 'ar-va.com' || u.hostname.endsWith('.ar-va.com')) || u.hostname.endsWith('localhost') ? u.href : null;
+    } catch { return null; }
+  })();
+  const status = document.getElementById('done-status')!;
+  const result = location.hash.match(/tgAuthResult=([A-Za-z0-9\-_=]*)$/)?.[1];
+
+  if (result) {
+    // Telegram's answer: base64url JSON of the same signed fields its login button sends.
+    let data: Record<string, string | number> = {};
+    try { data = JSON.parse(atob(result.replace(/-/g, '+').replace(/_/g, '/'))); } catch {}
+    const query = new URLSearchParams(Object.entries(data).map(([k, v]) => [k, String(v)]));
+    query.set('return', `/auth/done?ok${safeNext ? `&next=${encodeURIComponent(safeNext)}` : ''}`);
+    location.replace(`/auth/telegram?${query}`);
+  } else if (params.has('ok')) {
+    status.textContent = 'You’re logged in.';
+    // A window opened by the page behind it closes; a tab (phones, blocked windows) goes on instead.
+    window.close();
+    setTimeout(() => {
+      if (safeNext) location.replace(safeNext);
+      else document.getElementById('done-close')!.hidden = false;
+    }, 400);
+  } else {
+    status.textContent = 'Telegram didn’t finish the login. Close this window and try again.';
+  }
+</script>

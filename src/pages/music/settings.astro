@@ -5,8 +5,9 @@
 export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
-import { loginHref, shelfName, timeLeft } from '../../music/lib';
-import { OPEN_INVITES_MAX, inviteOptions, canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, listInvites, removeShelf, revokeInvite, setShelfName, setWho, shelfSlug } from '../../music/store';
+import { escapeHtml, loginHref, shelfName, timeLeft } from '../../music/lib';
+import { notify } from '../../music/notify';
+import { OPEN_INVITES_MAX, adminTelegramId, inviteOptions, requestShelf, canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, listInvites, removeShelf, revokeInvite, setShelfName, setWho, shelfSlug } from '../../music/store';
 
 const user = await currentUser(Astro.cookies);
 if (!user) return Astro.redirect(loginHref(Astro.url));
@@ -15,6 +16,22 @@ let notice: string | null = Astro.url.searchParams.get('error');
 if (Astro.url.searchParams.has('welcome')) notice = 'Welcome, you’re in! One step left: connect Discogs below and your shelf fills itself.';
 if (Astro.url.searchParams.has('named')) notice = 'Your shelf address is saved.';
 if (Astro.url.searchParams.has('invited')) notice = 'New invite link ready: copy it below and send it to a friend.';
+// "Request a shelf" (the button below, or the login page's, which logs in and comes back with ?request): the admin
+// gets a Telegram message with who is asking; once a week at most.
+const askForShelf = async () => {
+  const result = await requestShelf(user);
+  if (result === 'sent') {
+    const who = `${escapeHtml(user.name)}${user.username ? ` (@${escapeHtml(user.username)})` : ''}`;
+    Astro.locals.cfContext.waitUntil(notify([{ chatId: adminTelegramId(), text: `<b>${who}</b> would like a shelf on music.ar-va.com.\n\nSend them an invite link: <a href="https://${Astro.url.host}/settings#invites">your invites</a>` }]));
+  }
+  return result;
+};
+if (Astro.url.searchParams.has('request') && Astro.request.method === 'GET') {
+  const result = await askForShelf();
+  if (result !== 'collector') return Astro.redirect(`/settings?${result === 'sent' ? 'requested' : 'asked'}#shelf`);
+}
+if (Astro.url.searchParams.has('requested')) notice = 'Request sent! You’ll get an invite link on Telegram.';
+if (Astro.url.searchParams.has('asked')) notice = 'You’ve already asked this week: your invite link will come on Telegram.';
 
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
@@ -22,6 +39,10 @@ if (Astro.request.method === 'POST') {
   if (action === 'logout') {
     await endSession(Astro.cookies, Astro.url.hostname);
     return Astro.redirect(`${Astro.url.protocol}//${Astro.url.host.replace(/^music\./, '')}/`, 303);
+  }
+  if (action === 'request-shelf') {
+    const result = await askForShelf();
+    return Astro.redirect(result === 'collector' ? '/settings' : `/settings?${result === 'sent' ? 'requested' : 'asked'}#shelf`, 303);
   }
   if (action === 'shelf-name' && canCollect(user)) {
     const raw = String(form.get('shelf_name') ?? '').trim();
@@ -200,10 +221,15 @@ const steps = [
     )}
 
     {!canCollect(user) && (
-      <section class={card} aria-labelledby="shelf-heading">
+      <section id="shelf" class={`${card} scroll-mt-6`} aria-labelledby="shelf-heading">
         <h2 id="shelf-heading" class={cardTitle}>Want a shelf of your own?</h2>
-        <p class={lead}>Shelves are by invitation. If a friend already has one, ask them for an invite link: they make it in their settings in a second. Until then, you can comment on every shelf and record.</p>
-        <a href="/" class="mt-5 ctl">Browse the shelves →</a>
+        <p class={lead}>Shelves are by invitation. Ask for one here, or ask a friend who has a shelf: they make an invite link in their settings in a second. Until then, you can comment on every shelf and record.</p>
+        <div class="mt-5 flex flex-wrap items-center gap-3">
+          {user.shelf_request_at && Date.now() / 1000 - user.shelf_request_at < 7 * 86400
+            ? <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Requested: your invite link will come on Telegram.</p>
+            : <form method="post"><input type="hidden" name="action" value="request-shelf" /><button class={primary}>Request a shelf</button></form>}
+          <a href="/" class="ctl">Browse the shelves →</a>
+        </div>
       </section>
     )}
 
