@@ -13,6 +13,12 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.hostname.startsWith('music.')) {
+      // The one login page is on ar-va.com (the Telegram bot's domain): music.ar-va.com/login goes there, back here after.
+      if (url.pathname === '/login' || url.pathname === '/login/') {
+        const login = new URL(`${url.protocol}//${siteDomain(url.host)}/login`);
+        login.searchParams.set('return', url.searchParams.get('return') ?? `${url.origin}/`);
+        return Response.redirect(login.href, 302);
+      }
       if (!SHARED.test(url.pathname)) {
         url.pathname = '/music' + url.pathname;
         request = new Request(url, request);
