@@ -86,11 +86,13 @@ export const isAdmin = (u: User | null) => !!u && !!env.ADMIN_TELEGRAM_ID && Str
 export const canCollect = (u: User | null) => !!u && (u.is_collector === 1 || isAdmin(u));
 
 export async function saveTelegramUser(u: { id: number; name: string; username: string | null; photoUrl: string | null }) {
-  await (await db()).prepare(
+  return (await (await db()).prepare(
     `INSERT INTO users (id, name, username, photo_url, created_at) VALUES (?1, ?2, ?3, ?4, ?5)
-     ON CONFLICT (id) DO UPDATE SET name = ?2, username = ?3, photo_url = ?4`,
-  ).bind(u.id, u.name, u.username, u.photoUrl, now()).run();
+     ON CONFLICT (id) DO UPDATE SET name = ?2, username = ?3, photo_url = ?4 RETURNING *`,
+  ).bind(u.id, u.name, u.username, u.photoUrl, now()).first<User>())!;
 }
+
+export const userById = async (id: number) => (await db()).prepare('SELECT * FROM users WHERE id = ?').bind(id).first<User>();
 
 // ---- Sessions (the cookie holds a random token; D1 holds only its hash) ----
 
@@ -213,6 +215,20 @@ export async function inviteDetails(code: string) {
   return (await db()).prepare(`SELECT users.id, users.name, users.photo_url, users.shelf_name, users.discogs_username, l.expires_at, l.max_uses - l.uses AS uses_left
     FROM invite_links l JOIN users ON users.id = l.created_by WHERE l.id = ?2 AND ${activeLink('l.')}`).bind(now(), await sha256(code))
     .first<{ id: number; name: string; photo_url: string | null; shelf_name: string | null; discogs_username: string | null; expires_at: number | null; uses_left: number | null }>();
+}
+
+// The invite someone opened while logged out: whichever way they then log in (Telegram's window, the login page, the
+// login page's other buttons), the Telegram callback accepts it, so the invite isn't lost on the way.
+const INVITE_COOKIE = 'invite';
+export const rememberInvite = (cookies: AstroCookies, code: string, hostname: string) =>
+  cookies.set(INVITE_COOKIE, code, { ...cookieOptions(hostname), maxAge: 86400, httpOnly: true });
+export const hasPendingInvite = (cookies: AstroCookies) => cookies.has(INVITE_COOKIE);
+/** Accepts the remembered invite (once) for someone who isn't a collector yet; true if that made them one. */
+export async function acceptPendingInvite(cookies: AstroCookies, user: User, hostname: string) {
+  const code = cookies.get(INVITE_COOKIE)?.value;
+  if (!code) return false;
+  cookies.delete(INVITE_COOKIE, { path: '/', domain: cookieDomain(hostname) });
+  return !canCollect(user) && (await acceptInvite(code, user));
 }
 
 /** Makes the user a collector (and remembers who invited them) if the link still works. Returns false otherwise. */
