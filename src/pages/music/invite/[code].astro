@@ -7,17 +7,18 @@ export const prerender = false;
 import Layout from '../../../layouts/Layout.astro';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import Cover from '../../../components/music/Cover.astro';
-import { acceptInvite, canCollect, currentUser, directory, inviteDetails, shelfSlug } from '../../../music/store';
+import { acceptInvite, canCollect, currentUser, directory, inviteDetails, rememberInvite, shelfSlug } from '../../../music/store';
 import { env } from 'cloudflare:workers';
 import { loginHref, musicPath, siteDomain, telegramAuthUrl, timeLeft } from '../../../music/lib';
 
 const code = Astro.params.code!;
 const user = await currentUser(Astro.cookies);
-if (user && canCollect(user)) return Astro.redirect('/settings');
+if (user && canCollect(user)) return Astro.redirect(Astro.url.searchParams.has('accept') ? '/settings?welcome' : '/settings');
 if (user && (Astro.request.method === 'POST' || Astro.url.searchParams.has('accept')) && (await acceptInvite(code, user))) {
   return Astro.redirect('/settings?welcome', 303);
 }
 const [invite, shelves] = await Promise.all([inviteDetails(code), directory(4)]);
+if (invite && !user) rememberInvite(Astro.cookies, code, Astro.url.hostname);
 
 const first = (name: string) => name.split(' ')[0];
 const theirs = invite ? shelves.find((s) => s.id === invite.id) : undefined;

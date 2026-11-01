@@ -6,7 +6,7 @@ export const prerender = false;
 import Layout from '../../layouts/Layout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import { checkShelfName, escapeHtml, loginHref, timeLeft } from '../../music/lib';
-import { notify } from '../../music/notify';
+import { connectWebhook, notify } from '../../music/notify';
 import { OPEN_INVITES_MAX, adminTelegramId, inviteOptions, requestShelf, canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, listInvites, removeShelf, revokeInvite, setShelfName, setWho, shelfSlug } from '../../music/store';
 
 const user = await currentUser(Astro.cookies);
@@ -21,8 +21,14 @@ if (Astro.url.searchParams.has('invited')) notice = 'New invite link ready: copy
 const askForShelf = async () => {
   const result = await requestShelf(user);
   if (result === 'sent') {
-    const who = `${escapeHtml(user.name)}${user.username ? ` (@${escapeHtml(user.username)})` : ''}`;
-    Astro.locals.cfContext.waitUntil(notify([{ chatId: adminTelegramId(), text: `<b>${who}</b> would like a shelf on music.ar-va.com.\n\nSend them an invite link: <a href="https://${Astro.url.host}/settings#invites">your invites</a>` }]));
+    // People without a @username can still be opened from the message (tg://user), and the button has the bot send
+    // them an invite link (api/telegram.ts).
+    const who = `<a href="tg://user?id=${user.id}">${escapeHtml(user.name)}</a>${user.username ? ` (@${escapeHtml(user.username)})` : ''}`;
+    Astro.locals.cfContext.waitUntil(connectWebhook(Astro.url.host).then(() => notify([{
+      chatId: adminTelegramId(),
+      text: `<b>${who}</b> would like a shelf on music.ar-va.com.\n\nThe button sends them an invite link from this bot (works once, for 7 days).`,
+      buttons: [[{ text: 'Send an invite link', callback_data: `invite:${user.id}` }]],
+    }])));
   }
   return result;
 };
