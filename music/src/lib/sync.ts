@@ -147,7 +147,9 @@ type Unmatched = { releaseId: number; artist: string; title: string };
 async function syncMatches(list: Unmatched[], progress: (message: string) => void, prefix = '') {
   for (const [i, r] of list.entries()) {
     progress(`${prefix}Finding albums on streaming services: ${i + 1} of ${list.length}…`);
-    const apple = await appleMatch(r.artist, r.title).catch(() => null);
+    // Apple failing (slow-down, network) isn't "not on Apple Music": leave the album for the next visit.
+    const apple = await appleMatch(r.artist, r.title).catch(() => undefined);
+    if (apple === undefined) continue;
     await site({ action: 'match', releaseId: r.releaseId, apple });
   }
 }

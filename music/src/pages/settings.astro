@@ -12,7 +12,7 @@ import { OPEN_INVITES_MAX, adminTelegramId, inviteOptions, requestShelf, canColl
 const user = await currentUser(Astro.cookies);
 if (!user) return Astro.redirect(loginHref(Astro.url));
 
-let notice: string | null = Astro.url.searchParams.get('error');
+let notice: string | null = null;
 if (Astro.url.searchParams.has('welcome')) notice = 'Welcome, you’re in! One step left: connect Discogs below and your shelf fills itself.';
 if (Astro.url.searchParams.has('named')) notice = 'Your shelf address is saved.';
 if (Astro.url.searchParams.has('invited')) notice = 'New invite link ready: copy it below and send it to a friend.';
@@ -55,7 +55,10 @@ if (Astro.request.method === 'POST') {
     const raw = String(form.get('shelf_name') ?? '').trim();
     const checked = raw ? checkShelfName(raw, isAdmin(user)) : { name: null };
     const problem = 'error' in checked ? checked.error : await setShelfName(user, checked.name);
-    return Astro.redirect(problem ? `/settings?error=${encodeURIComponent(problem)}` : '/settings?named', 303);
+    // Shown right here, not passed through the address (a link could otherwise put any text on this page).
+    if (!problem) return Astro.redirect('/settings?named', 303);
+    notice = problem;
+    Astro.response.status = 400;
   }
   if (action === 'disconnect' && user.discogs_username) {
     await removeShelf(user.id, false);
