@@ -23,7 +23,7 @@ ARVA makes modern digital products with the patience of a century-old craft work
 
 ## 2. Logo
 
-Files are in `logo/`. Never redraw or retype the logo; always use the files. **Logo colours follow the palette:** the ink files use `--text` (light) and the washi files use `--text` (dark); they change only when the brand palette changes, and then every file changes together (see the changelog). Never recolour a single file for one page.
+Files are in `logo/`. Never redraw or retype the logo; always use the files. **The wordmark** (since 2026-11-20) is "ARVA" in Brygada 1918 Medium (500), letter-spaced 0.23 em, outlined to paths (no font needed), its capitals centred on the leaf; it ties the logo to the sites' titles. It was a wide geometric sans in the style of Archivo before. **Logo colours follow the palette:** the ink files use `--text` (light) and the washi files use `--text` (dark); they change only when the brand palette changes, and then every file changes together (see the changelog). Never recolour a single file for one page.
 
 | File | Use |
 |---|---|
@@ -137,7 +137,7 @@ Other colour rules:
 Rules:
 - Use only these three families. Never Inter, Roboto, Arial, Montserrat, Poppins, or another serif.
 - All three cover Cyrillic, so Russian titles and text render in the brand fonts. Check Cyrillic before adding any font.
-- Brygada 1918 is for titles only, never paragraphs or controls. The wordmark keeps its own drawn letters (Archivo, 125% width) inside the logo files; don't set text in Archivo.
+- Brygada 1918 is for titles only, never paragraphs or controls. The wordmark is Brygada too, but as drawn shapes in the logo files: never retype "ARVA" in live text as a logo.
 - Brygada's small letters are shorter than Plex Sans' (x-height 0.47 vs 0.52 of the size), so a title looks smaller than text at the same size: never set the two side by side at one size.
 - Sentence case everywhere: headings, buttons and labels. No all-caps labels, and no label above a heading that only repeats it.
 - Paragraphs are at most 68 characters wide (`--measure`). Use `text-wrap: balance` on headings and `pretty` on paragraphs.
@@ -222,7 +222,7 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 ## 9. Never
 
 - Bright grass or eco greens (the only green is `--kashiwa`), rainbow, or neon colours, or gradient backgrounds.
-- Any font other than Brygada 1918, IBM Plex Sans, IBM Plex Mono, and Plex Sans JP (Archivo lives on only inside the logo files).
+- Any font other than Brygada 1918, IBM Plex Sans, IBM Plex Mono, and Plex Sans JP.
 - The logo redrawn, in a circle, in Kikyō, or recoloured outside a palette change.
 - Kashiwa on interactive elements.
 - White text on the dark-theme Kikyō.
@@ -244,6 +244,11 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 ---
 
 ## Changelog
+
+- **2026-11-20 (logo):** the wordmark redrawn in Brygada 1918 500, letter-spaced 0.23 em ("Open capitals", chosen by the
+  owner from three options), outlined with opentype.js from Google Fonts' static Medium; the leaf unchanged. All
+  horizontal, stacked and wordmark files and the full / wordmark avatars (SVG + PNG) regenerated; the indigo and
+  periwinkle avatar grounds moved to Kikyō (#4A45B5 / #979CF7). The horizontal logo is now 87 px wide at 24 px tall.
 
 - **2026-11-20 (colour names and roles):** the three colours are named Kikyō (act), Kashiwa (belong) and Bengara
   (notice), with one job each ("Kikyō, Kashiwa and Bengara" in section 3; replaces "Purple or Moss"). Tokens renamed
