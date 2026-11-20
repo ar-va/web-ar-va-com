@@ -7,6 +7,8 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   output: 'server',
   adapter: cloudflare({ imageService: 'passthrough' }),
+  // Logos and favicons, the same files on every ARVA site.
+  publicDir: '../shared/public',
   session: false,
   // Refuses form posts from other sites (403).
   security: { checkOrigin: true },
