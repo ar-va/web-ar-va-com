@@ -63,8 +63,9 @@ The pattern: trust collapses when people discover a gap between what an anonymou
    in the FAQ, folded.
 3. **Verifiable, not just claimed** (integrity). The code is public and deployed from GitHub; the page links to it
    ("Read the code" under the box), and the FAQ says how.
-4. **Name the one honest limit** (two-sided messages are more credible than absolute ones). Under the text box: "Your
-   words are the only thing that can give you away." The old line "Nobody will know it was you, including me"
+4. **Name the one honest limit** (two-sided messages are more credible than absolute ones). In the FAQ ("Can Artur find
+   out who I am?"): your words are the one thing that can give you away. (Under the text box until 2026-11-20, removed
+   there at the user's request.) The old line "Nobody will know it was you, including me"
    overclaimed and was removed.
 5. **Risk at the moment of choice** (control paradox). Two small pills under the box, "Only me" (default) and "Ask to
    make it public"; picking the second shows what publishing means: I read it first, then anyone can read it word for
@@ -96,6 +97,7 @@ back to the writer); claims the code doesn't back up.
 
 The front page reads like a search page: the title, one line to write in (Send inside it; it grows only when the text
 needs more lines), one sentence on what reaches me and where the answer comes back, then the answered messages in a
-masonry grid. As soon as someone starts (focus or text, in CSS, so it works without script) two small lines appear under
-the box: who can see it (5, its risk shown when "public" is picked), then the honest limit (4) and the helpline (10).
+masonry grid. As soon as someone starts (focus or text, in CSS, so it works without script) who can see it appears under
+the box (5, its risk shown when "public" is picked). The helpline (10) is always shown, under "How anonymous is this? ·
+Read the code"; the honest limit (4) is in the FAQ.
 
