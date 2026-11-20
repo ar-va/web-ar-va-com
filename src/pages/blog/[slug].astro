@@ -58,9 +58,9 @@ const displayTitle = h1 ? h1.text : 'Untitled Post';
                 prose-p:leading-relaxed prose-p:my-5 prose-p:font-normal prose-li:font-normal prose-blockquote:font-normal
                 prose-headings:font-bold prose-headings:tracking-tight prose-headings:mt-0 prose-headings:mb-0
                 prose-img:mx-auto prose-img:rounded-xl prose-img:border prose-img:border-zinc-200 dark:prose-img:border-zinc-800 prose-img:max-h-[550px] prose-img:w-auto prose-img:object-contain prose-img:shadow-sm
-                prose-a:text-blue-violet-600 dark:prose-a:text-blue-violet-400 prose-a:decoration-blue-violet-500/30 hover:prose-a:decoration-blue-violet-500 prose-a:underline-offset-4 prose-a:font-medium transition-colors
-                prose-blockquote:border-l-2 prose-blockquote:border-l-blue-violet-500 prose-blockquote:not-italic
-                prose-code:text-blue-violet-600 dark:prose-code:text-blue-violet-400 prose-code:bg-zinc-100 dark:prose-code:bg-zinc-800/70 prose-code:px-1.5 prose-code:py-0.5 prose-code:font-medium prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none
+                prose-a:text-kikyo-600 dark:prose-a:text-kikyo-400 prose-a:decoration-kikyo-500/30 hover:prose-a:decoration-kikyo-500 prose-a:underline-offset-4 prose-a:font-medium transition-colors
+                prose-blockquote:border-l-2 prose-blockquote:border-l-kikyo-500 prose-blockquote:not-italic
+                prose-code:text-kikyo-600 dark:prose-code:text-kikyo-400 prose-code:bg-zinc-100 dark:prose-code:bg-zinc-800/70 prose-code:px-1.5 prose-code:py-0.5 prose-code:font-medium prose-code:rounded-md prose-code:before:content-none prose-code:after:content-none
                 prose-hr:border-zinc-200 dark:prose-hr:border-zinc-800 prose-hr:my-8">
       <Content />
     </div>
@@ -114,7 +114,7 @@ const displayTitle = h1 ? h1.text : 'Untitled Post';
             const remainingHtml = html.substring(firstLineEnd).replace(/^(<br>|\n)/, '').trim();
 
             // Inject the styled component
-            firstP.innerHTML = `<strong class="block text-blue-violet-600 dark:text-blue-violet-400 mb-2 font-bold text-sm flex items-center gap-2">
+            firstP.innerHTML = `<strong class="block text-kikyo-600 dark:text-kikyo-400 mb-2 font-bold text-sm flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
                 </svg>

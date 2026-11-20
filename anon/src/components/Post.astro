@@ -32,8 +32,8 @@ const icons: Record<string, string> = {
   lock: 'M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z',
 };
 const act = 'inline-flex items-center gap-1.5 rounded-full px-2.5 h-8 text-sm text-zinc-500 hover:bg-(--well) hover:text-zinc-900 dark:hover:text-white transition-colors';
-const field = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/40 px-3.5 py-2.5 text-zinc-900 dark:text-white leading-relaxed focus:outline-none focus:border-blue-violet-500 transition-colors resize-none [field-sizing:content] min-h-11';
-const primary = 'shrink-0 bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 text-sm font-semibold px-4 h-9 rounded-full hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors';
+const field = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/40 px-3.5 py-2.5 text-zinc-900 dark:text-white leading-relaxed focus:outline-none focus:border-kikyo-500 transition-colors resize-none [field-sizing:content] min-h-11';
+const primary = 'shrink-0 bg-kikyo-600 dark:bg-kikyo-400 text-white dark:text-zinc-950 text-sm font-semibold px-4 h-9 rounded-full hover:bg-kikyo-700 dark:hover:bg-kikyo-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors';
 ---
 <article id={`m-${m.id}`} class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-5 sm:p-6" data-post>
   <header class="flex items-center gap-3">
@@ -47,7 +47,7 @@ const primary = 'shrink-0 bg-blue-violet-600 dark:bg-blue-violet-400 text-white 
       </p>
     </div>
     <div class="flex shrink-0 items-center gap-2">
-      {fresh && <span class="rounded-full bg-brick-tint px-2 py-0.5 text-xs font-medium text-brick dark:bg-brick-tint-dark dark:text-brick-light">New</span>}
+      {fresh && <span class="rounded-full bg-bengara-tint px-2 py-0.5 text-xs font-medium text-bengara dark:bg-bengara-tint-dark dark:text-bengara-light">New</span>}
       {badge && (
         <span class:list={['inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium', badge.on ? 'bg-(--on-bg) text-(--on-text)' : 'bg-(--well) text-zinc-600 dark:text-zinc-300']}>
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={icons[badge.icon]} /></svg>
@@ -58,7 +58,7 @@ const primary = 'shrink-0 bg-blue-violet-600 dark:bg-blue-violet-400 text-white 
   </header>
 
   <p class="mt-4 text-[17px] leading-relaxed text-zinc-800 dark:text-zinc-200 whitespace-pre-line break-words">{words(m.body).map((part) => 'url' in part
-    ? <a href={part.url} target="_blank" rel="nofollow ugc noopener noreferrer" class="text-blue-violet-600 dark:text-blue-violet-400 underline decoration-blue-violet-500/30 hover:decoration-blue-violet-500 underline-offset-4 break-all">{part.url}</a>
+    ? <a href={part.url} target="_blank" rel="nofollow ugc noopener noreferrer" class="text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/30 hover:decoration-kikyo-500 underline-offset-4 break-all">{part.url}</a>
     : part.text)}</p>
 
   <!-- When on the left, what you can do on the right. -->
@@ -69,7 +69,7 @@ const primary = 'shrink-0 bg-blue-violet-600 dark:bg-blue-violet-400 text-white 
           {!!m.wants_public && !published && (
             <form method="post" action="/admin">
               <input type="hidden" name="action" value="publish" /><input type="hidden" name="id" value={m.id} /><input type="hidden" name="back" value={back} />
-              <button class={`${act} !text-blue-violet-600 dark:!text-blue-violet-400 hover:!bg-(--on-bg)`}>
+              <button class={`${act} !text-kikyo-600 dark:!text-kikyo-400 hover:!bg-(--on-bg)`}>
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
                 Publish
               </button>
@@ -88,7 +88,7 @@ const primary = 'shrink-0 bg-blue-violet-600 dark:bg-blue-violet-400 text-white 
         </>
       )}
       {!admin && (published
-        ? <a href={permalink} class="px-2.5 text-xs text-zinc-500 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{mode === 'owner' ? 'See it on the public page' : `Published ${day(m.published_at!)}`}</a>
+        ? <a href={permalink} class="px-2.5 text-xs text-zinc-500 hover:text-kikyo-600 dark:hover:text-kikyo-400 transition-colors">{mode === 'owner' ? 'See it on the public page' : `Published ${day(m.published_at!)}`}</a>
         : <span class="px-2.5 text-xs text-zinc-500">Only you and {answerer.name} can see this</span>)}
     </div>
     <div class="flex items-center gap-1">
@@ -122,7 +122,7 @@ const primary = 'shrink-0 bg-blue-violet-600 dark:bg-blue-violet-400 text-white 
                 </p>
                 <div data-view>
                   <p class="mt-0.5 text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-line break-words">{words(r.body).map((part) => 'url' in part
-                    ? <a href={part.url} target="_blank" rel="nofollow ugc noopener noreferrer" class="text-blue-violet-600 dark:text-blue-violet-400 underline decoration-blue-violet-500/30 hover:decoration-blue-violet-500 underline-offset-4 break-all">{part.url}</a>
+                    ? <a href={part.url} target="_blank" rel="nofollow ugc noopener noreferrer" class="text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/30 hover:decoration-kikyo-500 underline-offset-4 break-all">{part.url}</a>
                     : part.text)}</p>
                   {admin && (
                     <div class="mt-1 flex items-center gap-4 text-sm">

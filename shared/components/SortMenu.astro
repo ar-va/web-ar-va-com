@@ -16,7 +16,7 @@ const options = [['new', 'Newest first'], ['old', 'Oldest first'], ['az', 'A–Z
     {options.map(([key, label]) => (
       <li role="none">
         <button type="button" role="menuitemradio" aria-checked={key === 'new' ? 'true' : 'false'} data-sort={key}
-          class="group w-full flex items-center justify-between gap-4 text-left text-sm px-3 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-900/5 dark:hover:bg-white/10 aria-checked:text-blue-violet-600 dark:aria-checked:text-blue-violet-400">
+          class="group w-full flex items-center justify-between gap-4 text-left text-sm px-3 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-900/5 dark:hover:bg-white/10 aria-checked:text-kikyo-600 dark:aria-checked:text-kikyo-400">
           {label}
           <svg class="w-4 h-4 invisible group-aria-checked:visible" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
         </button>

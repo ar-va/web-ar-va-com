@@ -20,8 +20,8 @@ const icon = size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
     return (
       <a href={href} target="_blank" rel="noopener noreferrer" aria-label={`${label} on ${s.name}`} title={`${label} on ${s.name}`}
         class={buttons
-          ? 'ctl group/svc pl-2.5 [&>svg]:text-blue-violet-600 dark:[&>svg]:text-blue-violet-400 [&>svg]:transition-transform [&>svg]:duration-200 hover:[&>svg]:-translate-y-px hover:[&>svg]:scale-110 motion-reduce:hover:[&>svg]:transform-none'
-          : 'text-blue-violet-600 dark:text-blue-violet-400 hover:text-blue-violet-700 dark:hover:text-blue-violet-300 inline-block transition-transform duration-200 ease-out hover:-translate-y-0.5 hover:scale-115 focus-visible:-translate-y-0.5 focus-visible:scale-115 motion-reduce:transition-none motion-reduce:hover:transform-none'}>
+          ? 'ctl group/svc pl-2.5 [&>svg]:text-kikyo-600 dark:[&>svg]:text-kikyo-400 [&>svg]:transition-transform [&>svg]:duration-200 hover:[&>svg]:-translate-y-px hover:[&>svg]:scale-110 motion-reduce:hover:[&>svg]:transform-none'
+          : 'text-kikyo-600 dark:text-kikyo-400 hover:text-kikyo-700 dark:hover:text-kikyo-300 inline-block transition-transform duration-200 ease-out hover:-translate-y-0.5 hover:scale-115 focus-visible:-translate-y-0.5 focus-visible:scale-115 motion-reduce:transition-none motion-reduce:hover:transform-none'}>
         {s.key === 'spotify' && (
           <svg class={icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5" /><path d="M7.3 9.6c3.3-1 6.8-.7 9.6.9M7.9 12.7c2.7-.7 5.4-.4 7.6.8M8.5 15.6c2-.5 3.9-.3 5.6.6" /></svg>
         )}

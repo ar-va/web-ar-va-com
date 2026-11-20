@@ -15,8 +15,8 @@ interface Props {
 const { comment: c, user, canDelete, action, hidden, small = false } = Astro.props;
 const own = !!user && user.id === c.author_id;
 const date = (s: number) => new Date(s * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
-const field = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-3.5 py-2.5 text-zinc-900 dark:text-white leading-relaxed focus:outline-none focus:border-blue-violet-500 transition-colors resize-y';
-const primary = 'bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 text-sm font-medium px-4 py-1.5 rounded-full hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors';
+const field = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-3.5 py-2.5 text-zinc-900 dark:text-white leading-relaxed focus:outline-none focus:border-kikyo-500 transition-colors resize-y';
+const primary = 'bg-kikyo-600 dark:bg-kikyo-400 text-white dark:text-zinc-950 text-sm font-medium px-4 py-1.5 rounded-full hover:bg-kikyo-700 dark:hover:bg-kikyo-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors';
 const quiet = 'text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white px-3 py-1.5 rounded-full transition-colors';
 const act = 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors';
 const hint = 'ml-auto hidden sm:inline text-xs text-zinc-400 dark:text-zinc-500';
@@ -28,7 +28,7 @@ const hint = 'ml-auto hidden sm:inline text-xs text-zinc-400 dark:text-zinc-500'
   <div class="min-w-0 flex-grow">
     <div class="text-sm flex flex-wrap items-baseline gap-x-2">
       {c.username
-        ? <a href={`https://t.me/${c.username}`} class="font-medium text-zinc-900 dark:text-white hover:text-blue-violet-500 transition-colors">{c.name}</a>
+        ? <a href={`https://t.me/${c.username}`} class="font-medium text-zinc-900 dark:text-white hover:text-kikyo-500 transition-colors">{c.name}</a>
         : <span class="font-medium text-zinc-900 dark:text-white">{c.name}</span>}
       <time class="text-zinc-500" datetime={new Date(c.created_at * 1000).toISOString()}>{date(c.created_at)}</time>
       {c.edited_at && <span class="text-zinc-400 dark:text-zinc-500 text-xs" title={`Edited ${date(c.edited_at)}`}>(edited)</span>}
@@ -36,7 +36,7 @@ const hint = 'ml-auto hidden sm:inline text-xs text-zinc-400 dark:text-zinc-500'
 
     <div data-view>
       <p class="mt-1 text-zinc-700 dark:text-zinc-300 whitespace-pre-line break-words">{linkify(c.body).map((part) => 'url' in part
-        ? <a href={part.url} target="_blank" rel="nofollow ugc noopener noreferrer" class="text-blue-violet-600 dark:text-blue-violet-400 underline decoration-blue-violet-500/30 hover:decoration-blue-violet-500 underline-offset-4 break-all">{part.url}</a>
+        ? <a href={part.url} target="_blank" rel="nofollow ugc noopener noreferrer" class="text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/30 hover:decoration-kikyo-500 underline-offset-4 break-all">{part.url}</a>
         : part.text)}</p>
       {user && (
         <div class="mt-1.5 flex items-center gap-4 text-sm">

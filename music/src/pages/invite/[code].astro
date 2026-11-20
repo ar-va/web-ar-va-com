@@ -87,7 +87,7 @@ const initial = 'grid place-items-center bg-(--on-bg) text-(--on-text) font-semi
 
           {user ? (
             <form method="post" class="mt-7">
-              <button class="w-full h-12 rounded-full text-base font-semibold bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 transition-colors">Accept invite</button>
+              <button class="w-full h-12 rounded-full text-base font-semibold bg-kikyo-600 dark:bg-kikyo-400 text-white dark:text-zinc-950 hover:bg-kikyo-700 dark:hover:bg-kikyo-300 transition-colors">Accept invite</button>
             </form>
           ) : (
             <>
@@ -95,7 +95,7 @@ const initial = 'grid place-items-center bg-(--on-bg) text-(--on-text) font-semi
               <svg class="w-5 h-5" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
               Accept with Telegram
             </a>
-            <p data-tg-hint hidden class="mt-3 text-sm text-zinc-600 dark:text-zinc-400">Window closed? <a href={loginHref(Astro.url, back)} class="font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Log in on the login page</a> instead, or try the button again.</p>
+            <p data-tg-hint hidden class="mt-3 text-sm text-zinc-600 dark:text-zinc-400">Window closed? <a href={loginHref(Astro.url, back)} class="font-medium text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">Log in on the login page</a> instead, or try the button again.</p>
             </>
           )}
           <p class="mt-3 text-xs text-zinc-500">
@@ -123,7 +123,7 @@ const initial = 'grid place-items-center bg-(--on-bg) text-(--on-text) font-semi
         </section>
         <section class="mt-8 rounded-2xl bg-zinc-100/70 dark:bg-white/[0.04] p-5" aria-labelledby="safe-title">
           <h2 id="safe-title" class="flex items-center gap-2 font-sans text-sm font-medium text-zinc-800 dark:text-zinc-200">
-            <svg class="w-4 h-4 text-blue-violet-600 dark:text-blue-violet-400" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z" /><path d="m9 12 2 2 4-4" /></svg>
+            <svg class="w-4 h-4 text-kikyo-600 dark:text-kikyo-400" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z" /><path d="m9 12 2 2 4-4" /></svg>
             Safe by design
           </h2>
           <dl class="mt-3 flex flex-col gap-3 text-sm">

@@ -11,7 +11,7 @@ const { label, home: homeHref, minimal = false } = Astro.props;
 // On music.ar-va.com the main site's links must leave the subdomain.
 const onMusic = Astro.url.hostname.startsWith('music.');
 const main = onMusic ? 'https://ar-va.com' : '';
-const link = 'text-zinc-500 hover:text-blue-violet-500 transition-colors dark:text-zinc-400 dark:hover:text-blue-violet-400 aria-[current=page]:text-blue-violet-600 dark:aria-[current=page]:text-blue-violet-400';
+const link = 'text-zinc-500 hover:text-kikyo-500 transition-colors dark:text-zinc-400 dark:hover:text-kikyo-400 aria-[current=page]:text-kikyo-600 dark:aria-[current=page]:text-kikyo-400';
 // The section the visitor is in stays highlighted: Home on /, Blog on /blog and its posts, Music on music.ar-va.com.
 const path = Astro.url.pathname;
 const current = (on: boolean) => (on ? 'page' : undefined);
@@ -31,7 +31,7 @@ const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https
     <img src="/brand/arva-horizontal-washi-moss.svg" alt="ARVA" width="100" height="24" class="h-[22px] sm:h-6 w-auto hidden dark:block max-[359px]:!hidden" />
     <img src="/brand/arva-mark-small-ink-moss.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 hidden max-[359px]:block dark:!hidden" />
     <img src="/brand/arva-mark-small-washi-moss.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 hidden dark:max-[359px]:block" />
-    {label && <span class="text-lg font-medium text-moss dark:text-moss-light">{label}</span>}
+    {label && <span class="text-lg font-medium text-kashiwa dark:text-kashiwa-light">{label}</span>}
   </a>
   <div class="h-11 flex items-center">
     {MAIN_SITE_PUBLIC && !minimal && <div class="flex items-center gap-4 min-[360px]:gap-5 sm:gap-7 text-sm font-medium">
@@ -44,7 +44,7 @@ const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https
     <!-- Phones show the words too while the menu is hidden (src/site.ts): there's room for them then. -->
     {!minimal && <>
     <a id="account" href="https://ar-va.com/login" title="Log in with Telegram" aria-label="Log in with Telegram" data-compact={MAIN_SITE_PUBLIC ? '' : undefined}
-      class="flex items-center gap-1.5 h-8 text-zinc-600 dark:text-zinc-300 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">
+      class="flex items-center gap-1.5 h-8 text-zinc-600 dark:text-zinc-300 hover:text-kikyo-600 dark:hover:text-kikyo-400 transition-colors">
       <svg class="w-4 h-4 shrink-0" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
       <span class:list={['whitespace-nowrap', { 'max-sm:sr-only': MAIN_SITE_PUBLIC }]}>Log in</span>
     </a>
@@ -53,25 +53,25 @@ const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https
          settings, and log out (on the music site, where the form posts). -->
     <div id="account-menu" hidden class="glass absolute right-6 top-full mt-1 w-72 max-w-[calc(100vw-3rem)] rounded-2xl p-2 z-50 text-sm">
       <p class="px-3 pt-2 pb-2.5 text-xs text-zinc-500">Logged in with Telegram as <span data-who-name class="font-medium text-zinc-700 dark:text-zinc-300"></span></p>
-      <a data-menu="connect" hidden href="/settings#shelf" class="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl bg-(--on-bg) text-(--on-text) hover:bg-(--on-bg-hover) focus-visible:outline-2 focus-visible:outline-blue-violet-500 transition-colors">
+      <a data-menu="connect" hidden href="/settings#shelf" class="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl bg-(--on-bg) text-(--on-text) hover:bg-(--on-bg-hover) focus-visible:outline-2 focus-visible:outline-kikyo-500 transition-colors">
         <span class="font-semibold">Connect Discogs</span>
         <span class="text-xs opacity-80">One step left: fill your shelf with your records</span>
       </a>
-      <a data-menu="shelf" hidden href="/" class="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl text-left hover:bg-(--well) focus-visible:outline-2 focus-visible:outline-blue-violet-500 transition-colors">
+      <a data-menu="shelf" hidden href="/" class="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl text-left hover:bg-(--well) focus-visible:outline-2 focus-visible:outline-kikyo-500 transition-colors">
         <span class="font-medium text-zinc-900 dark:text-white">Your shelf</span>
         <span class="text-xs text-zinc-500">See it the way visitors do</span>
       </a>
-      <a data-menu="update" hidden href="/settings?update#shelf" class="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl text-left hover:bg-(--well) focus-visible:outline-2 focus-visible:outline-blue-violet-500 transition-colors">
+      <a data-menu="update" hidden href="/settings?update#shelf" class="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl text-left hover:bg-(--well) focus-visible:outline-2 focus-visible:outline-kikyo-500 transition-colors">
         <span class="font-medium text-zinc-900 dark:text-white">Update from Discogs</span>
         <span class="text-xs text-zinc-500">Bring in new records and changes now</span>
       </a>
-      <a data-menu="settings" href="/settings" class="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl text-left hover:bg-(--well) focus-visible:outline-2 focus-visible:outline-blue-violet-500 transition-colors">
+      <a data-menu="settings" href="/settings" class="flex flex-col gap-0.5 px-3 py-2.5 rounded-xl text-left hover:bg-(--well) focus-visible:outline-2 focus-visible:outline-kikyo-500 transition-colors">
         <span class="font-medium text-zinc-900 dark:text-white">Settings</span>
         <span class="text-xs text-zinc-500">Discogs, invites and your account</span>
       </a>
       <form data-menu="logout" hidden method="post" action="/settings" class="mt-1 pt-1 border-t border-zinc-200/70 dark:border-zinc-700/60">
         <input type="hidden" name="action" value="logout" />
-        <button class="w-full flex flex-col gap-0.5 px-3 py-2.5 rounded-xl text-left hover:bg-(--well) focus-visible:outline-2 focus-visible:outline-blue-violet-500 transition-colors text-zinc-600 dark:text-zinc-300 hover:text-red-600 dark:hover:text-red-400">Log out</button>
+        <button class="w-full flex flex-col gap-0.5 px-3 py-2.5 rounded-xl text-left hover:bg-(--well) focus-visible:outline-2 focus-visible:outline-kikyo-500 transition-colors text-zinc-600 dark:text-zinc-300 hover:text-red-600 dark:hover:text-red-400">Log out</button>
       </form>
     </div>
     </>}
@@ -101,14 +101,14 @@ const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https
     a.setAttribute('aria-haspopup', 'true');
     a.setAttribute('aria-expanded', 'false');
     a.setAttribute('aria-controls', 'account-menu');
-    a.className = 'flex items-center gap-2 h-8 text-zinc-600 dark:text-zinc-300 hover:text-blue-violet-500 dark:hover:text-blue-violet-400 transition-colors';
+    a.className = 'flex items-center gap-2 h-8 text-zinc-600 dark:text-zinc-300 hover:text-kikyo-500 dark:hover:text-kikyo-400 transition-colors';
     const pic = typeof who.p === 'string' && who.p.startsWith('https://') ? Object.assign(document.createElement('img'), { src: who.p, alt: '', width: 24, height: 24, referrerPolicy: 'no-referrer', className: 'w-6 h-6 rounded-full object-cover' })
       : Object.assign(document.createElement('span'), { textContent: who.n.charAt(0), className: 'w-6 h-6 rounded-full bg-(--on-bg) text-(--on-text) text-xs grid place-items-center' });
     const name = Object.assign(document.createElement('span'), { textContent: who.n, className: 'compact' in a.dataset ? 'sr-only sm:not-sr-only' : 'whitespace-nowrap' });
     // A dot on the avatar while Discogs still needs connecting: the menu says what to do.
     const face = Object.assign(document.createElement('span'), { className: 'relative' });
     face.append(pic);
-    if (who.d) face.insertAdjacentHTML('beforeend', '<span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-blue-violet-500 ring-2 ring-paper dark:ring-zinc-950"></span>');
+    if (who.d) face.insertAdjacentHTML('beforeend', '<span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-kikyo-500 ring-2 ring-paper dark:ring-zinc-950"></span>');
     a.replaceChildren(face, name);
     a.insertAdjacentHTML('beforeend', '<svg class="w-3.5 h-3.5 opacity-60" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>');
 

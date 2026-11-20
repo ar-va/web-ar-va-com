@@ -34,7 +34,7 @@ const facts = [
 ].filter(Boolean);
 const Heading = href ? 'h2' : 'h1';
 // Album page: artist and title copy themselves on click (src/scripts/copy.ts); on the shelf the title links instead.
-const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-violet-500 transition-opacity';
+const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500 transition-opacity';
 ---
 <!-- The rolled-out disc sticks out 38 % of the sleeve's width: the gap leaves it ~60 px clear of the text. -->
 <!-- overflow-x: clip, with the page's 24 px side margin to spare: the light behind the rolled-out record reaches 120 % of
@@ -48,22 +48,22 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       <div data-spin-cover class="motion-safe:cursor-pointer"><Cover record={record} eager class="sleeve-open w-48 sm:w-60" /></div>
     )}
     <button type="button" data-spin aria-pressed="false" aria-label="Play the record" title="Play the record"
-      class="glass glass-dark group absolute right-2 bottom-2 z-10 w-9 h-9 grid place-items-center rounded-full text-white cursor-pointer motion-reduce:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-violet-500">
+      class="glass glass-dark group absolute right-2 bottom-2 z-10 w-9 h-9 grid place-items-center rounded-full text-white cursor-pointer motion-reduce:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500">
       <svg class="w-4 h-4 group-aria-pressed:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" /></svg>
       <svg class="w-4 h-4 group-aria-[pressed=false]:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5.5" width="3.8" height="13" rx="1" /><rect x="13.7" y="5.5" width="3.8" height="13" rx="1" /></svg>
     </button>
   </div>
   <div class="min-w-0 flex-1">
-    <p class="text-lg font-medium text-moss dark:text-moss-light mb-1">{href ? artist : <button type="button" data-copy title="Click to copy" class={copy}>{artist}</button>}</p>
+    <p class="text-lg font-medium text-kashiwa dark:text-kashiwa-light mb-1">{href ? artist : <button type="button" data-copy title="Click to copy" class={copy}>{artist}</button>}</p>
     <Heading class="text-3xl sm:text-5xl font-bold leading-[1.05] text-zinc-900 dark:text-white">
-      {href ? <a href={href} class="hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{title}</a> : <button type="button" data-copy title="Click to copy" class={copy}>{title}</button>}
+      {href ? <a href={href} class="hover:text-kikyo-600 dark:hover:text-kikyo-400 transition-colors">{title}</a> : <button type="button" data-copy title="Click to copy" class={copy}>{title}</button>}
     </Heading>
     {facts.length > 0 && <p class="mt-4 flex flex-wrap gap-y-1 text-zinc-700 dark:text-zinc-300">{facts.map((f) => <span class="fact">{f}</span>)}</p>}
     <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-500">
       {added}
       {askAdded && (
         <button type="button" popovertarget="added-ask" title="Set the day this record joined your collection"
-          class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-warning dark:text-warning-light bg-warning/10 dark:bg-warning-light/15 hover:bg-warning/20 dark:hover:bg-warning-light/25 focus-visible:outline-2 focus-visible:outline-blue-violet-500 transition-colors">
+          class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-warning dark:text-warning-light bg-warning/10 dark:bg-warning-light/15 hover:bg-warning/20 dark:hover:bg-warning-light/25 focus-visible:outline-2 focus-visible:outline-kikyo-500 transition-colors">
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5h.01" /></svg>{day ? 'Is this date right?' : 'Add the date'}
         </button>
       )}
@@ -79,11 +79,11 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
           <label class="flex flex-col gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
             Added on
             <input type="date" name="added" value={day || undefined} max={new Date().toISOString().slice(0, 10)} required onclick="try { this.showPicker() } catch {}"
-              class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2.5 font-normal text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 [color-scheme:light] dark:[color-scheme:dark]" />
+              class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2.5 font-normal text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500 [color-scheme:light] dark:[color-scheme:dark]" />
           </label>
           <!-- Save comes first in the form, so Enter saves; the row shows it rightmost. -->
           <div class="flex flex-row-reverse flex-wrap justify-start gap-2">
-            <button name="action" value="added" class="inline-flex items-center h-8 px-4 rounded-full text-sm font-medium bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 transition-colors">Save date</button>
+            <button name="action" value="added" class="inline-flex items-center h-8 px-4 rounded-full text-sm font-medium bg-kikyo-600 dark:bg-kikyo-400 text-white dark:text-zinc-950 hover:bg-kikyo-700 dark:hover:bg-kikyo-300 transition-colors">Save date</button>
             {day && <button name="action" value="added-ok" formnovalidate class="ctl">Discogs’ date is right</button>}
             <button type="button" popovertarget="added-ask" popovertargetaction="hide" class="ctl">Later</button>
           </div>

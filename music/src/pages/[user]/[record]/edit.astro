@@ -88,7 +88,7 @@ const fields: { key: string; label: string; hint?: string; multiline?: boolean }
   { key: 'tracklist', label: 'Tracklist', hint: 'Position, title, length and, under “Links”, the track on each service. Positions like A1, B1 are shown as Side A, Side B.', multiline: true },
   ...Object.entries(links).map(([key, name]) => ({ key, label: `${name} link`, hint: defaults[key] ? `Found automatically. Paste another ${name} album link if it’s the wrong one.` : `The album on ${name}. Empty: the ${name} icon searches for it.` })),
 ];
-const input = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 transition-colors';
+const input = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500 transition-colors';
 // The form in cards: what the record is, the owner's Discogs notes, the tracklist, where to listen.
 const byKey = Object.fromEntries(fields.map((f) => [f.key, f]));
 const groups = [
@@ -99,19 +99,19 @@ const groups = [
 ].filter((g) => g.keys.length);
 const card = 'rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-4 sm:p-6';
 const cardTitle = 'text-lg font-bold text-zinc-900 dark:text-white';
-const primary = 'inline-flex items-center h-8 px-4 rounded-full text-sm font-medium bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 transition-colors';
+const primary = 'inline-flex items-center h-8 px-4 rounded-full text-sm font-medium bg-kikyo-600 dark:bg-kikyo-400 text-white dark:text-zinc-950 hover:bg-kikyo-700 dark:hover:bg-kikyo-300 transition-colors';
 const edited = Object.keys(overrides).length;
 const dated = new Set(['released', 'vinylRelease', 'added']);
 ---
 <Layout title={`Edit ${values.title} - ARVA`}>
   <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
     <Breadcrumbs items={[{ label: 'Shelves', href: '/' }, { label: owner!.name, href: recordPath.replace(/\/[^/]+$/, '') }, { label: values.title, href: recordPath }, { label: 'Edit' }]} />
-    <p class="mt-8 text-lg font-medium text-moss dark:text-moss-light">{values.artist}</p>
+    <p class="mt-8 text-lg font-medium text-kashiwa dark:text-kashiwa-light">{values.artist}</p>
     <h1 class="mt-2 text-3xl sm:text-4xl font-bold leading-tight text-zinc-900 dark:text-white">Edit {values.title}</h1>
     <p class="mt-3 text-zinc-600 dark:text-zinc-400 max-w-xl">Everything starts from Discogs and the automatic Apple Music / Spotify matches. What you change is what visitors see; the default stays underneath (only you see it), so you can go back any time.</p>
 
     {Astro.url.searchParams.has('saved') && Object.keys(errors).length === 0 && (
-      <p class="mt-6 rounded-xl bg-blue-violet-100 dark:bg-blue-violet-900 px-4 py-3 text-sm text-blue-violet-700 dark:text-blue-violet-200" role="status">Saved. <a href={recordPath} class="font-medium underline underline-offset-4">See the record</a></p>
+      <p class="mt-6 rounded-xl bg-kikyo-100 dark:bg-kikyo-900 px-4 py-3 text-sm text-kikyo-700 dark:text-kikyo-200" role="status">Saved. <a href={recordPath} class="font-medium underline underline-offset-4">See the record</a></p>
     )}
 
     <form method="post" class="mt-8 flex flex-col gap-5">
@@ -123,20 +123,20 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
           <div class="flex items-center justify-between gap-4">
             <legend class={`${cardTitle} flex items-center gap-2`}>
               Cover
-              {'cover' in overrides && <span class="text-xs font-medium text-blue-violet-600 dark:text-blue-violet-400">Edited</span>}
+              {'cover' in overrides && <span class="text-xs font-medium text-kikyo-600 dark:text-kikyo-400">Edited</span>}
             </legend>
-            {'cover' in overrides && <button name="revert" value="cover" class="text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Revert</button>}
+            {'cover' in overrides && <button name="revert" value="cover" class="text-sm font-medium text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">Revert</button>}
           </div>
           <p class="mt-1 text-sm text-zinc-500">The main cover on the shelf and the record page; the others appear in its photos.{coverNote && <> {coverNote}</>}</p>
           <div class="mt-4 grid grid-cols-3 sm:grid-cols-5 gap-3">
             {covers.map(([src, label]) => (
               <label class="group cursor-pointer min-w-0">
                 <input type="radio" name="cover" value={src} checked={values.cover === src} class="sr-only peer" />
-                <span class="relative block aspect-square rounded-xl overflow-hidden ring-2 ring-transparent ring-offset-2 ring-offset-white dark:ring-offset-night-surface peer-checked:ring-blue-violet-500 peer-focus-visible:ring-blue-violet-500/60 transition-shadow">
+                <span class="relative block aspect-square rounded-xl overflow-hidden ring-2 ring-transparent ring-offset-2 ring-offset-white dark:ring-offset-night-surface peer-checked:ring-kikyo-500 peer-focus-visible:ring-kikyo-500/60 transition-shadow">
                   <img onload="this.classList.remove('skeleton')" onerror="this.classList.remove('skeleton')" src={src} alt="" width="160" height="160" loading="lazy" referrerpolicy="no-referrer"
                     class="skeleton w-full h-full object-cover group-hover:scale-[1.03] transition-transform" />
                 </span>
-                <span class="mt-1.5 block text-xs text-zinc-500 truncate peer-checked:text-blue-violet-600 dark:peer-checked:text-blue-violet-400">
+                <span class="mt-1.5 block text-xs text-zinc-500 truncate peer-checked:text-kikyo-600 dark:peer-checked:text-kikyo-400">
                   {src === appleArt && src !== values.cover ? 'Suggested: ' : ''}{label}
                 </span>
               </label>
@@ -149,27 +149,27 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
         <div class="flex items-center justify-between gap-4">
           <legend class={`${cardTitle} flex items-center gap-2`}>
             Vinyl colour
-            {'vinyl' in overrides && <span class="text-xs font-medium text-blue-violet-600 dark:text-blue-violet-400">Edited</span>}
+            {'vinyl' in overrides && <span class="text-xs font-medium text-kikyo-600 dark:text-kikyo-400">Edited</span>}
           </legend>
-          {'vinyl' in overrides && <button name="revert" value="vinyl" class="text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Revert</button>}
+          {'vinyl' in overrides && <button name="revert" value="vinyl" class="text-sm font-medium text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">Revert</button>}
         </div>
         <p class="mt-1 text-sm text-zinc-500">The disc on the shelf and the record page. From Discogs: {vinylName(defaults.vinyl).toLowerCase()}{defaults.vinyl === VINYL_SWATCHES[0][1] && ' (nothing in its format note)'}.</p>
         <div class="mt-4 flex flex-wrap gap-3">
           {VINYL_SWATCHES.map(([name, hex]) => (
             <label class="cursor-pointer" title={name}>
               <input type="radio" name="vinyl" value={hex} checked={!vinylCustom && vinylBase === hex} class="sr-only peer" aria-label={name} />
-              <span class="vinyl-swatch block w-9 h-9 rounded-full ring-2 ring-transparent ring-offset-2 ring-offset-white dark:ring-offset-night-surface peer-checked:ring-blue-violet-500 peer-focus-visible:ring-blue-violet-500/60 transition-shadow" style={`--vinyl: ${hex}`}></span>
+              <span class="vinyl-swatch block w-9 h-9 rounded-full ring-2 ring-transparent ring-offset-2 ring-offset-white dark:ring-offset-night-surface peer-checked:ring-kikyo-500 peer-focus-visible:ring-kikyo-500/60 transition-shadow" style={`--vinyl: ${hex}`}></span>
             </label>
           ))}
           <!-- Any other colour: the native picker sits over the swatch; picking selects this choice (script below). -->
           <label class="relative cursor-pointer" title="Another colour">
             <input type="radio" name="vinyl" value="custom" checked={vinylCustom} class="sr-only peer" aria-label="Another colour" data-vinyl-custom />
-            <span data-vinyl-custom-swatch class={`block w-9 h-9 rounded-full ring-2 ring-transparent ring-offset-2 ring-offset-white dark:ring-offset-night-surface peer-checked:ring-blue-violet-500 peer-focus-visible:ring-blue-violet-500/60 transition-shadow ${vinylCustom ? 'vinyl-swatch' : 'vinyl-swatch-any'}`} style={vinylCustom ? `--vinyl: ${vinylBase}` : undefined}></span>
+            <span data-vinyl-custom-swatch class={`block w-9 h-9 rounded-full ring-2 ring-transparent ring-offset-2 ring-offset-white dark:ring-offset-night-surface peer-checked:ring-kikyo-500 peer-focus-visible:ring-kikyo-500/60 transition-shadow ${vinylCustom ? 'vinyl-swatch' : 'vinyl-swatch-any'}`} style={vinylCustom ? `--vinyl: ${vinylBase}` : undefined}></span>
             <input type="color" name="vinylCustom" value={vinylCustom ? vinylBase : '#7f4bc4'} class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="Pick another colour" />
           </label>
         </div>
         <label class="mt-4 inline-flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer">
-          <input type="checkbox" name="vinylSeeThrough" checked={values.vinyl.length === 9 && values.vinyl !== CLEAR_VINYL} class="w-4 h-4 accent-blue-violet-600" />
+          <input type="checkbox" name="vinylSeeThrough" checked={values.vinyl.length === 9 && values.vinyl !== CLEAR_VINYL} class="w-4 h-4 accent-kikyo-600" />
           See-through (a translucent pressing)
         </label>
       </fieldset>
@@ -185,7 +185,7 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <p class="text-zinc-700 dark:text-zinc-300">
                   {match?.apple
-                    ? <>Matched on Apple Music: <a href={match.apple.url} target="_blank" rel="noopener noreferrer" class="text-blue-violet-600 dark:text-blue-violet-400 underline decoration-blue-violet-500/40 underline-offset-4">open the album ↗</a></>
+                    ? <>Matched on Apple Music: <a href={match.apple.url} target="_blank" rel="noopener noreferrer" class="text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/40 underline-offset-4">open the album ↗</a></>
                     : match ? 'Not found on Apple Music.' : 'Not looked up on Apple Music yet.'}
                 </p>
                 <button type="button" class="ctl shrink-0 disabled:opacity-50">Match again</button>
@@ -205,9 +205,9 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
                   <div class="flex items-center justify-between gap-3 mb-1.5">
                     <label for={`f-${key}`} class={`flex items-center gap-2 text-sm font-medium text-zinc-800 dark:text-zinc-200 ${key === 'tracklist' && !changed ? 'sr-only' : ''}`}>
                       {f.label}
-                      {changed && <span class="text-xs font-medium text-blue-violet-600 dark:text-blue-violet-400">Edited</span>}
+                      {changed && <span class="text-xs font-medium text-kikyo-600 dark:text-kikyo-400">Edited</span>}
                     </label>
-                    {changed && <button name="revert" value={key} class="text-xs font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Revert</button>}
+                    {changed && <button name="revert" value={key} class="text-xs font-medium text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">Revert</button>}
                   </div>
                   {f.multiline
                     ? <textarea id={`f-${key}`} name={key} maxlength={key === 'note' ? NOTE_MAX : undefined} rows={key === 'tracklist' ? Math.min(24, Math.max(6, values[key].split('\n').length + 1)) : 4} class={`${input} leading-relaxed ${key === 'tracklist' ? 'font-mono text-sm' : ''}`}>{values[key]}</textarea>
@@ -216,7 +216,7 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
                         <div class="flex gap-2">
                           <input id={`f-${key}`} name={key} value={values[key]} class={input} placeholder={key === 'added' ? 'YYYY-MM-DD' : 'YYYY-MM-DD, or just a year'} aria-invalid={errors[key] ? 'true' : undefined} />
                           <!-- A calendar for picking the date; typing stays possible (a year alone, "around 1975"). -->
-                          <label class="relative shrink-0 grid place-items-center w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-blue-violet-500 hover:border-blue-violet-500 focus-within:text-blue-violet-500 focus-within:border-blue-violet-500 focus-within:ring-2 focus-within:ring-blue-violet-500/30 transition-colors cursor-pointer" title="Pick a date">
+                          <label class="relative shrink-0 grid place-items-center w-11 rounded-xl border border-zinc-200 dark:border-zinc-800 text-zinc-500 hover:text-kikyo-500 hover:border-kikyo-500 focus-within:text-kikyo-500 focus-within:border-kikyo-500 focus-within:ring-2 focus-within:ring-kikyo-500/30 transition-colors cursor-pointer" title="Pick a date">
                             <svg class="w-5 h-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2" /><path d="M3.5 9.5h17M8 3v4M16 3v4" stroke-linecap="round" /></svg>
                             <input type="date" data-date-for={`f-${key}`} class="absolute inset-0 opacity-0 cursor-pointer" aria-label={`Pick the ${f.label.toLowerCase()} date`}
                               value={/^\d{4}-\d{2}-\d{2}$/.test(values[key]) ? values[key] : undefined} />
@@ -240,18 +240,18 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
         <div class="track rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
           <div class="flex items-center gap-0.5 sm:gap-1.5 p-1 sm:p-1.5">
             <button type="button" data-act="drag" aria-label="Move this line: drag it, or use the up and down arrow keys" title="Drag to reorder"
-              class="shrink-0 w-6 sm:w-7 h-8 grid place-items-center rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-grab active:cursor-grabbing touch-none focus-visible:outline-2 focus-visible:outline-blue-violet-500">
+              class="shrink-0 w-6 sm:w-7 h-8 grid place-items-center rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-grab active:cursor-grabbing touch-none focus-visible:outline-2 focus-visible:outline-kikyo-500">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6" /><circle cx="15" cy="6" r="1.6" /><circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" /><circle cx="9" cy="18" r="1.6" /><circle cx="15" cy="18" r="1.6" /></svg>
             </button>
-            <input data-k="position" aria-label="Position" placeholder="A1" class="w-9 sm:w-12 shrink-0 rounded-lg bg-transparent px-1 sm:px-2 py-1.5 font-mono text-sm text-zinc-500 focus:bg-white dark:focus:bg-night-surface focus:outline-none focus:ring-1 focus:ring-blue-violet-500" />
-            <input data-k="title" aria-label="Title" placeholder="Title" class="min-w-0 flex-grow rounded-lg bg-transparent px-1 sm:px-2 py-1.5 text-sm text-zinc-900 dark:text-white focus:bg-white dark:focus:bg-night-surface focus:outline-none focus:ring-1 focus:ring-blue-violet-500" />
-            <input data-k="duration" aria-label="Length" placeholder="4:52" class="w-11 sm:w-14 shrink-0 rounded-lg bg-transparent px-1 sm:px-2 py-1.5 font-mono text-sm tabular-nums text-zinc-500 text-right focus:bg-white dark:focus:bg-night-surface focus:outline-none focus:ring-1 focus:ring-blue-violet-500" />
+            <input data-k="position" aria-label="Position" placeholder="A1" class="w-9 sm:w-12 shrink-0 rounded-lg bg-transparent px-1 sm:px-2 py-1.5 font-mono text-sm text-zinc-500 focus:bg-white dark:focus:bg-night-surface focus:outline-none focus:ring-1 focus:ring-kikyo-500" />
+            <input data-k="title" aria-label="Title" placeholder="Title" class="min-w-0 flex-grow rounded-lg bg-transparent px-1 sm:px-2 py-1.5 text-sm text-zinc-900 dark:text-white focus:bg-white dark:focus:bg-night-surface focus:outline-none focus:ring-1 focus:ring-kikyo-500" />
+            <input data-k="duration" aria-label="Length" placeholder="4:52" class="w-11 sm:w-14 shrink-0 rounded-lg bg-transparent px-1 sm:px-2 py-1.5 font-mono text-sm tabular-nums text-zinc-500 text-right focus:bg-white dark:focus:bg-night-surface focus:outline-none focus:ring-1 focus:ring-kikyo-500" />
             <button type="button" data-act="fav" aria-pressed="false" aria-label="Favourite" title="Mark as one of your favourites"
-              class="group/fav shrink-0 w-7 sm:w-8 h-8 grid place-items-center rounded-lg text-zinc-400 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 aria-pressed:text-blue-violet-600 dark:aria-pressed:text-blue-violet-400 focus-visible:outline-2 focus-visible:outline-blue-violet-500">
+              class="group/fav shrink-0 w-7 sm:w-8 h-8 grid place-items-center rounded-lg text-zinc-400 hover:text-kikyo-600 dark:hover:text-kikyo-400 aria-pressed:text-bengara dark:aria-pressed:text-bengara-light focus-visible:outline-2 focus-visible:outline-kikyo-500">
               <svg class="w-4 h-4 group-aria-pressed/fav:fill-current" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linejoin="round" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
             </button>
             <button type="button" data-act="links" aria-label="Streaming links for this track" aria-expanded="false" title="Streaming links"
-              class="shrink-0 h-8 px-1 sm:px-2 inline-flex items-center gap-1 rounded-lg text-xs font-medium text-zinc-400 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 aria-expanded:text-blue-violet-600 dark:aria-expanded:text-blue-violet-400">
+              class="shrink-0 h-8 px-1 sm:px-2 inline-flex items-center gap-1 rounded-lg text-xs font-medium text-zinc-400 hover:text-kikyo-600 dark:hover:text-kikyo-400 aria-expanded:text-kikyo-600 dark:aria-expanded:text-kikyo-400">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" /></svg>
               <span data-count></span>
             </button>
@@ -260,9 +260,9 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
             </button>
           </div>
           <div data-links class="hidden grid-cols-1 sm:grid-cols-3 gap-2 px-2.5 pb-2.5">
-            <input data-k="spotify" type="url" aria-label="Spotify link" placeholder="Spotify link" class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500" />
-            <input data-k="apple" type="url" aria-label="Apple Music link" placeholder="Apple Music link" class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500" />
-            <input data-k="youtube" type="url" aria-label="YouTube Music link" placeholder="YouTube Music link" class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500" />
+            <input data-k="spotify" type="url" aria-label="Spotify link" placeholder="Spotify link" class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500" />
+            <input data-k="apple" type="url" aria-label="Apple Music link" placeholder="Apple Music link" class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500" />
+            <input data-k="youtube" type="url" aria-label="YouTube Music link" placeholder="YouTube Music link" class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500" />
           </div>
         </div>
       </template>
