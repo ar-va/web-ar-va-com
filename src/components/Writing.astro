@@ -88,7 +88,7 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
   <!-- Latest Section -->
   {latestPost && (
     <section class="mt-6">
-      <h2 class="font-sans text-zinc-500 dark:text-zinc-500 text-sm mb-2">Latest</h2>
+      <h2 class="font-sans mb-3"><span class="inline-block rounded-full bg-brick-tint px-2.5 py-0.5 text-sm font-medium text-brick dark:bg-brick-tint-dark dark:text-brick-light">Latest</span></h2>
       <a href={`/blog/${latestPost.data.slug || createCleanSlug(latestPost.id)}`} class="group block">
         <h3 class="text-2xl text-zinc-900 dark:text-zinc-200 group-hover:text-blue-violet-600 dark:group-hover:text-white transition-colors">
           {latestPost.displayTitle}

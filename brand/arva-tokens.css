@@ -1,4 +1,4 @@
-/* ARVA design tokens v3 (fonts 2026-11-20: Brygada 1918 + IBM Plex Sans; 2026-10-29: Tokyo Night–based dark, near-white paper light, Moss leaf-green secondary) — light + dark.
+/* ARVA design tokens v4 (2026-11-20: deeper accent and Moss, Brick added, titles 600; fonts 2026-11-20: Brygada 1918 + IBM Plex Sans; 2026-10-29: Tokyo Night–based dark, near-white paper light, Moss leaf-green secondary) — light + dark.
    Fonts: <link href="https://fonts.googleapis.com/css2?family=Brygada+1918:wght@400..700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"> */
 
 :root,
@@ -10,11 +10,13 @@
   --line: #D8DBE6;          /* borders, dividers */
   --text: #1F2335;          /* Ink */
   --text-2: #565F89;        /* Slate: secondary text */
-  --accent: #5A57C4;        /* Indigo: buttons, links, focus */
-  --accent-hover: #4B45B0;
+  --accent: #4A45B5;        /* Indigo: buttons, links, focus */
+  --accent-hover: #3D3891;
   --on-accent: #FFFFFF;
   --accent-tint: #E4E8FF;   /* tags, selection, info */
-  --moss: #237A50;          /* Moss: secondary, small leaf details (fern green) */
+  --moss: #15683F;          /* Moss: the leaf, identity labels, the facts separator */
+  --brick: #A3442B;         /* Brick: "look here" (Latest, New); never buttons or errors */
+  --brick-tint: #F7E6DF;    /* quiet ground behind a brick label */
   --success: #2F7D3A;
   --warning: #8A5D10;
   --error: #C0394B;
@@ -28,11 +30,13 @@
   --line: #333645;
   --text: #C6CBE4;          /* Moonlight */
   --text-2: #9CA3C4;
-  --accent: #A2A8FC;        /* Periwinkle */
+  --accent: #979CF7;        /* Periwinkle */
   --accent-hover: #B7BDFF;
   --on-accent: #15161C;
   --accent-tint: #3F3F75;
-  --moss: #8BD8A9;          /* Mint leaf */
+  --moss: #5FCF8F;          /* Mint leaf */
+  --brick: #E57F57;
+  --brick-tint: #4A2B22;
   --success: #9ECE6A;
   --warning: #E0AF68;
   --error: #F7768E;
@@ -43,8 +47,8 @@
     color-scheme: dark;
     --bg: #15161C; --surface: #1E2029; --sunken: #262935; --line: #333645;
     --text: #C6CBE4; --text-2: #9CA3C4;
-    --accent: #A2A8FC; --accent-hover: #B7BDFF; --on-accent: #15161C; --accent-tint: #3F3F75;
-    --moss: #8BD8A9; --success: #9ECE6A; --warning: #E0AF68; --error: #F7768E;
+    --accent: #979CF7; --accent-hover: #B7BDFF; --on-accent: #15161C; --accent-tint: #3F3F75;
+    --moss: #5FCF8F; --brick: #E57F57; --brick-tint: #4A2B22; --success: #9ECE6A; --warning: #E0AF68; --error: #F7768E;
   }
 }
 
@@ -70,7 +74,7 @@ body {
   font: 400 18px/1.6 var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
-h1, h2, h3, h4 { font-family: var(--font-head); font-weight: 500; margin: 0; text-wrap: balance; }
+h1, h2, h3, h4 { font-family: var(--font-head); font-weight: 600; margin: 0; text-wrap: balance; }
 h1 { font-size: clamp(40px, 6vw, 56px); line-height: 1.05; letter-spacing: -0.01em; }
 h2 { font-size: clamp(28px, 4vw, 36px); line-height: 1.15; }
 h3 { font-size: 24px; line-height: 1.25; }

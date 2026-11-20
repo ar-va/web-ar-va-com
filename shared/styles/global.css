@@ -8,8 +8,9 @@
 
 /* ARVA brand palette (brand/ARVA-brand-rules.md, brand/arva-tokens.css). Dark is based on Tokyo Night, toned down (less blue,
    a touch darker: #15161C page, #1E2029 surfaces, #C6CBE4 text), light is almost white with a hint of paper; accent Indigo / Periwinkle;
-   secondary Moss (leaf-green, the oak leaf). The two scales every class uses are remapped: blue-violet = accent (600 Indigo
-   #5A57C4, 700 hover, 400 Periwinkle #A2A8FC, 300 dark hover, 100/900 tints); zinc = cool neutrals (900 ink
+   secondary Moss (leaf-green, the oak leaf), third colour Brick (2026-11-20: accent and Moss deepened, Brick added, from the
+   ARVA design system). The two scales every class uses are remapped: blue-violet = accent (600 Indigo
+   #4A45B5, 700 hover, 400 Periwinkle #979CF7, 300 dark hover, 100/900 tints); zinc = cool neutrals (900 ink
    #1F2335, 600 slate #565F89, 200 line, 800 dark line #333645, 400 dark secondary #9CA3C4, 300 dark text
    #C6CBE4, 950 night #15161C). Updated 2026-10-29: warm/brown neutrals looked burnt; then the Tokyo Night base was toned down. */
 @theme {
@@ -17,11 +18,11 @@
   --color-blue-violet-100: #e4e8ff;
   --color-blue-violet-200: #cbd1ff;
   --color-blue-violet-300: #b7bdff;
-  --color-blue-violet-400: #a2a8fc;
-  --color-blue-violet-500: #6865d2;
-  --color-blue-violet-600: #5a57c4;
-  --color-blue-violet-700: #4b45b0;
-  --color-blue-violet-800: #3d3891;
+  --color-blue-violet-400: #979cf7;
+  --color-blue-violet-500: #5d59cc;
+  --color-blue-violet-600: #4a45b5;
+  --color-blue-violet-700: #3d3891;
+  --color-blue-violet-800: #312d78;
   --color-blue-violet-900: #2f3058;
   --color-blue-violet-950: #1e1e3a;
 
@@ -42,21 +43,26 @@
   --color-warning: #8a5d10;
   --color-warning-light: #e0af68;
   --color-night-surface: #1e2029;
-  --color-moss: #237a50;
-  --color-moss-light: #8bd8a9;
+  --color-moss: #15683f;
+  --color-moss-light: #5fcf8f;
+  /* Brick: "look here" without being an action or a status (the Latest label, a New marker). Never on buttons or errors. */
+  --color-brick: #a3442b;
+  --color-brick-light: #e57f57;
+  --color-brick-tint: #f7e6df;
+  --color-brick-tint-dark: #4a2b22;
 
   --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
   --font-heading: 'Brygada 1918', Georgia, serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
-/* Brand type (brand/ARVA-brand-rules.md, "Which font when"): Brygada 1918 for titles (bold ones at 500), in the
+/* Brand type (brand/ARVA-brand-rules.md, "Which font when"): Brygada 1918 for titles (bold ones at 600), in the
    base layer so a small label heading can say `font-sans`; Plex Mono only via `font-mono` (aligned numbers, codes). */
 @layer base {
   h1, h2, h3, h4 { font-family: var(--font-heading); }
 }
-/* Unlayered, so it beats the `font-bold` utility: brand headings are 500. */
-:is(h1, h2, h3, h4).font-bold { font-weight: 500; }
+/* Unlayered, so it beats the `font-bold` utility: brand headings are 600. */
+:is(h1, h2, h3, h4).font-bold { font-weight: 600; }
 /* Always keep room for the scrollbar, so short and long pages line up (desktop scrollbars take ~15 px). */
 html { scrollbar-gutter: stable; }
 /* ---- Music shelf (music.ar-va.com) ---- */
@@ -457,7 +463,10 @@ html { scroll-padding-top: 1.5rem; }
   .list-toolbar .view-switch[data-view-current="list"] .view-knob { transform: translateX(2rem); }
 }
 
-/* A line of separate facts ("1988 | Rock | 11 tracks | 47 min"): a thin rule between them, not a dot. */
-.fact + .fact { border-left: 1px solid var(--color-zinc-300); margin-left: 0.75rem; padding-left: 0.75rem; }
-.dark .fact + .fact { border-left-color: var(--color-zinc-700); }
+/* A line of separate facts ("1988, Rock, 11 tracks, 47 min" with a leaf in each gap): the logo's own small leaf
+   (arva-mark-small, path copied exactly) as a Moss stencil, 0.7em with 0.6em each side. Decorative: the facts read the same without it. */
+/* inline-block, not flex: the Details preview truncates each fact with an ellipsis. */
+.fact + .fact::before { content: ""; display: inline-block; vertical-align: -0.05em; width: 0.7em; height: 0.7em; margin: 0 0.6em; background: var(--color-moss);
+  -webkit-mask: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Cpath d="M16.33 74.72A7.28 7.28 0 1 1 15.09 60.22A6.92 6.92 0 0 0 19.85 48.57A9.93 9.93 0 0 1 31.44 32.84A4.98 4.98 0 0 0 38.22 26.44A11.25 11.25 0 0 1 56.52 14.09A7.94 7.94 0 0 0 69.23 11.94A14.56 14.56 0 1 1 81.54 32.9A7.94 7.94 0 0 0 78.13 48.18A11.25 11.25 0 1 1 69.31 68.89A4.97 4.97 0 0 0 62.77 75.51A9.93 9.93 0 0 1 46.34 86.28A5.54 5.54 0 0 0 36.68 89.56A7.28 7.28 0 1 1 23.2 85.25A6.96 6.96 0 0 0 16.33 74.72ZM21.95 75.35L25.32 78.72L9.66 94.37L2.92 94.37Z"/%3E%3C/svg%3E') center / contain no-repeat; mask: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Cpath d="M16.33 74.72A7.28 7.28 0 1 1 15.09 60.22A6.92 6.92 0 0 0 19.85 48.57A9.93 9.93 0 0 1 31.44 32.84A4.98 4.98 0 0 0 38.22 26.44A11.25 11.25 0 0 1 56.52 14.09A7.94 7.94 0 0 0 69.23 11.94A14.56 14.56 0 1 1 81.54 32.9A7.94 7.94 0 0 0 78.13 48.18A11.25 11.25 0 1 1 69.31 68.89A4.97 4.97 0 0 0 62.77 75.51A9.93 9.93 0 0 1 46.34 86.28A5.54 5.54 0 0 0 36.68 89.56A7.28 7.28 0 1 1 23.2 85.25A6.96 6.96 0 0 0 16.33 74.72ZM21.95 75.35L25.32 78.72L9.66 94.37L2.92 94.37Z"/%3E%3C/svg%3E') center / contain no-repeat; }
+.dark .fact + .fact::before { background: var(--color-moss-light); }
 

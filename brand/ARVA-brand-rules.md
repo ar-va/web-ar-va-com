@@ -63,11 +63,13 @@ Use **only** the CSS variables from `arva-tokens.css`. Do not write hex values i
 | `--line` | #D8DBE6 | #333645 | All borders and dividers (1px) |
 | `--text` | #1F2335 Ink | #C6CBE4 Moonlight | Headings and body text |
 | `--text-2` | #565F89 Slate | #9CA3C4 | Captions, meta, placeholders, secondary text |
-| `--accent` | #5A57C4 Indigo | #A2A8FC Periwinkle | Primary buttons, links, focus rings, active nav |
-| `--accent-hover` | #4B45B0 | #B7BDFF | Hover state of the accent |
+| `--accent` | #4A45B5 Indigo | #979CF7 Periwinkle | Primary buttons, links, focus rings, active nav |
+| `--accent-hover` | #3D3891 | #B7BDFF | Hover state of the accent |
 | `--on-accent` | #FFFFFF | #15161C | Text and icons placed on an accent fill |
 | `--accent-tint` | #E4E8FF | #3F3F75 | Tags, selected rows, info banners, text selection |
-| `--moss` | #237A50 Moss | #8BD8A9 Mint leaf | Secondary: small heritage and nature details (see below) |
+| `--moss` | #15683F Moss | #5FCF8F Mint leaf | The leaf: identity details, the facts separator (see below) |
+| `--brick` | #A3442B Brick | #E57F57 | Third colour, "look here": the Latest label, a New marker (see below) |
+| `--brick-tint` | #F7E6DF | #4A2B22 | Quiet ground behind a brick label (brick text on it 5.1:1 light, 4.5:1 dark) |
 | `--success` | #2F7D3A | #9ECE6A | Success messages and icons |
 | `--warning` | #8A5D10 | #E0AF68 | Warning messages and icons |
 | `--error` | #C0394B | #F7768E | Error messages, invalid field borders |
@@ -78,7 +80,9 @@ The dark theme is based on **Tokyo Night**, toned down: less blue and a touch da
 
 **Service icons.** Third-party service icons (Spotify, Apple Music, YouTube Music) use `--accent`, not their brand colours, so they sit inside the palette; hover `--accent-hover`. Third-party sign-in buttons (Telegram) use the site's primary button style, with the service's icon in the button's text colour.
 
-**Proportions on any screen:** about 60% `--bg` and `--surface`, 30% `--text`, at most 10% `--accent`, under 3% `--moss`.
+**Proportions on any screen:** about 60% `--bg` and `--surface`, 30% `--text`, at most 10% `--accent`, under 5% each for `--moss` and `--brick`.
+
+**Three main colours, one job each (2026-11-20):** purple (`--accent`) means you can act, Moss means this is who we are, Brick means look here. Brick marks what deserves a second look without being an action or a status: the "Latest" label on shelves and the blog, anon's "New" marker, as a `--brick-tint` pill with `--brick` text. Never on buttons, links or errors, never on the same element as the accent, and never two of the three side by side as equal choices.
 
 Rules:
 - Each view has one accent: indigo in light, periwinkle in dark, plus the secondary `--moss` in small doses. Don't introduce other blues, purples, or brand colours.
@@ -123,9 +127,9 @@ Rules of thumb:
 
 | Role | Font | Weight | Size / line height | Notes |
 |---|---|---|---|---|
-| H1 | Brygada 1918 | 500 | 56 / 1.05 (40 on mobile) | letter-spacing −0.01em |
-| H2 | Brygada 1918 | 500 | 36 / 1.15 (28 on mobile) | |
-| H3 | Brygada 1918 | 500 | 24 / 1.25 | |
+| H1 | Brygada 1918 | 600 | 56 / 1.05 (40 on mobile) | letter-spacing −0.01em |
+| H2 | Brygada 1918 | 600 | 36 / 1.15 (28 on mobile) | |
+| H3 | Brygada 1918 | 600 | 24 / 1.25 | |
 | Body | IBM Plex Sans | 400 | 18 / 1.6 | Medium (500) for emphasis, never bold body text |
 | Small / meta | IBM Plex Sans | 400 | 15 / 1.5 | colour `--text-2` |
 | Button | IBM Plex Sans | 600 | 16 / 1 | |
@@ -148,7 +152,7 @@ Decide by what the text **does**, not by which HTML tag it sits in.
 
 | Font | Use it for | Examples on ar-va.com |
 |---|---|---|
-| **Brygada 1918** (500) | Titles a reader scans for: page titles, section titles, card and item titles, album and post titles | "Artur — ARVA", "Selected work", "Tracklist", "Comments", "Chet Baker Sings", edit-page card titles |
+| **Brygada 1918** (600) | Titles a reader scans for: page titles, section titles, card and item titles, album and post titles | "Artur — ARVA", "Selected work", "Tracklist", "Comments", "Chet Baker Sings", edit-page card titles |
 | **IBM Plex Sans** | Everything read or operated: body text, meta lines, links, navigation, buttons and controls, form fields, and small grey labels that name a group | "Filter", "Sort", "Spotify", "Show details", "Latest", "Added", "Genres", "Date published", "Added to the shelf…" |
 | **IBM Plex Sans** (500, sentence case) | Labels that carry information: the artist above an album title (Moss), "Side A", "New", "Edited" | "Miles Davis", "Side A" |
 | **IBM Plex Mono** (400, normal case) | Numbers that line up in columns, codes | Track positions (A1) and lengths (4:52), code |
@@ -205,7 +209,7 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 - Photography shows real materials, hands, tools, workshops, and products in use. Use natural light and warm, slightly muted grading. No stock-photo smiles, no glowing abstract tech.
 - Images sit in 12 px radius frames or run full-bleed. To place text over a photo, add a `--bg`-coloured overlay at 70% or more opacity.
 - Icons are line icons with a 1.5px stroke, round joins, 20 or 24 px, coloured `--text` or `--text-2`. Lucide is a good match. Never use filled multicolour icons or emoji.
-- Don't add decorative leaves, leaf patterns, or nature illustrations. The logo is the only leaf.
+- Don't add decorative leaves, leaf patterns, or nature illustrations. The logo is the only leaf, with one exception (2026-11-20): the logo's small leaf, in Moss at 0.7em, divides separate facts in a line (between "1959", "Jazz" and "5 tracks" on album pages). One leaf per gap, never a row of leaves on its own.
 - If an image is missing, use a `--sunken` placeholder box with a short caption describing what goes there. Never invent images with SVG.
 
 ---
@@ -236,13 +240,18 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 1. Every colour comes from a token, and both themes have been checked.
 2. Logo files are swapped correctly for the theme.
 3. There is one primary button per view and the accent covers 10% of the screen or less.
-4. Body text is 18 px IBM Plex Sans, and headings are Brygada 1918 500.
+4. Body text is 18 px IBM Plex Sans, and headings are Brygada 1918 600.
 5. Every interactive element has a visible focus state and a hit area of at least 44 px.
 6. Text contrast is at least 4.5:1, which the tokens guarantee if used as specified.
 
 ---
 
 ## Changelog
+
+- **2026-11-20 (colours, leaf, titles):** from the refreshed ARVA design system: accent deepened (#4A45B5 / #979CF7,
+  hover #3D3891), Moss deeper and bolder (#15683F / #5FCF8F, logo and favicon files follow), Brick added as the third
+  main colour (#A3442B / #E57F57, tint #F7E6DF / #4A2B22) for "Latest" and "New", the logo's small leaf replaces the
+  thin rule between facts, and titles are Brygada 1918 600.
 
 - **2026-11-20 (fonts):** the owner chose the "Archive" pairing, Brygada 1918 (titles, 500) with IBM Plex Sans (text),
   after comparing pairings on real pages (IBM Plex Sans was tried for text the same day and dropped). Reasons: a serif for
