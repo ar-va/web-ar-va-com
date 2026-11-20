@@ -97,7 +97,7 @@ const faq = [
       <!-- One line that grows with what's written, Send inside it (like a chat box). -->
       <div class="compose flex items-end gap-2 pr-2">
         <textarea id="body" name="body" required maxlength={BODY_MAX} rows="1" autofocus={!!error}
-          placeholder="Write anything. Kind or critical, both are welcome."
+          placeholder="Write freely"
           aria-describedby={error ? 'send-error body-hint body-count' : 'body-hint body-count'}
           class="block flex-1 min-w-0 bg-transparent pl-5 py-3.5 text-[17px] leading-relaxed text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none resize-none max-h-[60vh]">{draft.body}</textarea>
         <button aria-label="Send anonymously" title="Send anonymously" data-send
