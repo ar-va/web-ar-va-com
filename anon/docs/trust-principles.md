@@ -66,12 +66,13 @@ The pattern: trust collapses when people discover a gap between what an anonymou
 4. **Name the one honest limit** (two-sided messages are more credible than absolute ones). Under the text box: "Your
    words are the only thing that can give you away." The old line "Nobody will know it was you, including me"
    overclaimed and was removed.
-5. **Risk at the moment of choice** (control paradox). Picking "Ask to make it public" shows what publishing means:
-   anyone can read it word for word, people who know you might recognize your writing, and it can be undone.
+5. **Risk at the moment of choice** (control paradox). Two small pills under the box, "Only me" (default) and "Ask to
+   make it public"; picking the second shows what publishing means: I read it first, then anyone can read it word for
+   word, people who know you might recognize your writing, and it can be undone.
 6. **Private by default, public by request, published after reading** (ask.fm). Unchanged from the first version.
-7. **Welcome every kind of message** (lower evaluation fear). "Kind or critical, both are welcome" in the box, and
-   optional starters for a blank page (shown once the box opens) that mix thanks, confession, disagreement and a
-   question.
+7. **Welcome every kind of message** (lower evaluation fear). "Kind or critical, both are welcome" in the box. (The
+   optional starters, thanks / confession / disagreement / a question, were removed 2026-11-20 at the user's request:
+   the open box felt cluttered.)
 8. **Real numbers or none** (relative standards). The answered list is only real messages; the empty state says there
    are no made-up examples. Response time is shown only from real data and only after 5 answered messages.
 9. **No tricks, said out loud** (NGL, Sendit). No fake messages, no "see who sent this", no notifications pulling people
@@ -80,8 +81,9 @@ The pattern: trust collapses when people discover a gap between what an anonymou
     ([findahelpline.com](https://findahelpline.com/)): an anonymous inbox is not crisis help.
 11. **House rules.** What won't be published (anything naming or exposing someone else, threats, cruelty), so writers
     know their words won't sit next to abuse and readers know the space is looked after.
-12. **No pressure.** No timers, no counters urging people on, a calm character count, "Take your time. Nothing is sent
-    until you press the button."
+12. **No pressure.** No timers, no counters urging people on, a calm character count. ("Take your time. Nothing is sent
+    until you press the button." was removed 2026-11-20 with the starters; Send is a button inside the box, so nothing
+    goes until it's pressed.)
 
 ## Never add
 
@@ -91,8 +93,8 @@ back to the writer); claims the code doesn't back up.
 
 ## Page layout (2026-11-20)
 
-The front page reads like a search page: the title, one line to write in, one sentence on what reaches me and where the answer comes back, then the
-answered messages in a masonry grid. The line opens into the whole form as soon as someone starts (focus or text, in
-CSS, so it works without script): the choice with its risk (5), the honest limit (4), "Take your time" (12), the
-starters (7) and the helpline (10) all still appear before anything can be sent.
+The front page reads like a search page: the title, one line to write in (Send inside it; it grows only when the text
+needs more lines), one sentence on what reaches me and where the answer comes back, then the answered messages in a
+masonry grid. As soon as someone starts (focus or text, in CSS, so it works without script) two small lines appear under
+the box: who can see it (5, its risk shown when "public" is picked), then the honest limit (4) and the helpline (10).
 
