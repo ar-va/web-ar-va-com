@@ -40,7 +40,7 @@ Files are in `logo/`. Never redraw or retype the logo; always use the files. **T
 | `arva-stacked-ink-moss.svg` / `-washi-moss.svg` | Square spaces on screen, two-tone |
 | `arva-mark-small-ink-moss.svg` / `-washi-moss.svg` | Leaf alone below 32 px on screen (phone header) |
 | `favicon.svg` | Browser favicon: the Kashiwa leaf, switching to mint on dark tabs |
-| `../avatars/arva-avatar-{full,wordmark,leaf}-{scheme}.svg` / `.png` | Profile pictures (1:1, 1024 px PNG): full logo (stacked), wordmark or leaf on a solid ground. Schemes: `paper` (Kashiwa leaf, ink), `night` (mint, washi), `ink` (mint, paper), `moss` / `indigo` (all paper), `periwinkle` (all ink). Sized to keep the clear space and to survive a circle crop. Prefer `full-paper` / `full-night`; the leaf alone where the name shows next to it anyway |
+| `../avatars/arva-avatar-{full,wordmark,leaf}-{scheme}.svg` / `.png` | Profile pictures (1:1, 1024 px PNG): full logo (stacked), wordmark or leaf on a solid ground. Schemes: `paper` (Kashiwa leaf, ink), `night` (mint, washi), `ink` (mint, paper), `kashiwa` / `kikyo` (all paper), `kikyo-light` (Kikyō's dark-theme value, all ink). Sized to keep the clear space and to survive a circle crop. Prefer `full-paper` / `full-night`; the leaf alone where the name shows next to it anyway |
 
 Rules:
 - Header logo height is 24–32 px on desktop and 22–26 px on mobile. The sites use 30 px and 26 px (2026-11-20; 24 px left the letter-spaced wordmark too small).
@@ -246,6 +246,9 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 ---
 
 ## Changelog
+
+- **2026-11-20 (avatar names):** avatar files named after the brand colours: `-moss` → `-kashiwa`, `-indigo` →
+  `-kikyo`, `-periwinkle` → `-kikyo-light`. Files unchanged otherwise.
 
 - **2026-11-20 (logo):** the wordmark redrawn in Brygada 1918 500, letter-spaced 0.23 em ("Open capitals", chosen by the
   owner from three options), outlined with opentype.js from Google Fonts' static Medium; the leaf unchanged. All
