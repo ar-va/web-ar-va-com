@@ -1,9 +1,8 @@
 ---
 // anon's pages on the shared ARVA layout (shared/layouts/Layout.astro), with what anon adds: a minimal header (no
 // account link: nobody logs in here) labelled "anon", the Inbox link for the admin, no-referrer on every page (private
-// links carry their secret in the address), noindex where asked, its own footer links and a <main> landmark.
+// links carry their secret in the address), noindex where asked and a <main> landmark.
 import Base from '@shared/layouts/Layout.astro';
-import { SOURCE_URL } from '../site';
 import '../styles/anon.css';
 
 interface Props {
@@ -26,15 +25,6 @@ const path = Astro.url.pathname;
       Inbox
     </a>
   )}
-  <Fragment slot="footer-links">
-    <a href="/#how-anonymous" class="hover:text-blue-violet-500 dark:hover:text-white transition-colors">How anonymous is this?</a>
-    <a href={SOURCE_URL} class="hover:text-blue-violet-500 dark:hover:text-white transition-colors">Source code</a>
-    <a href="https://music.ar-va.com/" class="hover:text-blue-violet-500 dark:hover:text-white transition-colors">music.ar-va.com</a>
-    <a href="https://t.me/artuo" class="flex items-center gap-2 hover:text-blue-violet-500 dark:hover:text-white transition-colors">
-      <svg class="w-4 h-4" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
-      Telegram
-    </a>
-  </Fragment>
   <main class="flex-grow flex flex-col">
     <slot />
   </main>
