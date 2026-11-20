@@ -1,5 +1,5 @@
 {
-	"name": "anon-ar-va-com",
+	"name": "web-anon-ar-va-com",
 	// "ARVA and MoveoImmigration", the same account as ar-va.com (pinned: Wrangler refuses to guess non-interactively).
 	"account_id": "5381dc39fbfcb930bb82b729520f7102",
 	"main": "@astrojs/cloudflare/entrypoints/server",

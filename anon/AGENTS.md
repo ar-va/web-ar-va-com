@@ -2,14 +2,15 @@
 
 Anonymous messages to Artur, in the spirit of ask.fm: anyone writes with no name and no account, may ask for the
 message to be public, and gets a private link to come back for the answer. Artur approves what goes public and
-answers underneath. Astro 7 + Tailwind 4 on one Cloudflare Worker (`anon-ar-va-com`) with D1. Design: ar-va.com /
+answers underneath. Astro 7 + Tailwind 4 on one Cloudflare Worker (`web-anon-ar-va-com`) with D1. Design: ar-va.com /
 music.ar-va.com (ARVA brand, see `../ar-va.com/brand/ARVA-brand-rules.md`); the post card follows Solaris'
 `PostCard.tsx` (`../solaris/app/src/features/feed/`).
 
 **Page design and wording follow [`docs/trust-principles.md`](docs/trust-principles.md)** (research on disclosure,
 trust and dark patterns, 2026-11-17). Read it before changing the front page; its "Never add" list is binding.
 
-**GitHub:** `ar-va/web-anon-ar-va-com` (public, so anyone can check the code; the page links to it). Commit as
+**GitHub:** the `anon/` folder of `ar-va/ar-va.com` (public, so anyone can check the code; the page links to it;
+until 2026-11-20 its own repo `ar-va/web-anon-ar-va-com`, now archived). Logos and favicons come from `../shared/public`. Commit as
 `ARVA <github@ar-va.com>` (local git config) with **no Claude co-author lines** (user, 2026-11-17).
 
 ## Anonymity rules (keep them when changing anything)
@@ -61,5 +62,6 @@ local `ar-va-music-na`, then send `Cookie: __Secure-session=<token>`.
 First deployed by the user 2026-11-17 (`wrangler deploy`, which created D1 `ar-va-anon`, id pinned in wrangler.jsonc,
 and the anon.ar-va.com custom domain). Secrets set: `TELEGRAM_BOT_TOKEN`, and `EMAIL_KEY` (unused since email was
 removed; `npx wrangler secret delete EMAIL_KEY`). Deploy: `npm run build && npx wrangler deploy`,
-or (once connected) a push to `main` through Cloudflare Workers Builds: dashboard → Workers → anon-ar-va-com →
-Settings → Builds → Connect the GitHub repo, build command `npm run build`, deploy command `npx wrangler deploy`.
+or a push to `main` through Cloudflare Workers Builds (Worker `web-anon-ar-va-com`, repo `ar-va/ar-va.com`, root
+directory `anon`, build `npm run build`, deploy `npx wrangler deploy`, watch paths `anon/*`, `shared/*`,
+`package.json`, `package-lock.json`).

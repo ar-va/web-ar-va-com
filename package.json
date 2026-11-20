@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "private": true,
   "workspaces": [
-    "music"
+    "music",
+    "anon"
   ],
   "engines": {
     "node": ">=22.12.0"
@@ -15,7 +16,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "generate-types": "wrangler types --strict-vars=false",
-    "test": "node --test 'shared/tests/*.test.js'"
+    "test": "node --test 'shared/tests/*.test.js' 'anon/tests/*.test.js'"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.3.0",

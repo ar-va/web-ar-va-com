@@ -3,8 +3,9 @@
 The code behind [anon.ar-va.com](https://anon.ar-va.com): a place to write to Artur with no name and no account.
 Writers can ask for their message to be public; it appears only after he has read it, word for word, with his answer.
 
-This repository is public so anyone can check what the site does with a message. Cloudflare builds and deploys the
-site from this repository, so the code here is the code that runs.
+This folder (`anon/` in the public repository [ar-va/ar-va.com](https://github.com/ar-va/ar-va.com)) is public so
+anyone can check what the site does with a message. Cloudflare builds and deploys the site from this folder, so the
+code here is the code that runs. Until 2026-11-20 it was its own repository, `ar-va/web-anon-ar-va-com` (archived).
 
 ## What the site stores
 
@@ -19,7 +20,8 @@ The design and wording follow [`docs/trust-principles.md`](docs/trust-principles
 Astro 7 on a Cloudflare Worker with D1.
 
 ```sh
-npm install
+npm install     # at the top of the repository (npm workspaces)
+cd anon
 npm test        # unit tests
 npm run build
 npx astro preview --port 4330
