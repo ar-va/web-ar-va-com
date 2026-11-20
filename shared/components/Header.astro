@@ -25,10 +25,10 @@ const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https
 <nav id="site-header" class="relative z-50 mt-3 max-w-5xl mx-auto px-6 w-full grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
   <a href={home} class="shrink-0 justify-self-start h-11 flex items-center gap-3" aria-label={label ? `${label}.ar-va.com home` : 'ARVA home'}>
     <!-- Brand logo files (two-tone: Moss leaf, wordmark in the text colour), ink on light and washi on dark: the full
-         horizontal logo, 24 px tall, 22 px on phones; below 360 px only the leaf (the brand's small mark), so the
+         horizontal logo, 30 px tall, 26 px on phones (was 24 / 22; user 2026-11-20: too small); below 360 px only the leaf (the brand's small mark), so the
          menu stays centred (user, 2026-10-29). -->
-    <img src="/brand/arva-horizontal-ink-moss.svg" alt="ARVA" width="87" height="24" class="h-[22px] sm:h-6 w-auto dark:hidden max-[359px]:!hidden" />
-    <img src="/brand/arva-horizontal-washi-moss.svg" alt="ARVA" width="87" height="24" class="h-[22px] sm:h-6 w-auto hidden dark:block max-[359px]:!hidden" />
+    <img src="/brand/arva-horizontal-ink-moss.svg" alt="ARVA" width="109" height="30" class="h-[26px] sm:h-[30px] w-auto dark:hidden max-[359px]:!hidden" />
+    <img src="/brand/arva-horizontal-washi-moss.svg" alt="ARVA" width="109" height="30" class="h-[26px] sm:h-[30px] w-auto hidden dark:block max-[359px]:!hidden" />
     <img src="/brand/arva-mark-small-ink-moss.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 hidden max-[359px]:block dark:!hidden" />
     <img src="/brand/arva-mark-small-washi-moss.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 hidden dark:max-[359px]:block" />
     {label && <span class="text-lg font-medium text-kashiwa dark:text-kashiwa-light">{label}</span>}
