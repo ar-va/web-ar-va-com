@@ -1,7 +1,7 @@
 ---
 // anon's pages on the shared ARVA layout (shared/layouts/Layout.astro), with what anon adds: a minimal header (no
-// account link: nobody logs in here) labelled "anon", the Inbox link for the admin, no-referrer on every page (private
-// links carry their secret in the address), noindex where asked and a <main> landmark.
+// account link: nobody logs in here) labelled "anon", the Inbox link for the admin, a same-origin referrer policy on every
+// page (private links carry their secret in the address), noindex where asked and a <main> landmark.
 import Base from '@shared/layouts/Layout.astro';
 import '../styles/anon.css';
 
@@ -16,8 +16,10 @@ const { title, description, noindex = false, admin = false } = Astro.props;
 const path = Astro.url.pathname;
 ---
 <Base title={title} description={description} noindex={noindex} header={{ label: 'anon', home: '/', minimal: true }}>
-  <!-- Private links carry their secret in the address: never pass it on to another site. -->
-  <meta slot="head" name="referrer" content="no-referrer" />
+  <!-- Private links carry their secret in the address: never pass it on to another site. "same-origin", not
+       "no-referrer": with no-referrer browsers send form posts with `Origin: null`, which Astro refuses as cross-site
+       (403), so nobody could send a message (found 2026-11-20). -->
+  <meta slot="head" name="referrer" content="same-origin" />
   {admin && (
     <a slot="header-actions" href="/admin" aria-current={path.startsWith('/admin') ? 'page' : undefined}
       class="flex items-center gap-1.5 h-8 text-zinc-600 dark:text-zinc-300 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 aria-[current=page]:text-blue-violet-600 dark:aria-[current=page]:text-blue-violet-400 transition-colors">
