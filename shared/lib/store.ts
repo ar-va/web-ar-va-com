@@ -2,7 +2,7 @@
 import { env } from 'cloudflare:workers';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { AstroCookies } from 'astro';
-import { nameKey, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
+import { activeLink, nameKey, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
 
 // Tables are created lazily (no migration step in the deploy).
 const SCHEMA = [
@@ -166,8 +166,6 @@ export function inviteOptions(user: User) {
 }
 /** Active invite links a collector may have at once (the admin has no limit): keeps growth, and the bill, in check. */
 export const OPEN_INVITES_MAX = 5;
-// A link that still works; ?1 is the current time.
-const activeLink = (t = '') => `${t}revoked_at IS NULL AND (${t}expires_at IS NULL OR ${t}expires_at > ?1) AND (${t}max_uses IS NULL OR ${t}uses < ${t}max_uses)`;
 
 /**
  * A new invite link (`expiresIn` seconds, `maxUses`; 0 = never / no limit). Values `by` may not pick become their
@@ -416,21 +414,11 @@ export async function shelfRecord(userId: number, instanceId: number) {
 
 // ---- Owner edits: only the changed values are stored; Discogs' own data stays untouched underneath ----
 
-export async function recordOverrides(userId: number, instanceId: number): Promise<Overrides> {
-  const row = await (await db()).prepare('SELECT data FROM overrides WHERE user_id = ? AND instance_id = ?').bind(userId, instanceId).first<{ data: string }>();
-  return row ? JSON.parse(row.data) : {};
-}
-
 export async function saveOverrides(userId: number, instanceId: number, data: Overrides) {
   const d = await db();
   await (Object.keys(data).length
     ? d.prepare('INSERT OR REPLACE INTO overrides (user_id, instance_id, data) VALUES (?, ?, ?)').bind(userId, instanceId, JSON.stringify(data))
     : d.prepare('DELETE FROM overrides WHERE user_id = ? AND instance_id = ?').bind(userId, instanceId)).run();
-}
-
-export async function releaseMatch(releaseId: number): Promise<import('./lib').Match | null> {
-  const row = await (await db()).prepare('SELECT data FROM matches WHERE release_id = ?').bind(releaseId).first<{ data: string }>();
-  return row ? JSON.parse(row.data) : null;
 }
 
 // ---- Comments ----

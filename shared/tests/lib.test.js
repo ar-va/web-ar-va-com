@@ -2,8 +2,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
+import { DatabaseSync } from 'node:sqlite';
 import {
-  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, toCsv, safeDay, playCount, addedNeedsDate, telegramAuthUrl, tracklistToText, textToTracklist, safeStreamingUrl,
+  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, toCsv, safeDay, playCount, addedNeedsDate, telegramAuthUrl, tracklistToText, textToTracklist, safeStreamingUrl, activeLink,
 } from '../lib/lib.ts';
 
 const BOT = '123:test-bot-token';
@@ -354,3 +355,41 @@ test('checkShelfName: offensive and look-official names refused, ordinary ones f
   assert.equal(ok('settings', true), false); // the site's own addresses: not even for the admin
   assert.equal(nameKey('A-r_a.b-o-r'), 'arabor');
 });
+
+test('release details from an upload: wrong types become text, sizes are capped, nothing crashes the page', () => {
+  const d = toReleaseDetail({ id: 7, tracklist: [{ position: 1, title: 5, duration: { x: 1 } }, null, 'x', ...Array(400).fill({ title: 'T' })], country: { x: 1 }, released: ['2020'], year: 'soon', images: 'nope' }, null);
+  assert.deepEqual(d.tracklist[0], { position: '1', title: '5', duration: '', heading: false });
+  assert.deepEqual(d.tracklist[1], { position: '', title: '', duration: '', heading: false });
+  assert.equal(d.tracklist.length, 300);
+  assert.equal(d.country, null);
+  assert.equal(d.released, null);
+  assert.equal(d.originalYear, null);
+  assert.deepEqual(d.images, []);
+  // What the album page does with a tracklist (it threw "s.normalize is not a function" on a number title).
+  const linked = withMatchLinks(d.tracklist.slice(0, 2), { apple: { url: 'https://music.apple.com/a', tracks: [{ title: '5', url: 'https://music.apple.com/s' }] } });
+  assert.equal(linked[0].links.apple, 'https://music.apple.com/s');
+  assert.equal(toReleaseDetail({ id: 7, year: 1999 }, 1972).originalYear, 1972);
+  assert.equal(toReleaseDetail({ id: 7, year: 1999 }, null).originalYear, 1999);
+});
+
+test('invite links: only working ones count (not revoked, not expired, uses left), and the last use is taken once', () => {
+  const db = new DatabaseSync(':memory:');
+  db.exec('CREATE TABLE invite_links (id TEXT PRIMARY KEY, created_by INTEGER, expires_at INTEGER, max_uses INTEGER, uses INTEGER NOT NULL DEFAULT 0, revoked_at INTEGER)');
+  const now = 1000;
+  const add = db.prepare('INSERT INTO invite_links (id, created_by, expires_at, max_uses, uses, revoked_at) VALUES (?, 1, ?, ?, ?, ?)');
+  add.run('forever', null, null, 0, null);
+  add.run('last-use', 2000, 5, 4, null);
+  add.run('expires-now', 1000, null, 0, null);
+  add.run('expired', 999, null, 0, null);
+  add.run('revoked', null, null, 0, 900);
+  add.run('used-up', null, 1, 1, null);
+  const working = (alias = '') => db.prepare(`SELECT ${alias}id AS id FROM invite_links ${alias.slice(0, -1)} WHERE ${activeLink(alias)} ORDER BY ${alias}id`).all(now).map((r) => r.id);
+  assert.deepEqual(working(), ['forever', 'last-use']);
+  assert.deepEqual(working('l.'), ['forever', 'last-use']);
+  // acceptInvite's update: the fifth use of a five-use link works once, then the link is used up.
+  const accept = db.prepare(`UPDATE invite_links SET uses = uses + 1 WHERE id = ?2 AND ${activeLink()} RETURNING created_by`);
+  assert.deepEqual({ ...accept.get(now, 'last-use') }, { created_by: 1 });
+  assert.equal(accept.get(now, 'last-use'), undefined);
+  assert.deepEqual(working(), ['forever']);
+});
+

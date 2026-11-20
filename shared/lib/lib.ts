@@ -95,6 +95,11 @@ export async function unseal(sealed: string, secret: string) {
   return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(iv) }, await aesKey(secret), unb64(data)));
 }
 
+// ---- Invites ----
+
+/** SQL that holds for an invite link that still works: not revoked, not expired, uses left. `?1` is the current time. */
+export const activeLink = (t = '') => `${t}revoked_at IS NULL AND (${t}expires_at IS NULL OR ${t}expires_at > ?1) AND (${t}max_uses IS NULL OR ${t}uses < ${t}max_uses)`;
+
 // ---- Discogs data ----
 
 export interface Field { name: string; value: string }
@@ -166,15 +171,21 @@ export interface ReleaseDetail {
 }
 
 /** GET /releases/{id} (+ the master's year) → what the record page shows. */
+// Text from an upload, whatever was sent: the browser brings these details, and they're shown to every collector who
+// owns the release, so a number or an object where text belongs must not break their pages.
+const text = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max) : typeof v === 'number' ? String(v) : '');
+const year = (v: unknown) => (Number.isSafeInteger(v) && (v as number) > 0 ? (v as number) : null);
+
 export function toReleaseDetail(release: any, masterYear: number | null, firstReleased: string | null = null): ReleaseDetail {
   return {
-    released: typeof release.released === 'string' ? release.released : null,
-    originalYear: masterYear || release.year || null,
+    released: text(release.released, 20) || null,
+    originalYear: year(masterYear) ?? year(release.year),
     firstReleased: typeof firstReleased === 'string' && /^\d{4}(-\d{2}){0,2}$/.test(firstReleased) ? firstReleased : null,
-    country: release.country || null,
-    tracklist: (release.tracklist ?? []).map((t: any) => ({ position: t.position, title: t.title, duration: t.duration, heading: t.type_ === 'heading' })),
+    country: text(release.country, 100) || null,
+    tracklist: (Array.isArray(release.tracklist) ? release.tracklist : []).slice(0, 300)
+      .map((t: any) => ({ position: text(t?.position, 20), title: text(t?.title, 300), duration: text(t?.duration, 20), heading: t?.type_ === 'heading' })),
     uri: typeof release.uri === 'string' && release.uri.startsWith('https://www.discogs.com/') ? release.uri : `https://www.discogs.com/release/${Number(release.id)}`,
-    images: (release.images ?? []).map((i: any) => i?.uri).filter((u: unknown): u is string => typeof u === 'string' && u.startsWith('https://i.discogs.com/')).slice(0, 12),
+    images: (Array.isArray(release.images) ? release.images : []).map((i: any) => i?.uri).filter((u: unknown): u is string => typeof u === 'string' && u.startsWith('https://i.discogs.com/')).slice(0, 12),
   };
 }
 
