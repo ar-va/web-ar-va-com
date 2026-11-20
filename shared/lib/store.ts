@@ -57,6 +57,8 @@ export async function db() {
 export const dbRequest = new AsyncLocalStorage<{ bookmark: string | null; session?: D1DatabaseSession }>();
 
 const now = () => Math.floor(Date.now() / 1000);
+// Rows with a JSON `data` column, as a map by one of their columns.
+const byId = <T>(rows: unknown[], key: string) => new Map((rows as Record<string, any>[]).map((r) => [r[key] as number, JSON.parse(r.data) as T]));
 
 export interface User {
   id: number;
@@ -116,7 +118,9 @@ export function setWho(cookies: AstroCookies, user: User, hostname: string) {
 export async function startSession(cookies: AstroCookies, user: { id: number; name: string; photoUrl: string | null }, hostname: string) {
   const token = randomToken();
   const d = await db();
-  const [, row] = await d.batch([
+  const [, , row] = await d.batch([
+    // Expired logins are cleared here, so the table doesn't keep one dead row per login forever.
+    d.prepare('DELETE FROM sessions WHERE expires_at < ?').bind(now()),
     d.prepare('INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)').bind(await sha256(token), user.id, now() + SESSION_DAYS * 86400),
     d.prepare('SELECT * FROM users WHERE id = ?').bind(user.id),
   ]);
@@ -292,7 +296,6 @@ export async function shelfData(name: string) {
     q(`SELECT release_id, data FROM matches WHERE release_id IN ${releaseIds}`),
     q(`${commentsSql} WHERE shelf_id = ${owner} AND instance_id = ${SHELF_THREAD} ORDER BY c.id`),
   ]);
-  const byId = <T>(rows: unknown[], key: string) => new Map((rows as Record<string, any>[]).map((r) => [r[key] as number, JSON.parse(r.data) as T]));
   const details = byId<ReleaseDetail>(releases.results, 'id');
   const edits = byId<Overrides>(overrides.results, 'instance_id');
   const found = byId<Match>(matches.results, 'release_id');
@@ -316,7 +319,6 @@ export async function collectionExport(userId: number) {
     d.prepare(`SELECT id, data FROM releases WHERE id IN ${releaseIds}`).bind(userId),
     d.prepare(`SELECT release_id, data FROM matches WHERE release_id IN ${releaseIds}`).bind(userId),
   ]);
-  const byId = <T>(rows: unknown[], key: string) => new Map((rows as Record<string, any>[]).map((r) => [r[key] as number, JSON.parse(r.data) as T]));
   const details = byId<ReleaseDetail>(releases.results, 'id');
   const edits = byId<Overrides>(overrides.results, 'instance_id');
   const found = byId<Match>(matches.results, 'release_id');

@@ -172,12 +172,14 @@ export async function saveMatch(user: User, releaseId: number, apple: any, artis
   // The owner's edited artist and title when re-matching from the edit page (Discogs' spelling otherwise).
   const name = (v: unknown, fallback: string) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 300) : fallback);
   const [a, t] = [name(artist, record.artist), name(title, record.title)];
+  let spotifyFailed = false;
   const [spotify, youtube] = await Promise.all([
-    spotifyMatch(a, t).catch((e) => { console.log(`spotify match failed for ${releaseId}: ${e instanceof Error ? e.message : e}`); return undefined; }),
+    spotifyMatch(a, t).catch((e) => { console.log(`spotify match failed for ${releaseId}: ${e instanceof Error ? e.message : e}`); spotifyFailed = true; return undefined; }),
     youtubeMatch(a, t),
   ]);
   if (spotify) match.spotify = spotify;
   if (youtube !== undefined) match.youtube = youtube;
-  await d.prepare('INSERT OR REPLACE INTO matches (release_id, data, matched_at) VALUES (?, ?, ?)').bind(releaseId, JSON.stringify(match), now()).run();
+  // A Spotify error isn't "not on Spotify": dated 0, the album is looked up again on the next visit (not in 60 days).
+  await d.prepare('INSERT OR REPLACE INTO matches (release_id, data, matched_at) VALUES (?, ?, ?)').bind(releaseId, JSON.stringify(match), spotifyFailed ? 0 : now()).run();
   return true;
 }
