@@ -1,0 +1,15 @@
+dist/
+.astro/
+.wrangler/
+node_modules/
+npm-debug.log*
+.env
+.env.*
+.DS_Store
+.idea/
+.dev.vars*
+!.dev.vars.example
+worker-configuration.d.ts
+
+# personal project notes, not in git (as in ar-va.com)
+CLAUDE.md

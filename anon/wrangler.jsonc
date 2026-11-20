@@ -1,0 +1,57 @@
+{
+	"name": "anon-ar-va-com",
+	// "ARVA and MoveoImmigration", the same account as ar-va.com (pinned: Wrangler refuses to guess non-interactively).
+	"account_id": "5381dc39fbfcb930bb82b729520f7102",
+	"main": "@astrojs/cloudflare/entrypoints/server",
+	"compatibility_date": "2026-09-01",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS"
+	},
+	"routes": [
+		{
+			"pattern": "anon.ar-va.com",
+			"custom_domain": true
+		}
+	],
+	"d1_databases": [
+		// Messages and replies (created by the first deploy, 2026-11-17).
+		{
+			"binding": "DB",
+			"database_name": "ar-va-anon",
+			"database_id": "7acdfb78-7eff-4840-8abf-362caba3c4d6"
+		},
+		// ar-va.com's database, read only for one thing: is the visitor logged in as the admin (sessions + users).
+		{
+			"binding": "AUTH",
+			"database_name": "ar-va-music-na",
+			"database_id": "96eed6b4-2463-4d7b-835a-63f90db32ad8"
+		}
+	],
+	// Flood control without storing anything: Cloudflare counts per key in memory and forgets.
+	"ratelimits": [
+		{
+			"name": "SEND_LIMIT",
+			"namespace_id": "4201",
+			"simple": {
+				"limit": 5,
+				"period": 60
+			}
+		}
+	],
+	"vars": {
+		"ADMIN_TELEGRAM_ID": "284024981",
+		"MAIN_ORIGIN": "https://ar-va.com"
+	},
+	// Our own console lines only: per-request invocation logs would keep visitors' request details.
+	"observability": {
+		"enabled": true,
+		"logs": {
+			"invocation_logs": false
+		}
+	}
+	// Secret (wrangler secret put / .dev.vars): TELEGRAM_BOT_TOKEN (the @arvasitebot token, as on ar-va.com).
+}

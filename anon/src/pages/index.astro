@@ -1,0 +1,313 @@
+---
+// The hero is a writing box: anyone can send a message with no name and no account. Below it, the messages their
+// senders asked to make public and the admin published, with the answers, then the promises and the privacy FAQ.
+// Why it looks and reads this way: docs/trust-principles.md (keep the page consistent with it).
+//
+// Sending reads nothing about the sender: not cookies, not the browser. The connection's address is handed to
+// Cloudflare's rate limiter (in memory, not stored) and dropped.
+import { env } from 'cloudflare:workers';
+import Layout from '../layouts/Layout.astro';
+import Post from '../components/Post.astro';
+import { BODY_MAX, cleanText, plural } from '../lib/core';
+import { PAGE_SIZE, answerStats, createMessage, publishedPage, recentCount } from '../lib/store';
+import { HELPLINES_URL, SOURCE_URL } from '../site';
+import { answerer as getAnswerer, currentAdmin } from '../lib/admin';
+import { newMessageNotice } from '../lib/notify';
+
+/** Everyone together, per hour: beyond this the site asks people to come back later (a flood, not a person). */
+const HOURLY_CEILING = 120;
+
+let error: string | null = null;
+let draft = { body: '', visibility: 'private' };
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  draft = {
+    body: String(form.get('body') ?? ''),
+    visibility: form.get('visibility') === 'public' ? 'public' : 'private',
+  };
+  const body = cleanText(draft.body);
+  const ip = Astro.request.headers.get('cf-connecting-ip') ?? 'local';
+  if (String(form.get('website') ?? '') !== '') {
+    // The hidden field people never see: only form-filling robots type into it. Pretend it worked.
+    return Astro.redirect('/', 303);
+  } else if (!body) {
+    error = 'Write something first.';
+  } else if (body.length > BODY_MAX) {
+    error = `That’s ${body.length} characters; the limit is ${BODY_MAX}. Could you shorten it, or send it in two parts?`;
+  } else if (!(await env.SEND_LIMIT.limit({ key: ip })).success || (await recentCount()) >= HOURLY_CEILING) {
+    error = 'Too many messages at once. Please wait a minute and send it again.';
+    Astro.response.status = 429;
+  } else {
+    const { id, token } = await createMessage(body, draft.visibility === 'public');
+    Astro.locals.cfContext.waitUntil(newMessageNotice({ id, body, wantsPublic: draft.visibility === 'public' }, Astro.url.origin));
+    return Astro.redirect(`/m/${token}?sent`, 303);
+  }
+  if (Astro.response.status === 200) Astro.response.status = 400;
+}
+
+const page = Math.max(1, Math.min(10_000, Number(Astro.url.searchParams.get('page')) || 1));
+const [{ messages, total }, admin, answerer, stats] = await Promise.all([publishedPage(page), currentAdmin(Astro.cookies), getAnswerer(), answerStats()]);
+const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+const deleted = Astro.url.searchParams.has('deleted');
+
+/** "within a few hours", "within a day", "within 3 days": the real median, rounded up, in plain words. */
+const within = (s: number) => s < 6 * 3600 ? 'within a few hours' : s < 36 * 3600 ? 'within a day' : `within ${Math.ceil(s / 86400)} days`;
+
+// What reaches me and what doesn't: concrete, checkable, said once near the decision (see the principles doc).
+const receipt = [
+  { kind: 'yes', title: 'Your words and the date', text: 'That’s all that reaches me.' },
+  { kind: 'no', title: 'No name, email, account or IP address', text: 'Nothing to sign up for, nothing about your device kept.' },
+  { kind: 'code', title: 'Don’t take my word for it', text: 'The code that runs this page is public.', href: SOURCE_URL, link: 'Read it on GitHub' },
+];
+const icon = {
+  yes: 'm4.5 12.75 6 6 9-13.5',
+  no: 'M6 18 18 6M6 6l12 12',
+  code: 'M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5',
+};
+// Starters for a blank page, deliberately mixed: thanks, a confession, disagreement, a question.
+const starters = ['Thank you for…', 'I never told you…', 'I disagree with you about…', 'I’ve always wanted to ask…'];
+const promises = [
+  { title: 'I won’t try to find out who you are', text: 'No tracking, no guessing out loud, no asking around.' },
+  { title: 'I won’t share what you sent privately', text: 'Not as a screenshot, not as a quote. Only what you asked to make public, and only if I publish it.' },
+  { title: 'No tricks', text: 'No made-up messages, no “see who sent this”, no notifications to pull you back, nothing to pay for.' },
+  { title: 'Some things I won’t publish', text: 'Anything that names or exposes someone else, threatens or demeans, or was written to hurt. I still read it; it stays private.' },
+];
+const faq = [
+  { q: 'What does the site keep?', a: [
+    'Your words, the date, whether you asked to make it public, and a scrambled form of your private link’s code (so not even the database can rebuild your link).',
+    'Nothing else: no name, no email, no account, no IP address, no browser or device details, no tracking cookies.',
+  ] },
+  { q: `Can ${answerer.name} find out who I am?`, a: [
+    'Not from anything the site stores. Your words are the one thing that can: if you mention details only you would know, or write the way you always write, I might recognize you. Leave those out if it matters.',
+    'To stop floods, your connection’s address is checked against a limit of five messages a minute, in memory, and never written down. If you are logged in on music.ar-va.com, your browser sends that login here too, as it does to every ar-va.com page; this page ignores it and stores nothing from it.',
+  ] },
+  { q: 'Can I check any of this?', a: [
+    'Yes. The site’s code is public on GitHub, and the site is built and deployed from it automatically, so what you read there is what runs here.',
+  ], link: { href: SOURCE_URL, text: 'See the code →' } },
+  { q: 'How will I know you answered?', a: [
+    'Come back to your private link. There’s no email or notification on purpose: any contact detail would be a thread back to you.',
+  ] },
+  { q: 'What gets published?', a: [
+    'Only messages whose writer asked for it, and only after I have read them. They appear exactly as written, with my answer underneath. I can’t edit your words, only publish them or not.',
+  ] },
+  { q: 'Can I take it back?', a: [
+    'Yes. Your private link lets you make it private again (it leaves this page at once) or delete it and my answers for good.',
+  ] },
+];
+---
+<Layout title="anon.ar-va.com: tell me anything" description="Write to me, or about me, with no name and no account. Something you want to get off your chest, something personal, or just something to share." admin={!!admin}>
+  <!-- Who and why on the left, the writing box on the right (phones: one after the other). -->
+  <section class="max-w-5xl mx-auto px-6 w-full pt-12 sm:pt-16 pb-16 grid grid-cols-1 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] gap-x-14 gap-y-10 items-start">
+    <div class="md:pt-6">
+      <p class="text-xs font-medium tracking-widest uppercase mb-4">anon.ar-va.com · anonymous</p>
+      <h1 class="text-5xl sm:text-6xl font-bold mb-5 tracking-tight text-zinc-900 dark:text-white leading-[1.05] text-balance">Tell me anything</h1>
+      <p class="text-lg leading-relaxed text-zinc-600 dark:text-zinc-300 text-pretty max-w-md">
+        Something you never said to me, something about me, or something you need to get off your chest.
+        Kind or critical, both are welcome.
+      </p>
+
+      <!-- A real person on the other end, and a promise in their own words. -->
+      <figure class="mt-7 flex gap-3.5 items-start max-w-md">
+        {answerer.photo
+          ? <img src={answerer.photo} alt="" width="44" height="44" referrerpolicy="no-referrer" class="w-11 h-11 rounded-full object-cover shrink-0" />
+          : <span class="w-11 h-11 rounded-full bg-(--on-bg) text-(--on-text) font-semibold grid place-items-center shrink-0" aria-hidden="true">{answerer.name.charAt(0)}</span>}
+        <div>
+          <blockquote class="text-zinc-800 dark:text-zinc-200 leading-relaxed text-pretty">“I read every message myself. I can’t see who wrote it, and I won’t try to find out.”</blockquote>
+          <figcaption class="mt-1 text-sm text-zinc-500">{answerer.name}, who you’re writing to · <a href="https://t.me/artuo" class="hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">Telegram</a></figcaption>
+        </div>
+      </figure>
+
+      <ul class="mt-8 flex flex-col gap-4" role="list" aria-label="What reaches me">
+        {receipt.map((r) => (
+          <li class="flex gap-3.5">
+            <span class:list={['shrink-0 w-8 h-8 rounded-full grid place-items-center', r.kind === 'no' ? 'bg-(--well) text-zinc-500 dark:text-zinc-400' : 'bg-(--on-bg) text-(--on-text)']}>
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={icon[r.kind as keyof typeof icon]} /></svg>
+            </span>
+            <span class="pt-1">
+              <span class="block font-medium text-zinc-900 dark:text-white leading-snug">{r.title}</span>
+              <span class="block mt-0.5 text-[15px] text-zinc-600 dark:text-zinc-400 leading-relaxed">{r.text}{r.href && <> <a href={r.href} class="font-medium text-blue-violet-600 dark:text-blue-violet-400 underline decoration-blue-violet-500/30 underline-offset-4 hover:text-zinc-900 dark:hover:text-white transition-colors">{r.link}</a></>}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <a href="#how-anonymous" class="inline-block mt-7 text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:text-zinc-900 dark:hover:text-white transition-colors">How anonymous is this? ↓</a>
+    </div>
+
+    <form method="post" id="write" class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-5 sm:p-7 flex flex-col gap-5" data-compose>
+      {deleted && <p class="rounded-xl bg-(--well) px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300" role="status">Your message and its answers are deleted.</p>}
+      <div>
+        <div class="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-2">
+          <label for="body" class="font-medium text-zinc-900 dark:text-white">Your message</label>
+          <span class="text-xs text-zinc-500">Take your time. Nothing is sent until you press the button.</span>
+        </div>
+        <!-- Starters for a blank page (shown with script, which inserts them). -->
+        <div class="mb-2.5 flex flex-wrap gap-1.5" data-starters hidden>
+          {starters.map((s) => <button type="button" class="ctl !h-7 !px-3 !text-[13px] !font-normal" data-starter={s}>{s}</button>)}
+        </div>
+        <div class="compose rounded-xl">
+          <textarea id="body" name="body" required maxlength={BODY_MAX} rows="7" autofocus={!!error}
+            placeholder="Write it here, in your own words."
+            aria-describedby={error ? 'send-error body-hint body-count' : 'body-hint body-count'}
+            class="block w-full min-h-44 max-h-[60vh] bg-transparent px-4 py-3.5 text-[17px] leading-relaxed text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none resize-none">{draft.body}</textarea>
+          <div class="px-4 pb-2.5 flex items-start justify-between gap-4 text-xs">
+            <p id="body-hint" class="text-zinc-500 text-pretty">Your words are the only thing that can give you away: leave out details only you would know.</p>
+            <p id="body-count" class="shrink-0 text-zinc-400 dark:text-zinc-500 tabular-nums" aria-live="polite" data-count={BODY_MAX}>{BODY_MAX} left</p>
+          </div>
+        </div>
+      </div>
+
+      <fieldset class="visibility">
+        <legend class="font-medium text-zinc-900 dark:text-white mb-2">Who can see it</legend>
+        <div class="grid sm:grid-cols-2 gap-2.5">
+          <label class="choice rounded-xl px-4 py-3 cursor-pointer flex gap-3">
+            <input type="radio" name="visibility" value="private" checked={draft.visibility !== 'public'} class="sr-only" />
+            <svg class="w-5 h-5 shrink-0 mt-0.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
+            <span>
+              <span class="choice-title block text-sm font-semibold text-zinc-900 dark:text-white">Only me</span>
+              <span class="block mt-0.5 text-sm text-zinc-600 dark:text-zinc-400 leading-snug">Stays between us. Nobody else ever sees it.</span>
+            </span>
+          </label>
+          <label class="choice rounded-xl px-4 py-3 cursor-pointer flex gap-3">
+            <input type="radio" name="visibility" value="public" checked={draft.visibility === 'public'} class="sr-only" />
+            <svg class="w-5 h-5 shrink-0 mt-0.5 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 0 0 8.716-6.747M12 21a9.004 9.004 0 0 1-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 0 1 7.843 4.582M12 3a8.997 8.997 0 0 0-7.843 4.582m15.686 0A11.953 11.953 0 0 1 12 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0 1 21 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0 1 12 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 0 1 3 12c0-1.605.42-3.113 1.157-4.418" /></svg>
+            <span>
+              <span class="choice-title block text-sm font-semibold text-zinc-900 dark:text-white">Ask to make it public</span>
+              <span class="block mt-0.5 text-sm text-zinc-600 dark:text-zinc-400 leading-snug">I read it first. If I publish it, it appears below with my answer.</span>
+            </span>
+          </label>
+        </div>
+        <!-- Said at the moment of choosing, not buried in the FAQ (works without script). -->
+        <p class="public-note mt-2.5 rounded-xl bg-(--well) px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed text-pretty">
+          Once published, anyone can read it word for word, and people who know you might recognize how you write.
+          You can make it private again any time from your private link.
+        </p>
+      </fieldset>
+
+      <!-- Only robots fill this in. -->
+      <div class="hidden" aria-hidden="true"><label>Website <input name="website" tabindex="-1" autocomplete="off" /></label></div>
+
+      {error && <p id="send-error" class="text-sm text-red-600 dark:text-red-400" role="alert">{error}</p>}
+
+      <div class="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
+        <button class="inline-flex items-center gap-2 bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 font-semibold px-6 h-12 rounded-full hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 disabled:opacity-50 transition-colors" data-submit="Sending…">
+          Send anonymously
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" /></svg>
+        </button>
+        <span class="text-sm text-zinc-500 text-pretty">Next: your private link, the only way back to my answer.</span>
+      </div>
+
+      <!-- Duty of care: an inbox is not help in a crisis, so say where help is. Quiet, not alarming. -->
+      <p class="pt-4 border-t border-zinc-100 dark:border-zinc-800 text-sm text-zinc-500 leading-relaxed text-pretty">
+        Carrying something heavy? You deserve more than an inbox:{' '}
+        <a href={HELPLINES_URL} target="_blank" rel="noopener noreferrer" class="font-medium text-blue-violet-600 dark:text-blue-violet-400 underline decoration-blue-violet-500/30 underline-offset-4 hover:text-zinc-900 dark:hover:text-white transition-colors">find a free, confidential helpline in your country</a>.
+      </p>
+    </form>
+  </section>
+
+  <section id="answered" class="w-full border-t border-zinc-200/70 dark:border-zinc-800/70 bg-zinc-100/60 dark:bg-zinc-950">
+    <div class="max-w-3xl mx-auto px-6 w-full py-14 sm:py-16">
+      <div class="mb-6">
+        <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h2 class="text-3xl font-bold text-zinc-900 dark:text-white">Answered in public</h2>
+          {total > 0 && <p class="text-sm text-zinc-500">{plural(total, 'message')}{pages > 1 && ` · page ${page} of ${pages}`}</p>}
+        </div>
+        <p class="mt-2 text-zinc-600 dark:text-zinc-400 text-pretty">
+          Shared by the people who wrote them and published word for word after I read them.
+          {stats.medianSeconds !== null && <> I’ve answered {plural(stats.answered, 'message')} so far, usually {within(stats.medianSeconds)}.</>}
+        </p>
+      </div>
+      {messages.length > 0 ? (
+        <div class="flex flex-col gap-5">
+          {messages.map((m) => <Post message={m} mode={admin ? 'admin' : 'public'} answerer={answerer} back={`/?page=${page}`} />)}
+        </div>
+      ) : (
+        <div class="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 px-6 py-12 text-center">
+          <p class="font-medium text-zinc-900 dark:text-white">{page > 1 ? 'Nothing on this page.' : 'Nothing public yet.'}</p>
+          <p class="mt-1 text-zinc-600 dark:text-zinc-400 text-pretty">When someone asks to share their message and I answer it, it appears here. No made-up examples in the meantime.</p>
+        </div>
+      )}
+      {pages > 1 && (
+        <nav class="mt-8 flex items-center justify-between text-sm font-medium" aria-label="More messages">
+          {page > 1 ? <a href={page === 2 ? '/#answered' : `/?page=${page - 1}#answered`} class="ctl">← Newer</a> : <span />}
+          {page < pages ? <a href={`/?page=${page + 1}#answered`} class="ctl">Older →</a> : <span />}
+        </nav>
+      )}
+    </div>
+  </section>
+
+  <section id="promises" class="max-w-3xl mx-auto px-6 w-full pt-14 sm:pt-16">
+    <p class="text-xs font-medium tracking-widest uppercase mb-3">House rules</p>
+    <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-6">What I promise</h2>
+    <ul class="grid sm:grid-cols-2 gap-x-8 gap-y-6" role="list">
+      {promises.map((p, i) => (
+        <li class="flex gap-3.5">
+          <span class="shrink-0 font-mono text-sm text-zinc-400 dark:text-zinc-500 pt-0.5 tabular-nums" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+          <span>
+            <span class="block font-medium text-zinc-900 dark:text-white">{p.title}</span>
+            <span class="block mt-1 text-zinc-600 dark:text-zinc-400 leading-relaxed text-pretty">{p.text}</span>
+          </span>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section id="how-anonymous" class="max-w-3xl mx-auto px-6 w-full py-14 sm:py-16">
+    <p class="text-xs font-medium tracking-widest uppercase mb-3">Privacy</p>
+    <h2 class="text-3xl font-bold text-zinc-900 dark:text-white mb-6">How anonymous is this?</h2>
+    <div class="flex flex-col gap-2.5">
+      {faq.map((f) => (
+        <details class="group rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-5 py-4">
+          <summary class="cursor-pointer list-none flex items-center justify-between gap-3 font-medium text-zinc-900 dark:text-white [&::-webkit-details-marker]:hidden">
+            {f.q}
+            <svg class="w-4 h-4 shrink-0 text-zinc-400 transition-transform group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+          </summary>
+          <div class="mt-3 flex flex-col gap-2.5 text-zinc-600 dark:text-zinc-400 leading-relaxed text-pretty">
+            {f.a.map((p) => <p>{p}</p>)}
+            {f.link && <a href={f.link.href} class="self-start font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:text-zinc-900 dark:hover:text-white transition-colors">{f.link.text}</a>}
+          </div>
+        </details>
+      ))}
+    </div>
+  </section>
+</Layout>
+
+<style>
+  /* The note about publishing shows only while "Ask to make it public" is picked (no script needed). */
+  .visibility:not(:has(input[value='public']:checked)) .public-note { display: none; }
+</style>
+
+<script>
+  import '../scripts/post.ts';
+  const box = document.querySelector<HTMLTextAreaElement>('#body');
+  const count = document.querySelector<HTMLElement>('#body-count');
+  if (box && count) {
+    // Characters left, counted the way the server counts them (after trimming). Calm until it matters.
+    const max = Number(count.dataset.count);
+    const show = () => {
+      const left = max - box.value.trim().length;
+      count.textContent = left >= 0 ? `${left} left` : `${-left} over`;
+      count.classList.toggle('!text-red-600', left < 0);
+    };
+    box.addEventListener('input', show);
+    show();
+
+    // Starters: a first line for a blank page. Into an empty box it starts the message; otherwise it goes in at the
+    // cursor on a new line. The ellipsis is replaced by the cursor.
+    const starters = document.querySelector<HTMLElement>('[data-starters]');
+    if (starters) {
+      starters.hidden = false;
+      starters.addEventListener('click', (e) => {
+        const s = (e.target as HTMLElement).closest<HTMLElement>('[data-starter]')?.dataset.starter;
+        if (!s) return;
+        const text = s.replace(/…$/, ' ');
+        const at = box.selectionStart ?? box.value.length;
+        const before = box.value.slice(0, at);
+        const insert = (before && !before.endsWith('\n') ? '\n' : '') + text;
+        box.setRangeText(insert, at, box.selectionEnd ?? at, 'end');
+        box.focus();
+        show();
+      });
+    }
+  }
+</script>

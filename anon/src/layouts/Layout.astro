@@ -1,0 +1,51 @@
+---
+import '../styles/global.css';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Private links and the inbox: kept out of search engines. */
+  noindex?: boolean;
+  admin?: boolean;
+}
+const { title, description, noindex = false, admin = false } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!-- ARVA brand fonts: Archivo (headings), IBM Plex Sans (text), IBM Plex Mono (labels). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,500..700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    {description && <meta name="description" content={description} />}
+    {description && <meta property="og:description" content={description} />}
+    <meta property="og:title" content={title} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <!-- Private links carry their secret in the address: never pass it on to another site. -->
+    <meta name="referrer" content="no-referrer" />
+    <slot name="head" />
+    <script is:inline>
+      // The theme cookie is shared by every ar-va.com site (set by the theme switch); else the system setting.
+      (() => {
+        const saved = document.cookie.match(/(?:^|; )theme=(dark|light)/);
+        const dark = saved ? saved[1] === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.classList.toggle('dark', dark);
+      })();
+    </script>
+  </head>
+  <body class="bg-paper text-zinc-900 transition-colors duration-300 dark:bg-zinc-950 dark:text-zinc-300 antialiased min-h-screen flex flex-col">
+    <Header admin={admin} />
+    <main class="flex-grow flex flex-col">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>
