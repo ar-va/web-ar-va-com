@@ -53,20 +53,24 @@ The pattern: trust collapses when people discover a gap between what an anonymou
 
 ## Principles and where they show on the page
 
-1. **A real person, in their own words** (benevolence). Artur's photo and one promise next to the headline: "I read
-   every message myself. I can't see who wrote it, and I won't try to find out."
-2. **Concrete receipt, said once** (avoid over-reassurance). Three lines near the form: what reaches me (your words and
-   the date), what doesn't (name, email, account, IP), and how to check. Details live in the FAQ, folded.
+1. **A real person, in their own words** (benevolence). Artur's photo beside the one sentence under the box, and "I
+   won't try to find out who you are" first under "What I promise". (Until 2026-11-20 the hero also quoted "I read
+   every message myself. I can't see who wrote it, and I won't try to find out."; the search-page layout keeps the
+   hero to one sentence.)
+2. **Concrete receipt, said once** (avoid over-reassurance). One sentence right under the box: "Only your words and the
+   date reach me: no name, no account, no IP address", then "How anonymous is this? · Read the code". Details live
+   in the FAQ, folded.
 3. **Verifiable, not just claimed** (integrity). The code is public and deployed from GitHub; the page links to it
-   ("Don't take my word for it"), and the FAQ says how.
+   ("Read the code" under the box), and the FAQ says how.
 4. **Name the one honest limit** (two-sided messages are more credible than absolute ones). Under the text box: "Your
    words are the only thing that can give you away." The old line "Nobody will know it was you, including me"
    overclaimed and was removed.
 5. **Risk at the moment of choice** (control paradox). Picking "Ask to make it public" shows what publishing means:
    anyone can read it word for word, people who know you might recognize your writing, and it can be undone.
 6. **Private by default, public by request, published after reading** (ask.fm). Unchanged from the first version.
-7. **Welcome every kind of message** (lower evaluation fear). "Kind or critical, both are welcome", and optional starters
-   for a blank page that mix thanks, confession, disagreement and a question.
+7. **Welcome every kind of message** (lower evaluation fear). "Kind or critical, both are welcome" in the box, and
+   optional starters for a blank page (shown once the box opens) that mix thanks, confession, disagreement and a
+   question.
 8. **Real numbers or none** (relative standards). The answered list is only real messages; the empty state says there
    are no made-up examples. Response time is shown only from real data and only after 5 answered messages.
 9. **No tricks, said out loud** (NGL, Sendit). No fake messages, no "see who sent this", no notifications pulling people
@@ -83,3 +87,11 @@ The pattern: trust collapses when people discover a gap between what an anonymou
 Fake or seeded messages; "who sent this" hints or paid reveals; streaks, nudges or notifications to bring people
 back; tracking or analytics scripts; security badges standing in for facts; any contact field (it would be a thread
 back to the writer); claims the code doesn't back up.
+
+## Page layout (2026-11-20)
+
+The front page reads like a search page: the title, one line to write in, one sentence on what reaches me, then the
+answered messages in a masonry grid. The line opens into the whole form as soon as someone starts (focus or text, in
+CSS, so it works without script): the choice with its risk (5), the honest limit (4), "Take your time" (12), the
+starters (7) and the helpline (10) all still appear before anything can be sent.
+
