@@ -1,0 +1,30 @@
+---
+// One published message, to share a link to.
+import Layout from '../../layouts/Layout.astro';
+import Post from '../../components/Post.astro';
+import { excerpt } from '../../lib/core';
+import { publishedMessage } from '../../lib/store';
+import { answerer as getAnswerer, currentAdmin } from '../../lib/admin';
+
+const id = Number(Astro.params.id);
+if (!Number.isSafeInteger(id) || id < 1) return new Response(null, { status: 404 });
+const [message, admin, answerer] = await Promise.all([publishedMessage(id), currentAdmin(Astro.cookies), getAnswerer()]);
+if (!message) return new Response(null, { status: 404 });
+---
+<Layout title={`Anonymous: “${excerpt(message.body.replace(/\s+/g, ' '), 60)}”`} description={excerpt(message.body.replace(/\s+/g, ' '), 160)} admin={!!admin}>
+  <div class="max-w-3xl mx-auto px-6 w-full pt-10 sm:pt-14 pb-16 flex flex-col gap-6">
+    <p class="text-sm text-zinc-500"><a href="/#answered" class="hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">← All answered messages</a></p>
+    <Post message={message} mode={admin ? 'admin' : 'public'} answerer={answerer} back={`/p/${id}`} />
+    <div class="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 px-6 py-8 flex flex-wrap items-center justify-between gap-4">
+      <div class="max-w-md">
+        <p class="font-medium text-zinc-900 dark:text-white">Something you want to tell me?</p>
+        <p class="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">No name, no account. Nobody will know it was you.</p>
+      </div>
+      <a href="/#write" class="inline-flex items-center bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 text-sm font-semibold px-5 h-10 rounded-full hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 transition-colors">Write anonymously</a>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import '../../scripts/post.ts';
+</script>

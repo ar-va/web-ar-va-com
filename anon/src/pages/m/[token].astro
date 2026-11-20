@@ -1,0 +1,118 @@
+---
+// The sender's private page. The address holds the only copy of the secret (the database keeps its hash), so whoever
+// has the link is the sender: they read the answers, change who can see it, or delete it.
+import Layout from '../../layouts/Layout.astro';
+import Post from '../../components/Post.astro';
+import { isToken } from '../../lib/core';
+import { deleteByToken, messageByToken, setWantsPublic } from '../../lib/store';
+import { answerer as getAnswerer } from '../../lib/admin';
+
+const token = Astro.params.token ?? '';
+// Never cached anywhere, never indexed.
+Astro.response.headers.set('Cache-Control', 'no-store');
+Astro.response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+if (!isToken(token)) return new Response(null, { status: 404 });
+
+let notice: string | null = null;
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+  if (!(await messageByToken(token))) return new Response(null, { status: 404 });
+  if (action === 'delete') {
+    await deleteByToken(token);
+    return Astro.redirect('/?deleted#write', 303);
+  }
+  if (action === 'private') { await setWantsPublic(token, false); return Astro.redirect(`/m/${token}?saved=private`, 303); }
+  if (action === 'public') { await setWantsPublic(token, true); return Astro.redirect(`/m/${token}?saved=public`, 303); }
+}
+
+const [message, answerer] = await Promise.all([messageByToken(token), getAnswerer()]);
+if (!message) return new Response(null, { status: 404 });
+const sent = Astro.url.searchParams.has('sent');
+const saved = Astro.url.searchParams.get('saved');
+notice = ({
+  private: message.published_at === null ? 'It’s private now: only you and I can see it.' : null,
+  public: 'Asked. I’ll read it and decide whether to publish it.',
+} as Record<string, string | null>)[saved ?? ''] ?? null;
+const link = `${Astro.url.origin}/m/${token}`;
+const answered = message.replies.length > 0;
+const card = 'rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-5 sm:p-6';
+const quiet = 'ctl';
+---
+<Layout title="Your message · anon.ar-va.com" noindex>
+  <div class="max-w-3xl mx-auto px-6 w-full pt-10 sm:pt-14 pb-16 flex flex-col gap-6">
+    {sent ? (
+      <section class="arrive">
+        <p class="text-xs font-medium tracking-widest uppercase mb-3">Sent</p>
+        <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-zinc-900 dark:text-white leading-[1.08] mb-4 text-balance">It’s on its way, and nobody knows it’s from you</h1>
+        <p class="text-lg leading-relaxed text-zinc-600 dark:text-zinc-300 text-pretty">
+          Bookmark this page or copy its link. It’s the only way back to your message and my answer, and I can’t send it
+          to you: I don’t know who you are.
+        </p>
+      </section>
+    ) : (
+      <section>
+        <p class="text-xs font-medium tracking-widest uppercase mb-3">Your private page</p>
+        <h1 class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">{answered ? 'I answered' : 'Your message'}</h1>
+        <p class="text-zinc-600 dark:text-zinc-400 text-pretty">{answered ? 'My answer is under your message.' : 'I haven’t answered yet. Check back here in a day or two.'}</p>
+      </section>
+    )}
+
+    <!-- The link, front and centre: copy it or bookmark it. -->
+    <div class={`${card} flex flex-col gap-3`}>
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" /></svg>
+        <p class="font-medium text-zinc-900 dark:text-white text-sm">Your private link</p>
+      </div>
+      <div class="flex flex-col sm:flex-row gap-2">
+        <input readonly value={link} aria-label="Your private link" class="min-w-0 flex-1 rounded-full bg-(--well) px-4 h-10 font-mono text-[13px] text-zinc-700 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-blue-violet-500" onfocus="this.select()" />
+        <button type="button" data-copy={link} data-copied="Copied. Keep it somewhere safe" class="inline-flex justify-center items-center gap-2 bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 text-sm font-semibold px-5 h-10 rounded-full hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" /></svg>
+          Copy link
+        </button>
+      </div>
+      <p class="text-xs text-zinc-500 leading-relaxed">Anyone with this link can read and delete your message, so keep it to yourself. Bookmarking this page works too.</p>
+    </div>
+
+    {notice && <p class="rounded-xl bg-(--well) px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300" role="status">{notice}</p>}
+
+    <div class:list={{ arrive: sent }}>
+      <Post message={message} mode="owner" answerer={answerer} />
+    </div>
+
+    <!-- What they can change. -->
+    <section class={`${card} flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800 !py-1`} aria-label="Your choices">
+      <div class="py-5 flex flex-wrap items-center justify-between gap-3">
+        <div class="max-w-md">
+          <p class="font-medium text-zinc-900 dark:text-white">Who can see it</p>
+          <p class="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400 text-pretty">{message.published_at !== null
+            ? 'It’s public, on the front page. Making it private takes it off at once.'
+            : message.wants_public ? 'You asked to make it public. I haven’t published it yet.'
+            : 'Only you and I can see it.'}</p>
+        </div>
+        <form method="post">
+          {message.wants_public
+            ? <><input type="hidden" name="action" value="private" /><button class={quiet}>Make it private</button></>
+            : <><input type="hidden" name="action" value="public" /><button class={quiet}>Ask to make it public</button></>}
+        </form>
+      </div>
+
+      <div class="py-5 flex flex-wrap items-center justify-between gap-3">
+        <div class="max-w-md">
+          <p class="font-medium text-zinc-900 dark:text-white">Delete it</p>
+          <p class="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400 text-pretty">Your message and my answers go away for good, and this link stops working.</p>
+        </div>
+        <form method="post">
+          <input type="hidden" name="action" value="delete" />
+          <button class="ctl hover:!text-red-600 dark:hover:!text-red-400" data-confirm="Delete your message and my answers for good?">Delete my message</button>
+        </form>
+      </div>
+    </section>
+
+    <p class="text-sm text-zinc-500"><a href="/" class="hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">← Write another message</a></p>
+  </div>
+</Layout>
+
+<script>
+  import '../../scripts/post.ts';
+</script>

@@ -1,0 +1,28 @@
+---
+// ar-va.com's header, trimmed: logo left, theme switch right. Visitors never log in here, so there's no account link;
+// the admin gets a link to the inbox.
+import ThemeToggle from './ThemeToggle.astro';
+
+interface Props { admin?: boolean }
+const { admin = false } = Astro.props;
+const path = Astro.url.pathname;
+---
+<nav class="relative z-50 mt-3 max-w-5xl mx-auto px-6 w-full grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+  <a href="/" class="shrink-0 justify-self-start h-11 flex items-center gap-3" aria-label="anon.ar-va.com home">
+    <img src="/brand/arva-horizontal-ink-moss.svg" alt="ARVA" width="100" height="24" class="h-[22px] sm:h-6 w-auto dark:hidden max-[359px]:!hidden" />
+    <img src="/brand/arva-horizontal-washi-moss.svg" alt="ARVA" width="100" height="24" class="h-[22px] sm:h-6 w-auto hidden dark:block max-[359px]:!hidden" />
+    <img src="/brand/arva-mark-small-ink-moss.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 hidden max-[359px]:block dark:!hidden" />
+    <img src="/brand/arva-mark-small-washi-moss.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 hidden dark:max-[359px]:block" />
+    <span class="text-xs font-medium uppercase tracking-widest pt-0.5">anon</span>
+  </a>
+  <div class="justify-self-end h-11 flex items-center gap-3 sm:gap-4 text-sm font-medium">
+    {admin && (
+      <a href="/admin" aria-current={path.startsWith('/admin') ? 'page' : undefined}
+        class="flex items-center gap-1.5 h-8 text-zinc-600 dark:text-zinc-300 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 aria-[current=page]:text-blue-violet-600 dark:aria-[current=page]:text-blue-violet-400 transition-colors">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 13.5h3.86a2.25 2.25 0 0 1 2.012 1.244l.256.512a2.25 2.25 0 0 0 2.013 1.244h3.218a2.25 2.25 0 0 0 2.013-1.244l.256-.512a2.25 2.25 0 0 1 2.013-1.244h3.859M2.25 13.5V18a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-4.5M2.25 13.5l2.4-7.2A2.25 2.25 0 0 1 6.784 4.5h10.432a2.25 2.25 0 0 1 2.134 1.8l2.4 7.2" /></svg>
+        Inbox
+      </a>
+    )}
+    <ThemeToggle />
+  </div>
+</nav>

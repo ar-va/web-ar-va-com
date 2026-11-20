@@ -1,0 +1,97 @@
+---
+// The admin's inbox: every message, newest first, with filters; publish what asked to be public, answer, delete.
+// Login is ar-va.com's Telegram login (src/lib/admin.ts).
+import Layout from '../layouts/Layout.astro';
+import Post from '../components/Post.astro';
+import { REPLY_MAX, cleanText, safeBack } from '../lib/core';
+import { PAGE_SIZE, addReply, deleteMessage, deleteReply, editReply, inbox, isInboxFilter, markRead, publish, type InboxFilter } from '../lib/store';
+import { answerer as getAnswerer, currentAdmin, loginUrl } from '../lib/admin';
+
+Astro.response.headers.set('Cache-Control', 'no-store');
+const admin = await currentAdmin(Astro.cookies);
+if (!admin) {
+  if (Astro.request.method === 'POST') return new Response('Log in on ar-va.com first.', { status: 403 });
+  return Astro.redirect(loginUrl(Astro.url), 302);
+}
+const answerer = await getAnswerer();
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const action = String(form.get('action') ?? '');
+  const id = Number(form.get('id'));
+  const back = safeBack(form.get('back'));
+  const body = cleanText(form.get('body'));
+  if (!Number.isSafeInteger(id) || id < 1) return new Response('Bad request', { status: 400 });
+  const wordsOk = body.length > 0 && body.length <= REPLY_MAX;
+  if (action === 'publish') await publish(id, true);
+  else if (action === 'unpublish') await publish(id, false);
+  else if (action === 'delete') await deleteMessage(id);
+  else if (action === 'delete-reply') await deleteReply(id);
+  else if (action === 'edit-reply' && wordsOk) await editReply(id, body);
+  else if (action === 'reply' && wordsOk) await addReply(id, body);
+  else return new Response('Bad request', { status: 400 });
+  return Astro.redirect(back, 303);
+}
+
+const filterParam = Astro.url.searchParams.get('show') ?? 'all';
+const filter: InboxFilter = isInboxFilter(filterParam) ? filterParam : 'all';
+const page = Math.max(1, Number(Astro.url.searchParams.get('page')) || 1);
+const { messages, totals } = await inbox(filter, page);
+const fresh = new Set(messages.filter((m) => m.read_at === null).map((m) => m.id));
+// Seen once shown: next time they're no longer "New".
+Astro.locals.cfContext.waitUntil(markRead([...fresh]));
+const pages = Math.max(1, Math.ceil(totals[filter] / PAGE_SIZE));
+const here = (f: InboxFilter, p = 1) => (f === 'all' && p === 1 ? '/admin' : `/admin?show=${f}${p > 1 ? `&page=${p}` : ''}`);
+const tabs: { key: InboxFilter; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'unanswered', label: 'Unanswered' },
+  { key: 'public', label: 'Asks to be public' },
+  { key: 'published', label: 'Published' },
+];
+const empty: Record<InboxFilter, string> = {
+  unanswered: 'Every message has an answer.',
+  public: 'No message is waiting to be published.',
+  published: 'Nothing is published yet.',
+  all: 'No messages yet. Share anon.ar-va.com and they will arrive here.',
+};
+---
+<Layout title="Inbox · anon.ar-va.com" noindex admin>
+  <div class="max-w-3xl mx-auto px-6 w-full pt-10 sm:pt-14 pb-16">
+    <p class="text-xs font-medium tracking-widest uppercase mb-3">Only you see this page</p>
+    <h1 class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white mb-2">Inbox</h1>
+    <p class="text-zinc-600 dark:text-zinc-400 text-pretty mb-7">
+      {totals.new > 0 && <span class="font-medium text-zinc-900 dark:text-white">{totals.new} new since you last looked. </span>}
+      Answers to a public message show on the front page; answers to a private one only on the sender’s private link
+      (they check back there).
+    </p>
+
+    <nav class="flex flex-wrap gap-2 mb-6" aria-label="Show">
+      {tabs.map((t) => (
+        <a href={here(t.key)} class="ctl" aria-pressed={t.key === filter ? 'true' : 'false'}>
+          {t.label}
+          <span class="tabular-nums opacity-70">{totals[t.key]}</span>
+        </a>
+      ))}
+    </nav>
+
+    {messages.length > 0 ? (
+      <div class="flex flex-col gap-5">
+        {messages.map((m) => <Post message={m} mode="admin" answerer={answerer} back={here(filter, page)} fresh={fresh.has(m.id)} />)}
+      </div>
+    ) : (
+      <div class="rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 px-6 py-12 text-center text-zinc-600 dark:text-zinc-400">{empty[filter]}</div>
+    )}
+
+    {pages > 1 && (
+      <nav class="mt-8 flex items-center justify-between text-sm font-medium" aria-label="More messages">
+        {page > 1 ? <a href={here(filter, page - 1)} class="ctl">← Newer</a> : <span />}
+        <span class="text-zinc-500">Page {page} of {pages}</span>
+        {page < pages ? <a href={here(filter, page + 1)} class="ctl">Older →</a> : <span />}
+      </nav>
+    )}
+  </div>
+</Layout>
+
+<script>
+  import '../scripts/post.ts';
+</script>

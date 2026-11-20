@@ -1,0 +1,57 @@
+---
+---
+<button
+  id="theme-toggle"
+  role="switch"
+  aria-checked="false"
+  aria-label="Toggle Dark Mode"
+  class="relative inline-flex h-8 w-14 items-center rounded-full bg-(--well) transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-violet-500"
+>
+  <span class="sr-only">Toggle Dark Mode</span>
+  
+  <!-- Sliding Purple Knob -->
+  <span
+    class="absolute left-1 z-0 inline-block h-6 w-6 transform rounded-full bg-(--on-bg) shadow-[0_1px_3px_rgb(0_0_0/0.15)] transition-transform duration-300 dark:translate-x-6"
+  ></span>
+  
+  <!-- Icons Container -->
+  <span class="relative z-10 flex w-full justify-between px-1.5 pointer-events-none">
+    
+    <!-- Sun Icon -->
+    <svg class="tt-sun w-4 h-4 text-(--on-text) dark:text-zinc-500 transition-colors duration-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0 Z" />
+    </svg>
+    
+    <!-- Moon Icon -->
+    <svg class="tt-moon w-4 h-4 text-zinc-400 dark:text-(--on-text) transition-colors duration-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+    </svg>
+    
+  </span>
+</button>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const themeToggleBtn = document.getElementById("theme-toggle");
+    if (!themeToggleBtn) return;
+
+    // Sync initial ARIA state with the current theme on page load
+    const isDark = document.documentElement.classList.contains("dark");
+    themeToggleBtn.setAttribute("aria-checked", isDark ? "true" : "false");
+
+    const handleToggleClick = () => {
+      const element = document.documentElement;
+      element.classList.toggle("dark");
+      
+      const currentlyDark = element.classList.contains("dark");
+      // One choice for every ar-va.com site, remembered for a year (browsers refuse Domain=localhost).
+      const site = location.hostname.split(".").slice(-2).join(".");
+      document.cookie = `theme=${currentlyDark ? "dark" : "light"}; path=/; max-age=31536000; samesite=lax${site === "localhost" ? "" : `; domain=${site}`}`;
+      
+      // Update ARIA state dynamically when clicked
+      themeToggleBtn.setAttribute("aria-checked", currentlyDark ? "true" : "false");
+    };
+    
+    themeToggleBtn.addEventListener("click", handleToggleClick);
+  });
+</script>
