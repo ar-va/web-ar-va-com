@@ -4,6 +4,7 @@
 import Layout from '../../layouts/Layout.astro';
 import Post from '../../components/Post.astro';
 import { isToken } from '../../lib/core';
+import { HELPLINES_URL } from '../../site';
 import { deleteByToken, messageByToken, setWantsPublic } from '../../lib/store';
 import { answerer as getAnswerer } from '../../lib/admin';
 
@@ -56,6 +57,13 @@ const quiet = 'ctl';
         <h1 class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">{answered ? 'I answered' : 'Your message'}</h1>
         <p class="text-zinc-600 dark:text-zinc-400 text-pretty">{answered ? 'My answer is under your message.' : 'I haven’t answered yet. Check back here in a day or two.'}</p>
       </section>
+    )}
+    <!-- Duty of care, where an inbox's limit is plain: right after writing, while the answer is still a day or two away. -->
+    {!answered && (
+      <p class="-mt-2 text-zinc-500 text-pretty">
+        If what you’re carrying can’t wait for my answer, you deserve more than an inbox:{' '}
+        <a href={HELPLINES_URL} target="_blank" rel="noopener noreferrer" class="font-medium text-blue-violet-600 dark:text-blue-violet-400 underline decoration-blue-violet-500/30 underline-offset-4 hover:text-zinc-900 dark:hover:text-white transition-colors">find a free, confidential helpline</a>.
+      </p>
     )}
 
     <!-- The link, front and centre: copy it or bookmark it. -->

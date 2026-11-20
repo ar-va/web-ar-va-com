@@ -79,8 +79,10 @@ The pattern: trust collapses when people discover a gap between what an anonymou
    are no made-up examples. Response time is shown only from real data and only after 5 answered messages.
 9. **No tricks, said out loud** (NGL, Sendit). No fake messages, no "see who sent this", no notifications pulling people
    back, nothing to pay for. Listed under "What I promise".
-10. **Duty of care.** A quiet line under the form pointing to free, confidential helplines
-    ([findahelpline.com](https://findahelpline.com/)): an anonymous inbox is not crisis help.
+10. **Duty of care.** A quiet line pointing to free, confidential helplines
+    ([findahelpline.com](https://findahelpline.com/)): an anonymous inbox is not crisis help. Since 2026-11-20 on the
+    private page while the answer is still to come ("If what you’re carrying can’t wait for my answer…"), right after
+    sending: where the inbox's limit is plain, without opening the front page with crisis (see "priming" above).
 11. **House rules.** What won't be published (anything naming or exposing someone else, threats, cruelty), so writers
     know their words won't sit next to abuse and readers know the space is looked after.
 12. **No pressure.** No timers, no counters urging people on, a calm character count. ("Take your time. Nothing is sent
@@ -98,5 +100,5 @@ back to the writer); claims the code doesn't back up.
 The front page reads like a search page: the title, one line to write in (Send inside it; it grows only when the text
 needs more lines), one sentence on what reaches me and where the answer comes back, then the answered messages in a
 masonry grid. As soon as someone starts (focus or text, in CSS, so it works without script) who can see it appears under
-the box (5, its risk shown when "public" is picked). The helpline (10) is always shown, right under the title; the honest limit (4) is in the FAQ.
+the box (5, its risk shown when "public" is picked). The helpline (10) is on the private page while the answer is still to come; the honest limit (4) is in the FAQ.
 
