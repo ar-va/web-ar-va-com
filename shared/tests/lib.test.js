@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import {
-  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, toCsv, safeDay, playCount, addedNeedsDate, telegramAuthUrl, tracklistToText, textToTracklist, safeStreamingUrl, activeLink,
+  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, toCsv, safeDay, playCount, addedNeedsDate, telegramAuthUrl, tracklistToText, textToTracklist, safeStreamingUrl, activeLink, youtubeId,
 } from '../lib/lib.ts';
 
 const BOT = '123:test-bot-token';
@@ -393,3 +393,13 @@ test('invite links: only working ones count (not revoked, not expired, uses left
   assert.deepEqual(working(), ['forever']);
 });
 
+
+test('youtubeId: track links from YouTube Music, YouTube and youtu.be; anything else is null', () => {
+  assert.equal(youtubeId('https://music.youtube.com/watch?v=zqNTltOGh5c'), 'zqNTltOGh5c');
+  assert.equal(youtubeId('https://www.youtube.com/watch?list=OLAK5&v=zqNTltOGh5c&t=3'), 'zqNTltOGh5c');
+  assert.equal(youtubeId('https://youtu.be/zqNTltOGh5c'), 'zqNTltOGh5c');
+  assert.equal(youtubeId('https://music.youtube.com/browse/MPREb_abc'), null);
+  assert.equal(youtubeId('https://evil.example/watch?v=zqNTltOGh5c'), null);
+  assert.equal(youtubeId('https://music.youtube.com/watch?v=zqNTltOGh5cX'), null);
+  assert.equal(youtubeId(undefined), null);
+});

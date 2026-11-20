@@ -21,8 +21,10 @@ interface Props {
   /** For the owner when the "Added on" date is missing (addedNeedsDate): an icon that opens a popup to set it.
    *  `sameDay` = how many of their records Discogs dated on this record's day. */
   askAdded?: { sameDay: number };
+  /** Album page: the tracks found on YouTube Music, in order. The record's sound plays them (scripts/album-player.ts). */
+  play?: { id: string; title: string }[];
 }
-const { record, artist, title, released, genres, trackCount, links, href, runtime, askAdded } = Astro.props;
+const { record, artist, title, released, genres, trackCount, links, href, runtime, askAdded, play } = Astro.props;
 // Discogs' added date is in the collector's local time: show that day, not the UTC one.
 const day = record.added.slice(0, 10);
 const added = day ? `Added to the shelf ${formatReleased(day)}` : 'Added date unknown';
@@ -39,8 +41,8 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
 <!-- The rolled-out disc sticks out 38 % of the sleeve's width: the gap leaves it ~60 px clear of the text. -->
 <!-- overflow-x: clip, with the page's 24 px side margin to spare: the light behind the rolled-out record reaches 120 % of
      the cover past it, which made phones scroll sideways (446 px on a 390 px screen); now it fades out at the screen edge. -->
-<div class="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-36 overflow-x-clip [overflow-clip-margin:1.5rem]">
-  <div data-turntable class="relative shrink-0 self-start sm:self-auto">
+<div data-hero class="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-36 overflow-x-clip [overflow-clip-margin:1.5rem]">
+  <div data-turntable data-play={play?.length ? JSON.stringify(play) : undefined} class="relative shrink-0 self-start sm:self-auto">
     <!-- Shelf: the cover links too (for mouse and touch; keyboards and screen readers use the title's link). -->
     {href ? (
       <a href={href} tabindex="-1" aria-hidden="true" class="block"><Cover record={record} eager class="sleeve-open w-48 sm:w-60" /></a>
@@ -93,12 +95,14 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
     <div class="mt-5">
       <Listen buttons query={`${artist} ${title}`} label={`Listen to ${title}`} links={links} />
     </div>
+    {play?.length ? <p data-now-playing class="mt-3 min-h-5 text-sm text-zinc-500" aria-live="polite"></p> : null}
     <slot />
   </div>
 </div>
 
 <script>
   import { emitBurst } from '../scripts/notes';
+  import { albumPlayer } from '../scripts/album-player';
 
   // Notes drift out of the open side while the record rolls out (CSS: 0.25 s delay, 1.6 s).
   document.querySelectorAll<HTMLElement>('.sleeve-open').forEach((sleeve) => emitBurst(sleeve, 'right', 9, 1500, 300));
@@ -113,6 +117,10 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
     const sleeve = disc?.closest<HTMLElement>('.sleeve');
     const glare = turntable.querySelector<HTMLElement>('.glare');
     if (!disc || !sleeve) return;
+    // Album page with tracks on YouTube Music: the record's sound follows the turntable.
+    const sound = turntable.dataset.play
+      ? albumPlayer(JSON.parse(turntable.dataset.play), turntable.closest('[data-hero]')?.querySelector('[data-now-playing]') ?? null, () => halt())
+      : null;
     // The still glare gives way while the record plays and comes back as it stops.
     const fadeGlare = (to: number, ms: number) => glare?.animate([{ opacity: getComputedStyle(glare).opacity }, { opacity: to }], { duration: ms, easing: 'ease-in-out', fill: 'forwards' });
     let spin: Animation | null = null;
@@ -161,8 +169,10 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       button.title = label;
       button.setAttribute('aria-label', label);
     };
-    const toggle = () => {
+    // Without the spin (reduced motion) there's no play / pause button, so no sound either.
+    const toggle = (byUser: boolean) => {
       if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (!playing) sound?.play(byUser); else sound?.stop(byUser);
       if (!playing) {
         set(true);
         if (!spin) {
@@ -185,11 +195,13 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
         fadeGlare(1, coast());
       }
     };
-    button.addEventListener('click', toggle);
-    turntable.querySelector('[data-spin-cover]')?.addEventListener('click', toggle);
+    // The album ended or the browser refused sound: the record comes to rest without touching the sound.
+    function halt() { if (playing) { set(false); clearInterval(notes); fadeGlare(1, coast()); } }
+    button.addEventListener('click', () => toggle(true));
+    turntable.querySelector('[data-spin-cover]')?.addEventListener('click', () => toggle(true));
     // Start playing as the roll-out (CSS `roll-out`, 0.25 s delay + 1.6 s) settles.
     let started = false;
-    const autoplay = () => { if (!started && !playing) { started = true; toggle(); } };
+    const autoplay = () => { if (!started && !playing) { started = true; toggle(false); } };
     disc.addEventListener('animationend', (e) => { if (e.animationName === 'roll-out') autoplay(); }, { once: true });
     setTimeout(autoplay, 2000);
   });
