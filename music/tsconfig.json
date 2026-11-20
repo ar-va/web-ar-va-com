@@ -1,0 +1,16 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    // Code both sites use, in ../shared: import from '@shared/…'.
+    "paths": { "@shared/*": ["../shared/*"] }
+  },
+  "include": [
+    ".astro/types.d.ts",
+    "**/*",
+    "../shared/**/*",
+    "./worker-configuration.d.ts"
+  ],
+  "exclude": [
+    "dist"
+  ]
+}

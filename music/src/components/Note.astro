@@ -1,0 +1,65 @@
+---
+// The owner's note, on a shelf (about the collection) and under each album (about the record): a quote signed with
+// their first name, two lines then "View more". The owner gets "Edit" (or a dashed "Add a note…" box when empty),
+// which opens ?note: a form rendered by the server here (no script needed) that posts `action=note` to the page.
+// At most NOTE_MAX characters.
+import { NOTE_MAX } from '@shared/lib/lib';
+
+interface Props {
+  note: string | null;
+  /** First name of the owner, for the signature. */
+  by: string;
+  /** "the collection" or "this record". */
+  about: string;
+  /** The page's own path, for Edit and Cancel. */
+  base: string;
+  canEdit: boolean;
+  editing: boolean;
+  addText: string;
+  placeholder: string;
+  class?: string;
+}
+const { note, by, about, base, canEdit, editing, addText, placeholder, class: className = '' } = Astro.props;
+---
+{editing ? (
+  <form id="note" method="post" class={`max-w-2xl scroll-mt-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-4 sm:p-5 ${className}`}>
+    <input type="hidden" name="action" value="note" />
+    <label for="note-text" class="block text-sm font-medium text-zinc-800 dark:text-zinc-200 mb-2">About {about.replace(/^the /, 'your ')}</label>
+    <textarea id="note-text" name="note" rows="3" maxlength={NOTE_MAX} autofocus placeholder={placeholder}
+      oninput="this.form.querySelector('[data-left]').textContent = this.maxLength - this.value.length"
+      class="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2.5 text-zinc-900 dark:text-white leading-relaxed focus:outline-none focus:border-blue-violet-500 transition-colors">{note ?? ''}</textarea>
+    <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
+      <span class="text-xs text-zinc-500"><span data-left>{NOTE_MAX - (note?.length ?? 0)}</span> characters left</span>
+      <span class="flex items-center gap-2">
+        <a href={`${base}#note`} class="ctl">Cancel</a>
+        <button class="inline-flex items-center h-8 px-4 rounded-full text-sm font-medium bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 transition-colors">Save</button>
+      </span>
+    </div>
+  </form>
+) : note ? (
+  <figure id="note" data-note class={`max-w-2xl scroll-mt-6 ${className}`}>
+    <blockquote class="border-l-2 border-zinc-200 dark:border-zinc-800 pl-4">
+      <p data-note-text class="text-[0.9375rem] leading-relaxed text-zinc-600 dark:text-zinc-400 break-words line-clamp-2">{note}</p>
+      <button type="button" data-note-more hidden class="mt-1 text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">View more</button>
+    </blockquote>
+    <figcaption class="mt-2 pl-4 text-xs text-zinc-500">
+      — {by}, about {about}{canEdit && <> · <a href={`${base}?note#note`} class="font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Edit</a></>}
+    </figcaption>
+  </figure>
+) : canEdit && (
+  <a id="note" href={`${base}?note#note`} class={`max-w-2xl scroll-mt-6 flex items-start gap-3 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-500 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 hover:border-blue-violet-400 transition-colors ${className}`}>
+    <svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.9 4.1a2.1 2.1 0 0 1 3 3L8.5 18.5 4 20l1.5-4.5z" /></svg>
+    {addText}
+  </a>
+)}
+
+<script>
+  // The two-line preview runs the paragraphs together (a short first line and a blank one would leave a lonely
+  // "…"); "View more", shown only when the preview cuts something off, brings back the whole note with its line breaks.
+  const text = document.querySelector<HTMLElement>('[data-note-text]');
+  const more = document.querySelector<HTMLButtonElement>('[data-note-more]');
+  if (text && more && (text.scrollHeight > text.clientHeight + 1 || /\n/.test(text.textContent ?? ''))) {
+    more.hidden = false;
+    more.addEventListener('click', () => { text.classList.remove('line-clamp-2'); text.classList.add('whitespace-pre-line'); more.hidden = true; });
+  }
+</script>

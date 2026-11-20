@@ -1,0 +1,37 @@
+---
+// A whole shelf page (music.ar-va.com/<name>): breadcrumbs, the shelf, and comments on the shelf at the bottom.
+import Layout from '@shared/layouts/Layout.astro';
+import Breadcrumbs from './Breadcrumbs.astro';
+import CommentThread from '@shared/components/CommentThread.astro';
+import LoginButton from '@shared/components/LoginButton.astro';
+import Shelf from './Shelf.astro';
+import { loginHref } from '@shared/lib/lib';
+import { SHELF_THREAD, canDeleteComment, shelfSlug, type User, type shelfData } from '@shared/lib/store';
+
+type Props = Awaited<ReturnType<typeof shelfData>> & { user: User | null; error: string | null; draft: string; editingNote: boolean };
+const { owner, records, comments, user, error, draft, editingNote } = Astro.props;
+const path = Astro.url.pathname;
+const thread = { shelfId: owner?.id ?? 0, instanceId: SHELF_THREAD };
+---
+<Layout title={owner ? `${owner.name}’s records - ARVA` : 'Not found - ARVA'} description={owner ? (owner.shelf_note ?? `${records.length} vinyl records on ${owner.name}’s shelf.`) : undefined}>
+  <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24">
+    <Breadcrumbs class="mb-8" share={!!owner} items={[{ label: 'Shelves', href: '/' }, { label: owner?.name ?? 'Not found' }]} />
+    {owner ? (
+      <>
+        <Shelf owner={{ name: owner.name, slug: shelfSlug(owner), discogs_username: owner.discogs_username!, telegram: owner.username, note: owner.shelf_note }}
+          records={records} commentCount={comments.length} canEdit={user?.id === owner.id} editingNote={editingNote} />
+        <section id="comments" class="mt-16 max-w-3xl">
+          <CommentThread comments={comments} user={user} canDelete={(id) => canDeleteComment(thread, id, user)} error={error} draft={draft}>
+            <LoginButton slot="login" href={loginHref(Astro.url, `${Astro.url.origin}${path}#comments`)} />
+          </CommentThread>
+        </section>
+      </>
+    ) : (
+      <p class="text-zinc-500">There’s no shelf here. <a href="/" class="text-blue-violet-600 dark:text-blue-violet-400 underline underline-offset-4">See all shelves →</a></p>
+    )}
+  </div>
+</Layout>
+
+<script>
+  import '@shared/scripts/comments';
+</script>
