@@ -4,6 +4,8 @@ Give this file to any AI that designs or codes for ARVA. Treat every rule as a r
 
 Use with: `arva-tokens.css` (all colours, fonts, spacing) and the SVG files in `logo/`.
 
+Online at https://brand.ar-va.com (this file: https://brand.ar-va.com/ARVA-brand-rules.md, an index for AI tools: https://brand.ar-va.com/llms.txt).
+
 ---
 
 ## 1. Who ARVA is

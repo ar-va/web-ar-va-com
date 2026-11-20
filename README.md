@@ -8,6 +8,7 @@ what they have in common lives in `shared/`.
 | `/` (`src/`) | **ar-va.com**: home, blog (written in Obsidian), and the Telegram login all sites use | `web-ar-va-com` |
 | `music/` | **music.ar-va.com**: record shelves from Discogs, comments, invites | `web-music-ar-va-com` |
 | `anon/` | **anon.ar-va.com**: anonymous messages, with its own database (see `anon/README.md`) | `web-anon-ar-va-com` |
+| `brand/` | **brand.ar-va.com**: the design language (brand rules, tokens, logos) as a page and as plain files for AI tools; static, built from the kit in the same folder | `web-brand-ar-va-com` |
 | `shared/` | Header, footer, layout, styles, logos and favicons (`shared/public`), accounts, sessions and comments (`shared/lib`) | (none; imported as `@shared/…`) |
 
 ar-va.com and music.ar-va.com use the same D1 database (`ar-va-music-na`): one account and one login across the

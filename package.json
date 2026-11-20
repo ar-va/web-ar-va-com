@@ -5,7 +5,8 @@
   "private": true,
   "workspaces": [
     "music",
-    "anon"
+    "anon",
+    "brand"
   ],
   "engines": {
     "node": ">=22.12.0"
