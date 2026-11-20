@@ -98,6 +98,5 @@ back to the writer); claims the code doesn't back up.
 The front page reads like a search page: the title, one line to write in (Send inside it; it grows only when the text
 needs more lines), one sentence on what reaches me and where the answer comes back, then the answered messages in a
 masonry grid. As soon as someone starts (focus or text, in CSS, so it works without script) who can see it appears under
-the box (5, its risk shown when "public" is picked). The helpline (10) is always shown, under "How anonymous is this? ·
-Read the code"; the honest limit (4) is in the FAQ.
+the box (5, its risk shown when "public" is picked). The helpline (10) is always shown, right under the title; the honest limit (4) is in the FAQ.
 
