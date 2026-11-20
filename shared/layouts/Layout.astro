@@ -4,8 +4,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import type { Props as HeaderProps } from '../components/Header.astro';
 
-// Slots: `head` (extra tags in <head>), `header-actions` (before the theme switch), `footer-links` (replaces the
-// footer's default links).
+// Slots: `head` (extra tags in <head>), `header-actions` (before the theme switch).
 interface Props {
   title: string;
   description?: string;
@@ -58,6 +57,6 @@ const { title, description, noindex = false, header = {} } = Astro.props;
     <div class="flex-grow flex flex-col">
       <slot />
     </div>
-    {Astro.slots.has('footer-links') ? <Footer><slot name="footer-links" slot="links" /></Footer> : <Footer />}
+    <Footer />
   </body>
 </html>
