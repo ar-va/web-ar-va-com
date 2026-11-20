@@ -23,3 +23,18 @@ html { scroll-padding-top: 1.5rem; }
 .arrive { animation: arrive 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 @keyframes arrive { from { opacity: 0; transform: translateY(10px); } }
 @media (prefers-reduced-motion: reduce) { .arrive { animation: none; } }
+
+/* The front page's box starts as one line, like a search box, and opens into the whole form as soon as you start:
+   while anything in the form has focus (the form itself takes focus on clicks inside it, tabindex=-1) or once there's
+   text. No script needed. Browsers without :has() show the whole form all the time. */
+.compose-form .compose { border-radius: 1.75rem; }
+.compose-form .compose textarea { min-height: 0; }
+.compose-form .open-only { display: none; }
+.compose-form:focus-within .compose,
+.compose-form:has(textarea:not(:placeholder-shown)) .compose { border-radius: 1rem; }
+.compose-form:focus-within .compose textarea,
+.compose-form:has(textarea:not(:placeholder-shown)) .compose textarea { min-height: 9rem; }
+.compose-form:focus-within .open-only,
+.compose-form:has(textarea:not(:placeholder-shown)) .open-only { display: block; animation: arrive 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@supports not selector(:has(*)) { .compose-form .open-only { display: block; } }
+@media (prefers-reduced-motion: reduce) { .compose-form .open-only { animation: none; } }
