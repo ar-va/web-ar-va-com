@@ -13,7 +13,7 @@ trust and dark patterns, 2026-11-17). Read it before changing the front page; it
 until 2026-11-20 its own repo `ar-va/web-anon-ar-va-com`, now archived). Logos and favicons come from `../shared/public`;
 header, footer, layout, theme switch and styles from `../shared` (since 2026-11-20): `src/layouts/Layout.astro` wraps
 the shared layout with what anon adds (minimal header labelled "anon" with no account link, the admin's Inbox link,
-`no-referrer` on every page, `noindex` where asked, `<main>`; the footer is the shared one); anon-only CSS in `src/styles/anon.css`. Commit as
+a `same-origin` referrer policy on every page, `noindex` where asked, `<main>`; the footer is the shared one); anon-only CSS in `src/styles/anon.css`. Commit as
 `ARVA <github@ar-va.com>` (local git config) with **no Claude co-author lines** (user, 2026-11-17).
 
 ## Anonymity rules (keep them when changing anything)
@@ -29,7 +29,9 @@ the shared layout with what anon adds (minimal header labelled "anon" with no ac
   Only `currentAdmin()` reads the session cookie, compares it with the admin, and keeps nothing.
 - Workers invocation logs are off (`observability.logs.invocation_logs: false`); code never logs addresses or text.
 - Public pages show the date only, never the time a message was sent. Private pages: `no-store`, `noindex`, and
-  `<meta name="referrer" content="no-referrer">` site-wide so the secret never leaks in a Referer.
+  `<meta name="referrer" content="same-origin">` site-wide so the secret never leaks in a Referer to another site.
+  **Not `no-referrer`:** with it, browsers send form posts with `Origin: null`, Astro's cross-site check refuses them
+  (403), and nobody could send a message or use the admin forms (live from 2026-11-17 until fixed on 2026-11-20).
 - The admin can't edit a sender's words: only publish (if they asked), unpublish, answer, delete.
 
 ## How it works
