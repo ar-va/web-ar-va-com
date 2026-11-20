@@ -47,7 +47,7 @@ const primary = 'shrink-0 bg-blue-violet-600 dark:bg-blue-violet-400 text-white 
       </p>
     </div>
     <div class="flex shrink-0 items-center gap-2">
-      {fresh && <span class="text-xs font-medium">New</span>}
+      {fresh && <span class="rounded-full bg-brick-tint px-2 py-0.5 text-xs font-medium text-brick dark:bg-brick-tint-dark dark:text-brick-light">New</span>}
       {badge && (
         <span class:list={['inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium', badge.on ? 'bg-(--on-bg) text-(--on-text)' : 'bg-(--well) text-zinc-600 dark:text-zinc-300']}>
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={icons[badge.icon]} /></svg>

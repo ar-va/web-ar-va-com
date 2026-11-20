@@ -71,7 +71,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
 
   {latest && (
     <section class="mt-6">
-      <h2 class="font-sans text-zinc-500 text-sm mb-6">Latest</h2>
+      <h2 class="font-sans mb-6"><span class="inline-block rounded-full bg-brick-tint px-2.5 py-0.5 text-sm font-medium text-brick dark:bg-brick-tint-dark dark:text-brick-light">Latest</span></h2>
       <RecordHero record={latest} artist={latest.artist} title={latest.title} released={latest.released} genres={latest.genres}
         trackCount={latest.trackCount} links={latest.links} runtime={latest.runtime ?? undefined} href={`${base}/${latest.instanceId}`} />
     </section>
