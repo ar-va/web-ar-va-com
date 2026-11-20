@@ -44,7 +44,6 @@ const quiet = 'ctl';
   <div class="max-w-3xl mx-auto px-6 w-full pt-10 sm:pt-14 pb-16 flex flex-col gap-6">
     {sent ? (
       <section class="arrive">
-        <p class="text-xs font-medium tracking-widest uppercase mb-3">Sent</p>
         <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-zinc-900 dark:text-white leading-[1.08] mb-4 text-balance">It’s on its way, and nobody knows it’s from you</h1>
         <p class="text-lg leading-relaxed text-zinc-600 dark:text-zinc-300 text-pretty">
           Bookmark this page or copy its link. It’s the only way back to your message and my answer, and I can’t send it
@@ -53,7 +52,6 @@ const quiet = 'ctl';
       </section>
     ) : (
       <section>
-        <p class="text-xs font-medium tracking-widest uppercase mb-3">Your private page</p>
         <h1 class="text-4xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3">{answered ? 'I answered' : 'Your message'}</h1>
         <p class="text-zinc-600 dark:text-zinc-400 text-pretty">{answered ? 'My answer is under your message.' : 'I haven’t answered yet. Check back here in a day or two.'}</p>
       </section>

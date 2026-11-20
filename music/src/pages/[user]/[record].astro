@@ -108,14 +108,14 @@ const rows: [string, string | null | undefined][] = record ? [
   ...Object.entries(v).filter(([k]) => k.startsWith('field:')).map(([k, value]) => [k.slice(6), value] as [string, string]),
 ] : [];
 // What the closed details card shows: the pressing at a glance.
-const preview = record ? [v.label, v.format, v.country].filter(Boolean).join(' · ') : '';
+const preview = record ? [v.label, v.format, v.country].filter(Boolean) : [];
 const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoration-blue-violet-500/30 hover:decoration-blue-violet-500 underline-offset-4 transition-colors';
 ---
 <Layout title={record ? `${v.title} by ${v.artist} - ARVA` : 'Not found - ARVA'} description={record ? `${v.artist} – ${v.title}${v.released ? ` (${displayDate(v.released)})` : ''}, on ${owner!.name}’s shelf.` : undefined}>
   {!record || !owner ? (
     <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
       <Breadcrumbs class="mb-8" items={[{ label: 'Shelves', href: '/' }, ...(owner ? [{ label: owner.name, href: shelfPath }] : []), { label: 'Not found' }]} />
-      <p class="text-zinc-500">This record isn’t on the shelf (any more). <a href={shelfPath} class={link}>Back to the shelf →</a></p>
+      <p class="text-zinc-500">This record isn’t on the shelf (any more). <a href={shelfPath} class={link}>Back to the shelf</a></p>
     </div>
   ) : (
     <article class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
@@ -143,13 +143,13 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
         addText="Add a note about this record: where you found it, why it matters, a favourite moment."
         placeholder="Where you found it, why it matters, what to listen for…" />
 
-      <!-- Details fold into a card at the tracklist's width: closed it previews the pressing (label · format · country).
+      <!-- Details fold into a card at the tracklist's width: closed it previews the pressing (label, format, country).
            Native <details>: keyboard and screen readers included. -->
       <details class="group/details rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface">
         <summary class="group/sum flex items-center gap-4 px-5 py-4 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-violet-500">
           <span class="min-w-0 flex-1">
             <span class="block font-medium text-zinc-900 dark:text-white">Details</span>
-            {preview && <span class="block mt-0.5 text-sm text-zinc-500 truncate group-open/details:hidden">{preview}</span>}
+            {preview.length > 0 && <span class="flex gap-x-4 mt-0.5 text-sm text-zinc-500 truncate group-open/details:hidden">{preview.map((x) => <span class="truncate">{x}</span>)}</span>}
           </span>
           <span class="shrink-0 grid place-items-center w-8 h-8 rounded-full bg-(--well) group-hover/sum:bg-(--well-hover) text-zinc-700 dark:text-zinc-200 transition-colors">
             <svg class="w-4 h-4 transition-transform group-open/details:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
@@ -177,7 +177,7 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
           <!-- Rows light up on hover; their listening icons show on hover or focus (always on touch screens). -->
           <ol class="mt-4 -mx-3">
             {tracks.map((t) => t.heading ? (
-              <li class="px-3 pt-6 pb-2 first:pt-1 text-xs font-bold tracking-widest uppercase">{t.title}</li>
+              <li class="px-3 pt-6 pb-2 first:pt-1 text-sm font-semibold text-zinc-900 dark:text-white">{t.title}</li>
             ) : (
               <li class="group flex items-center gap-4 px-3 py-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/[0.04] focus-within:bg-zinc-100 dark:focus-within:bg-white/[0.04] transition-colors">
                 <span class="w-7 shrink-0 font-mono text-sm text-zinc-500 tabular-nums">{t.position}</span>
@@ -215,8 +215,7 @@ const link = 'text-blue-violet-600 dark:text-blue-violet-400 underline decoratio
       )}
 
       <p class="mt-8 text-sm text-zinc-500">
-        <a href={detail?.uri ?? `https://www.discogs.com/release/${record.releaseId}`} class={link}>View this release on Discogs</a>
-        <span class="mx-1">·</span>Data from Discogs.
+        Data from Discogs: <a href={detail?.uri ?? `https://www.discogs.com/release/${record.releaseId}`} class={link}>view this release there</a>.
       </p>
 
       <section id="comments" class="mt-16">

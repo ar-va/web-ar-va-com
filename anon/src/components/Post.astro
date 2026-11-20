@@ -47,7 +47,7 @@ const primary = 'shrink-0 bg-blue-violet-600 dark:bg-blue-violet-400 text-white 
       </p>
     </div>
     <div class="flex shrink-0 items-center gap-2">
-      {fresh && <span class="text-[11px] font-medium uppercase tracking-widest">New</span>}
+      {fresh && <span class="text-xs font-medium">New</span>}
       {badge && (
         <span class:list={['inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium', badge.on ? 'bg-(--on-bg) text-(--on-text)' : 'bg-(--well) text-zinc-600 dark:text-zinc-300']}>
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={icons[badge.icon]} /></svg>
@@ -118,7 +118,7 @@ const primary = 'shrink-0 bg-blue-violet-600 dark:bg-blue-violet-400 text-white 
                 <p class="text-sm flex flex-wrap items-baseline gap-x-2">
                   <span class="font-medium text-zinc-900 dark:text-white">{answerer.name}</span>
                   <time class="text-xs text-zinc-500" datetime={new Date(r.created_at * 1000).toISOString()}>{admin ? ago(r.created_at) : day(r.created_at)}</time>
-                  {r.edited_at && <span class="text-xs text-zinc-400 dark:text-zinc-500">· edited</span>}
+                  {r.edited_at && <span class="text-xs text-zinc-400 dark:text-zinc-500">(edited)</span>}
                 </p>
                 <div data-view>
                   <p class="mt-0.5 text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-line break-words">{words(r.body).map((part) => 'url' in part

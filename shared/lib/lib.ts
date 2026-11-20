@@ -308,7 +308,7 @@ export function textToTracklist(text: string): Track[] {
 }
 
 /**
- * Vinyl positions (A1, A2, B1…) → a heading per side: "Side A", or "Disc 1 · Side A" when there are more than two
+ * Vinyl positions (A1, A2, B1…) → a heading per side: "Side A", or "Disc 1, Side A" when there are more than two
  * sides; the position shows just the track number. Tracklists with their own headings, or positions that
  * aren't letter + number (CDs, "1", "2"), are left as they are.
  */
@@ -358,7 +358,7 @@ export function withSideHeadings(tracks: Track[]): Track[] {
     if (side !== current) {
       current = side;
       const i = side.charCodeAt(0) - 65;
-      out.push({ position: '', title: discs ? `Disc ${Math.floor(i / 2) + 1} · Side ${side}` : `Side ${side}`, duration: '', heading: true });
+      out.push({ position: '', title: discs ? `Disc ${Math.floor(i / 2) + 1}, Side ${side}` : `Side ${side}`, duration: '', heading: true });
     }
     out.push({ ...t, position: t.position.slice(1) });
   }

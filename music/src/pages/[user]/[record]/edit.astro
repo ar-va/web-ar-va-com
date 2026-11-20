@@ -106,12 +106,12 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
 <Layout title={`Edit ${values.title} - ARVA`}>
   <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
     <Breadcrumbs items={[{ label: 'Shelves', href: '/' }, { label: owner!.name, href: recordPath.replace(/\/[^/]+$/, '') }, { label: values.title, href: recordPath }, { label: 'Edit' }]} />
-    <p class="mt-8 text-xs font-bold tracking-widest uppercase">{values.artist}</p>
+    <p class="mt-8 text-lg font-medium text-moss dark:text-moss-light">{values.artist}</p>
     <h1 class="mt-2 text-3xl sm:text-4xl font-bold leading-tight text-zinc-900 dark:text-white">Edit {values.title}</h1>
     <p class="mt-3 text-zinc-600 dark:text-zinc-400 max-w-xl">Everything starts from Discogs and the automatic Apple Music / Spotify matches. What you change is what visitors see; the default stays underneath (only you see it), so you can go back any time.</p>
 
     {Astro.url.searchParams.has('saved') && Object.keys(errors).length === 0 && (
-      <p class="mt-6 rounded-xl bg-blue-violet-100 dark:bg-blue-violet-900 px-4 py-3 text-sm text-blue-violet-700 dark:text-blue-violet-200" role="status">Saved. <a href={recordPath} class="font-medium underline underline-offset-4">See the record →</a></p>
+      <p class="mt-6 rounded-xl bg-blue-violet-100 dark:bg-blue-violet-900 px-4 py-3 text-sm text-blue-violet-700 dark:text-blue-violet-200" role="status">Saved. <a href={recordPath} class="font-medium underline underline-offset-4">See the record</a></p>
     )}
 
     <form method="post" class="mt-8 flex flex-col gap-5">
@@ -123,7 +123,7 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
           <div class="flex items-center justify-between gap-4">
             <legend class={`${cardTitle} flex items-center gap-2`}>
               Cover
-              {'cover' in overrides && <span class="text-[10px] font-bold tracking-widest uppercase text-blue-violet-600 dark:text-blue-violet-400">Edited</span>}
+              {'cover' in overrides && <span class="text-xs font-medium text-blue-violet-600 dark:text-blue-violet-400">Edited</span>}
             </legend>
             {'cover' in overrides && <button name="revert" value="cover" class="text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Revert</button>}
           </div>
@@ -137,7 +137,7 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
                     class="skeleton w-full h-full object-cover group-hover:scale-[1.03] transition-transform" />
                 </span>
                 <span class="mt-1.5 block text-xs text-zinc-500 truncate peer-checked:text-blue-violet-600 dark:peer-checked:text-blue-violet-400">
-                  {src === appleArt && src !== values.cover ? 'Suggested · ' : ''}{label}
+                  {src === appleArt && src !== values.cover ? 'Suggested: ' : ''}{label}
                 </span>
               </label>
             ))}
@@ -149,7 +149,7 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
         <div class="flex items-center justify-between gap-4">
           <legend class={`${cardTitle} flex items-center gap-2`}>
             Vinyl colour
-            {'vinyl' in overrides && <span class="text-[10px] font-bold tracking-widest uppercase text-blue-violet-600 dark:text-blue-violet-400">Edited</span>}
+            {'vinyl' in overrides && <span class="text-xs font-medium text-blue-violet-600 dark:text-blue-violet-400">Edited</span>}
           </legend>
           {'vinyl' in overrides && <button name="revert" value="vinyl" class="text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Revert</button>}
         </div>
@@ -205,7 +205,7 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
                   <div class="flex items-center justify-between gap-3 mb-1.5">
                     <label for={`f-${key}`} class={`flex items-center gap-2 text-sm font-medium text-zinc-800 dark:text-zinc-200 ${key === 'tracklist' && !changed ? 'sr-only' : ''}`}>
                       {f.label}
-                      {changed && <span class="text-[10px] font-bold tracking-widest uppercase text-blue-violet-600 dark:text-blue-violet-400">Edited</span>}
+                      {changed && <span class="text-xs font-medium text-blue-violet-600 dark:text-blue-violet-400">Edited</span>}
                     </label>
                     {changed && <button name="revert" value={key} class="text-xs font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Revert</button>}
                   </div>
@@ -380,7 +380,7 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
         row.querySelectorAll('[data-k="position"], [data-k="duration"], [data-act="fav"], [data-act="links"], [data-links]').forEach((el) => el.remove());
         const title = row.querySelector<HTMLInputElement>('[data-k="title"]')!;
         title.placeholder = 'Heading, e.g. Side B';
-        title.classList.add('font-mono', 'text-xs', 'font-bold', 'tracking-widest', 'uppercase');
+        title.classList.add('text-sm', 'font-semibold');
         row.classList.add('mt-2');
       } else {
         set('position', t.position);
