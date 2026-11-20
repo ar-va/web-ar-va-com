@@ -2,6 +2,12 @@
 import ThemeToggle from './ThemeToggle.astro';
 import { MAIN_SITE_PUBLIC } from '../site';
 
+// `label` names the site next to the logo ("anon"), `home` is where the logo leads; `minimal` drops the menu and the
+// account link (anon.ar-va.com: nobody logs in there, and a visitor's own name on an anonymous site would feel like
+// being identified). The `actions` slot goes before the theme switch (anon's Inbox link for the admin).
+export interface Props { label?: string; home?: string; minimal?: boolean }
+const { label, home: homeHref, minimal = false } = Astro.props;
+
 // On music.ar-va.com the main site's links must leave the subdomain.
 const onMusic = Astro.url.hostname.startsWith('music.');
 const main = onMusic ? 'https://ar-va.com' : '';
@@ -11,13 +17,13 @@ const path = Astro.url.pathname;
 const current = (on: boolean) => (on ? 'page' : undefined);
 // While home and blog are hidden (src/site.ts) the logo leads to the shelf and the menu is empty (Music alone would
 // repeat the logo).
-const home = MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https://music.ar-va.com/';
+const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https://music.ar-va.com/');
 ---
 
 <!-- A plain header across the page width: logo left, menu centred on the page (phones too), account + theme right.
      The theme switch is the only pill. Not pinned: it scrolls away with the page (user, 2026-10-29). -->
 <nav id="site-header" class="relative z-50 mt-3 max-w-5xl mx-auto px-6 w-full grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
-  <a href={home} class="shrink-0 justify-self-start h-11 flex items-center" aria-label="ARVA home">
+  <a href={home} class="shrink-0 justify-self-start h-11 flex items-center gap-3" aria-label={label ? `${label}.ar-va.com home` : 'ARVA home'}>
     <!-- Brand logo files (two-tone: Moss leaf, wordmark in the text colour), ink on light and washi on dark: the full
          horizontal logo, 24 px tall, 22 px on phones; below 360 px only the leaf (the brand's small mark), so the
          menu stays centred (user, 2026-10-29). -->
@@ -25,9 +31,10 @@ const home = MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https://music.ar-v
     <img src="/brand/arva-horizontal-washi-moss.svg" alt="ARVA" width="100" height="24" class="h-[22px] sm:h-6 w-auto hidden dark:block max-[359px]:!hidden" />
     <img src="/brand/arva-mark-small-ink-moss.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 hidden max-[359px]:block dark:!hidden" />
     <img src="/brand/arva-mark-small-washi-moss.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 hidden dark:max-[359px]:block" />
+    {label && <span class="text-xs font-medium uppercase tracking-widest pt-0.5">{label}</span>}
   </a>
   <div class="h-11 flex items-center">
-    {MAIN_SITE_PUBLIC && <div class="flex items-center gap-4 min-[360px]:gap-5 sm:gap-7 text-sm font-medium">
+    {MAIN_SITE_PUBLIC && !minimal && <div class="flex items-center gap-4 min-[360px]:gap-5 sm:gap-7 text-sm font-medium">
       <a href={`${main}/`} class={`${link} hidden sm:inline`} aria-current={current(!onMusic && path === '/')}>Home</a>
       <a href={`${main}/blog`} class={link} aria-current={current(!onMusic && path.startsWith('/blog'))}>Blog</a>
       <a href={onMusic ? '/' : 'https://music.ar-va.com/'} class={link} aria-current={current(onMusic)}>Music</a>
@@ -35,6 +42,7 @@ const home = MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https://music.ar-v
   </div>
   <div class="justify-self-end h-11 flex items-center gap-2 min-[360px]:gap-3 sm:gap-4 text-sm font-medium">
     <!-- Phones show the words too while the menu is hidden (src/site.ts): there's room for them then. -->
+    {!minimal && <>
     <a id="account" href="https://ar-va.com/login" title="Log in with Telegram" aria-label="Log in with Telegram" data-compact={MAIN_SITE_PUBLIC ? '' : undefined}
       class="flex items-center gap-1.5 h-8 text-zinc-600 dark:text-zinc-300 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">
       <svg class="w-4 h-4 shrink-0" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
@@ -66,6 +74,8 @@ const home = MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https://music.ar-v
         <button class="w-full flex flex-col gap-0.5 px-3 py-2.5 rounded-xl text-left hover:bg-(--well) focus-visible:outline-2 focus-visible:outline-blue-violet-500 transition-colors text-zinc-600 dark:text-zinc-300 hover:text-red-600 dark:hover:text-red-400">Log out</button>
       </form>
     </div>
+    </>}
+    <slot name="actions" />
     <ThemeToggle />
   </div>
 </nav>
@@ -75,6 +85,7 @@ const home = MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https://music.ar-v
   // The `who` cookie (first name + photo, set at login on ar-va.com) is display-only; the session cookie stays HttpOnly.
   (() => {
     const a = document.getElementById('account');
+    if (!a) return; // a minimal header (anon.ar-va.com) has no account link
     const base = location.hostname.replace(/^music\./, '') + (location.port ? ':' + location.port : '');
     const m = document.cookie.match(/(?:^|; )who=([^;]*)/);
     let who = null;

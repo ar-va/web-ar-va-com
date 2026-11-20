@@ -44,9 +44,9 @@
       element.classList.toggle("dark");
       
       const currentlyDark = element.classList.contains("dark");
-      // One choice for ar-va.com and music.ar-va.com, remembered for a year (browsers refuse Domain=localhost).
-      const site = location.hostname.replace(/^music\./, "");
-      document.cookie = `theme=${currentlyDark ? "dark" : "light"}; path=/; max-age=31536000; samesite=lax${site === "localhost" ? "" : `; domain=${site}`}`;
+      // One choice for every ar-va.com site, remembered for a year (browsers refuse Domain=localhost).
+      const site = location.hostname.endsWith("localhost") ? "" : location.hostname.split(".").slice(-2).join(".");
+      document.cookie = `theme=${currentlyDark ? "dark" : "light"}; path=/; max-age=31536000; samesite=lax${site ? `; domain=${site}` : ""}`;
       
       // Update ARIA state dynamically when clicked
       themeToggleBtn.setAttribute("aria-checked", currentlyDark ? "true" : "false");

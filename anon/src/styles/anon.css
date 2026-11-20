@@ -1,0 +1,25 @@
+/* anon.ar-va.com's own styles, on top of the shared ARVA ones (shared/styles/global.css). */
+/* Jumps to #m-12 or #answer stop a little below the top. */
+html { scroll-padding-top: 1.5rem; }
+
+/* The hero's writing box: a calm surface that lights its edge in the accent while you write. */
+.compose {
+  border: 1px solid var(--color-zinc-200);
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.dark .compose { border-color: var(--color-zinc-800); background: var(--color-night-surface); }
+.compose:focus-within { border-color: var(--color-blue-violet-500); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-blue-violet-500) 18%, transparent); }
+.compose textarea { field-sizing: content; }
+
+/* Choice cards (keep it between us / ask to publish): the picked one gets the "on" colours. */
+.choice { background: var(--well); transition: background-color 0.15s, box-shadow 0.15s; }
+.choice:hover { background: var(--well-hover); }
+.choice:has(input:checked) { background: var(--on-bg); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--color-blue-violet-500) 55%, transparent); }
+.choice:has(input:checked) .choice-title { color: var(--on-text); }
+.choice:has(input:focus-visible) { outline: 2px solid var(--color-blue-violet-500); outline-offset: 2px; }
+
+/* A new message on the private page eases in once. */
+.arrive { animation: arrive 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@keyframes arrive { from { opacity: 0; transform: translateY(10px); } }
+@media (prefers-reduced-motion: reduce) { .arrive { animation: none; } }

@@ -10,7 +10,10 @@ music.ar-va.com (ARVA brand, see `../ar-va.com/brand/ARVA-brand-rules.md`); the 
 trust and dark patterns, 2026-11-17). Read it before changing the front page; its "Never add" list is binding.
 
 **GitHub:** the `anon/` folder of `ar-va/web-ar-va-com` (public, so anyone can check the code; the page links to it;
-until 2026-11-20 its own repo `ar-va/web-anon-ar-va-com`, now archived). Logos and favicons come from `../shared/public`. Commit as
+until 2026-11-20 its own repo `ar-va/web-anon-ar-va-com`, now archived). Logos and favicons come from `../shared/public`;
+header, footer, layout, theme switch and styles from `../shared` (since 2026-11-20): `src/layouts/Layout.astro` wraps
+the shared layout with what anon adds (minimal header labelled "anon" with no account link, the admin's Inbox link,
+`no-referrer` on every page, `noindex` where asked, anon's footer links, `<main>`); anon-only CSS in `src/styles/anon.css`. Commit as
 `ARVA <github@ar-va.com>` (local git config) with **no Claude co-author lines** (user, 2026-11-17).
 
 ## Anonymity rules (keep them when changing anything)

@@ -1,5 +1,9 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "include": [".astro/types.d.ts", "**/*", "./worker-configuration.d.ts"],
+  "compilerOptions": {
+    // Code all ARVA sites use, in ../shared: import from '@shared/…'.
+    "paths": { "@shared/*": ["../shared/*"] }
+  },
+  "include": [".astro/types.d.ts", "**/*", "../shared/**/*", "./worker-configuration.d.ts"],
   "exclude": ["dist"]
 }
