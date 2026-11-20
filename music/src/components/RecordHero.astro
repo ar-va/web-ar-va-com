@@ -1,0 +1,196 @@
+---
+// The big record block shared by the album page and the shelf's "Latest", identical on both (user, 2026-10-29): the sleeve with the vinyl rolled out to
+// the right, then artist, album, added / released / genre / tracks, and the streaming links.
+// The record plays on its own after rolling out; a small play / pause button on the cover stops it. On the shelf the cover and
+// title link to the album; on the album page a click anywhere on the cover plays / pauses too.
+import Cover from '@shared/components/Cover.astro';
+import Listen from './Listen.astro';
+import { displayDate, formatReleased, type ShelfRecord } from '@shared/lib/lib';
+
+interface Props {
+  record: ShelfRecord;
+  artist: string;
+  title: string;
+  released: string;
+  genres: string[];
+  trackCount: number;
+  links: { spotify?: string; apple?: string; youtube?: string };
+  href?: string;
+  /** Total running time, e.g. "42 min" (the album page). */
+  runtime?: string;
+  /** For the owner when the "Added on" date is missing (addedNeedsDate): an icon that opens a popup to set it.
+   *  `sameDay` = how many of their records Discogs dated on this record's day. */
+  askAdded?: { sameDay: number };
+}
+const { record, artist, title, released, genres, trackCount, links, href, runtime, askAdded } = Astro.props;
+// Discogs' added date is in the collector's local time: show that day, not the UTC one.
+const day = record.added.slice(0, 10);
+const added = day ? `Added to the shelf ${formatReleased(day)}` : 'Added date unknown';
+const facts = [
+  released && displayDate(released),
+  genres.join(', '),
+  trackCount > 0 && `${trackCount} track${trackCount === 1 ? '' : 's'}`,
+  runtime,
+].filter(Boolean);
+const Heading = href ? 'h2' : 'h1';
+// Album page: artist and title copy themselves on click (src/scripts/copy.ts); on the shelf the title links instead.
+const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-violet-500 transition-opacity';
+---
+<!-- The rolled-out disc sticks out 38 % of the sleeve's width: the gap leaves it ~60 px clear of the text. -->
+<!-- overflow-x: clip, with the page's 24 px side margin to spare: the light behind the rolled-out record reaches 120 % of
+     the cover past it, which made phones scroll sideways (446 px on a 390 px screen); now it fades out at the screen edge. -->
+<div class="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-36 overflow-x-clip [overflow-clip-margin:1.5rem]">
+  <div data-turntable class="relative shrink-0 self-start sm:self-auto">
+    <!-- Shelf: the cover links too (for mouse and touch; keyboards and screen readers use the title's link). -->
+    {href ? (
+      <a href={href} tabindex="-1" aria-hidden="true" class="block"><Cover record={record} eager class="sleeve-open w-48 sm:w-60" /></a>
+    ) : (
+      <div data-spin-cover class="motion-safe:cursor-pointer"><Cover record={record} eager class="sleeve-open w-48 sm:w-60" /></div>
+    )}
+    <button type="button" data-spin aria-pressed="false" aria-label="Play the record" title="Play the record"
+      class="glass glass-dark group absolute right-2 bottom-2 z-10 w-9 h-9 grid place-items-center rounded-full text-white cursor-pointer motion-reduce:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-violet-500">
+      <svg class="w-4 h-4 group-aria-pressed:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" /></svg>
+      <svg class="w-4 h-4 group-aria-[pressed=false]:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5.5" width="3.8" height="13" rx="1" /><rect x="13.7" y="5.5" width="3.8" height="13" rx="1" /></svg>
+    </button>
+  </div>
+  <div class="min-w-0 flex-1">
+    <p class="text-xs font-bold tracking-widest uppercase mb-2">{href ? artist : <button type="button" data-copy title="Click to copy" class={copy}>{artist}</button>}</p>
+    <Heading class="text-3xl sm:text-5xl font-bold leading-[1.05] text-zinc-900 dark:text-white">
+      {href ? <a href={href} class="hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{title}</a> : <button type="button" data-copy title="Click to copy" class={copy}>{title}</button>}
+    </Heading>
+    {facts.length > 0 && <p class="mt-4 text-zinc-700 dark:text-zinc-300">{facts.join(' · ')}</p>}
+    <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-500">
+      {added}
+      {askAdded && (
+        <button type="button" popovertarget="added-ask" title="Set the day this record joined your collection"
+          class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium text-warning dark:text-warning-light bg-warning/10 dark:bg-warning-light/15 hover:bg-warning/20 dark:hover:bg-warning-light/25 focus-visible:outline-2 focus-visible:outline-blue-violet-500 transition-colors">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5h.01" /></svg>{day ? 'Is this date right?' : 'Add the date'}
+        </button>
+      )}
+    </p>
+    {askAdded && (
+      <div id="added-ask" popover class="m-auto w-[min(27rem,calc(100vw-2rem))] rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-6 text-left text-zinc-700 dark:text-zinc-300 shadow-2xl backdrop:bg-black/40">
+        <h2 class="text-lg font-bold text-zinc-900 dark:text-white">When did this record join your collection?</h2>
+        <p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+          {day ? `Discogs says ${formatReleased(day)}, the same day as ${askAdded.sameDay - 1} other records of yours: probably when they went into Discogs, not when you got them.` : 'Discogs didn’t give a date for this one.'}
+          {' '}Your date orders the shelf and the “Added” filter.
+        </p>
+        <form method="post" class="mt-5 flex flex-col gap-4">
+          <label class="flex flex-col gap-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+            Added on
+            <input type="date" name="added" value={day || undefined} max={new Date().toISOString().slice(0, 10)} required onclick="try { this.showPicker() } catch {}"
+              class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2.5 font-normal text-zinc-900 dark:text-white focus:outline-none focus:border-blue-violet-500 [color-scheme:light] dark:[color-scheme:dark]" />
+          </label>
+          <!-- Save comes first in the form, so Enter saves; the row shows it rightmost. -->
+          <div class="flex flex-row-reverse flex-wrap justify-start gap-2">
+            <button name="action" value="added" class="inline-flex items-center h-8 px-4 rounded-full text-sm font-medium bg-blue-violet-600 dark:bg-blue-violet-400 text-white dark:text-zinc-950 hover:bg-blue-violet-700 dark:hover:bg-blue-violet-300 transition-colors">Save date</button>
+            {day && <button name="action" value="added-ok" formnovalidate class="ctl">Discogs’ date is right</button>}
+            <button type="button" popovertarget="added-ask" popovertargetaction="hide" class="ctl">Later</button>
+          </div>
+        </form>
+      </div>
+    )}
+    <div class="mt-6">
+      <Listen buttons query={`${artist} ${title}`} label={`Listen to ${title}`} links={links} />
+    </div>
+    <slot />
+  </div>
+</div>
+
+<script>
+  import { emitBurst } from '../scripts/notes';
+
+  // Notes drift out of the open side while the record rolls out (CSS: 0.25 s delay, 1.6 s).
+  document.querySelectorAll<HTMLElement>('.sleeve-open').forEach((sleeve) => emitBurst(sleeve, 'right', 9, 1500, 300));
+
+  // The record plays like a turntable: once it has rolled out it spins up to 33⅓ rpm (a turn every 1.8 s) and keeps
+  // going, a note drifting out now and then (only while the hero is on screen). Tapping play / pause (or, on the album page, the cover) stops the notes and
+  // slows it to a halt; tapping again starts it. Nothing moves with reduced motion.
+  const REV_MS = 1800;
+  document.querySelectorAll<HTMLElement>('[data-turntable]').forEach((turntable) => {
+    const button = turntable.querySelector<HTMLElement>('[data-spin]')!;
+    const disc = turntable.querySelector<HTMLElement>('.disc');
+    const sleeve = disc?.closest<HTMLElement>('.sleeve');
+    const glare = turntable.querySelector<HTMLElement>('.glare');
+    if (!disc || !sleeve) return;
+    // The still glare gives way while the record plays and comes back as it stops.
+    const fadeGlare = (to: number, ms: number) => glare?.animate([{ opacity: getComputedStyle(glare).opacity }, { opacity: to }], { duration: ms, easing: 'ease-in-out', fill: 'forwards' });
+    let spin: Animation | null = null;
+    let ramp = 0;
+    let notes = 0;
+    let playing = false;
+    let visible = true;
+    new IntersectionObserver(([e]) => { visible = e.isIntersecting; }).observe(sleeve);
+    // Spin-up: the speed eases in like a platter catching up.
+    const spinUp = (ms: number) => {
+      cancelAnimationFrame(ramp);
+      const from = spin!.playbackRate;
+      const start = performance.now();
+      const step = (now: number) => {
+        const t = Math.min(1, (now - start) / ms);
+        spin!.playbackRate = from + (1 - from) * (1 - (1 - t) ** 2);
+        if (t < 1) ramp = requestAnimationFrame(step);
+      };
+      ramp = requestAnimationFrame(step);
+    };
+    // Spin-down: coasts from its current speed and halts on a whole turn, so the record's faint sheen comes to rest
+    // under the still glare (where it also starts from). Returns how long the stop takes.
+    const coast = () => {
+      cancelAnimationFrame(ramp);
+      const s = spin!;
+      const from = Number(s.currentTime);
+      const speed = Math.max(s.playbackRate, 0.4);
+      s.pause();
+      // about 1.1 s of travel at full speed (a ~2.2 s stop), rounded to a whole turn, never less than a third of one
+      let to = Math.round((from + 1100 * speed) / REV_MS) * REV_MS;
+      if (to - from < REV_MS / 3) to += REV_MS;
+      const ms = (2 * (to - from)) / speed; // easing out from that speed: distance = speed × time / 2
+      const start = performance.now();
+      const step = (now: number) => {
+        const t = Math.min(1, (now - start) / ms);
+        s.currentTime = from + (to - from) * t * (2 - t);
+        if (t < 1) ramp = requestAnimationFrame(step);
+      };
+      ramp = requestAnimationFrame(step);
+      return ms;
+    };
+    const set = (on: boolean) => {
+      playing = on;
+      button.setAttribute('aria-pressed', String(on));
+      const label = on ? 'Stop the record' : 'Play the record';
+      button.title = label;
+      button.setAttribute('aria-label', label);
+    };
+    const toggle = () => {
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      if (!playing) {
+        set(true);
+        if (!spin) {
+          // The resting record sits rolled out 38 % and turned 300°; the spin carries on from there.
+          spin = disc.animate(
+            [{ transform: 'translateX(38%) rotate(300deg)' }, { transform: 'translateX(38%) rotate(660deg)' }],
+            { duration: REV_MS, iterations: Infinity },
+          );
+        }
+        spin.playbackRate = 0;
+        spin.play();
+        spinUp(1100);
+        fadeGlare(0, 900);
+        emitBurst(sleeve, 'right', 3, 900, 400);
+        clearInterval(notes);
+        notes = window.setInterval(() => { if (visible && !document.hidden) emitBurst(sleeve, 'right', 1, 300); }, 1600);
+      } else {
+        set(false);
+        clearInterval(notes);
+        fadeGlare(1, coast());
+      }
+    };
+    button.addEventListener('click', toggle);
+    turntable.querySelector('[data-spin-cover]')?.addEventListener('click', toggle);
+    // Start playing as the roll-out (CSS `roll-out`, 0.25 s delay + 1.6 s) settles.
+    let started = false;
+    const autoplay = () => { if (!started && !playing) { started = true; toggle(); } };
+    disc.addEventListener('animationend', (e) => { if (e.animationName === 'roll-out') autoplay(); }, { once: true });
+    setTimeout(autoplay, 2000);
+  });
+</script>

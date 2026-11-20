@@ -1,9 +1,9 @@
 ---
 // Comments under a blog post. Rendered per request as a server island (the post itself stays pre-rendered).
-import CommentThread from './CommentThread.astro';
-import LoginButton from './LoginButton.astro';
-import { loginHref } from '../music/lib';
-import { canDeleteComment, currentUser, listComments } from '../music/store';
+import CommentThread from '@shared/components/CommentThread.astro';
+import LoginButton from '@shared/components/LoginButton.astro';
+import { loginHref } from '@shared/lib/lib';
+import { canDeleteComment, currentUser, listComments } from '@shared/lib/store';
 
 interface Props { slug: string }
 const { slug } = Astro.props;

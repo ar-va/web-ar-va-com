@@ -1,6 +1,6 @@
 ---
 import { getCollection, render } from 'astro:content';
-import Layout from '../../layouts/Layout.astro';
+import Layout from '@shared/layouts/Layout.astro';
 import BlogComments from '../../components/BlogComments.astro';
 import { createCleanSlug } from '../../utils/helpers';
 
@@ -155,6 +155,6 @@ const displayTitle = h1 ? h1.text : 'Untitled Post';
   </script>
   <script>
     // Reply / Edit for the comments island below (delegated, so it works once the island arrives).
-    import '../../scripts/comments';
+    import '@shared/scripts/comments';
   </script>
 </Layout>

@@ -3,14 +3,14 @@
 // "Request a shelf"); right: the Telegram login. Names the page the visitor came from when it can.
 export const prerender = false;
 import { getCollection } from 'astro:content';
-import { MAIN_SITE_PUBLIC } from '../site';
-import Layout from '../layouts/Layout.astro';
+import { MAIN_SITE_PUBLIC } from '@shared/site';
+import Layout from '@shared/layouts/Layout.astro';
 import TelegramLogin from '../components/TelegramLogin.astro';
-import Cover from '../components/music/Cover.astro';
+import Cover from '@shared/components/Cover.astro';
 import { createCleanSlug } from '../utils/helpers';
 import { env } from 'cloudflare:workers';
-import { safeReturnPath, telegramAuthUrl } from '../music/lib';
-import { adminShelfOwner, currentUser, directory, hasPendingInvite, shelfOwner, shelfRecord, shelfRecords, shelfSlug } from '../music/store';
+import { safeReturnPath, telegramAuthUrl } from '@shared/lib/lib';
+import { adminShelfOwner, currentUser, directory, hasPendingInvite, shelfOwner, shelfRecord, shelfRecords, shelfSlug } from '@shared/lib/store';
 
 const returnTo = safeReturnPath(Astro.url.searchParams.get('return'), Astro.url.hostname);
 if (await currentUser(Astro.cookies)) return Astro.redirect(returnTo);
@@ -175,5 +175,5 @@ const perks = [
 </Layout>
 
 <script>
-  import '../scripts/telegram-popup';
+  import '@shared/scripts/telegram-popup';
 </script>

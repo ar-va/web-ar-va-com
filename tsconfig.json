@@ -1,11 +1,16 @@
 {
   "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    // Code both sites use: import from '@shared/…' (music/ has the same alias).
+    "paths": { "@shared/*": ["./shared/*"] }
+  },
   "include": [
     ".astro/types.d.ts",
     "**/*",
     "./worker-configuration.d.ts"
   ],
   "exclude": [
-    "dist"
+    "dist",
+    "music"
   ]
 }

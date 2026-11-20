@@ -3,9 +3,9 @@ import type { APIRoute } from 'astro';
 import { getCollection } from 'astro:content';
 import { createCleanSlug } from '../../utils/helpers';
 import { env } from 'cloudflare:workers';
-import { addComment, currentUser, deleteComment, editComment } from '../../music/store';
-import { commentNotices, loginHref } from '../../music/lib';
-import { notify } from '../../music/notify';
+import { addComment, currentUser, deleteComment, editComment } from '@shared/lib/store';
+import { commentNotices, loginHref } from '@shared/lib/lib';
+import { notify } from '@shared/lib/notify';
 
 export const prerender = false;
 

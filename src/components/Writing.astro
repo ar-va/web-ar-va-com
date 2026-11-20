@@ -1,7 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import { createCleanSlug, getReadingTime } from '../utils/helpers';
-import SortMenu from './SortMenu.astro';
+import SortMenu from '@shared/components/SortMenu.astro';
 
 // `page`: the /blog page (an h1 with a meta line, like a shelf); otherwise a section of the home page.
 const { page = false } = Astro.props as { page?: boolean };
@@ -231,7 +231,7 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
 </div>
 
 <script>
-  import { filtersCount, filtersPanel } from '../scripts/filters-panel';
+  import { filtersCount, filtersPanel } from '@shared/scripts/filters-panel';
   filtersPanel();
 
   document.addEventListener('DOMContentLoaded', () => {

@@ -1,8 +1,8 @@
 // Telegram Login Widget redirects here (ar-va.com/auth/telegram) with the signed user data.
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
-import { safeReturnPath, verifyTelegramLogin } from '../../music/lib';
-import { acceptPendingInvite, saveTelegramUser, startSession } from '../../music/store';
+import { safeReturnPath, verifyTelegramLogin } from '@shared/lib/lib';
+import { acceptPendingInvite, saveTelegramUser, startSession } from '@shared/lib/store';
 
 export const prerender = false;
 

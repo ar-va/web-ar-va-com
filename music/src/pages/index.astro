@@ -1,0 +1,80 @@
+---
+// music.ar-va.com/: every collector's shelf as a card, most recently added to first: who, how many records and
+// comments, the start of their note, then a small shelf of their latest records ending in a "+N more" stack that
+// says there's more to browse. The whole card opens their shelf.
+export const prerender = false;
+import Layout from '@shared/layouts/Layout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import Cover from '@shared/components/Cover.astro';
+import { directory, shelfSlug } from '@shared/lib/store';
+
+const SHOWN = 4;
+const shelves = await directory(SHOWN);
+const total = shelves.reduce((n, s) => n + s.count, 0);
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+---
+<Layout title="Record shelves - ARVA" description={`${plural(shelves.length, 'collector')} and ${plural(total, 'vinyl record')} on music.ar-va.com.`}>
+  <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24">
+    <Breadcrumbs class="mb-8" share items={[{ label: 'Shelves' }]} />
+    <h1 class="text-3xl font-bold text-zinc-900 dark:text-white">Record shelves</h1>
+    <p class="mt-3 max-w-xl text-zinc-600 dark:text-zinc-400">Vinyl collections, straight from their owners’ Discogs. Pick a shelf to browse every record, its tracklist and where to listen.</p>
+    <p class="mt-2 text-sm text-zinc-500">{plural(shelves.length, 'collector')} · {plural(total, 'record')}</p>
+
+    {shelves.length === 0 ? (
+      <p class="mt-10 text-zinc-500">No shelves yet.</p>
+    ) : (
+      <ul class="mt-10 flex flex-col gap-6" role="list">
+        {shelves.map((s) => {
+          const href = `/${encodeURIComponent(shelfSlug(s))}`;
+          const more = s.count - s.records.length;
+          return (
+            <li class="group/card relative rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-5 sm:p-7 hover:border-blue-violet-300 dark:hover:border-blue-violet-500/40 transition-colors">
+              <div class="flex items-start gap-4">
+                {s.photo_url?.startsWith('https://')
+                  ? <img src={s.photo_url} alt="" width="48" height="48" referrerpolicy="no-referrer" class="w-12 h-12 rounded-full object-cover shrink-0" />
+                  : <span aria-hidden="true" class="w-12 h-12 rounded-full shrink-0 grid place-items-center bg-(--on-bg) text-(--on-text) text-lg font-semibold">{s.name.slice(0, 1)}</span>}
+                <div class="min-w-0 flex-1">
+                  <h2 class="text-xl font-bold text-zinc-900 dark:text-white">
+                    <!-- The heading's link covers the whole card (after:inset-0), so the card is one link. -->
+                    <a href={href} class="after:absolute after:inset-0 after:rounded-3xl group-hover/card:text-blue-violet-600 dark:group-hover/card:text-blue-violet-400 focus-visible:outline-none after:focus-visible:outline-2 after:focus-visible:outline-offset-2 after:focus-visible:outline-blue-violet-500 transition-colors">{s.name}’s records</a>
+                  </h2>
+                  <p class="mt-0.5 text-sm text-zinc-500">{plural(s.count, 'record')} · {plural(s.comments, 'comment')}</p>
+                  {s.shelf_note && <p class="mt-2 text-zinc-600 dark:text-zinc-400 line-clamp-2 break-words">{s.shelf_note}</p>}
+                </div>
+              </div>
+
+              <!-- The latest records on a ledge, then a stack for the rest; they link to the shelf too (above the card's own
+                   link, so hovering a record still lifts it), hidden from keyboards and screen readers. -->
+              <ul class="shelf !grid-cols-3 sm:!grid-cols-5 !gap-y-0 !pt-10 !px-0 mt-1" role="list" aria-hidden="true">
+                {s.records.map((r, i) => (
+                  <li class:list={['shelf-slot', { 'max-sm:hidden': i >= 2 }]}>
+                    <a href={href} tabindex="-1" class="shelf-record block"><Cover record={r} eager={i < 4} /></a>
+                  </li>
+                ))}
+                {more > 0 && (
+                  <li class="shelf-slot">
+                    <a href={href} tabindex="-1" class="more-stack">
+                      <span class="text-2xl sm:text-3xl font-bold text-zinc-900 dark:text-white">+{more}</span>
+                      <span class="text-xs text-zinc-500">more record{more === 1 ? '' : 's'}</span>
+                    </a>
+                  </li>
+                )}
+              </ul>
+
+              <span class="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400">
+                Browse the shelf <span aria-hidden="true" class="transition-transform group-hover/card:translate-x-1">→</span>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    )}
+
+    <p class="mt-12 text-sm text-zinc-500">Shelves here are by invitation: every collector can invite someone from their settings.</p>
+  </div>
+</Layout>
+
+<script>
+  import { notesOnHover } from '../scripts/notes';
+  notesOnHover('.shelf .shelf-record');
+</script>

@@ -1,5 +1,5 @@
 {
-  "name": "ar-va-com",
+  "name": "web-ar-va-com",
   "account_id": "5381dc39fbfcb930bb82b729520f7102",
   "main": "./src/worker.ts",
   "compatibility_date": "2026-09-01",
@@ -7,13 +7,11 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    // Every request goes through the Worker so music.ar-va.com/ isn't answered with the blog's index.html.
+    // Every request goes through the Worker, so the hidden home and blog pages redirect (src/worker.ts).
     "run_worker_first": true
   },
-  "routes": [
-    { "pattern": "ar-va.com", "custom_domain": true },
-    { "pattern": "music.ar-va.com", "custom_domain": true }
-  ],
+  // music.ar-va.com is its own Worker (music/wrangler.jsonc).
+  "routes": [{ "pattern": "ar-va.com", "custom_domain": true }],
   // In eastern North America (moved 2026-10-28 from "ar-va-music", which Cloudflare had placed in Singapore:
   // ~0.3 s per query from here). The old database stays as a backup.
   "d1_databases": [{ "binding": "DB", "database_name": "ar-va-music-na", "database_id": "96eed6b4-2463-4d7b-835a-63f90db32ad8" }],
@@ -24,6 +22,5 @@
     "ADMIN_TELEGRAM_ID": "284024981"
   },
   "observability": { "enabled": true }
-  // Secrets (wrangler secret put / .dev.vars): TELEGRAM_BOT_TOKEN, DISCOGS_CONSUMER_KEY,
-  // DISCOGS_CONSUMER_SECRET, TOKEN_KEY.
+  // Secret (wrangler secret put / .dev.vars): TELEGRAM_BOT_TOKEN (checks logins, sends blog comment notices).
 }

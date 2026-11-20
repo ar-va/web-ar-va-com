@@ -1,0 +1,19 @@
+{
+  "name": "web-music-ar-va-com",
+  "account_id": "5381dc39fbfcb930bb82b729520f7102",
+  "main": "./src/worker.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "directory": "./dist", "binding": "ASSETS" },
+  "routes": [{ "pattern": "music.ar-va.com", "custom_domain": true }],
+  // The same database as ar-va.com (accounts, sessions and comments are shared; see the root wrangler.jsonc).
+  "d1_databases": [{ "binding": "DB", "database_name": "ar-va-music-na", "database_id": "96eed6b4-2463-4d7b-835a-63f90db32ad8" }],
+  "vars": {
+    "TELEGRAM_BOT_NAME": "arvasitebot",
+    "ADMIN_TELEGRAM_ID": "284024981"
+  },
+  "observability": { "enabled": true }
+  // Secrets (wrangler secret put / .dev.vars): TELEGRAM_BOT_TOKEN, DISCOGS_CONSUMER_KEY, DISCOGS_CONSUMER_SECRET,
+  // TOKEN_KEY (must stay the same value: it unlocks the stored Discogs tokens and invite codes), YOUTUBE_API_KEY;
+  // optional SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET.
+}
