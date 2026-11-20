@@ -9,7 +9,7 @@ import Note from '../../components/Note.astro';
 import LoginButton from '@shared/components/LoginButton.astro';
 import CommentThread from '@shared/components/CommentThread.astro';
 import Listen from '../../components/Listen.astro';
-import { addedNeedsDate, cleanNote, commentNotices, safeDay, displayDate, formatReleased, gallery, loginHref, popularTracks, recordDefaults, shortCount, recordValues, shelfView, textToTracklist, titleKey, withSideHeadings } from '@shared/lib/lib';
+import { youtubeId, addedNeedsDate, cleanNote, commentNotices, safeDay, displayDate, formatReleased, gallery, loginHref, popularTracks, recordDefaults, shortCount, recordValues, shelfView, textToTracklist, titleKey, withSideHeadings } from '@shared/lib/lib';
 import { addComment, canDeleteComment, currentUser, deleteComment, editComment, recordData, saveOverrides, shelfSlug } from '@shared/lib/store';
 import { notify } from '@shared/lib/notify';
 
@@ -87,6 +87,8 @@ const v = record ? recordValues(recordDefaults(record, detail, match), overrides
 const tracks = record ? withSideHeadings(textToTracklist(v.tracklist)) : [];
 // Marks in the tracklist: the most played on YouTube (objective) and the owner's favourites (their pick).
 const popular = popularTracks(tracks, match);
+// The record's sound: every track with a YouTube or YouTube Music link (the owner's or the automatic match), in order.
+const play = tracks.flatMap((t) => { const id = !t.heading && youtubeId(t.links?.youtube); return id ? [{ id, title: t.title }] : []; });
 const favorites = new Set((v.favorites ?? '').split('\n').filter((x) => x.trim()).map(titleKey));
 const ownerFirst = owner?.name.split(' ')[0] ?? '';
 const hero = record ? shelfView(record, detail, overrides, match) : null;
@@ -133,7 +135,7 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
 
       <header class="mt-10 mb-12 !max-w-none">
         <RecordHero record={hero!} artist={hero!.artist} title={hero!.title} released={hero!.released} genres={hero!.genres} trackCount={hero!.trackCount} links={hero!.links} runtime={hero!.runtime ?? undefined}
-          askAdded={isOwner && addedNeedsDate(record.added, overrides, sameDay) ? { sameDay } : undefined}>
+          askAdded={isOwner && addedNeedsDate(record.added, overrides, sameDay) ? { sameDay } : undefined} play={play}>
           <Gallery images={photos} title={hero!.title} />
         </RecordHero>
       </header>

@@ -640,6 +640,10 @@ export const playCount = (text: string) => {
 };
 
 /** "4.5M", "820K", "950": plays, short. */
+/** The video id in a YouTube or YouTube Music track link (watch?v=…, youtu.be/…), or null. */
+export const youtubeId = (url: string | undefined) =>
+  url?.match(/^https:\/\/(?:(?:www|music|m)\.youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/)([\w-]{11})(?![\w-])/)?.[1] ?? null;
+
 export const shortCount = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : String(n));
 
 /** Cover images come only from Discogs or Apple's artwork servers. */
