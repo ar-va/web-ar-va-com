@@ -16,7 +16,7 @@ interface Props {
   editingNote: boolean;
 }
 const { owner, records, commentCount, canEdit, editingNote } = Astro.props;
-const meta = 'inline-flex items-center gap-1.5 py-1 tabular-nums hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors';
+const meta = 'inline-flex items-center gap-1.5 py-1 tabular-nums hover:text-kikyo-600 dark:hover:text-kikyo-400 transition-colors';
 const base = `/${encodeURIComponent(owner.slug)}`;
 const latest = records[0];
 
@@ -34,10 +34,10 @@ const genres = [...count(records.flatMap((r) => r.genres.map((g) => g.toLowerCas
 
 // Filter buttons: the exact classes Writing.astro uses for tags and years.
 const btn = 'group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white';
-const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors';
+const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-kikyo-500/50 group-[.active-tag:hover]/btn:!decoration-kikyo-500 group-[.active-tag]/btn:text-kikyo-600 dark:group-[.active-tag]/btn:text-kikyo-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors';
 // View switch: built like the theme switch (user, 2026-10-29): a grey track with a solid knob that slides under the
 // current view's icon. Two buttons underneath, so each view is still announced on its own.
-const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center rounded-full text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 aria-pressed:!text-(--on-text) transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-violet-500';
+const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center rounded-full text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 aria-pressed:!text-(--on-text) transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-kikyo-500';
 ---
 
 <div id="shelf" class="font-normal">
@@ -71,7 +71,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
 
   {latest && (
     <section class="mt-6">
-      <h2 class="font-sans mb-6"><span class="inline-block rounded-full bg-brick-tint px-2.5 py-0.5 text-sm font-medium text-brick dark:bg-brick-tint-dark dark:text-brick-light">Latest</span></h2>
+      <h2 class="font-sans mb-6"><span class="inline-block rounded-full bg-bengara-tint px-2.5 py-0.5 text-sm font-medium text-bengara dark:bg-bengara-tint-dark dark:text-bengara-light">Latest</span></h2>
       <RecordHero record={latest} artist={latest.artist} title={latest.title} released={latest.released} genres={latest.genres}
         trackCount={latest.trackCount} links={latest.links} runtime={latest.runtime ?? undefined} href={`${base}/${latest.instanceId}`} />
     </section>
@@ -130,7 +130,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
           <!-- Filters drop down from "All records" (and travel with the bar); several can be picked before closing. -->
           <div id="filters-panel" hidden class="glass absolute left-0 right-0 top-full mt-2 rounded-3xl px-5 py-4 max-h-[70vh] overflow-y-auto space-y-1">
             <button type="button" data-filters-reset disabled title="Clear the filters and the search"
-              class="absolute right-4 top-3.5 inline-flex items-center gap-1 text-xs font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:text-blue-violet-800 dark:hover:text-blue-violet-200 disabled:text-zinc-400 dark:disabled:text-zinc-600 disabled:pointer-events-none transition-colors">
+              class="absolute right-4 top-3.5 inline-flex items-center gap-1 text-xs font-medium text-kikyo-600 dark:text-kikyo-400 hover:text-kikyo-800 dark:hover:text-kikyo-200 disabled:text-zinc-400 dark:disabled:text-zinc-600 disabled:pointer-events-none transition-colors">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>
               Reset
             </button>
@@ -204,10 +204,10 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
 
         <div id="filter-info" class="hidden mt-6 text-sm text-zinc-500 items-baseline">
           <span id="filter-info-text"></span>
-          <button type="button" id="clear-filters" class="ml-1 text-blue-violet-600 dark:text-blue-violet-400 hover:text-zinc-900 dark:hover:text-white transition-colors underline decoration-blue-violet-500/50 hover:decoration-blue-violet-500 underline-offset-4">Reset</button>
+          <button type="button" id="clear-filters" class="ml-1 text-kikyo-600 dark:text-kikyo-400 hover:text-zinc-900 dark:hover:text-white transition-colors underline decoration-kikyo-500/50 hover:decoration-kikyo-500 underline-offset-4">Reset</button>
         </div>
 
-        <a href={`https://www.discogs.com/user/${encodeURIComponent(owner.discogs_username)}/collection`} class="mt-10 inline-block text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 -mx-4 px-4 py-2 rounded-full transition-colors">View Discogs catalogue</a>
+        <a href={`https://www.discogs.com/user/${encodeURIComponent(owner.discogs_username)}/collection`} class="mt-10 inline-block text-sm font-medium text-kikyo-600 dark:text-kikyo-400 hover:bg-kikyo-50 dark:hover:bg-kikyo-500/15 -mx-4 px-4 py-2 rounded-full transition-colors">View Discogs catalogue</a>
       </section>
     </>
   )}

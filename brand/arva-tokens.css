@@ -1,4 +1,4 @@
-/* ARVA design tokens v4 (2026-11-20: deeper accent and Moss, Brick added, titles 600; fonts 2026-11-20: Brygada 1918 + IBM Plex Sans; 2026-10-29: Tokyo Night–based dark, near-white paper light, Moss leaf-green secondary) — light + dark.
+/* ARVA design tokens v5 (2026-11-20: the three colours named Kikyō, Kashiwa, Bengara; deeper, Bengara added, titles 600; fonts 2026-11-20: Brygada 1918 + IBM Plex Sans; 2026-10-29: Tokyo Night–based dark, near-white paper light, Moss leaf-green secondary) — light + dark.
    Fonts: <link href="https://fonts.googleapis.com/css2?family=Brygada+1918:wght@400..700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet"> */
 
 :root,
@@ -10,13 +10,13 @@
   --line: #D8DBE6;          /* borders, dividers */
   --text: #1F2335;          /* Ink */
   --text-2: #565F89;        /* Slate: secondary text */
-  --accent: #4A45B5;        /* Indigo: buttons, links, focus */
-  --accent-hover: #3D3891;
-  --on-accent: #FFFFFF;
-  --accent-tint: #E4E8FF;   /* tags, selection, info */
-  --moss: #15683F;          /* Moss: the leaf, identity labels, the facts separator */
-  --brick: #A3442B;         /* Brick: "look here" (Latest, New); never buttons or errors */
-  --brick-tint: #F7E6DF;    /* quiet ground behind a brick label */
+  --kikyo: #4A45B5;        /* Kikyō (bellflower violet): act. Buttons, links, focus */
+  --kikyo-hover: #3D3891;
+  --on-kikyo: #FFFFFF;
+  --kikyo-tint: #E4E8FF;   /* tags, selection, info */
+  --kashiwa: #15683F;          /* Kashiwa (oak leaf): belong. The leaf, people, the owner's voice, the facts separator */
+  --bengara: #A3442B;         /* Bengara (earth red): notice. Latest, New, flame, favourite heart; never buttons or errors */
+  --bengara-tint: #F7E6DF;    /* quiet ground behind a Bengara label */
   --success: #2F7D3A;
   --warning: #8A5D10;
   --error: #C0394B;
@@ -30,13 +30,13 @@
   --line: #333645;
   --text: #C6CBE4;          /* Moonlight */
   --text-2: #9CA3C4;
-  --accent: #979CF7;        /* Periwinkle */
-  --accent-hover: #B7BDFF;
-  --on-accent: #15161C;
-  --accent-tint: #3F3F75;
-  --moss: #5FCF8F;          /* Mint leaf */
-  --brick: #E57F57;
-  --brick-tint: #4A2B22;
+  --kikyo: #979CF7;        /* Kikyō, dark */
+  --kikyo-hover: #B7BDFF;
+  --on-kikyo: #15161C;
+  --kikyo-tint: #3F3F75;
+  --kashiwa: #5FCF8F;          /* Kashiwa, dark */
+  --bengara: #E57F57;
+  --bengara-tint: #4A2B22;
   --success: #9ECE6A;
   --warning: #E0AF68;
   --error: #F7768E;
@@ -47,8 +47,8 @@
     color-scheme: dark;
     --bg: #15161C; --surface: #1E2029; --sunken: #262935; --line: #333645;
     --text: #C6CBE4; --text-2: #9CA3C4;
-    --accent: #979CF7; --accent-hover: #B7BDFF; --on-accent: #15161C; --accent-tint: #3F3F75;
-    --moss: #5FCF8F; --brick: #E57F57; --brick-tint: #4A2B22; --success: #9ECE6A; --warning: #E0AF68; --error: #F7768E;
+    --kikyo: #979CF7; --kikyo-hover: #B7BDFF; --on-kikyo: #15161C; --kikyo-tint: #3F3F75;
+    --kashiwa: #5FCF8F; --bengara: #E57F57; --bengara-tint: #4A2B22; --success: #9ECE6A; --warning: #E0AF68; --error: #F7768E;
   }
 }
 
@@ -83,18 +83,18 @@ small, .meta { font-size: 15px; line-height: 1.5; color: var(--text-2); }
 /* Labels that carry information (an artist above a title, a status): sentence case, never all caps (2026-11-20). */
 .label { font: 500 16px/1.3 var(--font-body); color: var(--text-2); }
 
-a { color: var(--accent); text-underline-offset: 3px; }
+a { color: var(--kikyo); text-underline-offset: 3px; }
 a:hover { color: var(--text); }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-::selection { background: var(--accent-tint); color: var(--text); }
+:focus-visible { outline: 2px solid var(--kikyo); outline-offset: 2px; }
+::selection { background: var(--kikyo-tint); color: var(--text); }
 
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 22px; border-radius: var(--radius); font: 600 16px/1 var(--font-body); text-decoration: none; border: 1.5px solid transparent; transition: background .18s var(--ease), color .18s var(--ease); cursor: pointer; }
-.btn-primary { background: var(--accent); color: var(--on-accent); }
-.btn-primary:hover { background: var(--accent-hover); color: var(--on-accent); }
+.btn-primary { background: var(--kikyo); color: var(--on-kikyo); }
+.btn-primary:hover { background: var(--kikyo-hover); color: var(--on-kikyo); }
 .btn-secondary { background: transparent; color: var(--text); border-color: var(--text); }
 .btn-secondary:hover { background: var(--text); color: var(--bg); }
 
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: var(--space-5); }
 .input { background: var(--surface); color: var(--text); border: 1.5px solid var(--line); border-radius: var(--radius); padding: 12px 14px; font: 400 16px/1.2 var(--font-body); }
-.input:focus { outline: none; border-color: var(--accent); }
-.tag { display: inline-block; background: var(--accent-tint); color: var(--text); font: 500 12px/1 var(--font-mono); letter-spacing: .04em; padding: 6px 9px; border-radius: var(--radius-sm); }
+.input:focus { outline: none; border-color: var(--kikyo); }
+.tag { display: inline-block; background: var(--kikyo-tint); color: var(--text); font: 500 12px/1 var(--font-mono); letter-spacing: .04em; padding: 6px 9px; border-radius: var(--radius-sm); }

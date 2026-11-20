@@ -11,14 +11,14 @@ const { items, share = false, class: className = '' } = Astro.props;
       <li class="flex items-center gap-2 min-w-0">
         {i > 0 && <span aria-hidden="true" class="text-zinc-300 dark:text-zinc-700">/</span>}
         {item.href && i < items.length - 1
-          ? <a href={item.href} class="truncate max-w-[14rem] hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{item.label}</a>
+          ? <a href={item.href} class="truncate max-w-[14rem] hover:text-kikyo-600 dark:hover:text-kikyo-400 transition-colors">{item.label}</a>
           : <span aria-current="page" class="truncate max-w-[14rem] text-zinc-700 dark:text-zinc-300">{item.label}</span>}
       </li>
     ))}
     {share && (
       <li class="flex items-center">
         <button type="button" data-copy="page" title="Copy the link to this page" aria-label="Copy the link to this page"
-          class="w-7 h-7 -my-1 grid place-items-center rounded-full text-zinc-400 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 hover:bg-(--well) focus-visible:outline-2 focus-visible:outline-blue-violet-500 transition-colors">
+          class="w-7 h-7 -my-1 grid place-items-center rounded-full text-zinc-400 hover:text-kikyo-600 dark:hover:text-kikyo-400 hover:bg-(--well) focus-visible:outline-2 focus-visible:outline-kikyo-500 transition-colors">
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8.5" y="8.5" width="12" height="12" rx="2" /><path d="M15.5 8.5V5.5a2 2 0 0 0-2-2h-8a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3" /></svg>
         </button>
       </li>

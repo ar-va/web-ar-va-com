@@ -7,24 +7,24 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ARVA brand palette (brand/ARVA-brand-rules.md, brand/arva-tokens.css). Dark is based on Tokyo Night, toned down (less blue,
-   a touch darker: #15161C page, #1E2029 surfaces, #C6CBE4 text), light is almost white with a hint of paper; accent Indigo / Periwinkle;
-   secondary Moss (leaf-green, the oak leaf), third colour Brick (2026-11-20: accent and Moss deepened, Brick added, from the
-   ARVA design system). The two scales every class uses are remapped: blue-violet = accent (600 Indigo
-   #4A45B5, 700 hover, 400 Periwinkle #979CF7, 300 dark hover, 100/900 tints); zinc = cool neutrals (900 ink
+   a touch darker: #15161C page, #1E2029 surfaces, #C6CBE4 text), light is almost white with a hint of paper. Three named colours, one job each (2026-11-20, brand rules "Kikyō, Kashiwa
+   and Bengara"): kikyo = act (the accent scale: 600 #4A45B5 light, 400 #979CF7 dark, 700 hover, 300 dark hover, 100/900
+   tints), kashiwa = belong (the oak leaf, people and provenance), bengara = notice (Latest, New, flame, favourite heart).
+   Before 2026-11-20 these were blue-violet, moss and brick. Neutrals: zinc remapped; zinc = cool neutrals (900 ink
    #1F2335, 600 slate #565F89, 200 line, 800 dark line #333645, 400 dark secondary #9CA3C4, 300 dark text
    #C6CBE4, 950 night #15161C). Updated 2026-10-29: warm/brown neutrals looked burnt; then the Tokyo Night base was toned down. */
 @theme {
-  --color-blue-violet-50: #f1f3ff;
-  --color-blue-violet-100: #e4e8ff;
-  --color-blue-violet-200: #cbd1ff;
-  --color-blue-violet-300: #b7bdff;
-  --color-blue-violet-400: #979cf7;
-  --color-blue-violet-500: #5d59cc;
-  --color-blue-violet-600: #4a45b5;
-  --color-blue-violet-700: #3d3891;
-  --color-blue-violet-800: #312d78;
-  --color-blue-violet-900: #2f3058;
-  --color-blue-violet-950: #1e1e3a;
+  --color-kikyo-50: #f1f3ff;
+  --color-kikyo-100: #e4e8ff;
+  --color-kikyo-200: #cbd1ff;
+  --color-kikyo-300: #b7bdff;
+  --color-kikyo-400: #979cf7;
+  --color-kikyo-500: #5d59cc;
+  --color-kikyo-600: #4a45b5;
+  --color-kikyo-700: #3d3891;
+  --color-kikyo-800: #312d78;
+  --color-kikyo-900: #2f3058;
+  --color-kikyo-950: #1e1e3a;
 
   --color-zinc-50: #fdfdfb;
   --color-zinc-100: #f1f2f6;
@@ -43,13 +43,13 @@
   --color-warning: #8a5d10;
   --color-warning-light: #e0af68;
   --color-night-surface: #1e2029;
-  --color-moss: #15683f;
-  --color-moss-light: #5fcf8f;
-  /* Brick: "look here" without being an action or a status (the Latest label, a New marker). Never on buttons or errors. */
-  --color-brick: #a3442b;
-  --color-brick-light: #e57f57;
-  --color-brick-tint: #f7e6df;
-  --color-brick-tint-dark: #4a2b22;
+  --color-kashiwa: #15683f;
+  --color-kashiwa-light: #5fcf8f;
+  /* Bengara: "look here" without being an action or a status. Never on buttons, links or errors. */
+  --color-bengara: #a3442b;
+  --color-bengara-light: #e57f57;
+  --color-bengara-tint: #f7e6df;
+  --color-bengara-tint-dark: #4a2b22;
 
   --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
   --font-heading: 'Brygada 1918', Georgia, serif;
@@ -146,9 +146,9 @@ html { scrollbar-gutter: stable; }
 .dark .shelf-label > span:first-child { color: var(--color-zinc-200); }
 .shelf-label > span:last-child { font-size: 0.75rem; color: var(--color-zinc-500); }
 .shelf-record:hover .shelf-label > span:first-child,
-.shelf-record:focus-visible .shelf-label > span:first-child { color: var(--color-blue-violet-600); }
+.shelf-record:focus-visible .shelf-label > span:first-child { color: var(--color-kikyo-600); }
 .dark .shelf-record:hover .shelf-label > span:first-child,
-.dark .shelf-record:focus-visible .shelf-label > span:first-child { color: var(--color-blue-violet-400); }
+.dark .shelf-record:focus-visible .shelf-label > span:first-child { color: var(--color-kikyo-400); }
 
 /* Shelves directory: "+N more" at the end of a collector's row, a stack of sleeves standing on the ledge. */
 .more-stack {
@@ -161,7 +161,7 @@ html { scrollbar-gutter: stable; }
 
 .sleeve {
   --vinyl: #131316;
-  --glow: color-mix(in srgb, var(--vinyl) 40%, var(--color-blue-violet-400));
+  --glow: color-mix(in srgb, var(--vinyl) 40%, var(--color-kikyo-400));
   isolation: isolate;
 }
 .sleeve-face {
@@ -176,7 +176,7 @@ html { scrollbar-gutter: stable; }
   z-index: 0;
   border-radius: 9999px;
   background:
-    radial-gradient(circle, #111 0 2%, var(--color-blue-violet-500) 2.5% 16%, rgb(0 0 0 / 0.45) 16.5% 18%, transparent 18.5%),
+    radial-gradient(circle, #111 0 2%, var(--color-kikyo-500) 2.5% 16%, rgb(0 0 0 / 0.45) 16.5% 18%, transparent 18.5%),
     /* one faint sheen that turns with the record, so the spin shows at its real speed (two sheens half a turn apart
        made 33⅓ rpm look twice as fast). At the hero's resting turn (300°) it sits at 3 o'clock, under the still .glare;
        the hero starts from and stops on a whole turn, so the two meet there. */
@@ -188,13 +188,13 @@ html { scrollbar-gutter: stable; }
 /* Edit page: a small record per colour choice; "another colour" shows the spectrum until one is picked. */
 .vinyl-swatch {
   background:
-    radial-gradient(circle, #111 0 5%, var(--color-blue-violet-500) 6% 28%, transparent 29%),
+    radial-gradient(circle, #111 0 5%, var(--color-kikyo-500) 6% 28%, transparent 29%),
     repeating-radial-gradient(circle, var(--vinyl) 0 1px, color-mix(in srgb, var(--vinyl) 85%, white) 1px 2.5px);
   border: 1px solid rgb(0 0 0 / 0.12); /* not a box-shadow: that would hide Tailwind's ring on the picked one */
 }
 .vinyl-swatch-any {
   background:
-    radial-gradient(circle, #111 0 5%, var(--color-blue-violet-500) 6% 28%, transparent 29%),
+    radial-gradient(circle, #111 0 5%, var(--color-kikyo-500) 6% 28%, transparent 29%),
     conic-gradient(#c62f34, #efc531, #2f9e5b, #6bb3e8, #2f5fd0, #7f4bc4, #ec74a8, #c62f34);
 }
 /* Light from inside the sleeve: it spills out of the opening, behind the record, in the vinyl's colour. */
@@ -222,7 +222,7 @@ html { scrollbar-gutter: stable; }
 .shelf-record:focus-visible .sleeve::before { opacity: 1; }
 .shelf-record:hover .sleeve-face,
 .shelf-record:focus-visible .sleeve-face { transform: translateY(-3px); }
-.shelf-record:focus-visible { outline: 2px solid var(--color-blue-violet-500); outline-offset: 4px; }
+.shelf-record:focus-visible { outline: 2px solid var(--color-kikyo-500); outline-offset: 4px; }
 
 /* The room's light on the vinyl: one soft white wedge that follows the record out of the sleeve but never rotates.
    Hidden inside the sleeve; skips the centre label. The hero fades it out while the record plays (RecordHero.astro). */
@@ -377,11 +377,11 @@ html { scroll-padding-top: 1.5rem; }
    - the same "on" tint for the switch knobs (theme, view) and the filter count badge (2026-10-29: one colour for every
      on-state); solid violet only for primary buttons.
    Toolbar controls are 2rem pills. */
-:root { --well: rgb(31 35 53 / 0.06); --well-hover: rgb(31 35 53 / 0.1); --on-bg: var(--color-blue-violet-100); --on-bg-hover: var(--color-blue-violet-200); --on-text: var(--color-blue-violet-700); }
+:root { --well: rgb(31 35 53 / 0.06); --well-hover: rgb(31 35 53 / 0.1); --on-bg: var(--color-kikyo-100); --on-bg-hover: var(--color-kikyo-200); --on-text: var(--color-kikyo-700); }
 /* Dark "on": violet-500 mixed 45 % into the dark surface, opaque (at 25 % it had the grey wells' brightness and
    only the hue set it apart; user 2026-10-29: "indistinguishable"); violet-900 was too bold, the
    first 22 % violet-400 mix a little too pale. */
-.dark { --well: rgb(255 255 255 / 0.08); --well-hover: rgb(255 255 255 / 0.13); --on-bg: color-mix(in srgb, var(--color-blue-violet-500) 45%, #1e2029); --on-bg-hover: color-mix(in srgb, var(--color-blue-violet-500) 55%, #1e2029); --on-text: var(--color-blue-violet-200); }
+.dark { --well: rgb(255 255 255 / 0.08); --well-hover: rgb(255 255 255 / 0.13); --on-bg: color-mix(in srgb, var(--color-kikyo-500) 45%, #1e2029); --on-bg-hover: color-mix(in srgb, var(--color-kikyo-500) 55%, #1e2029); --on-text: var(--color-kikyo-200); }
 .ctl {
   display: inline-flex; align-items: center; gap: 0.375rem; height: 2rem; padding: 0 0.875rem; border-radius: 9999px;
   font-size: 0.875rem; font-weight: 500; color: var(--color-zinc-700); background: var(--well);
@@ -440,13 +440,13 @@ html { scroll-padding-top: 1.5rem; }
 }
 .dark .search-field input { color: #fff; }
 .search-field input:hover { background: var(--well-hover); }
-.search-field input:focus { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-blue-violet-500) 60%, transparent); }
+.search-field input:focus { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-kikyo-500) 60%, transparent); }
 .search-field input::placeholder { color: var(--color-zinc-500); }
 .search-field input::-webkit-search-cancel-button { display: none; }
 .search-field svg { position: absolute; left: 0.6rem; top: 50%; translate: 0 -50%; width: 1rem; height: 1rem; pointer-events: none; }
 
 /* Edit page: the tracklist row being dragged lifts off the list. */
-.track.dragging { position: relative; z-index: 10; box-shadow: 0 10px 24px -8px rgb(0 0 0 / 0.25); border-color: var(--color-blue-violet-500); }
+.track.dragging { position: relative; z-index: 10; box-shadow: 0 10px 24px -8px rgb(0 0 0 / 0.25); border-color: var(--color-kikyo-500); }
 
 /* Phones: the list toolbar spans the width, controls 2.5rem tall and together, search filling the rest (easier to see and tap); the
    filters panel, hung from the toolbar row, is full width too. */
@@ -466,7 +466,7 @@ html { scroll-padding-top: 1.5rem; }
 /* A line of separate facts ("1988, Rock, 11 tracks, 47 min" with a leaf in each gap): the logo's own small leaf
    (arva-mark-small, path copied exactly) as a Moss stencil, 0.7em with 0.6em each side. Decorative: the facts read the same without it. */
 /* inline-block, not flex: the Details preview truncates each fact with an ellipsis. */
-.fact + .fact::before { content: ""; display: inline-block; vertical-align: -0.05em; width: 0.7em; height: 0.7em; margin: 0 0.6em; background: var(--color-moss);
+.fact + .fact::before { content: ""; display: inline-block; vertical-align: -0.05em; width: 0.7em; height: 0.7em; margin: 0 0.6em; background: var(--color-kashiwa);
   -webkit-mask: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Cpath d="M16.33 74.72A7.28 7.28 0 1 1 15.09 60.22A6.92 6.92 0 0 0 19.85 48.57A9.93 9.93 0 0 1 31.44 32.84A4.98 4.98 0 0 0 38.22 26.44A11.25 11.25 0 0 1 56.52 14.09A7.94 7.94 0 0 0 69.23 11.94A14.56 14.56 0 1 1 81.54 32.9A7.94 7.94 0 0 0 78.13 48.18A11.25 11.25 0 1 1 69.31 68.89A4.97 4.97 0 0 0 62.77 75.51A9.93 9.93 0 0 1 46.34 86.28A5.54 5.54 0 0 0 36.68 89.56A7.28 7.28 0 1 1 23.2 85.25A6.96 6.96 0 0 0 16.33 74.72ZM21.95 75.35L25.32 78.72L9.66 94.37L2.92 94.37Z"/%3E%3C/svg%3E') center / contain no-repeat; mask: url('data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Cpath d="M16.33 74.72A7.28 7.28 0 1 1 15.09 60.22A6.92 6.92 0 0 0 19.85 48.57A9.93 9.93 0 0 1 31.44 32.84A4.98 4.98 0 0 0 38.22 26.44A11.25 11.25 0 0 1 56.52 14.09A7.94 7.94 0 0 0 69.23 11.94A14.56 14.56 0 1 1 81.54 32.9A7.94 7.94 0 0 0 78.13 48.18A11.25 11.25 0 1 1 69.31 68.89A4.97 4.97 0 0 0 62.77 75.51A9.93 9.93 0 0 1 46.34 86.28A5.54 5.54 0 0 0 36.68 89.56A7.28 7.28 0 1 1 23.2 85.25A6.96 6.96 0 0 0 16.33 74.72ZM21.95 75.35L25.32 78.72L9.66 94.37L2.92 94.37Z"/%3E%3C/svg%3E') center / contain no-repeat; }
-.dark .fact + .fact::before { background: var(--color-moss-light); }
+.dark .fact + .fact::before { background: var(--color-kashiwa-light); }
 

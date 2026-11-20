@@ -75,22 +75,22 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
     <div class="mb-2">
       <h1 class="text-3xl font-bold leading-tight text-zinc-900 dark:text-white">Writing</h1>
       <p class="mt-2 text-sm text-zinc-500">
-        <a href="#all-writing" class="inline-flex items-center gap-1.5 py-1 hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{postsWithData.length} post{postsWithData.length === 1 ? '' : 's'} <span aria-hidden="true">↓</span></a>
+        <a href="#all-writing" class="inline-flex items-center gap-1.5 py-1 hover:text-kikyo-600 dark:hover:text-kikyo-400 transition-colors">{postsWithData.length} post{postsWithData.length === 1 ? '' : 's'} <span aria-hidden="true">↓</span></a>
       </p>
     </div>
   ) : (
     <div class="flex justify-between items-center mb-2">
       <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Writing</h2>
-      <a href="#all-writing" class="text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:bg-blue-violet-50 dark:hover:bg-blue-violet-500/15 px-4 py-2 rounded-full transition-colors">All writing ↓</a>
+      <a href="#all-writing" class="text-sm font-medium text-kikyo-600 dark:text-kikyo-400 hover:bg-kikyo-50 dark:hover:bg-kikyo-500/15 px-4 py-2 rounded-full transition-colors">All writing ↓</a>
     </div>
   )}
 
   <!-- Latest Section -->
   {latestPost && (
     <section class="mt-6">
-      <h2 class="font-sans mb-3"><span class="inline-block rounded-full bg-brick-tint px-2.5 py-0.5 text-sm font-medium text-brick dark:bg-brick-tint-dark dark:text-brick-light">Latest</span></h2>
+      <h2 class="font-sans mb-3"><span class="inline-block rounded-full bg-bengara-tint px-2.5 py-0.5 text-sm font-medium text-bengara dark:bg-bengara-tint-dark dark:text-bengara-light">Latest</span></h2>
       <a href={`/blog/${latestPost.data.slug || createCleanSlug(latestPost.id)}`} class="group block">
-        <h3 class="text-2xl text-zinc-900 dark:text-zinc-200 group-hover:text-blue-violet-600 dark:group-hover:text-white transition-colors">
+        <h3 class="text-2xl text-zinc-900 dark:text-zinc-200 group-hover:text-kikyo-600 dark:group-hover:text-white transition-colors">
           {latestPost.displayTitle}
         </h3>
         
@@ -102,7 +102,7 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
             <>
               <span class="flex flex-wrap gap-y-1" onclick="event.preventDefault();">
                 {latestPost.sortedTags.map((tag, index) => (
-                  <span class="inline-flex"><button data-tag={tag} class="tag-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{tag}</span></button>{index < latestPost.sortedTags.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1">,</span>}</span>
+                  <span class="inline-flex"><button data-tag={tag} class="tag-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-kikyo-500/50 group-[.active-tag:hover]/btn:!decoration-kikyo-500 group-[.active-tag]/btn:text-kikyo-600 dark:group-[.active-tag]/btn:text-kikyo-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{tag}</span></button>{index < latestPost.sortedTags.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1">,</span>}</span>
                 ))}
               </span>
             </>
@@ -145,7 +145,7 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
       <!-- Filters drop down from "All writing" (and travel with the bar); several can be picked before closing. -->
       <div id="filters-panel" hidden class="glass absolute left-0 right-0 top-full mt-2 rounded-3xl px-5 py-4 max-h-[70vh] overflow-y-auto space-y-1">
         <button type="button" data-filters-reset disabled title="Clear the filters and the search"
-          class="absolute right-4 top-3.5 inline-flex items-center gap-1 text-xs font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:text-blue-violet-800 dark:hover:text-blue-violet-200 disabled:text-zinc-400 dark:disabled:text-zinc-600 disabled:pointer-events-none transition-colors">
+          class="absolute right-4 top-3.5 inline-flex items-center gap-1 text-xs font-medium text-kikyo-600 dark:text-kikyo-400 hover:text-kikyo-800 dark:hover:text-kikyo-200 disabled:text-zinc-400 dark:disabled:text-zinc-600 disabled:pointer-events-none transition-colors">
           <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8" /><path d="M3 3v5h5" /></svg>
           Reset
         </button>
@@ -154,10 +154,10 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
           <h2 class="font-sans text-zinc-500 dark:text-zinc-500 text-sm">Date published</h2>
           <div class="leading-8 text-base" id="date-filters">
             {years.map((year, yearIndex) => (
-              <span class="year-block inline" data-year-group={year}><span class="filter-group"><button data-year={year} class="year-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{year}</span><span class="no-underline text-zinc-500 dark:text-zinc-400"> ({yearTotals[year]})</span></button><span class="month-group hidden ml-1.5" data-year-group={year}>{Object.entries(yearsMap.get(year)!).sort(([a],[b])=>parseInt(a)-parseInt(b)).map(([month, count], monthIndex, arr) => {
+              <span class="year-block inline" data-year-group={year}><span class="filter-group"><button data-year={year} class="year-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-kikyo-500/50 group-[.active-tag:hover]/btn:!decoration-kikyo-500 group-[.active-tag]/btn:text-kikyo-600 dark:group-[.active-tag]/btn:text-kikyo-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{year}</span><span class="no-underline text-zinc-500 dark:text-zinc-400"> ({yearTotals[year]})</span></button><span class="month-group hidden ml-1.5" data-year-group={year}>{Object.entries(yearsMap.get(year)!).sort(([a],[b])=>parseInt(a)-parseInt(b)).map(([month, count], monthIndex, arr) => {
                   const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleString('en-US', { month: 'long' }).toLowerCase();
                   return (
-                    <span class="inline"><button data-month={`${year}-${month}`} class="month-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{monthName}</span><span class="no-underline text-zinc-500 dark:text-zinc-400"> ({count})</span></button>{monthIndex < arr.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
+                    <span class="inline"><button data-month={`${year}-${month}`} class="month-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-kikyo-500/50 group-[.active-tag:hover]/btn:!decoration-kikyo-500 group-[.active-tag]/btn:text-kikyo-600 dark:group-[.active-tag]/btn:text-kikyo-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{monthName}</span><span class="no-underline text-zinc-500 dark:text-zinc-400"> ({count})</span></button>{monthIndex < arr.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1.5">,</span>}</span>
                   );
                 })}</span></span>{yearIndex < years.length - 1 && <span class="year-separator text-zinc-500 dark:text-zinc-600 mx-1.5">·</span>}</span>
             ))}
@@ -169,7 +169,7 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
           <h2 class="font-sans text-zinc-500 dark:text-zinc-500 text-sm ">Topics</h2>
           <div class="leading-8 text-base" id="topics-container">
             {topics.length > 0 ? topics.map((topic, index) => (
-              <span class="topic-item inline"><button data-tag={topic.tag} class="tag-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{topic.tag}</span><span class="no-underline text-zinc-500 dark:text-zinc-400 transition-colors"> ({topic.count})</span></button><span class={`topic-comma text-zinc-500 dark:text-zinc-600 mr-1.5 ${index < topics.length - 1 ? '' : 'hidden'}`}>,</span></span>
+              <span class="topic-item inline"><button data-tag={topic.tag} class="tag-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-kikyo-500/50 group-[.active-tag:hover]/btn:!decoration-kikyo-500 group-[.active-tag]/btn:text-kikyo-600 dark:group-[.active-tag]/btn:text-kikyo-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{topic.tag}</span><span class="no-underline text-zinc-500 dark:text-zinc-400 transition-colors"> ({topic.count})</span></button><span class={`topic-comma text-zinc-500 dark:text-zinc-600 mr-1.5 ${index < topics.length - 1 ? '' : 'hidden'}`}>,</span></span>
             )) : null}
       
             <span id="no-topics-message" class="text-zinc-500 text-sm hidden">No relevant topics found.</span>
@@ -208,7 +208,7 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
             {post.sortedTags.map((tag, index) => (
               <span class="inline-flex">
                 <button data-tag={tag} class="tag-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white">
-                  <span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{tag}</span>
+                  <span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-kikyo-500/50 group-[.active-tag:hover]/btn:!decoration-kikyo-500 group-[.active-tag]/btn:text-kikyo-600 dark:group-[.active-tag]/btn:text-kikyo-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{tag}</span>
                 </button>
                 {index < post.sortedTags.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1">,</span>}
               </span>
@@ -220,7 +220,7 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
     
     <div id="filter-info-container" class="hidden mt-4 text-sm text-zinc-500 items-baseline">
       <span id="filter-info-text"></span>
-      <button id="clear-all-btn" class="ml-1 text-blue-violet-600 dark:text-blue-violet-400 hover:text-zinc-900 dark:hover:text-white transition-colors underline decoration-blue-violet-500/50 hover:decoration-blue-violet-500 underline-offset-4">Reset</button>
+      <button id="clear-all-btn" class="ml-1 text-kikyo-600 dark:text-kikyo-400 hover:text-zinc-900 dark:hover:text-white transition-colors underline decoration-kikyo-500/50 hover:decoration-kikyo-500 underline-offset-4">Reset</button>
     </div>
     
     <p id="no-results-message" class="text-zinc-500 text-sm hidden mt-4">No matching posts found.</p>
