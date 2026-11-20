@@ -244,8 +244,8 @@ On the site, Archivo is applied to `h1`–`h4` in the CSS base layer, so an elem
 
 - **2026-11-20 (labels, separators, arrows):** after a review against common "generated page" tells, the owner asked
   to drop three patterns: all-caps tracked mono eyebrows (labels that repeat a heading are gone; the rest are Plex
-  Sans 500 in sentence case, the artist and site name in Moss), "A · B · C" meta strings (now words, commas or
-  spacing), and "→" on link text (kept only where it means a direction). Plex Mono stays for aligned numbers and codes.
+  Sans 500 in sentence case, the artist and site name in Moss), "A · B · C" meta strings (now words, commas, or a
+  thin vertical rule between facts), and "→" on link text (kept only where it means a direction). Plex Mono stays for aligned numbers and codes.
 
 - **2026-10-30:** Moss allowed for the shelf's freshness in settings ("just now"), an exception to "Moss is not
   success" chosen by the owner.

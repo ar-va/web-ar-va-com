@@ -58,7 +58,7 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
     <Heading class="text-3xl sm:text-5xl font-bold leading-[1.05] text-zinc-900 dark:text-white">
       {href ? <a href={href} class="hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{title}</a> : <button type="button" data-copy title="Click to copy" class={copy}>{title}</button>}
     </Heading>
-    {facts.length > 0 && <p class="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-zinc-700 dark:text-zinc-300">{facts.map((f) => <span>{f}</span>)}</p>}
+    {facts.length > 0 && <p class="mt-4 flex flex-wrap gap-y-1 text-zinc-700 dark:text-zinc-300">{facts.map((f) => <span class="fact">{f}</span>)}</p>}
     <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-500">
       {added}
       {askAdded && (
