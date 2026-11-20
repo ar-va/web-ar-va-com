@@ -34,11 +34,11 @@ Files are in `logo/`. Never redraw or retype the logo; always use the files. **T
 | `arva-stacked-ink.svg` / `-washi.svg` | Square spaces: splash, social, about page |
 | `arva-mark-ink.svg` / `-washi.svg` | Mark alone, 32 px and larger |
 | `arva-mark-small-ink.svg` / `-washi.svg` | Mark alone, below 32 px (simplified, no midrib) |
-| `arva-mark-moss.svg` | Heritage contexts only (print, packaging, an "about" page); Kashiwa `--kashiwa` |
+| `arva-mark-kashiwa.svg` | Heritage contexts only (print, packaging, an "about" page); Kashiwa `--kashiwa` |
 | `arva-wordmark-ink.svg` | Wordmark alone, only where the mark already appears nearby |
-| `arva-horizontal-ink-moss.svg` / `-washi-moss.svg` | **Default on screen** (site header): Kashiwa leaf, wordmark in `--text` |
-| `arva-stacked-ink-moss.svg` / `-washi-moss.svg` | Square spaces on screen, two-tone |
-| `arva-mark-small-ink-moss.svg` / `-washi-moss.svg` | Leaf alone below 32 px on screen (phone header) |
+| `arva-horizontal-ink-kashiwa.svg` / `-washi-kashiwa.svg` | **Default on screen** (site header): Kashiwa leaf, wordmark in `--text` |
+| `arva-stacked-ink-kashiwa.svg` / `-washi-kashiwa.svg` | Square spaces on screen, two-tone |
+| `arva-mark-small-ink-kashiwa.svg` / `-washi-kashiwa.svg` | Leaf alone below 32 px on screen (phone header) |
 | `favicon.svg` | Browser favicon: the Kashiwa leaf, switching to mint on dark tabs |
 | `../avatars/arva-avatar-{full,wordmark,leaf}-{scheme}.svg` / `.png` | Profile pictures (1:1, 1024 px PNG): full logo (stacked), wordmark or leaf on a solid ground. Schemes: `paper` (Kashiwa leaf, ink), `night` (mint, washi), `ink` (mint, paper), `kashiwa` / `kikyo` (all paper), `kikyo-light` (Kikyō's dark-theme value, all ink). Sized to keep the clear space and to survive a circle crop. Prefer `full-paper` / `full-night`; the leaf alone where the name shows next to it anyway |
 
@@ -47,7 +47,7 @@ Rules:
 - Clear space on every side must be at least the width of the leaf's tip lobe (about ¼ of the mark's height).
 - Swap ink and washi files with the theme. Never place the ink logo on a dark background or the washi logo on a light one.
 - Never use Kikyō on the logo.
-- **Two-tone:** on screen the leaf may be `--kashiwa` while the wordmark stays `--text` (the `-moss` files). This is the one place Kashiwa may sit on an interactive element (the logo as a home link). Use the one-colour ink / washi files for print, embossing, stamps and other single-colour uses.
+- **Two-tone:** on screen the leaf may be `--kashiwa` while the wordmark stays `--text` (the `-kashiwa` files). This is the one place Kashiwa may sit on an interactive element (the logo as a home link). Use the one-colour ink / washi files for print, embossing, stamps and other single-colour uses.
 - Never rotate, outline, add shadows to, add gradients to, stretch, or animate-distort the logo. The 45° lean is part of the mark.
 - Never put the leaf in a circle, a badge, or a frame.
 
@@ -247,6 +247,8 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 
 ## Changelog
 
+- **2026-11-20 (logo names):** the two-tone and green logo files named after Kashiwa: `-moss.svg` →
+  `-kashiwa.svg` (`arva-mark-moss.svg` → `arva-mark-kashiwa.svg`). Files unchanged otherwise.
 - **2026-11-20 (avatar names):** avatar files named after the brand colours: `-moss` → `-kashiwa`, `-indigo` →
   `-kikyo`, `-periwinkle` → `-kikyo-light`. Files unchanged otherwise.
 
