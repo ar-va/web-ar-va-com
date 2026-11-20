@@ -70,7 +70,8 @@ The pattern: trust collapses when people discover a gap between what an anonymou
    make it public"; picking the second shows what publishing means: I read it first, then anyone can read it word for
    word, people who know you might recognize your writing, and it can be undone.
 6. **Private by default, public by request, published after reading** (ask.fm). Unchanged from the first version.
-7. **Welcome every kind of message** (lower evaluation fear). "Kind or critical, both are welcome" in the box. (The
+7. **Welcome every kind of message** (lower evaluation fear). "Write freely" in the box (until 2026-11-20 "Write
+   anything. Kind or critical, both are welcome."; the user wanted one or two words). (The
    optional starters, thanks / confession / disagreement / a question, were removed 2026-11-20 at the user's request:
    the open box felt cluttered.)
 8. **Real numbers or none** (relative standards). The answered list is only real messages; the empty state says there
