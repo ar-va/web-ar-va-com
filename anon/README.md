@@ -3,7 +3,7 @@
 The code behind [anon.ar-va.com](https://anon.ar-va.com): a place to write to Artur with no name and no account.
 Writers can ask for their message to be public; it appears only after he has read it, word for word, with his answer.
 
-This folder (`anon/` in the public repository [ar-va/ar-va.com](https://github.com/ar-va/ar-va.com)) is public so
+This folder (`anon/` in the public repository [ar-va/web-ar-va-com](https://github.com/ar-va/web-ar-va-com)) is public so
 anyone can check what the site does with a message. Cloudflare builds and deploys the site from this folder, so the
 code here is the code that runs. Until 2026-11-20 it was its own repository, `ar-va/web-anon-ar-va-com` (archived).
 
