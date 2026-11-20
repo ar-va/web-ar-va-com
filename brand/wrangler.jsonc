@@ -1,0 +1,9 @@
+{
+  "name": "web-brand-ar-va-com",
+  // "ARVA and MoveoImmigration", the same account as the other ARVA sites.
+  "account_id": "5381dc39fbfcb930bb82b729520f7102",
+  "compatibility_date": "2026-09-01",
+  // Static files only: no Worker code runs, so requests cost nothing on the Free plan.
+  "assets": { "directory": "./dist" },
+  "routes": [{ "pattern": "brand.ar-va.com", "custom_domain": true }]
+}
