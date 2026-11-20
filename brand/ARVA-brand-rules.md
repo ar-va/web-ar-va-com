@@ -41,7 +41,7 @@ Files are in `logo/`. Never redraw or retype the logo; always use the files. **T
 | `../avatars/arva-avatar-{full,wordmark,leaf}-{scheme}.svg` / `.png` | Profile pictures (1:1, 1024 px PNG): full logo (stacked), wordmark or leaf on a solid ground. Schemes: `paper` (Kashiwa leaf, ink), `night` (mint, washi), `ink` (mint, paper), `moss` / `indigo` (all paper), `periwinkle` (all ink). Sized to keep the clear space and to survive a circle crop. Prefer `full-paper` / `full-night`; the leaf alone where the name shows next to it anyway |
 
 Rules:
-- Header logo height is 24–32 px on desktop and 22–26 px on mobile.
+- Header logo height is 24–32 px on desktop and 22–26 px on mobile. The sites use 30 px and 26 px (2026-11-20; 24 px left the letter-spaced wordmark too small).
 - Clear space on every side must be at least the width of the leaf's tip lobe (about ¼ of the mark's height).
 - Swap ink and washi files with the theme. Never place the ink logo on a dark background or the washi logo on a light one.
 - Never use Kikyō on the logo.
@@ -248,7 +248,7 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 - **2026-11-20 (logo):** the wordmark redrawn in Brygada 1918 500, letter-spaced 0.23 em ("Open capitals", chosen by the
   owner from three options), outlined with opentype.js from Google Fonts' static Medium; the leaf unchanged. All
   horizontal, stacked and wordmark files and the full / wordmark avatars (SVG + PNG) regenerated; the indigo and
-  periwinkle avatar grounds moved to Kikyō (#4A45B5 / #979CF7). The horizontal logo is now 87 px wide at 24 px tall.
+  periwinkle avatar grounds moved to Kikyō (#4A45B5 / #979CF7). The horizontal logo is 109 px wide at its 30 px header height.
 
 - **2026-11-20 (colour names and roles):** the three colours are named Kikyō (act), Kashiwa (belong) and Bengara
   (notice), with one job each ("Kikyō, Kashiwa and Bengara" in section 3; replaces "Purple or Moss"). Tokens renamed
