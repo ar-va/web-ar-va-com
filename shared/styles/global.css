@@ -102,7 +102,9 @@ html { scrollbar-gutter: stable; }
   --row-gap: 5rem;
   --label-h: 0px;
   row-gap: calc(var(--row-gap) + var(--label-h));
-  padding: 3.5rem calc(var(--gap) / 2) 1.5rem;
+  /* bottom: the labels hang below the last row's ledge (absolute), so their height counts here too, or the text under
+     the shelf ("Showing 7 of 59") runs into them */
+  padding: 3.5rem calc(var(--gap) / 2) calc(1.5rem + var(--label-h));
   isolation: isolate;
 }
 @media (min-width: 640px) {
