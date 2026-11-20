@@ -9,7 +9,7 @@ music.ar-va.com (ARVA brand, see `../ar-va.com/brand/ARVA-brand-rules.md`); the 
 **Page design and wording follow [`docs/trust-principles.md`](docs/trust-principles.md)** (research on disclosure,
 trust and dark patterns, 2026-11-17). Read it before changing the front page; its "Never add" list is binding.
 
-**GitHub:** the `anon/` folder of `ar-va/ar-va.com` (public, so anyone can check the code; the page links to it;
+**GitHub:** the `anon/` folder of `ar-va/web-ar-va-com` (public, so anyone can check the code; the page links to it;
 until 2026-11-20 its own repo `ar-va/web-anon-ar-va-com`, now archived). Logos and favicons come from `../shared/public`. Commit as
 `ARVA <github@ar-va.com>` (local git config) with **no Claude co-author lines** (user, 2026-11-17).
 
@@ -62,6 +62,6 @@ local `ar-va-music-na`, then send `Cookie: __Secure-session=<token>`.
 First deployed by the user 2026-11-17 (`wrangler deploy`, which created D1 `ar-va-anon`, id pinned in wrangler.jsonc,
 and the anon.ar-va.com custom domain). Secrets set: `TELEGRAM_BOT_TOKEN`, and `EMAIL_KEY` (unused since email was
 removed; `npx wrangler secret delete EMAIL_KEY`). Deploy: `npm run build && npx wrangler deploy`,
-or a push to `main` through Cloudflare Workers Builds (Worker `web-anon-ar-va-com`, repo `ar-va/ar-va.com`, root
+or a push to `main` through Cloudflare Workers Builds (Worker `web-anon-ar-va-com`, repo `ar-va/web-ar-va-com`, root
 directory `anon`, build `npm run build`, deploy `npx wrangler deploy`, watch paths `anon/*`, `shared/*`,
 `package.json`, `package-lock.json`).
