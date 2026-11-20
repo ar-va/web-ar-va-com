@@ -179,7 +179,9 @@ export async function saveMatch(user: User, releaseId: number, apple: any, artis
   ]);
   if (spotify) match.spotify = spotify;
   if (youtube !== undefined) match.youtube = youtube;
-  // A Spotify error isn't "not on Spotify": dated 0, the album is looked up again on the next visit (not in 60 days).
-  await d.prepare('INSERT OR REPLACE INTO matches (release_id, data, matched_at) VALUES (?, ?, ?)').bind(releaseId, JSON.stringify(match), spotifyFailed ? 0 : now()).run();
+  // A Spotify error isn't "not on Spotify": dated so the album is looked up again in a day, not in 60 days (not on the
+  // next visit either: a lasting failure, like expired keys, would re-match every album, and spend YouTube quota, on every visit).
+  await d.prepare('INSERT OR REPLACE INTO matches (release_id, data, matched_at) VALUES (?, ?, ?)')
+    .bind(releaseId, JSON.stringify(match), spotifyFailed ? now() - MATCH_MAX_AGE + 86400 : now()).run();
   return true;
 }
