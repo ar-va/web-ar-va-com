@@ -45,18 +45,18 @@
   --color-moss: #237a50;
   --color-moss-light: #8bd8a9;
 
-  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
-  --font-heading: 'Archivo', system-ui, sans-serif;
+  --font-sans: 'Onest', system-ui, sans-serif;
+  --font-heading: 'Brygada 1918', Georgia, serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 }
 
-/* Brand type (brand/ARVA-brand-rules.md, "Which font when"): Archivo for titles (112 % width; bold ones at 600), in the
+/* Brand type (brand/ARVA-brand-rules.md, "Which font when"): Brygada 1918 for titles (bold ones at 500), in the
    base layer so a small label heading can say `font-sans`; Plex Mono only via `font-mono` (aligned numbers, codes). */
 @layer base {
-  h1, h2, h3, h4 { font-family: var(--font-heading); font-stretch: 112%; }
+  h1, h2, h3, h4 { font-family: var(--font-heading); }
 }
-/* Unlayered, so it beats the `font-bold` utility: brand headings are 600. */
-:is(h1, h2, h3, h4).font-bold { font-weight: 600; }
+/* Unlayered, so it beats the `font-bold` utility: brand headings are 500. */
+:is(h1, h2, h3, h4).font-bold { font-weight: 500; }
 /* Always keep room for the scrollbar, so short and long pages line up (desktop scrollbars take ~15 px). */
 html { scrollbar-gutter: stable; }
 /* ---- Music shelf (music.ar-va.com) ---- */
