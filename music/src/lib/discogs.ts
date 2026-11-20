@@ -2,7 +2,7 @@
 // per-address limit (measured 2026-10-27: 71 of 25 used before our first request). Instead it signs requests that
 // the collector's browser sends (src/music/sync.ts) and stores what the browser brings back.
 import { env } from 'cloudflare:workers';
-import { oauthHeader, safeCoverUrl, safeStreamingUrl, seal, signablePath, toReleaseDetail, toShelfRecord, unseal, type CollectionField, type Match, type ReleaseDetail } from '@shared/lib/lib';
+import { oauthHeader, safeCoverUrl, safeStreamingUrl, seal, signablePath, toReleaseDetail, toShelfRecord, unseal, type CollectionField, type Match } from '@shared/lib/lib';
 import { spotifyMatch } from './spotify';
 import { youtubeMatch } from './youtube';
 import { db, type User } from '@shared/lib/store';
@@ -99,20 +99,21 @@ export async function missingReleases(user: User) {
   return results;
 }
 
-/** Caches a release's details, only for releases on the uploader's own shelf. */
+/**
+ * Caches a release's details, only for releases on the uploader's own shelf. The cache is shared by everyone who owns
+ * the release, so a row is replaced only when it's stale or lacks the newer keys (the same test as missingReleases):
+ * another collector can't overwrite fresh details.
+ */
 export async function saveRelease(user: User, release: any, masterYear: unknown, firstReleased: unknown) {
   const id = Number(release?.id);
   const d = await db();
   const owned = Number.isSafeInteger(id) && await d.prepare(`SELECT 1 FROM records WHERE user_id = ? AND json_extract(data, '$.releaseId') = ? LIMIT 1`).bind(user.id, id).first();
   if (!owned) return false;
   const detail = toReleaseDetail(release, Number.isSafeInteger(masterYear) ? (masterYear as number) : null, typeof firstReleased === 'string' ? firstReleased : null);
-  await d.prepare('INSERT OR REPLACE INTO releases (id, data, fetched_at) VALUES (?, ?, ?)').bind(id, JSON.stringify(detail), now()).run();
+  await d.prepare(`INSERT INTO releases (id, data, fetched_at) VALUES (?1, ?2, ?3) ON CONFLICT (id) DO UPDATE SET data = excluded.data, fetched_at = excluded.fetched_at
+    WHERE releases.fetched_at <= ?4 OR json_type(releases.data, '$.firstReleased') IS NULL OR json_type(releases.data, '$.images') IS NULL`)
+    .bind(id, JSON.stringify(detail), now(), now() - RELEASE_MAX_AGE).run();
   return true;
-}
-
-export async function cachedRelease(releaseId: number): Promise<ReleaseDetail | null> {
-  const row = await (await db()).prepare('SELECT data FROM releases WHERE id = ?').bind(releaseId).first<{ data: string }>();
-  return row ? JSON.parse(row.data) : null;
 }
 
 // ---- Streaming matches (Apple Music found by the browser, Spotify looked up here) ----
