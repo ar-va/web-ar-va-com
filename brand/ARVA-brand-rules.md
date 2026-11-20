@@ -97,7 +97,7 @@ Rules:
 | Use purple for | Use Moss for | Keep neutral |
 |---|---|---|
 | Links (inline and "All records ↓"-style) | The leaf in the logo | Body text and headings |
-| Primary buttons ("View work", "Log in", "Post comment") | The artist above an album title and a site's name next to the logo (Onest 500, sentence case) | Secondary text, dates, counts in brackets |
+| Primary buttons ("View work", "Log in", "Post comment") | The artist above an album title and a site's name next to the logo (IBM Plex Sans 500, sentence case) | Secondary text, dates, counts in brackets |
 | Current or selected state: active nav, picked filters, current view, switch knobs, open menus | Rare heritage or editorial accents: a "since" line, one stamp-like detail, a pull quote's mark | Dividers and borders |
 | Focus rings and hover states | Descriptive markers that are not clickable (e.g. a "new" marker on a recent record, a category label) | Grey control pills at rest |
 | Small signals: count badges (in the `--accent-tint` "on" colour, like every on-state), Reset | | Small section headings ("Latest", "Photos", "Tracklist") |
@@ -126,18 +126,18 @@ Rules of thumb:
 | H1 | Brygada 1918 | 500 | 56 / 1.05 (40 on mobile) | letter-spacing −0.01em |
 | H2 | Brygada 1918 | 500 | 36 / 1.15 (28 on mobile) | |
 | H3 | Brygada 1918 | 500 | 24 / 1.25 | |
-| Body | Onest | 400 | 18 / 1.6 | Medium (500) for emphasis, never bold body text |
-| Small / meta | Onest | 400 | 15 / 1.5 | colour `--text-2` |
-| Button | Onest | 600 | 16 / 1 | |
-| Label (artist, site name, status) | Onest | 500 | 14–18, sentence case | |
+| Body | IBM Plex Sans | 400 | 18 / 1.6 | Medium (500) for emphasis, never bold body text |
+| Small / meta | IBM Plex Sans | 400 | 15 / 1.5 | colour `--text-2` |
+| Button | IBM Plex Sans | 600 | 16 / 1 | |
+| Label (artist, site name, status) | IBM Plex Sans | 500 | 14–18, sentence case | |
 | Code, specs, numbers in tables | IBM Plex Mono | 400 | 14–15 | |
-| Japanese text | IBM Plex Sans JP | same as Onest | | |
+| Japanese text | IBM Plex Sans JP | same as IBM Plex Sans | | |
 
 Rules:
 - Use only these three families. Never Inter, Roboto, Arial, Montserrat, Poppins, or another serif.
 - All three cover Cyrillic, so Russian titles and text render in the brand fonts. Check Cyrillic before adding any font.
 - Brygada 1918 is for titles only, never paragraphs or controls. The wordmark keeps its own drawn letters (Archivo, 125% width) inside the logo files; don't set text in Archivo.
-- Brygada's small letters are shorter than Onest's (x-height 0.47 vs 0.53 of the size), so a title looks smaller than text at the same size: never set the two side by side at one size.
+- Brygada's small letters are shorter than Plex Sans' (x-height 0.47 vs 0.52 of the size), so a title looks smaller than text at the same size: never set the two side by side at one size.
 - Sentence case everywhere: headings, buttons and labels. No all-caps labels, and no label above a heading that only repeats it.
 - Paragraphs are at most 68 characters wide (`--measure`). Use `text-wrap: balance` on headings and `pretty` on paragraphs.
 - Left-align text. Centre it only for short hero lines or empty states.
@@ -149,18 +149,18 @@ Decide by what the text **does**, not by which HTML tag it sits in.
 | Font | Use it for | Examples on ar-va.com |
 |---|---|---|
 | **Brygada 1918** (500) | Titles a reader scans for: page titles, section titles, card and item titles, album and post titles | "Artur — ARVA", "Selected work", "Tracklist", "Comments", "Chet Baker Sings", edit-page card titles |
-| **Onest** | Everything read or operated: body text, meta lines, links, navigation, buttons and controls, form fields, and small grey labels that name a group | "Filter", "Sort", "Spotify", "Show details", "Latest", "Added", "Genres", "Date published", "Added to the shelf…" |
-| **Onest** (500, sentence case) | Labels that carry information: the artist above an album title (Moss), "Side A", "New", "Edited" | "Miles Davis", "Side A" |
+| **IBM Plex Sans** | Everything read or operated: body text, meta lines, links, navigation, buttons and controls, form fields, and small grey labels that name a group | "Filter", "Sort", "Spotify", "Show details", "Latest", "Added", "Genres", "Date published", "Added to the shelf…" |
+| **IBM Plex Sans** (500, sentence case) | Labels that carry information: the artist above an album title (Moss), "Side A", "New", "Edited" | "Miles Davis", "Side A" |
 | **IBM Plex Mono** (400, normal case) | Numbers that line up in columns, codes | Track positions (A1) and lengths (4:52), code |
 
 Rules of thumb:
-1. **A control is never in Brygada**, even when it sits inside a heading for structure. Buttons, toggles and menu items are Onest.
-2. **Small grey labels are Onest**, even when they are headings in the markup (`font-sans`). Brygada below about 18 px competes with real titles.
-3. **A label carries information or it goes.** Sentence case, Onest; no eyebrow that repeats the heading under it.
-4. **Mono normal case only for aligned numbers and code.** Dates in running text stay Onest.
-5. **One family per element.** Don't mix Brygada and Onest inside a single button or line.
+1. **A control is never in Brygada**, even when it sits inside a heading for structure. Buttons, toggles and menu items are IBM Plex Sans.
+2. **Small grey labels are IBM Plex Sans**, even when they are headings in the markup (`font-sans`). Brygada below about 18 px competes with real titles.
+3. **A label carries information or it goes.** Sentence case, IBM Plex Sans; no eyebrow that repeats the heading under it.
+4. **Mono normal case only for aligned numbers and code.** Dates in running text stay IBM Plex Sans.
+5. **One family per element.** Don't mix Brygada and IBM Plex Sans inside a single button or line.
 
-On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an element that is a heading only for structure can switch to Onest with `font-sans`; Plex Mono only where a class asks for it (`font-mono`), for aligned numbers and codes.
+On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an element that is a heading only for structure can switch to IBM Plex Sans with `font-sans`; Plex Mono only where a class asks for it (`font-mono`), for aligned numbers and codes.
 
 ---
 
@@ -192,7 +192,7 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 
 **Cards:** `--surface` fill, 1px `--line` border, 12 px radius, 24 px padding, no shadow. Hover (only if the card is clickable) changes the border to `--text-2`.
 
-**Tags / badges:** `--accent-tint` fill, `--text` label, 12 px Onest 500, sentence case.
+**Tags / badges:** `--accent-tint` fill, `--text` label, 12 px IBM Plex Sans 500, sentence case.
 
 **Header:** logo on the left, nav links and one primary button on the right, plus the theme toggle. 72 px tall with a 1px `--line` bottom border, on `--bg`. Sticky is allowed; no blur effects.
 
@@ -221,7 +221,7 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 ## 9. Never
 
 - Bright grass or eco greens (the only green is `--moss`), rainbow, or neon colours, or gradient backgrounds.
-- Any font other than Brygada 1918, Onest, IBM Plex Mono, and Plex Sans JP (Archivo lives on only inside the logo files).
+- Any font other than Brygada 1918, IBM Plex Sans, IBM Plex Mono, and Plex Sans JP (Archivo lives on only inside the logo files).
 - The logo redrawn, in a circle, in the accent colour, or recoloured outside a palette change.
 - Moss on interactive elements.
 - White text on periwinkle (dark-theme accent).
@@ -236,7 +236,7 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 1. Every colour comes from a token, and both themes have been checked.
 2. Logo files are swapped correctly for the theme.
 3. There is one primary button per view and the accent covers 10% of the screen or less.
-4. Body text is 18 px Onest, and headings are Brygada 1918 500.
+4. Body text is 18 px IBM Plex Sans, and headings are Brygada 1918 500.
 5. Every interactive element has a visible focus state and a hit area of at least 44 px.
 6. Text contrast is at least 4.5:1, which the tokens guarantee if used as specified.
 
@@ -244,9 +244,10 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 
 ## Changelog
 
-- **2026-11-20 (fonts):** the owner chose Brygada 1918 (titles, 500) and Onest (text) after comparing pairings on real
-  pages. Reasons: a serif for status and craft, a calm modern sans, and full Cyrillic in both (Archivo had none, so
-  Russian titles fell back to a system font). Replaces Archivo and IBM Plex Sans; Plex Mono stays for aligned numbers.
+- **2026-11-20 (fonts):** the owner chose the "Archive" pairing, Brygada 1918 (titles, 500) with IBM Plex Sans (text),
+  after comparing pairings on real pages (IBM Plex Sans was tried for text the same day and dropped). Reasons: a serif for
+  status and craft, and full Cyrillic in both (Archivo had none, so Russian titles fell back to a system font).
+  Replaces Archivo; IBM Plex Sans and Plex Mono stay.
 
 - **2026-11-20 (labels, separators, arrows):** after a review against common "generated page" tells, the owner asked
   to drop three patterns: all-caps tracked mono eyebrows (labels that repeat a heading are gone; the rest are Plex
