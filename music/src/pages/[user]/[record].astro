@@ -131,14 +131,14 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
       </div>
       {isOwner && <p id="sync-progress" class="text-xs text-zinc-500 empty:hidden mt-2" role="status" aria-live="polite"></p>}
 
-      <header class="mt-10 mb-14 !max-w-none">
+      <header class="mt-10 mb-12 !max-w-none">
         <RecordHero record={hero!} artist={hero!.artist} title={hero!.title} released={hero!.released} genres={hero!.genres} trackCount={hero!.trackCount} links={hero!.links} runtime={hero!.runtime ?? undefined}
           askAdded={isOwner && addedNeedsDate(record.added, overrides, sameDay) ? { sameDay } : undefined}>
           <Gallery images={photos} title={hero!.title} />
         </RecordHero>
       </header>
 
-      <Note class="mb-10" note={v.note || null} by={owner.name.split(' ')[0]} about="this record" base={path} canEdit={isOwner}
+      <Note class="mb-12" note={v.note || null} by={owner.name.split(' ')[0]} about="this record" base={path} canEdit={isOwner}
         editing={isOwner && Astro.url.searchParams.has('note')}
         addText="Add a note about this record: where you found it, why it matters, a favourite moment."
         placeholder="Where you found it, why it matters, what to listen for…" />
