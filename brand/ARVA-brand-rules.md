@@ -83,7 +83,7 @@ The dark theme is based on **Tokyo Night**, toned down: less blue and a touch da
 Rules:
 - Each view has one accent: indigo in light, periwinkle in dark, plus the secondary `--moss` in small doses. Don't introduce other blues, purples, or brand colours.
 - Text on an accent fill always uses `--on-accent`. Never put white text on the dark-theme periwinkle.
-- `--moss` is allowed for: eyebrow labels (the mono uppercase labels above titles), one stamp-like detail, a "since" line, or editorial pull quotes. Never use it on buttons, links, form states, or large fills. It must not appear next to `--success`, so status colours stay readable as status.
+- `--moss` is allowed for: names that carry identity (the artist above an album title, a site's name next to the logo), one stamp-like detail, a "since" line, or editorial pull quotes. Never use it on buttons, links, form states, or large fills. It must not appear next to `--success`, so status colours stay readable as status.
 - **No gradients**, except for the subtle overlays on photos described in section 7.
 - **Green only as Moss.** The leaf colour is the teal-green `--moss`, never a bright grass or eco green. `--success` appears only in form or status feedback.
 - Pure black (#000) is never used. In the light theme, white is reserved for `--surface` and `--on-accent`; the page itself is Paper (#FDFDFB).
@@ -97,7 +97,7 @@ Rules:
 | Use purple for | Use Moss for | Keep neutral |
 |---|---|---|
 | Links (inline and "All records ↓"-style) | The leaf in the logo | Body text and headings |
-| Primary buttons ("View work", "Log in", "Post comment") | Mono uppercase eyebrow labels that name what you see ("BUSINESS SUCCESS SPECIALIST", "RELEASED", the artist above an album title) | Secondary text, dates, counts in brackets |
+| Primary buttons ("View work", "Log in", "Post comment") | The artist above an album title and a site's name next to the logo (Plex Sans 500, sentence case) | Secondary text, dates, counts in brackets |
 | Current or selected state: active nav, picked filters, current view, switch knobs, open menus | Rare heritage or editorial accents: a "since" line, one stamp-like detail, a pull quote's mark | Dividers and borders |
 | Focus rings and hover states | Descriptive markers that are not clickable (e.g. a "new" marker on a recent record, a category label) | Grey control pills at rest |
 | Small signals: count badges (in the `--accent-tint` "on" colour, like every on-state), Reset | | Small section headings ("Latest", "Photos", "Tracklist") |
@@ -129,14 +129,14 @@ Rules of thumb:
 | Body | IBM Plex Sans | 400 | 18 / 1.6 | Medium (500) for emphasis, never bold body text |
 | Small / meta | IBM Plex Sans | 400 | 15 / 1.5 | colour `--text-2` |
 | Button | IBM Plex Sans | 600 | 16 / 1 | |
-| Eyebrow / label | IBM Plex Mono | 500 | 12, uppercase, +0.08em tracking | |
+| Label (artist, site name, status) | IBM Plex Sans | 500 | 14–18, sentence case | |
 | Code, specs, numbers in tables | IBM Plex Mono | 400 | 14–15 | |
 | Japanese text | IBM Plex Sans JP | same as Plex Sans | | |
 
 Rules:
 - Use only these three families. Never Inter, Roboto, Arial, Montserrat, Poppins, or any serif.
 - Archivo is for headings only, never paragraphs. Expanded width (125%) belongs to the wordmark; don't set headings wider than 112%.
-- Sentence case for headings and buttons. Uppercase only for mono eyebrows and labels.
+- Sentence case everywhere: headings, buttons and labels. No all-caps labels, and no label above a heading that only repeats it.
 - Paragraphs are at most 68 characters wide (`--measure`). Use `text-wrap: balance` on headings and `pretty` on paragraphs.
 - Left-align text. Centre it only for short hero lines or empty states.
 
@@ -148,17 +148,17 @@ Decide by what the text **does**, not by which HTML tag it sits in.
 |---|---|---|
 | **Archivo** (600, 112% width) | Titles a reader scans for: page titles, section titles, card and item titles, album and post titles | "Artur — ARVA", "Selected work", "Tracklist", "Comments", "Chet Baker Sings", edit-page card titles |
 | **IBM Plex Sans** | Everything read or operated: body text, meta lines, links, navigation, buttons and controls, form fields, and small grey labels that name a group | "Filter", "Sort", "Spotify", "Show details", "Latest", "Added", "Genres", "Date published", "Added to the shelf…" |
-| **IBM Plex Mono** (500, uppercase, tracked) | Eyebrow labels above a title (in Moss) and side / status labels | "BUSINESS SUCCESS SPECIALIST", "RELEASED", the artist above an album title, "SIDE A" |
+| **IBM Plex Sans** (500, sentence case) | Labels that carry information: the artist above an album title (Moss), "Side A", "New", "Edited" | "Miles Davis", "Side A" |
 | **IBM Plex Mono** (400, normal case) | Numbers that line up in columns, codes | Track positions (A1) and lengths (4:52), code |
 
 Rules of thumb:
 1. **A control is never in Archivo**, even when it sits inside a heading for structure. Buttons, toggles and menu items are Plex Sans.
 2. **Small grey labels are Plex Sans**, even when they are headings in the markup (`font-sans`). Archivo below about 18 px looks cramped and competes with real titles.
-3. **Mono uppercase is a label, not a title.** Never use it for sentences or anything longer than a few words.
+3. **A label carries information or it goes.** Sentence case, Plex Sans; no eyebrow that repeats the heading under it.
 4. **Mono normal case only for aligned numbers and code.** Dates in running text stay Plex Sans.
 5. **One family per element.** Don't mix Archivo and Plex Sans inside a single button or line.
 
-On the site, Archivo is applied to `h1`–`h4` in the CSS base layer, so an element that is a heading only for structure can switch to Plex Sans with `font-sans`; Plex Mono is applied automatically to uppercase tracked labels.
+On the site, Archivo is applied to `h1`–`h4` in the CSS base layer, so an element that is a heading only for structure can switch to Plex Sans with `font-sans`; Plex Mono only where a class asks for it (`font-mono`), for aligned numbers and codes.
 
 ---
 
@@ -179,7 +179,7 @@ On the site, Archivo is applied to `h1`–`h4` in the CSS base layer, so an elem
 **Buttons**
 - Primary: `--accent` fill, `--on-accent` label, 14 × 22 px padding, 8 px radius. Hover: `--accent-hover`. Use one primary button per view.
 - Secondary: transparent, 1.5px `--text` border, `--text` label. Hover: inverts to a `--text` fill with a `--bg` label.
-- Text link button: `--accent` text with a trailing arrow →.
+- Text link button: `--accent` text, no trailing arrow (arrows only where they mean a direction: ← back, ↓ further down the page, Older →).
 - No icon-only buttons without an `aria-label`. Minimum hit area 44 × 44 px.
 
 **Links:** `--accent`, underlined in body copy with a 3px offset. Hover changes the colour to `--text`. Navigation links are `--text` with no underline; the active item gets `--accent` text.
@@ -190,7 +190,7 @@ On the site, Archivo is applied to `h1`–`h4` in the CSS base layer, so an elem
 
 **Cards:** `--surface` fill, 1px `--line` border, 12 px radius, 24 px padding, no shadow. Hover (only if the card is clickable) changes the border to `--text-2`.
 
-**Tags / badges:** `--accent-tint` fill, `--text` label, 12 px mono.
+**Tags / badges:** `--accent-tint` fill, `--text` label, 12 px Plex Sans 500, sentence case.
 
 **Header:** logo on the left, nav links and one primary button on the right, plus the theme toggle. 72 px tall with a 1px `--line` bottom border, on `--bg`. Sticky is allowed; no blur effects.
 
@@ -241,6 +241,11 @@ On the site, Archivo is applied to `h1`–`h4` in the CSS base layer, so an elem
 ---
 
 ## Changelog
+
+- **2026-11-20 (labels, separators, arrows):** after a review against common "generated page" tells, the owner asked
+  to drop three patterns: all-caps tracked mono eyebrows (labels that repeat a heading are gone; the rest are Plex
+  Sans 500 in sentence case, the artist and site name in Moss), "A · B · C" meta strings (now words, commas or
+  spacing), and "→" on link text (kept only where it means a direction). Plex Mono stays for aligned numbers and codes.
 
 - **2026-10-30:** Moss allowed for the shelf's freshness in settings ("just now"), an exception to "Moss is not
   success" chosen by the owner.

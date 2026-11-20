@@ -31,7 +31,7 @@ const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https
     <img src="/brand/arva-horizontal-washi-moss.svg" alt="ARVA" width="100" height="24" class="h-[22px] sm:h-6 w-auto hidden dark:block max-[359px]:!hidden" />
     <img src="/brand/arva-mark-small-ink-moss.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 hidden max-[359px]:block dark:!hidden" />
     <img src="/brand/arva-mark-small-washi-moss.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 hidden dark:max-[359px]:block" />
-    {label && <span class="text-xs font-medium uppercase tracking-widest pt-0.5">{label}</span>}
+    {label && <span class="text-lg font-medium text-moss dark:text-moss-light">{label}</span>}
   </a>
   <div class="h-11 flex items-center">
     {MAIN_SITE_PUBLIC && !minimal && <div class="flex items-center gap-4 min-[360px]:gap-5 sm:gap-7 text-sm font-medium">

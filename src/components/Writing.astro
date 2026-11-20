@@ -94,14 +94,12 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
           {latestPost.displayTitle}
         </h3>
         
-        <div class="text-zinc-500 text-sm mb-1 flex flex-wrap items-center gap-1">
+        <div class="text-zinc-500 text-sm mb-1 flex flex-wrap items-center gap-x-4 gap-y-1">
           <span>{latestPost.data.created!.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}</span>
-          <span>·</span>
           <span>{getReadingTime(latestPost.body)}</span>
           
           {latestPost.sortedTags.length > 0 && (
             <>
-              <span>·</span>
               <span class="flex flex-wrap gap-y-1" onclick="event.preventDefault();">
                 {latestPost.sortedTags.map((tag, index) => (
                   <span class="inline-flex"><button data-tag={tag} class="tag-btn group/btn transition-colors text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"><span class="group-hover/btn:underline group-hover/btn:underline-offset-4 group-hover/btn:decoration-zinc-500 dark:group-hover/btn:decoration-zinc-400 group-[.active-tag]/btn:underline group-[.active-tag]/btn:decoration-blue-violet-500/50 group-[.active-tag:hover]/btn:!decoration-blue-violet-500 group-[.active-tag]/btn:text-blue-violet-600 dark:group-[.active-tag]/btn:text-blue-violet-400 group-[.active-tag:hover]/btn:text-zinc-900 dark:group-[.active-tag:hover]/btn:text-white transition-colors">{tag}</span></button>{index < latestPost.sortedTags.length - 1 && <span class="text-zinc-500 dark:text-zinc-600 mr-1">,</span>}</span>
@@ -194,10 +192,9 @@ const years = Array.from(yearsMap.keys()).sort((a, b) => parseInt(b) - parseInt(
           <div class="flex items-center min-w-0 flex-grow pr-4">
             <!-- Date (Hidden on mobile, visible on sm+) -->
             <div class="hidden sm:flex items-center shrink-0">
-              <time class="text-zinc-500 dark:text-zinc-500 text-sm tabular-nums">
+              <time class="mr-4 text-zinc-500 dark:text-zinc-500 text-sm tabular-nums">
                 {post.data.created!.toISOString().split('T')[0]}
               </time>
-              <span class="text-zinc-300 dark:text-zinc-700 mx-1.5">·</span>
             </div>
 
             <!-- Title (Clips with an ellipsis if it's too long) -->

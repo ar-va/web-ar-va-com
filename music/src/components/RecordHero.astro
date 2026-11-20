@@ -54,11 +54,11 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
     </button>
   </div>
   <div class="min-w-0 flex-1">
-    <p class="text-xs font-bold tracking-widest uppercase mb-2">{href ? artist : <button type="button" data-copy title="Click to copy" class={copy}>{artist}</button>}</p>
+    <p class="text-lg font-medium text-moss dark:text-moss-light mb-1">{href ? artist : <button type="button" data-copy title="Click to copy" class={copy}>{artist}</button>}</p>
     <Heading class="text-3xl sm:text-5xl font-bold leading-[1.05] text-zinc-900 dark:text-white">
       {href ? <a href={href} class="hover:text-blue-violet-600 dark:hover:text-blue-violet-400 transition-colors">{title}</a> : <button type="button" data-copy title="Click to copy" class={copy}>{title}</button>}
     </Heading>
-    {facts.length > 0 && <p class="mt-4 text-zinc-700 dark:text-zinc-300">{facts.join(' · ')}</p>}
+    {facts.length > 0 && <p class="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-zinc-700 dark:text-zinc-300">{facts.map((f) => <span>{f}</span>)}</p>}
     <p class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-500">
       {added}
       {askAdded && (

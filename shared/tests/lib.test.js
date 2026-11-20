@@ -193,7 +193,7 @@ test('tracklist: per-track links, side headings, shelf names', async () => {
   const two = withSideHeadings([t('A1'), t('A2'), t('B1')]);
   assert.deepEqual(two.map((x) => (x.heading ? `# ${x.title}` : x.position)), ['# Side A', '1', '2', '# Side B', '1']);
   const four = withSideHeadings([t('A1'), t('B1'), t('C1'), t('D1')]);
-  assert.deepEqual(four.filter((x) => x.heading).map((x) => x.title), ['Disc 1 · Side A', 'Disc 1 · Side B', 'Disc 2 · Side C', 'Disc 2 · Side D']);
+  assert.deepEqual(four.filter((x) => x.heading).map((x) => x.title), ['Disc 1, Side A', 'Disc 1, Side B', 'Disc 2, Side C', 'Disc 2, Side D']);
   assert.deepEqual(withSideHeadings([t('1'), t('2')]).map((x) => x.position), ['1', '2']);
   assert.equal(withSideHeadings([t('A1'), t('A2')]).length, 2);
   const own = [{ position: '', title: 'Part one', duration: '', heading: true }, t('A1'), t('B1')];

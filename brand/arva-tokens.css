@@ -76,7 +76,8 @@ h2 { font-size: clamp(28px, 4vw, 36px); line-height: 1.15; }
 h3 { font-size: 24px; line-height: 1.25; }
 p { max-width: var(--measure); text-wrap: pretty; }
 small, .meta { font-size: 15px; line-height: 1.5; color: var(--text-2); }
-.eyebrow { font: 500 12px/1 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--text-2); }
+/* Labels that carry information (an artist above a title, a status): sentence case, never all caps (2026-11-20). */
+.label { font: 500 16px/1.3 var(--font-body); color: var(--text-2); }
 
 a { color: var(--accent); text-underline-offset: 3px; }
 a:hover { color: var(--text); }

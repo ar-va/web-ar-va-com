@@ -160,7 +160,7 @@ async function syncMatches(list: Unmatched[], progress: (message: string) => voi
  */
 async function syncBoth(missing: Missing[], unmatched: Unmatched[], progress: (message: string) => void, prefix = '') {
   const state = { details: '', matches: '' };
-  const show = () => progress(prefix + [state.details, state.matches].filter(Boolean).join(' · '));
+  const show = () => progress(prefix + [state.details, state.matches].filter(Boolean).join(' '));
   const results = await Promise.allSettled([
     syncDetails(missing, (m) => { state.details = m; show(); }),
     syncMatches(unmatched, (m) => { state.matches = m; show(); }),

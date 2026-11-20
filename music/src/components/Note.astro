@@ -43,7 +43,7 @@ const { note, by, about, base, canEdit, editing, addText, placeholder, class: cl
       <button type="button" data-note-more hidden class="mt-1 text-sm font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">View more</button>
     </blockquote>
     <figcaption class="mt-2 pl-4 text-xs text-zinc-500">
-      — {by}, about {about}{canEdit && <> · <a href={`${base}?note#note`} class="font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Edit</a></>}
+      — {by}, about {about}{canEdit && <a href={`${base}?note#note`} class="ml-3 font-medium text-blue-violet-600 dark:text-blue-violet-400 hover:underline underline-offset-4">Edit</a>}
     </figcaption>
   </figure>
 ) : canEdit && (
