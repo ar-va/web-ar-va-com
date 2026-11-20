@@ -53,12 +53,14 @@ The pattern: trust collapses when people discover a gap between what an anonymou
 
 ## Principles and where they show on the page
 
-1. **A real person, in their own words** (benevolence). Artur's photo beside the one sentence under the box, and "I
-   won't try to find out who you are" first under "What I promise". (Until 2026-11-20 the hero also quoted "I read
+1. **A real person, in their own words** (benevolence). "I won't try to find out who you are" first under "What I
+   promise", and Artur's photo on every answer. (Until 2026-11-20 the hero also quoted "I read
    every message myself. I can't see who wrote it, and I won't try to find out."; the search-page layout keeps the
    hero to one sentence.)
-2. **Concrete receipt, said once** (avoid over-reassurance). One sentence right under the box: "Only your words and the
-   date reach me: no name, no account, no IP address", then "How anonymous is this? · Read the code". Details live
+2. **Concrete receipt, said once** (avoid over-reassurance). One sentence under the title: "No name, no account, no
+   tracking. Read my answer through your private link, or below if you choose to make it public." (user's wording,
+   2026-11-20, without "fully anonymous": an absolute claim, see 4), then under the box "How anonymous is this? · Read
+   the code". Details live
    in the FAQ, folded.
 3. **Verifiable, not just claimed** (integrity). The code is public and deployed from GitHub; the page links to it
    ("Read the code" under the box), and the FAQ says how.
@@ -90,7 +92,7 @@ back to the writer); claims the code doesn't back up.
 
 ## Page layout (2026-11-20)
 
-The front page reads like a search page: the title, one line to write in, one sentence on what reaches me, then the
+The front page reads like a search page: the title, one sentence on what reaches me and where the answer comes back, one line to write in, then the
 answered messages in a masonry grid. The line opens into the whole form as soon as someone starts (focus or text, in
 CSS, so it works without script): the choice with its risk (5), the honest limit (4), "Take your time" (12), the
 starters (7) and the helpline (10) all still appear before anything can be sent.
