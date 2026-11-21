@@ -89,7 +89,8 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     // A new track slides in (not on load, not with reduced motion).
     if (!first && title && !matchMedia('(prefers-reduced-motion: reduce)').matches)
       title.animate([{ opacity: 0, transform: 'translateY(0.4rem)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
-    items.forEach((b, j) => b.setAttribute('aria-current', String(i === j)));
+    // The queue's rows and the tracklist's play buttons: matched by their track number, not their order on the page.
+    items.forEach((b) => b.setAttribute('aria-current', String(Number(b.dataset.barGo) === i)));
     canNext();
   };
   show(0);

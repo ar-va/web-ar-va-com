@@ -344,6 +344,30 @@ html { scrollbar-gutter: stable; }
   .glare { transition: none; }
 }
 
+/* Album page tracklist and the player (user, 2026-11-21): a playable track's number turns into play on hover; the
+   track playing shows bars instead (moving while it plays, still while paused) and its title in the accent; hovering
+   it offers pause (or play when paused). `data-album-started` / `data-album-playing` on <html> come from RecordHero. */
+.track-play > * { grid-area: 1 / 1; }
+.track-play :is(.track-play-icon, .track-pause-icon, .track-eq) { display: none; }
+.track-row:hover .track-play .track-num, .track-play:focus-visible .track-num { display: none; }
+.track-row:hover .track-play .track-play-icon, .track-play:focus-visible .track-play-icon { display: block; }
+[data-album-started] .track-play[aria-current="true"] .track-num { display: none; }
+[data-album-started] .track-play[aria-current="true"] .track-eq { display: flex; }
+[data-album-started] :is(.track-row:hover .track-play, .track-play:focus-visible)[aria-current="true"] .track-eq { display: none; }
+[data-album-playing] :is(.track-row:hover .track-play, .track-play:focus-visible)[aria-current="true"] .track-play-icon { display: none; }
+[data-album-playing] :is(.track-row:hover .track-play, .track-play:focus-visible)[aria-current="true"] .track-pause-icon { display: block; }
+[data-album-started] .track-row:has(.track-play[aria-current="true"]) .track-title { color: var(--color-kikyo-600); }
+.dark[data-album-started] .track-row:has(.track-play[aria-current="true"]) .track-title { color: var(--color-kikyo-400); }
+.track-eq { align-items: flex-end; gap: 2px; height: 0.8rem; }
+.track-eq i { width: 3px; border-radius: 1px; background: currentColor; }
+.track-eq i:nth-child(1) { height: 55%; } .track-eq i:nth-child(2) { height: 100%; } .track-eq i:nth-child(3) { height: 35%; }
+@keyframes track-eq { from { height: 20%; } to { height: 100%; } }
+@media (prefers-reduced-motion: no-preference) {
+  [data-album-playing] .track-eq i { animation: track-eq 0.5s ease-in-out infinite alternate; }
+  [data-album-playing] .track-eq i:nth-child(2) { animation-duration: 0.36s; animation-delay: -0.2s; }
+  [data-album-playing] .track-eq i:nth-child(3) { animation-duration: 0.62s; animation-delay: -0.4s; }
+}
+
 /* Telegram's login button page says `color-scheme: light dark` (follows the OS). This site switches theme with a
    class, so on a dark OS with the light theme the browser painted the frame's background opaque (black corners
    around the rounded button). Giving the frame the same setting keeps it transparent. */

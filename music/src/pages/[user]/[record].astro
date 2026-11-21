@@ -89,7 +89,14 @@ const tracks = record ? withSideHeadings(textToTracklist(v.tracklist)) : [];
 // Marks in the tracklist: the most played on YouTube (objective) and the owner's favourites (their pick).
 const popular = popularTracks(tracks, match);
 // The record's sound: every track with a YouTube or YouTube Music link (the owner's or the automatic match), in order.
-const play = tracks.flatMap((t) => { const id = !t.heading && youtubeId(t.links?.youtube); return id ? [{ id, title: t.title, duration: t.duration }] : []; });
+// Each playable track's place in that queue, so the tracklist can play it and show what's playing.
+const playIndex = new Map<object, number>();
+const play = tracks.flatMap((t) => {
+  const id = !t.heading && youtubeId(t.links?.youtube);
+  if (!id) return [];
+  playIndex.set(t, playIndex.size);
+  return [{ id, title: t.title, duration: t.duration }];
+});
 const favorites = new Set((v.favorites ?? '').split('\n').filter((x) => x.trim()).map(titleKey));
 const ownerFirst = owner?.name.split(' ')[0] ?? '';
 const hero = record ? shelfView(record, detail, overrides, match) : null;
@@ -183,9 +190,21 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
             {tracks.map((t) => t.heading ? (
               <li class="px-3 pt-6 pb-2 first:pt-1 text-sm font-semibold text-zinc-900 dark:text-white">{t.title}</li>
             ) : (
-              <li class="group flex items-center gap-4 px-3 py-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/[0.04] focus-within:bg-zinc-100 dark:focus-within:bg-white/[0.04] transition-colors">
-                <span class="w-7 shrink-0 font-mono text-sm text-zinc-500 tabular-nums">{t.position}</span>
-                <span class="flex-grow min-w-0 text-zinc-800 dark:text-zinc-200"><button type="button" data-copy title="Click to copy" class="cursor-copy text-left rounded-sm hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500 transition-opacity">{t.title}</button>
+              <li class="track-row group flex items-center gap-4 px-3 py-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/[0.04] focus-within:bg-zinc-100 dark:focus-within:bg-white/[0.04] transition-colors">
+                {/* A track the player has: its number turns into play on hover, bars while it's the one playing (user,
+                    2026-11-21). data-bar-go joins it to the player's queue rows (RecordHero wires the click). */}
+                {playIndex.has(t) ? (
+                  <button type="button" data-bar-go={playIndex.get(t)} aria-label={`Play ${t.title}`} title="Play this track"
+                    class="track-play w-7 h-6 shrink-0 -ml-1 pl-1 grid place-items-center justify-items-start rounded-md cursor-pointer font-mono text-sm text-zinc-500 tabular-nums focus-visible:outline-2 focus-visible:outline-kikyo-500">
+                    <span class="track-num">{t.position}</span>
+                    <svg class="track-play-icon w-4 h-4 text-zinc-900 dark:text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.5 4.8v14.4a.8.8 0 0 0 1.2.7l11.3-7.2a.8.8 0 0 0 0-1.4L8.7 4.1a.8.8 0 0 0-1.2.7z" /></svg>
+                    <svg class="track-pause-icon w-4 h-4 text-zinc-900 dark:text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2" /><rect x="13.8" y="5" width="4.2" height="14" rx="1.2" /></svg>
+                    <span class="track-eq text-kikyo-600 dark:text-kikyo-400" aria-hidden="true"><i></i><i></i><i></i></span>
+                  </button>
+                ) : (
+                  <span class="w-7 shrink-0 font-mono text-sm text-zinc-500 tabular-nums">{t.position}</span>
+                )}
+                <span class="flex-grow min-w-0 text-zinc-800 dark:text-zinc-200"><button type="button" data-copy title="Click to copy" class="track-title cursor-copy text-left rounded-sm hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500 transition-[opacity,color]">{t.title}</button>
                   {popular.has(titleKey(t.title)) && (
                     <span title={`Most played: ${shortCount(popular.get(titleKey(t.title))!)} plays on YouTube`} class="ml-2 inline-flex align-[-2px] text-bengara dark:text-bengara-light">
                       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z" /></svg><span class="sr-only">(one of the most played)</span>
