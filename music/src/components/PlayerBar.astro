@@ -37,8 +37,13 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
       {/* Concentric corners (as in the CodePen the user sent): the card's 24px radius minus its 1px rim and 10px padding.
           The same size minimised, so the card keeps its height (user 2026-11-21). */}
       <button type="button" data-bar-mini aria-expanded="true" aria-label="Minimise the player" title="Minimise the player"
-        class="w-11 h-11 shrink-0 overflow-hidden rounded-[13px] cursor-pointer bg-zinc-200 dark:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500 motion-safe:active:scale-95 transition-transform duration-150">
+        class="group/cover relative w-11 h-11 shrink-0 overflow-hidden rounded-[13px] cursor-pointer bg-zinc-200 dark:bg-zinc-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500 motion-safe:active:scale-95 transition-transform duration-150">
         {cover && <img src={cover} alt="" class="w-full h-full object-cover" />}
+        {/* Hover (or keyboard focus): an arrow over the cover says what a click does: → minimise (it slides to the right),
+            ← bring the full player back (user 2026-11-21). */}
+        <span aria-hidden="true" class="absolute inset-0 grid place-items-center bg-black/45 text-white opacity-0 group-hover/cover:opacity-100 group-focus-visible/cover:opacity-100 transition-opacity duration-150">
+          <svg class="w-5 h-5 transition-transform duration-200 group-aria-[expanded=false]/cover:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2.2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 7l5 5-5 5" /></svg>
+        </span>
       </button>
       <button type="button" data-bar-expand aria-expanded="false" aria-controls="player-queue" aria-keyshortcuts="Q" title="Show the queue (Q)"
         class="mini-hide min-w-0 flex-1 text-left rounded-lg cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500">
@@ -160,7 +165,11 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
     miniBtn?.setAttribute('aria-expanded', String(!on));
     miniBtn?.setAttribute('aria-label', on ? 'Show the full player' : 'Minimise the player');
     if (miniBtn) miniBtn.title = on ? 'Show the full player' : 'Minimise the player';
+    // The end size without the right anchor: anchored, the full card only took its content's width, so restoring
+    // sprang there, stopped, and jumped to the full width when the anchor came off (user 2026-11-21).
+    card.classList.remove('anchor-right');
     const to = card.offsetWidth;
+    card.classList.add('anchor-right');
     if (still()) { card.classList.remove('anchor-right'); return; }
     card.style.overflow = 'hidden';
     const a = card.animate([{ width: `${from}px`, translate: `${offset}px 0` }, { width: `${to}px`, translate: '0 0' }], { duration: DURATION, easing: spring });
