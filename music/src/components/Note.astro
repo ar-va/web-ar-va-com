@@ -61,6 +61,7 @@ const { note, by, photo, about, base, canEdit, editing, addText, placeholder, cl
 )}
 
 <script>
+  import { spring, DURATION } from '@shared/scripts/grow';
   // The two-line preview runs the paragraphs together (a short first line and a blank one would leave a lonely
   // "…"). When it cuts something off, a tap anywhere in the note (or "View more") brings back the whole note with its
   // line breaks (user 2026-11-21); Edit stays a link.
@@ -70,7 +71,20 @@ const { note, by, photo, about, base, canEdit, editing, addText, placeholder, cl
   if (box && text && more && (text.scrollHeight > text.clientHeight + 1 || /\n/.test(text.textContent ?? ''))) {
     more.hidden = false;
     box.classList.add('cursor-pointer');
-    const open = () => { text.classList.remove('line-clamp-2'); text.classList.add('whitespace-pre-line'); more.hidden = true; box.classList.remove('cursor-pointer'); box.removeEventListener('click', onClick); };
+    // Opening, the box grows to the whole note on the menus' spring (user 2026-11-21), "View more" going in the same move.
+    const open = () => {
+      const from = box.offsetHeight;
+      text.classList.remove('line-clamp-2');
+      text.classList.add('whitespace-pre-line');
+      more.hidden = true;
+      box.classList.remove('cursor-pointer');
+      box.removeEventListener('click', onClick);
+      const to = box.offsetHeight;
+      if (to === from || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      box.style.overflow = 'hidden';
+      box.animate([{ height: `${from}px` }, { height: `${to}px` }], { duration: DURATION, easing: spring })
+        .finished.then(() => { box.style.overflow = ''; }, () => {});
+    };
     const onClick = (e: MouseEvent) => { if (!(e.target as HTMLElement).closest('a')) open(); };
     box.addEventListener('click', onClick);
   }
