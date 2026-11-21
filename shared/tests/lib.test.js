@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import {
-  verifyTelegramLogin, vinylWear, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, toCsv, safeDay, playCount, addedNeedsDate, telegramAuthUrl, tracklistToText, textToTracklist, safeStreamingUrl, activeLink, youtubeId,
+  verifyTelegramLogin, vinylWear, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, shelfView, formatReleased, safeReturnPath, siteDomain, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, toCsv, safeDay, playCount, addedNeedsDate, telegramAuthUrl, tracklistToText, textToTracklist, safeStreamingUrl, activeLink, youtubeId,
 } from '../lib/lib.ts';
 
 const BOT = '123:test-bot-token';
@@ -90,6 +90,10 @@ test('collection item → shelf record keeps only public fields, in Discogs orde
   ]);
   assert.equal(toShelfRecord({ ...item, basic_information: { ...item.basic_information, cover_image: 'https://s.discogs.com/images/spacer.gif' } }, []).cover, null);
   assert.equal(toShelfRecord({ ...item, basic_information: { ...item.basic_information, cover_image: 'javascript:alert(1)' } }, []).cover, null);
+  // Wrong types from a tampered upload are stored as text / lists of text, so no page that shows the record crashes.
+  const odd = toShelfRecord({ ...item, date_added: 20260101, basic_information: { ...item.basic_information, title: { x: 1 }, genres: 'Rock', styles: [1, 'Jazz'] } }, []);
+  assert.deepEqual([odd.title, odd.added, odd.genres, odd.styles], ['', '20260101', [], ['Jazz']]);
+  assert.equal(shelfView(odd, null, {}).trackCount, 0);
 });
 
 test('release detail and dates', () => {
@@ -182,7 +186,8 @@ test('owner edits override Discogs key by key', async () => {
 });
 
 test('tracklist: per-track links, side headings, shelf names', async () => {
-  const { textToTracklist, tracklistToText, withSideHeadings, shelfName } = await import('../lib/lib.ts');
+  const { textToTracklist, tracklistToText, withSideHeadings, checkShelfName } = await import('../lib/lib.ts');
+  const shelfName = (v) => checkShelfName(v).name ?? null;
   const tracks = textToTracklist('A1 | Lazarus | 6:22 | https://open.spotify.com/track/1 https://music.apple.com/x/song/2 https://evil.example/3\nA2 | Dollar Days | https://music.youtube.com/watch?v=4');
   assert.deepEqual(tracks[0].links, { spotify: 'https://open.spotify.com/track/1', apple: 'https://music.apple.com/x/song/2' });
   assert.equal(tracks[0].duration, '6:22');
