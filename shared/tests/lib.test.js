@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { createHash, createHmac } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import {
-  verifyTelegramLogin, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, toCsv, safeDay, playCount, addedNeedsDate, telegramAuthUrl, tracklistToText, textToTracklist, safeStreamingUrl, activeLink, youtubeId,
+  verifyTelegramLogin, vinylWear, oauthHeader, signablePath, seal, unseal, toShelfRecord, toReleaseDetail, formatReleased, safeReturnPath, siteDomain, loginHref, vinylColor, vinylPick, safeVinyl, timeLeft, popularTracks, withMatchLinks, toCsv, safeDay, playCount, addedNeedsDate, telegramAuthUrl, tracklistToText, textToTracklist, safeStreamingUrl, activeLink, youtubeId,
 } from '../lib/lib.ts';
 
 const BOT = '123:test-bot-token';
@@ -402,4 +402,20 @@ test('youtubeId: track links from YouTube Music, YouTube and youtu.be; anything 
   assert.equal(youtubeId('https://evil.example/watch?v=zqNTltOGh5c'), null);
   assert.equal(youtubeId('https://music.youtube.com/watch?v=zqNTltOGh5cX'), null);
   assert.equal(youtubeId(undefined), null);
+});
+
+test('vinylWear: the same record always looks the same; records differ, a quarter clean, fingerprints on the grooves', () => {
+  assert.equal(vinylWear(1007), vinylWear(1007));
+  const all = Array.from({ length: 2000 }, (_, i) => vinylWear(1000 + i * 7));
+  assert.ok(new Set(all).size > 1900);
+  const share = (re) => all.filter((s) => re.test(s)).length / all.length;
+  assert.ok(Math.abs(share(/--smudges: none/) - 0.25) < 0.05, `clean ${share(/--smudges: none/)}`);
+  assert.ok(Math.abs(share(/smudges-light/) - 0.45) < 0.05);
+  assert.ok(Math.abs(share(/smudges-more/) - 0.3) < 0.05);
+  assert.ok(Math.abs(share(/--fp-at/) - 0.55) < 0.05);
+  for (const s of all) {
+    const fp = s.match(/--fp-at: (\d+)% (\d+)%/);
+    if (fp) assert.ok(Math.hypot(fp[1] - 50, fp[2] - 50) >= 14 && Math.hypot(fp[1] - 50, fp[2] - 50) <= 31, s);
+    assert.match(s, /^--smudges: [\w(),-]+; --sx: \d+%; --sy: \d+%; --sheen: \d+deg/);
+  }
 });
