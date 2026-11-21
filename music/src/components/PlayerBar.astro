@@ -145,7 +145,7 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
   const ambient = document.querySelector<HTMLElement>('[data-bar-ambient]');
   const fit = () => {
     if (wrap && card && queue) wrap.style.height = `${card.offsetHeight - queue.offsetHeight + 12}px`;
-    if (ambient && card) { ambient.style.height = `${card.offsetHeight}px`; ambient.style.width = `${card.offsetWidth}px`; }
+    if (ambient && card) { ambient.style.height = `${card.offsetHeight}px`; ambient.style.width = `${card.getBoundingClientRect().width}px`; }
   };
   if (card) new ResizeObserver(fit).observe(card);
 
@@ -154,12 +154,18 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
   const miniBtn = document.querySelector<HTMLElement>('[data-bar-mini]');
   const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
   function isMini() { return !!card?.classList.contains('mini'); }
-  function setMini(on: boolean, offset = 0) {
-    if (!card || on === isMini()) return;
+  /** Minimises / restores the card (`on`), or with `settle` springs it back to its current state after a drag. Only its
+   *  width moves, its right edge staying put: nothing slides sideways, so nothing pokes past the screen's edge (on a
+   *  phone that widened the page, the browser zoomed out to fit it, and the bottom-pinned player dropped; user
+   *  2026-11-21), and the blurred cover behind (sized to the card) stays under it. */
+  function setMini(on: boolean, settle = false) {
+    if (!card || (on === isMini() && !settle)) return;
+    const toggling = on !== isMini();
     if (on) openQueue(false);
-    const from = card.offsetWidth; // mid-spring too: the new spring starts where the card is now
+    const from = card.offsetWidth; // mid-spring or mid-drag too: the spring starts where the card is now
     // A toggle still springing: stop it, or its ending would un-anchor the card in the middle of this one.
     card.getAnimations().forEach((a) => a.cancel());
+    card.style.left = card.style.width = ''; // a drag's stretch
     card.classList.add('anchor-right');
     card.classList.toggle('mini', on);
     miniBtn?.setAttribute('aria-expanded', String(!on));
@@ -170,10 +176,10 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
     card.classList.remove('anchor-right');
     const to = card.offsetWidth;
     card.classList.add('anchor-right');
-    if (still()) { card.classList.remove('anchor-right'); return; }
+    if (still() || from === to) { card.classList.remove('anchor-right'); card.style.overflow = ''; return; }
     card.style.overflow = 'hidden';
-    const a = card.animate([{ width: `${from}px`, translate: `${offset}px 0` }, { width: `${to}px`, translate: '0 0' }], { duration: DURATION, easing: spring });
-    if (!on) card.querySelectorAll<HTMLElement>('.mini-hide').forEach((el) => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, delay: 60, easing: 'ease-out', fill: 'backwards' }));
+    const a = card.animate([{ width: `${from}px` }, { width: `${to}px` }], { duration: DURATION, easing: spring });
+    if (!on && toggling) card.querySelectorAll<HTMLElement>('.mini-hide').forEach((el) => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, delay: 60, easing: 'ease-out', fill: 'backwards' }));
     a.finished.then(() => { card.style.overflow = ''; card.classList.remove('anchor-right'); }, () => {});
   }
   // The cover: its click is its own (the row would also act on it).
@@ -181,15 +187,17 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
   // Music started from the page (the record, a track in the tracklist): the full player comes back (RecordHero).
   document.addEventListener('player:show', () => setMini(false));
 
-  // Swipe (touch) or drag (mouse) sideways: the card follows, a little reluctantly the wrong way; let go past a
-  // quarter of its width (or 60 px) and it minimises / comes back, otherwise it springs home. Sliders, the queue's list
-  // and vertical scrolling (touch-action: pan-y) are left alone; a drag doesn't count as a click.
-  let drag: { x: number; y: number; id: number; dx: number; active: boolean } | null = null;
+  // Swipe (touch) or drag (mouse) sideways, horizontally only: the full card's left edge follows the finger to the right
+  // (it narrows toward where it minimises), the minimised one stretches out to the left; the right edge never moves and
+  // the other way does nothing. Let go past a quarter of its width (or 60 px) and it minimises / comes back, otherwise
+  // it springs back. Sliders, the queue's list and vertical scrolling (touch-action: pan-y) are left alone; a drag
+  // doesn't count as a click.
+  let drag: { x: number; y: number; id: number; dx: number; w: number; active: boolean } | null = null;
   let dragged = false;
   card?.addEventListener('pointerdown', (e) => {
     dragged = false;
     if (e.button !== 0 || (e.target as Element).closest('input, #player-queue')) return;
-    drag = { x: e.clientX, y: e.clientY, id: e.pointerId, dx: 0, active: false };
+    drag = { x: e.clientX, y: e.clientY, id: e.pointerId, dx: 0, w: card.offsetWidth, active: false };
   });
   card?.addEventListener('pointermove', (e) => {
     if (!drag || e.pointerId !== drag.id) return;
@@ -199,22 +207,21 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
       if (Math.abs(dx) < 10) return;
       drag.active = true;
       card.setPointerCapture(e.pointerId);
+      card.getAnimations().forEach((a) => a.cancel());
+      card.style.overflow = 'hidden';
     }
     drag.dx = dx;
-    const way = isMini() ? -1 : 1;
-    card.style.translate = `${dx * way > 0 ? dx : dx / 4}px 0`;
+    if (isMini()) card.style.width = `${Math.min(card.parentElement!.clientWidth, drag.w + Math.max(0, -dx))}px`;
+    else card.style.left = `${Math.min(Math.max(0, dx), drag.w - 60)}px`;
   });
   const endDrag = (e: PointerEvent) => {
     if (!drag || e.pointerId !== drag.id) return;
-    const { active, dx } = drag;
+    const { active, dx, w } = drag;
     drag = null;
     if (!active || !card) return;
     dragged = true;
-    const shown = parseFloat(card.style.translate) || 0;
-    card.style.translate = '';
-    const far = Math.max(60, card.offsetWidth * (isMini() ? 0.3 : 0.25));
-    if (isMini() ? dx < -far : dx > far) setMini(!isMini(), shown);
-    else if (!still()) card.animate([{ translate: `${shown}px 0` }, { translate: '0 0' }], { duration: DURATION, easing: spring });
+    const far = Math.max(60, w * (isMini() ? 0.3 : 0.25));
+    setMini(isMini() ? !(dx < -far) : dx > far, true);
   };
   card?.addEventListener('pointerup', endDrag);
   card?.addEventListener('pointercancel', endDrag);
