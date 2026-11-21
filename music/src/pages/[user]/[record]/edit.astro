@@ -284,7 +284,7 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
 </Layout>
 
 <script>
-  import { growFrom } from '@shared/scripts/grow';
+  import { growFrom, shrinkTo } from '@shared/scripts/grow';
   import { renumber, titleKey, textToTracklist, tracklistToText, type Track } from '@shared/lib/lib';
   import { rematch } from '../../../lib/sync';
 
@@ -433,11 +433,11 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
       if (button.dataset.act === 'remove') { glide(() => row.remove()); save(); }
       if (button.dataset.act === 'fav') { button.setAttribute('aria-pressed', String(button.getAttribute('aria-pressed') !== 'true')); save(); }
       if (button.dataset.act === 'links') {
-        const l = row.querySelector('[data-links]')!;
-        const open = l.classList.toggle('hidden') === false;
-        l.classList.toggle('grid', open);
+        const l = row.querySelector<HTMLElement>('[data-links]')!;
+        const open = button.getAttribute('aria-expanded') !== 'true';
         button.setAttribute('aria-expanded', String(open));
-        if (open) growFrom(l, button);
+        if (open) { l.classList.remove('hidden'); l.classList.add('grid'); growFrom(l, button); }
+        else shrinkTo(l, button, () => { l.classList.add('hidden'); l.classList.remove('grid'); });
       }
     });
 

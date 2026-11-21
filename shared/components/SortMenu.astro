@@ -26,17 +26,18 @@ const options = [['new', 'Newest first'], ['old', 'Oldest first'], ['az', 'A–Z
 </div>
 
 <script>
-  import { growFrom } from '../scripts/grow';
+  import { growFrom, shrinkTo } from '../scripts/grow';
   document.querySelectorAll<HTMLElement>('[data-sort-menu]').forEach((menu) => {
     const button = menu.querySelector<HTMLButtonElement>(':scope > button')!;
     const list = menu.querySelector('ul')!;
+    // Open / closed is the button's aria-expanded (a closing menu is still on screen while it shrinks away).
+    const isOpen = () => button.getAttribute('aria-expanded') === 'true';
     const open = (yes: boolean) => {
-      const was = !list.hidden;
-      list.hidden = !yes;
+      if (yes === isOpen()) return;
       button.setAttribute('aria-expanded', String(yes));
-      if (yes && !was) growFrom(list, button);
+      if (yes) { list.hidden = false; growFrom(list, button); } else shrinkTo(list, button, () => { list.hidden = true; });
     };
-    button.addEventListener('click', () => open(list.hidden));
+    button.addEventListener('click', () => open(!isOpen()));
     document.addEventListener('click', (e) => { if (!menu.contains(e.target as Node)) open(false); });
     menu.addEventListener('keydown', (e) => { if (e.key === 'Escape') { open(false); button.focus(); } });
     list.querySelectorAll<HTMLElement>('[data-sort]').forEach((item) => item.addEventListener('click', () => {

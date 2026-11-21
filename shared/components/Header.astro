@@ -124,9 +124,17 @@ const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https
     // Log out is a form post to settings, so only on the music site (Astro refuses cross-site posts).
     if (location.host === `music.${base}`) item('logout').hidden = false;
     // Opening, the menu springs out of the avatar (shared/scripts/grow.ts, loaded by the Layout).
-    const toggle = (open) => { const was = !menu.hidden; menu.hidden = !open; a.setAttribute('aria-expanded', String(open)); if (open && !was) window.growFrom?.(menu, a); };
-    a.addEventListener('click', (e) => { e.preventDefault(); toggle(menu.hidden); });
-    document.addEventListener('click', (e) => { if (!menu.hidden && !menu.contains(e.target) && !a.contains(e.target)) toggle(false); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) { toggle(false); a.focus(); } });
+    // Closing, it shrinks back into the avatar first (shrinkTo). Open / closed = the avatar's aria-expanded.
+    const isOpen = () => a.getAttribute('aria-expanded') === 'true';
+    const toggle = (open) => {
+      if (open === isOpen()) return;
+      a.setAttribute('aria-expanded', String(open));
+      if (open) { menu.hidden = false; window.growFrom?.(menu, a); }
+      else if (window.shrinkTo) window.shrinkTo(menu, a, () => { menu.hidden = true; });
+      else menu.hidden = true;
+    };
+    a.addEventListener('click', (e) => { e.preventDefault(); toggle(!isOpen()); });
+    document.addEventListener('click', (e) => { if (isOpen() && !menu.contains(e.target) && !a.contains(e.target)) toggle(false); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) { toggle(false); a.focus(); } });
   })();
 </script>
