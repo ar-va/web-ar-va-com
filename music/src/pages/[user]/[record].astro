@@ -4,6 +4,7 @@ export const prerender = false;
 import Layout from '@shared/layouts/Layout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import RecordHero from '../../components/RecordHero.astro';
+import PlayerBar from '../../components/PlayerBar.astro';
 import Gallery from '../../components/Gallery.astro';
 import Note from '../../components/Note.astro';
 import LoginButton from '@shared/components/LoginButton.astro';
@@ -120,7 +121,7 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
       <p class="text-zinc-500">This record isn’t on the shelf (any more). <a href={shelfPath} class={link}>Back to the shelf</a></p>
     </div>
   ) : (
-    <article class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
+    <article class:list={['max-w-5xl mx-auto px-6 w-full flex-grow pt-12 *:max-w-3xl', play.length > 0 ? 'pb-12' : 'pb-24']}>
       <!-- The top row and the hero use the whole frame; details, tracklist and comments keep the reading measure. -->
       <div class="flex items-center justify-between gap-4 !max-w-none">
         <Breadcrumbs class="min-w-0" share items={[{ label: 'Shelves', href: '/' }, { label: owner.name, href: shelfPath }, { label: v.title }]} />
@@ -225,6 +226,7 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
           <LoginButton slot="login" href={loginHref(Astro.url, `${Astro.url.origin}${path}#comments`)} />
         </CommentThread>
       </section>
+      {play.length > 0 && <PlayerBar tracks={play} artist={hero!.artist} cover={hero!.cover} />}
     </article>
   )}
 </Layout>

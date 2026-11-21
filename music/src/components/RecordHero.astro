@@ -5,7 +5,6 @@
 // title link to the album; on the album page a click anywhere on the cover plays / pauses too.
 import Cover from '@shared/components/Cover.astro';
 import Listen from './Listen.astro';
-import PlayerBar from './PlayerBar.astro';
 import { displayDate, formatReleased, type ShelfRecord } from '@shared/lib/lib';
 
 interface Props {
@@ -23,7 +22,7 @@ interface Props {
    *  `sameDay` = how many of their records Discogs dated on this record's day. */
   askAdded?: { sameDay: number };
   /** Album page: the tracks found on YouTube Music, in order. The record's sound plays them (scripts/album-player.ts),
-   *  with a player bar pinned to the bottom of the page. */
+   *  with the player bar the album page renders at its end (PlayerBar.astro). */
   play?: { id: string; title: string; duration: string }[];
 }
 const { record, artist, title, released, genres, trackCount, links, href, runtime, askAdded, play } = Astro.props;
@@ -100,7 +99,6 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
     <slot />
   </div>
 </div>
-{play?.length ? <PlayerBar tracks={play} artist={artist} cover={record.cover} /> : null}
 
 <script>
   import { emitBurst } from '../scripts/notes';
@@ -208,7 +206,8 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       document.querySelector('[data-bar-prev]')?.addEventListener('click', () => { start(); sound.prev(); });
       document.querySelector('[data-bar-next]')?.addEventListener('click', () => { start(); sound.next(); });
       document.querySelectorAll<HTMLElement>('[data-bar-go]').forEach((b) => b.addEventListener('click', () => { start(); sound.go(Number(b.dataset.barGo)); }));
-      // Keyboard (user, 2026-11-21): Space / K play-pause, ← → 5 s, Shift+← → previous / next, Q queue, R repeat, M mute.
+      // Keyboard (user, 2026-11-21): Space / K play-pause, ← → 5 s, Shift+← → previous / next, ↑ ↓ volume (so they
+      // don't scroll album pages), Q queue, R repeat, M mute.
       // Not while typing, not with Ctrl / ⌘ / Alt, not while a dialog or popover (photo viewer, date popup) has the
       // keys, and Space / Enter on a focused button or link stay theirs.
       const press = (sel: string) => document.querySelector<HTMLElement>(sel)?.click();
@@ -221,7 +220,7 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
         if (key === ' ' && t.closest('button, a, summary')) return;
         const act: Record<string, () => void> = e.shiftKey
           ? { ArrowLeft: () => press('[data-bar-prev]'), ArrowRight: () => press('[data-bar-next]') }
-          : { ' ': () => toggle(true), k: () => toggle(true), ArrowLeft: () => sound.seekBy(-5), ArrowRight: () => sound.seekBy(5), q: () => press('[data-bar-queue]'), r: () => press('[data-bar-repeat]'), m: () => press('[data-bar-mute]') };
+          : { ' ': () => toggle(true), k: () => toggle(true), ArrowLeft: () => sound.seekBy(-5), ArrowRight: () => sound.seekBy(5), ArrowUp: () => sound.volumeBy(10), ArrowDown: () => sound.volumeBy(-10), q: () => press('[data-bar-queue]'), r: () => press('[data-bar-repeat]'), m: () => press('[data-bar-mute]') };
         const run = act[key];
         if (!run) return;
         e.preventDefault();
