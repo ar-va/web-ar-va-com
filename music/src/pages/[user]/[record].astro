@@ -183,8 +183,19 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
       </details>
 
       {tracks.length > 0 ? (
-        <section id="tracklist" class="mt-14 scroll-mt-6">
-          <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Tracklist</h2>
+        <details id="tracklist" open class="group/tracks mt-14 scroll-mt-6">
+          {/* Folds like Details (user 2026-11-21), open by default; closed it says how many tracks and how long. */}
+          <summary class="group/sum flex items-center gap-4 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-kikyo-500">
+            <span class="min-w-0 flex-1">
+              <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Tracklist</h2>
+              <span class="flex mt-1.5 text-sm text-zinc-500 group-open/tracks:hidden">
+                <span class="fact">{hero!.trackCount} track{hero!.trackCount === 1 ? '' : 's'}</span>{hero!.runtime && <span class="fact">{hero!.runtime}</span>}
+              </span>
+            </span>
+            <span class="shrink-0 grid place-items-center w-8 h-8 rounded-full bg-(--well) group-hover/sum:bg-(--well-hover) text-zinc-700 dark:text-zinc-200 transition-colors">
+              <svg class="w-4 h-4 transition-transform group-open/tracks:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
+            </span>
+          </summary>
           {(popular.size > 0 || favorites.size > 0) && (
             <p class="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-zinc-500">
               {popular.size > 0 && <span class="inline-flex items-center gap-1.5"><svg class="w-4 h-4 text-bengara dark:text-bengara-light" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z" /></svg>Most played on YouTube</span>}
@@ -238,7 +249,7 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
               </li>
             ))}
           </ol>
-        </section>
+        </details>
       ) : (
         <p class="mt-12 text-sm text-zinc-500">The tracklist arrives with the next sync from Discogs.</p>
       )}
