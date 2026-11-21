@@ -2,9 +2,10 @@
 // The album's player (user, 2026-11-21), sticky in the album page's reading column, placed right after the tracklist. The sound is
 // scripts/album-player.ts; play / pause also turns the record in the hero (RecordHero's script wires the buttons).
 // One compact row (the user liked the mini view and dropped the full card and Repeat): cover and track, then previous /
-// play / next in their own pill, volume (a slider rises above it on hover; a click mutes) and Queue. The progress is a
-// thin line along the card's bottom that shows its knob on hover and can be dragged. Clicking the track (or Queue / Q)
-// unfolds the queue inside the card: the row slides up, the list sits between it and the progress line.
+// play / next in their own pill and volume (a slider rises above it on hover; a click mutes). The progress is a thin
+// line along the card's bottom that shows its knob on hover and can be dragged. Clicking the track (or Q) unfolds the
+// queue inside the card: the row slides up, the list sits between it and the progress line. (A Queue button was
+// dropped, user 2026-11-21: the track does it.)
 interface Props { tracks: { id: string; title: string; duration: string }[]; artist: string; cover: string | null }
 const { tracks, artist, cover } = Astro.props;
 // Snappy: a press shrinks a button for an instant (none with reduced motion).
@@ -20,7 +21,7 @@ const side = `w-8 h-8 sm:w-9 sm:h-9 grid place-items-center rounded-full cursor-
     <!-- The row: clicking the cover or the track opens / closes the queue (keyboards: the track is a button). -->
     <div data-bar-head class="flex items-center gap-3 cursor-pointer">
       {cover ? <img src={cover} alt="" class="w-11 h-11 rounded-lg object-cover shrink-0" /> : <span class="w-11 h-11 rounded-lg bg-zinc-200 dark:bg-zinc-800 shrink-0"></span>}
-      <button type="button" data-bar-expand aria-expanded="false" aria-controls="player-queue" title="Show the queue"
+      <button type="button" data-bar-expand aria-expanded="false" aria-controls="player-queue" aria-keyshortcuts="Q" title="Show the queue (Q)"
         class="min-w-0 flex-1 text-left rounded-lg cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500">
         <span class="block" aria-live="polite">
           <span data-bar-title class="block truncate text-[0.9375rem] font-semibold leading-5 text-zinc-900 dark:text-white">{tracks[0].title}</span>
@@ -59,9 +60,6 @@ const side = `w-8 h-8 sm:w-9 sm:h-9 grid place-items-center rounded-full cursor-
             </div>
           </div>
         </div>
-        <button type="button" data-bar-queue aria-controls="player-queue" aria-expanded="false" aria-label="Queue" aria-keyshortcuts="Q" title="Queue (Q)" class={side}>
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M4 6h11M4 12h11M4 18h7" /><path d="M17 15.5v-9l4 2" /><circle cx="15" cy="16" r="2" /></svg>
-        </button>
       </div>
     </div>
 
@@ -95,11 +93,10 @@ const side = `w-8 h-8 sm:w-9 sm:h-9 grid place-items-center rounded-full cursor-
 </div>
 
 <script>
-  // The queue: the track row, Queue, Q (RecordHero), Esc or a click outside. Closed, the list is inert (not tabbable).
+  // The queue: the track row, Q (RecordHero), Esc or a click outside. Closed, the list is inert (not tabbable).
   const card = document.querySelector<HTMLElement>('[data-bar-card]');
   const head = document.querySelector<HTMLElement>('[data-bar-head]');
   const expandBtn = document.querySelector<HTMLElement>('[data-bar-expand]');
-  const queueBtn = document.querySelector<HTMLElement>('[data-bar-queue]');
   const queue = document.getElementById('player-queue');
   const list = document.querySelector<HTMLElement>('[data-bar-list]');
   const isOpen = () => !!queue?.classList.contains('open');
@@ -107,16 +104,15 @@ const side = `w-8 h-8 sm:w-9 sm:h-9 grid place-items-center rounded-full cursor-
     if (!queue) return;
     queue.classList.toggle('open', on);
     queue.toggleAttribute('inert', !on);
-    for (const b of [queueBtn, expandBtn]) b?.setAttribute('aria-expanded', String(on));
-    if (expandBtn) expandBtn.title = on ? 'Hide the queue' : 'Show the queue';
+    expandBtn?.setAttribute('aria-expanded', String(on));
+    if (expandBtn) expandBtn.title = `${on ? 'Hide' : 'Show'} the queue (Q)`;
     // Opening: the track playing in view, a third of the way down the list.
     const current = list?.querySelector<HTMLElement>('[aria-current="true"]');
     if (on && list && current) list.scrollTop = current.offsetTop - list.clientHeight / 3;
   };
   head?.addEventListener('click', () => openQueue(!isOpen()));
   document.querySelector('[data-bar-controls]')?.addEventListener('click', (e) => e.stopPropagation());
-  queueBtn?.addEventListener('click', () => openQueue(!isOpen()));
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) { openQueue(false); queueBtn?.focus(); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) { openQueue(false); expandBtn?.focus(); } });
   document.addEventListener('click', (e) => { if (isOpen() && !card?.contains(e.target as Node)) openQueue(false); });
 
   // The space the bar takes in the page = the card without the queue (+ its 12 px gap), whatever the queue is doing.
