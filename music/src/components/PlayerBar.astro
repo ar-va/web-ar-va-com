@@ -47,8 +47,9 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
             <svg class="w-[1.125rem] h-[1.125rem]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 5.5v13L15.5 12z" /><rect x="16.4" y="5" width="2.6" height="14" rx="1" /></svg>
           </button>
         </div>
-        <!-- Volume: the speaker mutes; hovering it (or focusing the slider) raises a slider above it. From 640 px up:
-             phones have volume buttons (and iOS ignores a page's volume), and the track's title needs the room. -->
+        <!-- Volume: the speaker mutes; hovering it (or focusing the slider) stretches the button upward into a capsule
+             holding the slider (user 2026-11-21: a separate floating pill didn't feel part of the player). From 640 px
+             up: phones have volume buttons (and iOS ignores a page's volume), and the track's title needs the room. -->
         <div class="player-volume relative max-sm:hidden">
           <button type="button" data-bar-mute aria-pressed="false" aria-label="Mute" aria-keyshortcuts="M" title="Mute (M)" class={`${side} group`}>
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -58,10 +59,8 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
             </svg>
           </button>
           <div class="player-volume-pop">
-            <div class="glass relative rounded-full w-9 h-32">
-              <input data-bar-volume type="range" min="0" max="100" step="1" value="50" aria-label="Volume" aria-keyshortcuts="ArrowUp ArrowDown"
-                class="player-seek player-volume-range" />
-            </div>
+            <input data-bar-volume type="range" min="0" max="100" step="1" value="50" aria-label="Volume" aria-keyshortcuts="ArrowUp ArrowDown"
+              class="player-seek player-volume-range" />
           </div>
         </div>
       </div>
@@ -160,13 +159,23 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
   .player-progress:is(:hover, :active, :focus-visible):not(:disabled)::-webkit-slider-thumb { opacity: 1; transform: none; }
   .player-progress:is(:hover, :active, :focus-visible):not(:disabled)::-moz-range-thumb { opacity: 1; transform: none; }
 
-  /* The volume slider rises above the speaker on hover / focus (the pop's padding bridges the gap, so moving the
-     pointer up to it keeps it open). Upright: a horizontal range turned a quarter. */
-  .player-volume-pop {
-    position: absolute; left: 50%; bottom: 100%; padding-bottom: 0.5rem; translate: -50% 0.5rem;
-    opacity: 0; visibility: hidden; transition: opacity 0.15s, translate 0.2s cubic-bezier(0.2, 0.9, 0.25, 1), visibility 0.15s;
+  /* Volume: on hover / keyboard focus (a mouse click's focus doesn't keep it open) the speaker button stretches upward into one capsule (::before, the button's hover well
+     over the card's own tint, so the part above the card reads the same), the slider in its upper part. The capsule
+     grows from the button's size; the button's own background steps aside meanwhile. */
+  .player-volume::before {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 100%; border-radius: 9999px; pointer-events: none;
+    background: linear-gradient(var(--well-hover), var(--well-hover)), rgb(253 253 251 / 0.9);
+    opacity: 0; transition: height 0.24s cubic-bezier(0.2, 0.9, 0.25, 1), opacity 0.12s, box-shadow 0.24s;
   }
-  .player-volume:is(:hover, :focus-within) .player-volume-pop { opacity: 1; visibility: visible; translate: -50% 0; }
-  .player-volume-range { position: absolute; left: 50%; top: 50%; width: 6.5rem; translate: -50% -50%; rotate: -90deg; --line: 4px; }
-  @media (prefers-reduced-motion: reduce) { .player-queue, .player-volume-pop { transition: none; } }
+  .dark .player-volume::before { background: linear-gradient(var(--well-hover), var(--well-hover)), rgb(30 32 41 / 0.9); }
+  .player-volume:is(:hover, :has(:focus-visible))::before { opacity: 1; height: calc(100% + 7rem); box-shadow: 0 10px 20px -12px rgb(0 0 0 / 0.4); }
+  .player-volume > button { position: relative; z-index: 1; }
+  .player-volume:is(:hover, :has(:focus-visible)) > button[aria-pressed="false"] { background: transparent; }
+  .player-volume-pop {
+    position: absolute; left: 0; right: 0; bottom: 100%; height: 7rem; z-index: 1;
+    opacity: 0; visibility: hidden; translate: 0 0.5rem; transition: opacity 0.15s, translate 0.24s cubic-bezier(0.2, 0.9, 0.25, 1), visibility 0.15s;
+  }
+  .player-volume:is(:hover, :has(:focus-visible)) .player-volume-pop { opacity: 1; visibility: visible; translate: 0 0; transition-delay: 0.05s; }
+  .player-volume-range { position: absolute; left: 50%; top: calc(50% + 0.25rem); width: 5.5rem; translate: -50% -50%; rotate: -90deg; --line: 4px; }
+  @media (prefers-reduced-motion: reduce) { .player-queue, .player-volume-pop, .player-volume::before { transition: none; } }
 </style>
