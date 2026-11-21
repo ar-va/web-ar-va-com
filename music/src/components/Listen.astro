@@ -70,15 +70,22 @@ const icon = size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
     close();
     const b = button.getBoundingClientRect();
     const twin = pop.querySelector<HTMLElement>('[data-listen-close]')!;
-    pop.classList.remove('listen-up');
-    pop.style.right = `${document.documentElement.clientWidth - b.right}px`;
+    const cw = document.documentElement.clientWidth;
+    pop.classList.remove('listen-up', 'listen-left');
+    pop.style.left = 'auto';
+    pop.style.right = `${cw - b.right}px`;
     pop.style.top = `${b.top}px`;
     if (!pop.matches(':popover-open')) pop.showPopover();
     // No room below: open upward, the twin last (at the bottom, over the button), the services in their order.
     if (b.top + pop.offsetHeight > innerHeight - 8) pop.classList.add('listen-up');
+    // No room to the left (a short title on a phone: the menu went 32 px past the screen's edge): mirrored, the menu's
+    // left edge on the button's and the twin at the row's left.
+    const left = b.right - pop.offsetWidth < 8;
+    if (left) { pop.classList.add('listen-left'); pop.style.right = 'auto'; pop.style.left = `${b.left}px`; }
     // Then nudge it so the twin sits exactly on the button (the menu's padding and rim).
     const t = twin.getBoundingClientRect(), p = pop.getBoundingClientRect();
-    pop.style.right = `${document.documentElement.clientWidth - p.right - (b.right - t.right)}px`;
+    if (left) pop.style.left = `${p.left + (b.left - t.left)}px`;
+    else pop.style.right = `${cw - p.right - (b.right - t.right)}px`;
     pop.style.top = `${p.top + (b.top - t.top)}px`;
     button.setAttribute('aria-expanded', 'true');
     growFrom(pop, button);
@@ -99,4 +106,6 @@ const icon = size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
   .listen-pop { position: fixed; inset: auto; }
   /* opening upward: the twin goes last, the services keep their order */
   .listen-pop.listen-up > [data-listen-head] { order: 1; }
+  /* mirrored (no room to the left): the twin first in its row, "Listen on" beside it */
+  .listen-pop.listen-left > [data-listen-head] { flex-direction: row-reverse; justify-content: flex-end; }
 </style>
