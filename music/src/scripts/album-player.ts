@@ -7,11 +7,12 @@
 // record simply plays without sound.
 import { dropNeedle } from './needle';
 
-const TARGET = 50; // percent
+const TARGET = 50; // percent: the volume until the visitor picks one with the bar's slider
 const FADE_IN_MS = 8000; // autoplay: a slow rise
 const RESUME_MS = 2000; // pressing play again
 const FADE_OUT_MS = 600;
 const KEY = 'album-sound';
+const VOLUME_KEY = 'album-volume';
 const PLAYING = 1, BUFFERING = 3, ENDED = 0;
 
 type Track = { id: string; title: string };
@@ -55,13 +56,28 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
   // stays quiet too. This page only.
   let muted = false;
   const muteBtn = $('[data-bar-mute]');
-  muteBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    muted = !muted;
-    muteBtn.setAttribute('aria-pressed', String(muted));
-    muteBtn.title = `${muted ? 'Unmute' : 'Mute'} (M)`;
-    if (player) muted ? player.mute() : player.unMute();
+  const setMuted = (on: boolean) => {
+    muted = on;
+    muteBtn?.setAttribute('aria-pressed', String(on));
+    if (muteBtn) muteBtn.title = `${on ? 'Unmute' : 'Mute'} (M)`;
+    if (player) on ? player.mute() : player.unMute();
+  };
+  muteBtn?.addEventListener('click', (e) => { e.stopPropagation(); setMuted(!muted); });
+  // Volume (the bar's slider, user 2026-11-21): what the fades rise to, remembered in this browser. Moving it while
+  // playing sets it at once (ending a fade-in); moving it while muted unmutes.
+  const stored = Number((() => { try { return localStorage.getItem(VOLUME_KEY); } catch { return null; } })() ?? NaN);
+  let level = Number.isFinite(stored) && stored >= 0 && stored <= 100 ? stored : TARGET;
+  const volume = $<HTMLInputElement>('[data-bar-volume]');
+  const paintVolume = () => volume?.style.setProperty('--p', `${level}%`);
+  if (volume) { volume.value = String(level); paintVolume(); }
+  volume?.addEventListener('input', () => {
+    level = Number(volume.value);
+    paintVolume();
+    try { localStorage.setItem(VOLUME_KEY, String(level)); } catch {}
+    if (muted && level > 0) setMuted(false);
+    if (player && wanted) { clearInterval(fade); player.setVolume(level); }
   });
+  volume?.addEventListener('click', (e) => e.stopPropagation());
   const show = (i: number) => {
     if (i === current || !tracks[i]) return;
     current = i;
@@ -116,7 +132,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
             failures = 0;
             if (!wanted) return player.pauseVideo();
             say('');
-            if (fadeMs) { ramp(TARGET, fadeMs); fadeMs = 0; }
+            if (fadeMs) { ramp(level, fadeMs); fadeMs = 0; }
           }
           // The album's end: round again with repeat on; otherwise back to the first track, ready for the next play.
           if (e.data === ENDED && playing() >= tracks.length - 1) {
@@ -149,7 +165,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
       if (!byUser && remembered() === 'off') return;
       if (byUser) remember('on');
       // The needle goes down once the platter has spun up (RecordHero: 1.1 s); the album fades in under its crackle.
-      if (!muted) dropNeedle(700);
+      if (!muted && level > 0) dropNeedle(700, 0.6 * Math.min(1.5, level / TARGET));
       wanted = true;
       await create();
       if (!wanted) return;
