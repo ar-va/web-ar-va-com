@@ -1,6 +1,6 @@
 ---
 // The big record block shared by the album page and the shelf's "Latest", identical on both (user, 2026-10-29): the sleeve with the vinyl rolled out to
-// the right, then artist, album, added / released / genre / tracks, and the streaming links.
+// the right, then artist, album with the streaming menu (headphones) at the end of its line, added / released / genre / tracks.
 // The record plays on its own after rolling out; a small play / pause button on the cover stops it. On the shelf the cover and
 // title link to the album; on the album page a click anywhere on the cover plays / pauses too.
 import Cover from '@shared/components/Cover.astro';
@@ -51,8 +51,8 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       <a href={href} tabindex="-1" aria-hidden="true" class="block"><Cover record={record} eager class="sleeve-open w-[min(15rem,62vw)] sm:w-60" /></a>
     ) : (
       <div data-spin-cover class="motion-safe:cursor-pointer"><Cover record={record} eager class="sleeve-open w-[min(15rem,62vw)] sm:w-60" /></div>
-      <span class="sleeve-shine" aria-hidden="true"></span>
     )}
+    <span class="sleeve-shine" aria-hidden="true"></span>
     <button type="button" data-spin aria-pressed="false" aria-label="Play the record" title="Play the record"
       class="glass glass-dark group absolute right-2 bottom-2 z-10 w-9 h-9 grid place-items-center rounded-full text-white cursor-pointer motion-reduce:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500">
       <svg class="w-4 h-4 group-aria-pressed:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" /></svg>
@@ -61,9 +61,14 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
   </div>
   <div class="min-w-0 flex-1">
     <p class="text-lg font-medium text-kashiwa dark:text-kashiwa-light mb-1">{href ? artist : <button type="button" data-copy title="Click to copy" class={copy}>{artist}</button>}</p>
-    <Heading class="text-3xl sm:text-5xl font-bold leading-[1.05] text-zinc-900 dark:text-white">
-      {href ? <a href={href} class="hover:text-kikyo-600 dark:hover:text-kikyo-400 transition-colors">{title}</a> : <button type="button" data-copy title="Click to copy" class={copy}>{title}</button>}
-    </Heading>
+    <!-- The title, and at the very end of its first line the headphones: a menu of the streaming services (user 2026-11-21,
+         instead of three buttons under the facts). -->
+    <div class="flex items-start justify-between gap-3">
+      <Heading class="min-w-0 text-3xl sm:text-5xl font-bold leading-[1.05] text-zinc-900 dark:text-white">
+        {href ? <a href={href} class="hover:text-kikyo-600 dark:hover:text-kikyo-400 transition-colors">{title}</a> : <button type="button" data-copy title="Click to copy" class={copy}>{title}</button>}
+      </Heading>
+      <span class="-mt-0.5 sm:mt-1"><Listen size="md" query={`${artist} ${title}`} label={`Listen to ${title}`} links={links} /></span>
+    </div>
     {facts.length > 0 && <p class="mt-5 flex flex-wrap gap-y-1 text-zinc-700 dark:text-zinc-300">{facts.map((f) => <span class="fact">{f}</span>)}</p>}
     <p class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-zinc-500">
       {added}
@@ -96,9 +101,6 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
         </form>
       </div>
     )}
-    <div class="mt-5">
-      <Listen buttons query={`${artist} ${title}`} label={`Listen to ${title}`} links={links} />
-    </div>
     <slot />
   </div>
 </div>
@@ -257,12 +259,12 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
     setTimeout(autoplay, 2000);
   });
 
-  // Album page: the turntable leans toward the mouse, the side under the pointer coming forward, on a spring (stiffness
+  // Album page and the shelf's Latest (user 2026-11-21: the same on both): the turntable leans toward the mouse, the side under the pointer coming forward, on a spring (stiffness
   // 120, damping 16, like React Bits' ReflectiveCard); the sleeve's glare follows the pointer and its band of light
   // slides with the tilt (.sleeve-shine). Mouse only (a tilt under a finger would fight scrolling), none with reduced motion.
   const TILT = 10;
   if (matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)').matches) {
-    document.querySelectorAll<HTMLElement>('[data-turntable]:has([data-spin-cover])').forEach((el) => {
+    document.querySelectorAll<HTMLElement>('[data-turntable]').forEach((el) => {
       let tx = 0, ty = 0, rx = 0, ry = 0, vx = 0, vy = 0, last = 0, frame = 0;
       const step = (now: number) => {
         const dt = Math.min(0.032, (now - last) / 1000 || 0.016);
