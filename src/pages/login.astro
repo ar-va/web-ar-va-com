@@ -13,32 +13,39 @@ import { safeReturnPath, telegramAuthUrl } from '@shared/lib/lib';
 import { adminShelfOwner, currentUser, directory, hasPendingInvite, shelfOwner, shelfRecord, shelfRecords, shelfSlug } from '@shared/lib/store';
 
 const returnTo = safeReturnPath(Astro.url.searchParams.get('return'), Astro.url.hostname);
-if (await currentUser(Astro.cookies)) return Astro.redirect(returnTo);
 const failed = Astro.url.searchParams.has('failed');
 
 const musicOrigin = `${Astro.url.protocol}//music.${Astro.url.host}`;
 const back = new URL(returnTo, Astro.url);
 const titleOf = (body = '') => body.match(/^#\s+(.+)$/m)?.[1].trim();
+const [, shelfUser, instance] = back.hostname.startsWith('music.') ? back.pathname.match(/^\/([^/]+)\/(\d+)/) ?? [] : [];
+
+// The database is read in two rounds, not one trip after another: this is the first page new people see.
+// Who's here (every collector's shelf: faces and totals), the admin's shelf, and the shelf of the record they came from.
+const [user, recordOwner, admin, shelves, allPosts] = await Promise.all([
+  currentUser(Astro.cookies),
+  shelfUser ? shelfOwner(decodeURIComponent(shelfUser)) : null,
+  adminShelfOwner(),
+  directory(4),
+  getCollection('blog'),
+]);
+if (user) return Astro.redirect(returnTo);
+// A small shelf to show what music.ar-va.com is: the record they came from first, then the latest additions.
+const [fromRecord, latest] = await Promise.all([
+  recordOwner ? shelfRecord(recordOwner.id, Number(instance)) : null,
+  admin ? shelfRecords(admin.id) : [],
+]);
 
 // Where they came from: a blog post or a record gets named in the headline.
-const posts = (await getCollection('blog')).filter((p) => p.data.created).sort((a, b) => b.data.created!.valueOf() - a.data.created!.valueOf());
+const posts = allPosts.filter((p) => p.data.created).sort((a, b) => b.data.created!.valueOf() - a.data.created!.valueOf());
 const fromSlug = back.hostname === Astro.url.hostname && back.pathname.match(/^\/blog\/([^/]+)/)?.[1];
 const fromPost = fromSlug ? posts.find((p) => (p.data.slug || createCleanSlug(p.id)) === decodeURIComponent(fromSlug)) : undefined;
-const [, shelfUser, instance] = back.hostname.startsWith('music.') ? back.pathname.match(/^\/([^/]+)\/(\d+)/) ?? [] : [];
-const recordOwner = shelfUser ? await shelfOwner(decodeURIComponent(shelfUser)) : null;
-const fromRecord = recordOwner ? await shelfRecord(recordOwner.id, Number(instance)) : null;
-
-// A small shelf to show what music.ar-va.com is: the record they came from first, then the latest additions.
-const admin = await adminShelfOwner();
-const latest = admin ? await shelfRecords(admin.id) : [];
 const shelf = [...(fromRecord ? [fromRecord] : []), ...latest.filter((r) => r.instanceId !== fromRecord?.instanceId)].slice(0, 4);
 const shelfOwnerName = (fromRecord ? recordOwner : admin) ? shelfSlug((fromRecord ? recordOwner : admin)!) : null;
 const showShelf = shelf.length > 0 && !!shelfOwnerName;
 
 const about = fromRecord ? `${fromRecord.title} by ${fromRecord.artist}` : fromPost ? titleOf(fromPost.body) : null;
 
-// Who's here: every collector's shelf (faces and totals).
-const shelves = await directory(4);
 const records = shelves.reduce((n, x) => n + x.count, 0);
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 // "Request a shelf": log in (Telegram's window, staying here), then settings sends the request (?request).

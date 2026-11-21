@@ -18,6 +18,8 @@ const SCHEMA = [
   `CREATE INDEX IF NOT EXISTS invite_links_by_creator ON invite_links (created_by)`,
   `CREATE TABLE IF NOT EXISTS oauth_pending (token TEXT PRIMARY KEY, secret TEXT NOT NULL, user_id INTEGER NOT NULL, created_at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS records (user_id INTEGER NOT NULL, instance_id INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY (user_id, instance_id))`,
+  // "Is this release on the user's shelf?" (each detail upload and match) without reading the whole shelf each time.
+  `CREATE INDEX IF NOT EXISTS records_release ON records (user_id, json_extract(data, '$.releaseId'))`,
   `CREATE TABLE IF NOT EXISTS releases (id INTEGER PRIMARY KEY, data TEXT NOT NULL, fetched_at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS comments (id INTEGER PRIMARY KEY AUTOINCREMENT, shelf_id INTEGER NOT NULL, instance_id INTEGER NOT NULL,
     author_id INTEGER NOT NULL, body TEXT NOT NULL, created_at INTEGER NOT NULL, parent_id INTEGER, edited_at INTEGER)`,
@@ -249,6 +251,8 @@ export async function removeShelf(userId: number, revoke: boolean) {
   await d.batch([
     d.prepare('DELETE FROM records WHERE user_id = ?').bind(userId),
     d.prepare(`UPDATE users SET discogs_username = NULL, discogs_token = NULL, synced_at = NULL, sync_error = NULL${revoke ? ', is_collector = 0' : ''} WHERE id = ?`).bind(userId),
+    // Someone no longer a collector can't bring in others with links they made before.
+    ...(revoke ? [d.prepare('UPDATE invite_links SET revoked_at = ? WHERE created_by = ? AND revoked_at IS NULL').bind(now(), userId)] : []),
   ]);
 }
 

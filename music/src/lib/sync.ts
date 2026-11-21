@@ -70,10 +70,16 @@ async function syncDetails(missing: Missing[], progress: (message: string) => vo
   const waiting = () => progress('Discogs asked to slow down; continuing in a minute…');
   for (const [i, m] of missing.entries()) {
     progress(`${prefix}Adding tracklists and release dates: ${i + 1} of ${missing.length}…`);
-    const release = await signedGet(`/releases/${m.releaseId}`, waiting);
-    const master = m.masterId ? await signedGet(`/masters/${m.masterId}`, waiting).catch(() => null) : null;
-    const main = master?.main_release && master.main_release !== m.releaseId ? await signedGet(`/releases/${master.main_release}`, waiting).catch(() => null) : release;
-    await site({ action: 'release', release, masterYear: master?.year ?? null, firstReleased: (master ? main?.released : null) ?? null });
+    try {
+      const release = await signedGet(`/releases/${m.releaseId}`, waiting);
+      const master = m.masterId ? await signedGet(`/masters/${m.masterId}`, waiting).catch(() => null) : null;
+      const main = master?.main_release && master.main_release !== m.releaseId ? await signedGet(`/releases/${master.main_release}`, waiting).catch(() => null) : release;
+      await site({ action: 'release', release, masterYear: master?.year ?? null, firstReleased: (master ? main?.released : null) ?? null });
+    } catch (e) {
+      // Still too fast after the waits, or the network is gone: stop. One bad release (e.g. deleted on Discogs, 404)
+      // is skipped, so it can't hold up every release after it on each visit.
+      if ((e as { status?: number }).status === 429 || e instanceof TypeError) throw e;
+    }
   }
 }
 

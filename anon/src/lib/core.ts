@@ -1,18 +1,11 @@
 // Pure logic, no Cloudflare imports, so `npm test` can run it in Node.
 
-const enc = new TextEncoder();
-const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
-const b64url = (bytes: Uint8Array) => b64(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+// Hashing, links and HTML escaping are the ones every ARVA site uses (a relative path with .ts, so Node's tests load it too).
+// newToken: the secret in a private link, 24 random bytes as 32 URL-safe characters. Only its hash is stored.
+export { escapeHtml, linkify, randomToken as newToken, sha256 } from '../../../shared/lib/lib.ts';
 
 export const now = () => Math.floor(Date.now() / 1000);
 
-export async function sha256(text: string) {
-  const digest = await crypto.subtle.digest('SHA-256', enc.encode(text));
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-/** The secret in a private link: 24 random bytes, 32 URL-safe characters. Only its hash is stored. */
-export const newToken = () => b64url(crypto.getRandomValues(new Uint8Array(24)));
 export const isToken = (s: string) => /^[A-Za-z0-9_-]{32}$/.test(s);
 
 // ---- Text ----
@@ -29,22 +22,6 @@ export function cleanText(raw: unknown) {
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
-
-
-/** Splits text into plain parts and http(s) links, so links can be made clickable while the text stays escaped. */
-export function linkify(text: string): ({ text: string } | { url: string })[] {
-  const parts: ({ text: string } | { url: string })[] = [];
-  let last = 0;
-  for (const m of text.matchAll(/https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)\]]/g)) {
-    if (m.index! > last) parts.push({ text: text.slice(last, m.index) });
-    parts.push({ url: m[0] });
-    last = m.index! + m[0].length;
-  }
-  if (last < text.length) parts.push({ text: text.slice(last) });
-  return parts;
-}
-
-export const escapeHtml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
 export const excerpt = (s: string, max = 300) => (s.length > max ? `${s.slice(0, max).trimEnd()}…` : s);
 

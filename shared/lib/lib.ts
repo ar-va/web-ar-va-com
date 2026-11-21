@@ -140,16 +140,17 @@ export function toShelfRecord(item: any, fields: CollectionField[]): ShelfRecord
     releaseId: item.id,
     masterId: b.master_id || 0,
     artist: artistLine(b.artists),
-    title: b.title,
+    // Shown on every collector's pages (shelves directory, login, invites): text where text belongs, whatever was sent.
+    title: text(b.title, 300),
     year: b.year || null,
     // Collection data arrives through the collector's browser: only Discogs' own https image host is trusted.
     cover: typeof b.cover_image === 'string' && b.cover_image.startsWith('https://i.discogs.com/') ? b.cover_image : null,
     labels: [...new Set((b.labels ?? []).map((l: any) => cleanName(l.name)))].join(', '),
     format: (b.formats ?? []).map((f: any) => [f.qty > 1 ? `${f.qty}×${f.name}` : f.name, ...(f.descriptions ?? []), ...(f.text ? [f.text] : [])].join(', ')).join(' + '),
     vinyl: vinylColor((b.formats ?? []).map((f: any) => f.text ?? '').join(', ')),
-    genres: b.genres ?? [],
-    styles: b.styles ?? [],
-    added: item.date_added ?? '', // other collectors' Discogs records may come without one
+    genres: words(b.genres),
+    styles: words(b.styles),
+    added: text(item.date_added, 40), // other collectors' Discogs records may come without one
     rating: item.rating || 0,
     fields: fields
       .filter((f) => f.public && byId.get(f.id))
@@ -170,12 +171,13 @@ export interface ReleaseDetail {
   uri: string;
 }
 
-/** GET /releases/{id} (+ the master's year) → what the record page shows. */
 // Text from an upload, whatever was sent: the browser brings these details, and they're shown to every collector who
 // owns the release, so a number or an object where text belongs must not break their pages.
 const text = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max) : typeof v === 'number' ? String(v) : '');
 const year = (v: unknown) => (Number.isSafeInteger(v) && (v as number) > 0 ? (v as number) : null);
+const words = (v: unknown) => (Array.isArray(v) ? v : []).filter((x): x is string => typeof x === 'string').map((x) => x.slice(0, 100)).slice(0, 50);
 
+/** GET /releases/{id} (+ the master's year) → what the record page shows. */
 export function toReleaseDetail(release: any, masterYear: number | null, firstReleased: string | null = null): ReleaseDetail {
   return {
     released: text(release.released, 20) || null,
@@ -307,11 +309,6 @@ export function textToTracklist(text: string): Track[] {
   });
 }
 
-/**
- * Vinyl positions (A1, A2, B1…) → a heading per side: "Side A", or "Disc 1, Side A" when there are more than two
- * sides; the position shows just the track number. Tracklists with their own headings, or positions that
- * aren't letter + number (CDs, "1", "2"), are left as they are.
- */
 /** Total running time ("42 min", "1 h 12 min") when every track has a length like 4:52 or 1:02:10; else null. */
 export function runtime(tracks: Track[]): string | null {
   const songs = tracks.filter((t) => !t.heading);
@@ -345,6 +342,11 @@ export function renumber(positions: string[]): string[] {
   });
 }
 
+/**
+ * Vinyl positions (A1, A2, B1…) → a heading per side: "Side A", or "Disc 1, Side A" when there are more than two
+ * sides; the position shows just the track number. Tracklists with their own headings, or positions that
+ * aren't letter + number (CDs, "1", "2"), are left as they are.
+ */
 export function withSideHeadings(tracks: Track[]): Track[] {
   const songs = tracks.filter((t) => !t.heading);
   if (tracks.some((t) => t.heading) || !songs.every((t) => /^[A-Z]\d*[a-z]?$/i.test(t.position))) return tracks;
@@ -407,9 +409,6 @@ export function checkShelfName(value: string, admin = false): { name: string } |
   }
   return { name: v };
 }
-
-/** The shelf address if it passes checkShelfName (for an ordinary collector), else null. */
-export const shelfName = (value: string) => { const r = checkShelfName(value); return 'name' in r ? r.name : null; };
 
 /** How an address is compared with others for look-alikes: no dashes, underscores or dots ("a-r-a-b-o-r" = "arabor"). */
 export const nameKey = (s: string) => s.toLowerCase().replace(/[-_.]/g, '');
@@ -639,8 +638,6 @@ export const playCount = (text: string) => {
   return m ? Math.round(parseFloat(m[1].replace(/,/g, '')) * ({ '': 1, K: 1e3, M: 1e6, B: 1e9 } as Record<string, number>)[m[2].toUpperCase()]) : 0;
 };
 
-/** "4.5M", "820K", "950": plays, short. */
-/** The video id in a YouTube or YouTube Music track link (watch?v=…, youtu.be/…), or null. */
 /** Each record's own wear (user, 2026-11-21: smudges varied per record, some more, some less, in different places):
  *  CSS custom properties for the disc (global.css), picked from the record's id so it never changes. About a quarter
  *  are clean, the rest have light or a little more smudging, cropped from a different part of the pattern; some carry
@@ -660,9 +657,11 @@ export function vinylWear(id: number): string {
   return out.join('; ');
 }
 
+/** The video id in a YouTube or YouTube Music track link (watch?v=…, youtu.be/…), or null. */
 export const youtubeId = (url: string | undefined) =>
   url?.match(/^https:\/\/(?:(?:www|music|m)\.youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/)([\w-]{11})(?![\w-])/)?.[1] ?? null;
 
+/** "4.5M", "820K", "950": plays, short. */
 export const shortCount = (n: number) => (n >= 1e6 ? `${+(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${Math.round(n / 1e3)}K` : String(n));
 
 /** Cover images come only from Discogs or Apple's artwork servers. */

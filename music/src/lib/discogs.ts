@@ -45,9 +45,11 @@ export async function setUsername(user: User, username: string) {
   // shortcut: the browser reports the username, so an invited collector could claim another (unclaimed) name; fine while shelves are invite-only.
   if (!/^[\w.-]{1,64}$/.test(username)) return 'Discogs sent an unexpected username.';
   const d = await db();
-  if (await d.prepare('SELECT id FROM users WHERE discogs_username = ? AND id != ?').bind(username, user.id).first()) {
-    return `The Discogs account “${username}” is already connected to another shelf.`;
-  }
+  // A shelf is found by its chosen address or its Discogs name, so neither may be someone else's.
+  const taken = await d.prepare('SELECT discogs_username = ?1 AS discogs FROM users WHERE (discogs_username = ?1 OR shelf_name = lower(?1)) AND id != ?2')
+    .bind(username, user.id).first<{ discogs: number }>();
+  if (taken?.discogs) return `The Discogs account “${username}” is already connected to another shelf.`;
+  if (taken) return `“${username}” is already another collector’s shelf address, so the two shelves would clash. Please message the site’s admin.`;
   const switched = user.discogs_username && user.discogs_username.toLowerCase() !== username.toLowerCase();
   await d.batch([
     ...(switched ? [d.prepare('DELETE FROM records WHERE user_id = ?').bind(user.id)] : []),
@@ -72,6 +74,14 @@ export async function saveCollection(user: User, fields: CollectionField[], item
   const records = items.map((i) => toShelfRecord(i, fields));
   if (records.some((r) => !Number.isSafeInteger(r.instanceId) || !Number.isSafeInteger(r.releaseId))) throw new Error('Unexpected collection data');
   const d = await db();
+  // Most syncs find nothing new: then only the time is written, not the whole shelf again (daily write limits).
+  const rows = records.map((r) => JSON.stringify(r)).sort();
+  const { results } = await d.prepare('SELECT data FROM records WHERE user_id = ?').bind(user.id).all<{ data: string }>();
+  const stored = results.map((r) => r.data).sort();
+  if (stored.length === rows.length && stored.every((s, i) => s === rows[i])) {
+    await d.prepare('UPDATE users SET synced_at = ?, sync_error = NULL WHERE id = ?').bind(now(), user.id).run();
+    return { count: records.length, missing: await missingReleases(user) };
+  }
   const inserts = [];
   // 3 parameters per row and D1 allows 100 bound parameters per statement.
   for (let i = 0; i < records.length; i += 33) {
