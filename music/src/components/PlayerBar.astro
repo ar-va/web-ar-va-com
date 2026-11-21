@@ -151,7 +151,9 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
   function setMini(on: boolean, offset = 0) {
     if (!card || on === isMini()) return;
     if (on) openQueue(false);
-    const from = card.offsetWidth;
+    const from = card.offsetWidth; // mid-spring too: the new spring starts where the card is now
+    // A toggle still springing: stop it, or its ending would un-anchor the card in the middle of this one.
+    card.getAnimations().forEach((a) => a.cancel());
     card.classList.add('anchor-right');
     card.classList.toggle('mini', on);
     miniBtn?.setAttribute('aria-expanded', String(!on));
