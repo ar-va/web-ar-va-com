@@ -5,6 +5,7 @@
 // title link to the album; on the album page a click anywhere on the cover plays / pauses too.
 import Cover from '@shared/components/Cover.astro';
 import Listen from './Listen.astro';
+import PlayerBar from './PlayerBar.astro';
 import { displayDate, formatReleased, type ShelfRecord } from '@shared/lib/lib';
 
 interface Props {
@@ -21,8 +22,9 @@ interface Props {
   /** For the owner when the "Added on" date is missing (addedNeedsDate): an icon that opens a popup to set it.
    *  `sameDay` = how many of their records Discogs dated on this record's day. */
   askAdded?: { sameDay: number };
-  /** Album page: the tracks found on YouTube Music, in order. The record's sound plays them (scripts/album-player.ts). */
-  play?: { id: string; title: string }[];
+  /** Album page: the tracks found on YouTube Music, in order. The record's sound plays them (scripts/album-player.ts),
+   *  with a player bar pinned to the bottom of the page. */
+  play?: { id: string; title: string; duration: string }[];
 }
 const { record, artist, title, released, genres, trackCount, links, href, runtime, askAdded, play } = Astro.props;
 // Discogs' added date is in the collector's local time: show that day, not the UTC one.
@@ -95,10 +97,10 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
     <div class="mt-5">
       <Listen buttons query={`${artist} ${title}`} label={`Listen to ${title}`} links={links} />
     </div>
-    {play?.length ? <p data-now-playing class="mt-3 min-h-5 text-sm text-zinc-500" aria-live="polite"></p> : null}
     <slot />
   </div>
 </div>
+{play?.length ? <PlayerBar tracks={play} artist={artist} cover={record.cover} /> : null}
 
 <script>
   import { emitBurst } from '../scripts/notes';
@@ -118,9 +120,8 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
     const glare = turntable.querySelector<HTMLElement>('.glare');
     if (!disc || !sleeve) return;
     // Album page with tracks on YouTube Music: the record's sound follows the turntable.
-    const sound = turntable.dataset.play
-      ? albumPlayer(JSON.parse(turntable.dataset.play), turntable.closest('[data-hero]')?.querySelector('[data-now-playing]') ?? null, () => halt())
-      : null;
+    const sound = turntable.dataset.play ? albumPlayer(JSON.parse(turntable.dataset.play), () => halt()) : null;
+    const barPlay = sound && document.querySelector<HTMLElement>('[data-bar-play]');
     // The still glare gives way while the record plays and comes back as it stops.
     const fadeGlare = (to: number, ms: number) => glare?.animate([{ opacity: getComputedStyle(glare).opacity }, { opacity: to }], { duration: ms, easing: 'ease-in-out', fill: 'forwards' });
     let spin: Animation | null = null;
@@ -168,11 +169,16 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       const label = on ? 'Stop the record' : 'Play the record';
       button.title = label;
       button.setAttribute('aria-label', label);
+      barPlay?.setAttribute('aria-pressed', String(on));
+      barPlay?.setAttribute('aria-label', on ? 'Pause' : 'Play');
+      if (barPlay) barPlay.title = on ? 'Pause' : 'Play';
     };
-    // Without the spin (reduced motion) there's no play / pause button, so no sound either.
+    // Reduced motion: the record stays still and nothing plays by itself; the player bar still plays the album.
     const toggle = (byUser: boolean) => {
-      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (still && (!byUser || !sound)) return;
       if (!playing) sound?.play(byUser); else sound?.stop(byUser);
+      if (still) return set(!playing);
       if (!playing) {
         set(true);
         if (!spin) {
@@ -192,13 +198,23 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       } else {
         set(false);
         clearInterval(notes);
-        fadeGlare(1, coast());
+        if (spin) fadeGlare(1, coast());
       }
     };
     // The album ended or the browser refused sound: the record comes to rest without touching the sound.
-    function halt() { if (playing) { set(false); clearInterval(notes); fadeGlare(1, coast()); } }
+    function halt() { if (playing) { set(false); clearInterval(notes); if (spin) fadeGlare(1, coast()); } }
     button.addEventListener('click', () => toggle(true));
     turntable.querySelector('[data-spin-cover]')?.addEventListener('click', () => toggle(true));
+    // The player bar: play / pause is the record's; previous, next and a track in the queue start it if it's stopped.
+    if (sound) {
+      const start = () => { if (!playing) toggle(true); };
+      barPlay!.addEventListener('click', () => toggle(true));
+      document.querySelector('[data-bar-prev]')?.addEventListener('click', () => { start(); sound.prev(); });
+      document.querySelector('[data-bar-next]')?.addEventListener('click', () => { start(); sound.next(); });
+      document.querySelectorAll<HTMLElement>('[data-bar-go]').forEach((b) => b.addEventListener('click', () => { start(); sound.go(Number(b.dataset.barGo)); }));
+      const queue = document.getElementById('player-queue');
+      queue?.addEventListener('toggle', (e) => document.querySelector('[data-bar-queue]')?.setAttribute('aria-expanded', String((e as ToggleEvent).newState === 'open')));
+    }
     // Start playing as the roll-out (CSS `roll-out`, 0.25 s delay + 1.6 s) settles.
     let started = false;
     const autoplay = () => { if (!started && !playing) { started = true; toggle(false); } };

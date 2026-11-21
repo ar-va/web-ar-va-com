@@ -1,0 +1,64 @@
+---
+// The album's player, pinned to the bottom of the album page (user, 2026-11-21): the track playing, previous / play /
+// next, its progress (drag to seek) and the queue. The sound is scripts/album-player.ts; play / pause also turns the
+// record in the hero (RecordHero's script wires the buttons).
+interface Props { tracks: { id: string; title: string; duration: string }[]; artist: string; cover: string | null }
+const { tracks, artist, cover } = Astro.props;
+const round = 'w-9 h-9 grid place-items-center rounded-full cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500';
+const skip = `${round} text-zinc-700 dark:text-zinc-200 hover:bg-[var(--well-hover)] disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-default`;
+---
+<div data-player-bar class="fixed inset-x-0 bottom-0 z-40 px-3 pb-3 pointer-events-none">
+  <section aria-label="Album player" class="glass pointer-events-auto max-w-5xl mx-auto rounded-3xl p-2 pr-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+    {cover ? <img src={cover} alt="" class="w-11 h-11 rounded-xl object-cover shrink-0" /> : <span class="w-11 h-11 rounded-xl bg-zinc-200 dark:bg-zinc-800 shrink-0"></span>}
+    <div class="min-w-0 flex-1 sm:flex-none sm:w-52" aria-live="polite">
+      <p data-bar-title class="truncate text-sm font-medium text-zinc-900 dark:text-white">{tracks[0].title}</p>
+      <p data-bar-note data-artist={artist} class="truncate text-xs text-zinc-500">{artist}</p>
+    </div>
+    <div class="flex items-center gap-1">
+      <button type="button" data-bar-prev aria-label="Previous track" title="Previous track" class={skip}>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5.5" width="2.6" height="13" rx="1" /><path d="M19 5.5v13L8.5 12z" /></svg>
+      </button>
+      <button type="button" data-bar-play aria-pressed="false" aria-label="Play" title="Play"
+        class={`${round} group w-10 h-10 bg-kikyo-600 dark:bg-kikyo-400 text-white dark:text-zinc-950 hover:bg-kikyo-700 dark:hover:bg-kikyo-300`}>
+        <svg class="w-4 h-4 group-aria-pressed:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" /></svg>
+        <svg class="w-4 h-4 group-aria-[pressed=false]:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5.5" width="3.8" height="13" rx="1" /><rect x="13.7" y="5.5" width="3.8" height="13" rx="1" /></svg>
+      </button>
+      <button type="button" data-bar-next aria-label="Next track" title="Next track" disabled={tracks.length < 2} class={skip}>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 5.5v13L15.5 12z" /><rect x="16.4" y="5.5" width="2.6" height="13" rx="1" /></svg>
+      </button>
+    </div>
+    <!-- Phones: the progress takes its own row under the controls. -->
+    <div class="order-last basis-full sm:order-none sm:basis-auto sm:flex-1 flex items-center gap-2 px-1 font-mono text-xs text-zinc-500 tabular-nums">
+      <span data-bar-time>0:00</span>
+      <input data-bar-seek type="range" min="0" max="0" value="0" step="1" disabled aria-label="Position in the track"
+        class="flex-1 min-w-0 h-1 cursor-pointer disabled:cursor-default accent-kikyo-600 dark:accent-kikyo-400" />
+      <span data-bar-length>{tracks[0].duration || '0:00'}</span>
+    </div>
+    <button type="button" data-bar-queue popovertarget="player-queue" aria-expanded="false" aria-label="Queue" title="Queue" class="ctl !px-2.5">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M4 6h11M4 12h11M4 18h7" /><path d="M17 15.5v-9l4 2" /><circle cx="15" cy="16" r="2" /></svg>
+    </button>
+  </section>
+</div>
+
+<!-- The queue: a popover above the bar (Esc or a click outside closes it). -->
+<div id="player-queue" popover class="fixed inset-auto right-3 bottom-32 sm:bottom-20 m-0 w-[min(24rem,calc(100vw-1.5rem))] max-h-[min(60vh,28rem)] overflow-y-auto rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-3 text-zinc-700 dark:text-zinc-300 shadow-2xl">
+  <h2 class="px-3 pt-1 text-base font-bold text-zinc-900 dark:text-white">Queue</h2>
+  <p class="px-3 pb-2 text-xs text-zinc-500">{tracks.length} track{tracks.length === 1 ? '' : 's'} from YouTube Music</p>
+  <ol>
+    {tracks.map((t, i) => (
+      <li>
+        <button type="button" data-bar-go={i} class="group w-full flex items-baseline gap-3 rounded-xl px-3 py-2 text-left text-sm cursor-pointer hover:bg-[var(--well)] aria-[current=true]:bg-[var(--on-bg)] aria-[current=true]:text-[var(--on-text)] focus-visible:outline-2 focus-visible:outline-kikyo-500 transition-colors">
+          <span class="w-5 shrink-0 font-mono text-xs text-zinc-500 group-aria-[current=true]:text-inherit">{i + 1}</span>
+          <span class="flex-1 min-w-0 truncate">{t.title}</span>
+          <span class="font-mono text-xs text-zinc-500 group-aria-[current=true]:text-inherit">{t.duration}</span>
+        </button>
+      </li>
+    ))}
+  </ol>
+</div>
+
+<style is:global>
+  /* Room under the footer, so the pinned bar never covers the end of the page. */
+  body:has([data-player-bar]) { padding-bottom: 7rem; }
+  @media (min-width: 640px) { body:has([data-player-bar]) { padding-bottom: 5rem; } }
+</style>
