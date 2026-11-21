@@ -17,6 +17,14 @@ const side = `${icon} !text-zinc-500 dark:!text-zinc-400 aria-pressed:!text-kiky
         <p data-bar-title class="truncate text-base font-semibold leading-6 text-zinc-900 dark:text-white">{tracks[0].title}</p>
         <p data-bar-note data-artist={artist} class="truncate text-sm leading-5 text-zinc-500">{artist}</p>
       </div>
+      <!-- Mute (user, 2026-11-21): its own click doesn't reach the row (which opens the queue). -->
+      <button type="button" data-bar-mute aria-pressed="false" aria-label="Mute" aria-keyshortcuts="M" title="Mute (M)" class={`${side} group -mr-2 shrink-0`}>
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" stroke="none" />
+          <path class="group-aria-pressed:hidden" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" />
+          <path class="group-aria-[pressed=false]:hidden" d="M16 9.5l5 5M21 9.5l-5 5" />
+        </svg>
+      </button>
       {cover ? <img src={cover} alt="" class="w-12 h-12 rounded-lg object-cover shrink-0" /> : <span class="w-12 h-12 rounded-lg bg-zinc-200 dark:bg-zinc-800 shrink-0"></span>}
     </div>
     <!-- The queue opens inside the card, between the track and its progress (user, 2026-11-21): the card is pinned to the
