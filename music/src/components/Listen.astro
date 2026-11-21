@@ -60,18 +60,26 @@ const icon = size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
 )}
 
 <script>
-  import { inkFrom } from '@shared/scripts/ink';
-  // The listen menu opens under its button, right-aligned (CSS anchoring isn't everywhere yet), spreading from it like
-  // ink; scrolling closes it.
+  import { growFrom } from '@shared/scripts/grow';
+  // The listen menu opens under its button, right-aligned (CSS anchoring isn't everywhere yet), and springs out of it.
+  // It's placed in `beforetoggle`, before the browser first draws it (placed in `toggle`, it showed for a frame in the
+  // top-left corner first, user 2026-11-21), and kept invisible until the spring starts. Scrolling closes it.
   document.querySelectorAll<HTMLElement>('.listen-pop').forEach((pop) => {
+    const button = document.querySelector<HTMLElement>(`[popovertarget="${pop.id}"]`)!;
+    pop.addEventListener('beforetoggle', (e) => {
+      if ((e as ToggleEvent).newState !== 'open') return;
+      const b = button.getBoundingClientRect();
+      pop.style.right = `${Math.max(8, innerWidth - b.right)}px`;
+      pop.style.top = `${b.bottom + 6}px`;
+      pop.style.visibility = 'hidden';
+    });
     pop.addEventListener('toggle', (e) => {
       if ((e as ToggleEvent).newState !== 'open') return;
-      const button = document.querySelector<HTMLElement>(`[popovertarget="${pop.id}"]`)!;
+      // not enough room below: open above the button instead
       const b = button.getBoundingClientRect();
-      const below = b.bottom + 6 + pop.offsetHeight < innerHeight;
-      pop.style.left = `${Math.max(8, b.right - pop.offsetWidth)}px`;
-      pop.style.top = `${below ? b.bottom + 6 : b.top - 6 - pop.offsetHeight}px`;
-      inkFrom(pop, button);
+      if (b.bottom + 6 + pop.offsetHeight > innerHeight) pop.style.top = `${Math.max(8, b.top - 6 - pop.offsetHeight)}px`;
+      pop.style.visibility = '';
+      growFrom(pop, button);
       addEventListener('scroll', () => pop.hidePopover(), { once: true, passive: true });
     });
   });
