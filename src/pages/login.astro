@@ -18,13 +18,15 @@ const failed = Astro.url.searchParams.has('failed');
 const musicOrigin = `${Astro.url.protocol}//music.${Astro.url.host}`;
 const back = new URL(returnTo, Astro.url);
 const titleOf = (body = '') => body.match(/^#\s+(.+)$/m)?.[1].trim();
+// A malformed escape (%zz) in a hand-typed or cut-off link names nothing, rather than breaking the page.
+const decode = (s: string) => { try { return decodeURIComponent(s); } catch { return ''; } };
 const [, shelfUser, instance] = back.hostname.startsWith('music.') ? back.pathname.match(/^\/([^/]+)\/(\d+)/) ?? [] : [];
 
 // The database is read in two rounds, not one trip after another: this is the first page new people see.
 // Who's here (every collector's shelf: faces and totals), the admin's shelf, and the shelf of the record they came from.
 const [user, recordOwner, admin, shelves, allPosts] = await Promise.all([
   currentUser(Astro.cookies),
-  shelfUser ? shelfOwner(decodeURIComponent(shelfUser)) : null,
+  shelfUser && decode(shelfUser) ? shelfOwner(decode(shelfUser)) : null,
   adminShelfOwner(),
   directory(4),
   getCollection('blog'),
@@ -39,7 +41,7 @@ const [fromRecord, latest] = await Promise.all([
 // Where they came from: a blog post or a record gets named in the headline.
 const posts = allPosts.filter((p) => p.data.created).sort((a, b) => b.data.created!.valueOf() - a.data.created!.valueOf());
 const fromSlug = back.hostname === Astro.url.hostname && back.pathname.match(/^\/blog\/([^/]+)/)?.[1];
-const fromPost = fromSlug ? posts.find((p) => (p.data.slug || createCleanSlug(p.id)) === decodeURIComponent(fromSlug)) : undefined;
+const fromPost = fromSlug ? posts.find((p) => (p.data.slug || createCleanSlug(p.id)) === decode(fromSlug)) : undefined;
 const shelf = [...(fromRecord ? [fromRecord] : []), ...latest.filter((r) => r.instanceId !== fromRecord?.instanceId)].slice(0, 4);
 const shelfOwnerName = (fromRecord ? recordOwner : admin) ? shelfSlug((fromRecord ? recordOwner : admin)!) : null;
 const showShelf = shelf.length > 0 && !!shelfOwnerName;

@@ -163,6 +163,16 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     });
   })));
 
+  // No sound is coming: the record and the bar stop, and say why.
+  const giveUp = (why: string) => {
+    wanted = false;
+    clearInterval(fade);
+    player?.setVolume(0);
+    liftNeedle(0, true); // nothing was heard: no lift sound, just stop the hiss
+    halt();
+    say(why);
+  };
+
   // Jumps to a track; the caller starts the sound first (the turntable's play), so it plays.
   const go = async (i: number) => {
     if (!tracks[i]) return;
@@ -176,13 +186,13 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     next: () => go(current + 1),
     // A few seconds in: back to the start of the track; otherwise the one before.
     prev: () => (player && player.getCurrentTime() > 3 ? player.seekTo(0, true) : go(Math.max(0, current - 1))),
-    /** Keyboard ← / →: a few seconds back or forward within the track (not past its end). */
     /** Keyboard ↑ / ↓: moves the bar's volume slider (also when it's hidden on phones), with all its rules. */
     volumeBy: (d: number) => {
       if (!volume) return;
       volume.value = String(Math.max(0, Math.min(100, level + d)));
       volume.dispatchEvent(new Event('input'));
     },
+    /** Keyboard ← / →: a few seconds back or forward within the track (not past its end). */
     seekBy: (s: number) => { if (player) player.seekTo(Math.max(0, Math.min(player.getDuration() - 1, player.getCurrentTime() + s)), true); },
     async play(byUser: boolean) {
       if (!byUser && remembered() === 'off') return;
@@ -191,7 +201,11 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
       // fades in under its crackle and the surface hiss stays faintly under the music (silent while muted).
       dropNeedle(700, loud());
       wanted = true;
+      // YouTube's script may never arrive (blocked in some countries, content blockers, offline): rather than spin in
+      // silence, stop once it's clearly not coming.
+      const loading = setTimeout(() => { if (wanted) giveUp('Couldn’t reach YouTube to play the album'); }, 12000);
       await create();
+      clearTimeout(loading);
       if (!wanted) return;
       clearInterval(fade);
       player.setVolume(0);
@@ -204,12 +218,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
         const s = player.getPlayerState();
         if (!wanted || s === PLAYING) return;
         if (s === BUFFERING && performance.now() - asked < 12000) return void setTimeout(check, 1000);
-        wanted = false;
-        clearInterval(fade);
-        player.setVolume(0);
-        liftNeedle(0, true); // nothing was heard: no lift sound, just stop the hiss
-        halt();
-        say('Press play to hear the album');
+        giveUp('Press play to hear the album');
       };
       if (!byUser) setTimeout(check, 3000);
     },
