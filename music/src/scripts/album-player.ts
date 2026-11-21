@@ -62,6 +62,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     muteBtn?.setAttribute('aria-pressed', String(on));
     if (muteBtn) muteBtn.title = `${on ? 'Unmute' : 'Mute'} (M)`;
     if (player) on ? player.mute() : player.unMute();
+    showVolume(); // muted, the volume bar reads zero; unmuted, it's back where it was
   };
   muteBtn?.addEventListener('click', (e) => { e.stopPropagation(); setMuted(!muted); });
   // Volume (the bar's slider, user 2026-11-21): what the fades rise to, remembered in this browser. Moving it while
@@ -69,11 +70,16 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
   const stored = Number((() => { try { return localStorage.getItem(VOLUME_KEY); } catch { return null; } })() ?? NaN);
   let level = Number.isFinite(stored) && stored >= 0 && stored <= 100 ? stored : TARGET;
   const volume = $<HTMLInputElement>('[data-bar-volume]');
-  const paintVolume = () => volume?.style.setProperty('--p', `${level}%`);
-  if (volume) { volume.value = String(level); paintVolume(); }
+  function showVolume() {
+    if (!volume) return;
+    const v = muted ? 0 : level;
+    volume.value = String(v);
+    volume.style.setProperty('--p', `${v}%`);
+  }
+  showVolume();
   volume?.addEventListener('input', () => {
     level = Number(volume.value);
-    paintVolume();
+    volume.style.setProperty('--p', `${level}%`);
     try { localStorage.setItem(VOLUME_KEY, String(level)); } catch {}
     if (muted && level > 0) setMuted(false);
     if (player && wanted) { clearInterval(fade); player.setVolume(level); }

@@ -641,6 +641,25 @@ export const playCount = (text: string) => {
 
 /** "4.5M", "820K", "950": plays, short. */
 /** The video id in a YouTube or YouTube Music track link (watch?v=…, youtu.be/…), or null. */
+/** Each record's own wear (user, 2026-11-21: smudges varied per record, some more, some less, in different places):
+ *  CSS custom properties for the disc (global.css), picked from the record's id so it never changes. About a quarter
+ *  are clean, the rest have light or a little more smudging, cropped from a different part of the pattern; some carry
+ *  a fingerprint somewhere on the grooves. */
+export function vinylWear(id: number): string {
+  let x = (id * 2654435761) >>> 0 || 1;
+  const rnd = () => { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; return x / 2 ** 32; };
+  const pick = rnd();
+  const smudges = pick < 0.25 ? 'none' : pick < 0.7 ? 'var(--smudges-light)' : 'var(--smudges-more)';
+  const pct = (v: number) => `${Math.round(v * 100)}%`;
+  const out = [`--smudges: ${smudges}`, `--sx: ${pct(rnd())}`, `--sy: ${pct(rnd())}`, `--sheen: ${Math.round(rnd() * 360)}deg`];
+  if (rnd() < 0.55) {
+    // somewhere on the grooves: 30–60 % of the way out from the centre, any angle
+    const a = rnd() * 2 * Math.PI, r = 0.15 + rnd() * 0.15;
+    out.push(`--fp-at: ${pct(0.5 + r * Math.cos(a))} ${pct(0.5 + r * Math.sin(a))}`, `--fp-a: ${(0.02 + rnd() * 0.02).toFixed(3)}`);
+  }
+  return out.join('; ');
+}
+
 export const youtubeId = (url: string | undefined) =>
   url?.match(/^https:\/\/(?:(?:www|music|m)\.youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/)([\w-]{11})(?![\w-])/)?.[1] ?? null;
 
