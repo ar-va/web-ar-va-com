@@ -1,14 +1,15 @@
 // The record's own sounds, made in the browser, no audio files (user, 2026-11-21): the needle going down (a low thump
-// with a click and a small bounce, then the lead-in groove's crackle and hiss fading as the album fades in), the
-// needle lifted when the music stops (the groove thins out, then the click of the stylus leaving and the arm settling),
-// and a very faint surface hiss with the odd crackle under the music while it plays. All at the player's volume.
+// with a click and a small bounce, then the lead-in groove's crackle fading as the album fades in), the needle lifted
+// when the music stops (the groove thins out, then the click of the stylus leaving and the arm settling), and the odd
+// crackle under the music while it plays. No hiss while it plays (user, 2026-11-21: crackle only, now and then). All at
+// the player's volume.
 
 /** The sound as samples (mono, -1..1): pure, so it can be tested and rendered to a file. */
 export function needleDrop(sampleRate: number, seconds = 3.6, random = Math.random): Float32Array {
   const out = new Float32Array(Math.round(sampleRate * seconds));
   const dt = 1 / sampleRate;
   const REV = 1.8; // 33⅓ rpm: the groove's one louder tick per turn
-  let hissLp = 0, rumble = 0, pop = 0, popDecay = 0, popTone = 0, nextTick = 0.55;
+  let pop = 0, popDecay = 0, popTone = 0, nextTick = 0.55;
   for (let i = 0; i < out.length; i++) {
     const t = i * dt;
     const white = random() * 2 - 1;
@@ -20,15 +21,13 @@ export function needleDrop(sampleRate: number, seconds = 3.6, random = Math.rand
       s += 0.6 * white * Math.exp(-t / 0.002);
       if (t > 0.085) s += 0.25 * white * Math.exp(-(t - 0.085) / 0.0015);
     }
-    // The groove: hiss (noise minus its low part), a little rumble, crackle pops (mostly small, now and then a big one).
+    // The lead-in groove: crackle pops (mostly small, now and then a big one) and a tick per turn; no hiss or rumble.
     const groove = Math.min(1, Math.max(0, (t - 0.06) / 0.1)) * Math.min(1, Math.max(0, (seconds - t) / (seconds - 1.6)));
-    hissLp += 0.25 * (white - hissLp);
-    rumble += 0.004 * (white - rumble);
     if (random() < 14 * dt) { pop = (random() < 0.12 ? 0.5 : 0.18) * random() * (random() < 0.5 ? -1 : 1); popDecay = Math.exp(-dt / (0.0004 + 0.0012 * random())); popTone = random(); }
     if (t >= nextTick) { pop = 0.32; popDecay = Math.exp(-dt / 0.0015); nextTick += REV; }
     const crackle = pop * (popTone < 0.5 ? 1 : white);
     pop *= popDecay;
-    s += groove * (0.035 * (white - hissLp) + 0.5 * rumble + crackle);
+    s += groove * crackle;
     out[i] = Math.max(-1, Math.min(1, s));
   }
   return out;
@@ -61,30 +60,26 @@ export function needleLift(sampleRate: number, seconds = 0.9, random = Math.rand
   return out;
 }
 
-/** The surface under the music (mono, -1..1), meant to loop: hiss, a little rumble, sparse crackle and one soft tick per
- *  turn (two turns at 33⅓ rpm, so the loop lands on the beat). Quiet on its own; played quieter still. */
-export function surfaceLoop(sampleRate: number, seconds = 3.6, random = Math.random): Float32Array {
+/** The surface under the music (mono, -1..1), meant to loop: only the odd crackle (user, 2026-11-21: no hiss), about
+ *  one a second at random moments, mostly small, now and then a bigger one, silence in between. Twelve seconds, so the
+ *  pattern doesn't audibly repeat. */
+export function surfaceLoop(sampleRate: number, seconds = 12, random = Math.random): Float32Array {
   const out = new Float32Array(Math.round(sampleRate * seconds));
   const dt = 1 / sampleRate;
-  let hissLp = 0, rumble = 0, pop = 0, popDecay = 0, nextTick = 0.9;
+  let pop = 0, popDecay = 0, popTone = 0;
   for (let i = 0; i < out.length; i++) {
-    const t = i * dt;
     const white = random() * 2 - 1;
-    hissLp += 0.25 * (white - hissLp);
-    rumble += 0.004 * (white - rumble);
-    if (random() < 6 * dt) { pop = 0.12 * random() * (random() < 0.5 ? -1 : 1); popDecay = Math.exp(-dt / (0.0004 + 0.001 * random())); }
-    if (t >= nextTick) { pop = 0.1; popDecay = Math.exp(-dt / 0.0012); nextTick += 1.8; }
-    const s = 0.035 * (white - hissLp) + 0.4 * rumble + pop;
+    if (random() < 1.2 * dt) { pop = (random() < 0.15 ? 0.3 : 0.12) * (0.5 + 0.5 * random()) * (random() < 0.5 ? -1 : 1); popDecay = Math.exp(-dt / (0.0004 + 0.001 * random())); popTone = random(); }
+    out[i] = pop * (popTone < 0.5 ? 1 : white);
     pop *= popDecay;
-    out[i] = Math.max(-1, Math.min(1, s));
   }
-  // smooth the seam: a short crossfade of the end into the start
-  const fade = Math.round(sampleRate * 0.05);
-  for (let i = 0; i < fade; i++) { const k = i / fade; out[i] = out[i] * k + out[out.length - fade + i] * (1 - k); }
-  return out.subarray(0, out.length - fade);
+  // a pop cut off at the end would click at the loop's seam: the last 10 ms fade out
+  const fade = Math.round(sampleRate * 0.01);
+  for (let i = 0; i < fade; i++) out[out.length - 1 - i] *= i / fade;
+  return out;
 }
 
-// The surface plays at this share of the player's volume: very faint, there rather than heard.
+// The surface crackle plays at this share of the player's volume: faint, there rather than heard.
 const SURFACE = 0.3;
 let ctx: AudioContext | null = null;
 let surface: { source: AudioBufferSourceNode; gain: GainNode } | null = null;
@@ -115,7 +110,7 @@ const once = (c: AudioContext, samples: Float32Array, volume: number, delayMs = 
 };
 
 /** `volume` is the player's (0–1, as YouTube's volume / 100), so the record sounds as loud as the music. The needle
- *  drops after `delayMs` (the platter spins up first) and the surface hiss fades in under it. */
+ *  drops after `delayMs` (the platter spins up first) and the surface crackle fades in under it. */
 export function dropNeedle(delayMs: number, volume: number) {
   withSound((c) => {
     once(c, needleDrop(c.sampleRate), volume, delayMs);
@@ -134,13 +129,13 @@ export function dropNeedle(delayMs: number, volume: number) {
   });
 }
 
-/** The music stopped: the needle comes off (unless `quiet`, e.g. the browser refused sound) and the hiss stops. */
+/** The music stopped: the needle comes off (unless `quiet`, e.g. the browser refused sound) and the crackle stops. */
 export function liftNeedle(volume: number, quiet = false) {
   stopSurface(quiet ? 0 : 0.25);
   if (!quiet && volume > 0) withSound((c) => once(c, needleLift(c.sampleRate), volume));
 }
 
-/** The player's volume changed (slider, mute): the hiss follows. */
+/** The player's volume changed (slider, mute): the crackle follows. */
 export function surfaceVolume(volume: number) {
   if (surface && ctx) surface.gain.gain.setTargetAtTime(volume * SURFACE, ctx.currentTime, 0.08);
 }

@@ -203,12 +203,11 @@ html { scrollbar-gutter: stable; }
    brightening toward that corner, a little shade toward the opposite one, and the top and right edges catching it.
    Soft-light blending, so the artwork keeps its colours and contrast (a white overlay would wash it out); matte, no
    streak. It moves with the sleeve. */
-/* The sleeve is cardboard (user, 2026-11-21): a fine paper grain everywhere, and on worn sleeves ring wear, the pale
-   circle a record presses into its sleeve over the years (--ring from vinylWear(): 0, 0.5 or 1 per record). */
+/* The sleeve is cardboard (user, 2026-11-21): a fine paper grain everywhere. (Ring wear, a pale circle per record, was
+   removed the same day: user, no circles on the sleeves.) */
 .sleeve-light {
   position: absolute; inset: 0; z-index: 2; pointer-events: none;
   background:
-    radial-gradient(circle closest-side, transparent 84%, rgb(255 255 255 / calc(0.25 * var(--ring, 0))) 89% 92%, rgb(0 0 0 / calc(0.1 * var(--ring, 0))) 93.5%, transparent 96%),
     var(--paper-grain) 0 0 / 160px 160px,
     linear-gradient(225deg, rgb(255 255 255 / 0.4) 0%, rgb(255 255 255 / 0.12) 30%, transparent 55%, rgb(0 0 0 / 0.22) 100%);
   box-shadow: inset -1px 1px 0 rgb(255 255 255 / 0.5), inset 1px -1px 0 rgb(0 0 0 / 0.25);

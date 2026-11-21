@@ -67,7 +67,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
   const stored = Number((() => { try { return localStorage.getItem(VOLUME_KEY); } catch { return null; } })() ?? NaN);
   let level = Number.isFinite(stored) && stored >= 0 && stored <= 100 ? stored : TARGET;
   const volume = $<HTMLInputElement>('[data-bar-volume]');
-  // The record's own sounds (needle, surface hiss) play at the music's volume: YouTube's 0–100 as 0–1, none when muted.
+  // The record's own sounds (needle, surface crackle) play at the music's volume: YouTube's 0–100 as 0–1, none when muted.
   const loud = () => (muted ? 0 : level / 100);
   function showVolume() {
     if (!volume) return;
@@ -168,7 +168,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     wanted = false;
     clearInterval(fade);
     player?.setVolume(0);
-    liftNeedle(0, true); // nothing was heard: no lift sound, just stop the hiss
+    liftNeedle(0, true); // nothing was heard: no lift sound, just stop the crackle
     halt();
     say(why);
   };
@@ -198,7 +198,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
       if (!byUser && remembered() === 'off') return;
       if (byUser) remember('on');
       // The needle goes down once the platter has spun up (RecordHero: 1.1 s), as loud as the music will be; the album
-      // fades in under its crackle and the surface hiss stays faintly under the music (silent while muted).
+      // fades in under its crackle and the odd surface crackle stays under the music (silent while muted).
       dropNeedle(700, loud());
       wanted = true;
       // YouTube's script may never arrive (blocked in some countries, content blockers, offline): rather than spin in

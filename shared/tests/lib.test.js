@@ -421,7 +421,6 @@ test('vinylWear: the same record always looks the same; records differ, a quarte
   for (const s of all) {
     const fp = s.match(/--fp-at: (\d+)% (\d+)%/);
     if (fp) assert.ok(Math.hypot(fp[1] - 50, fp[2] - 50) >= 14 && Math.hypot(fp[1] - 50, fp[2] - 50) <= 31, s);
-    assert.match(s, /^--smudges: [\w(),-]+; --sx: \d+%; --sy: \d+%; --sheen: \d+deg; --ring: (0|0\.5|1)\b/);
-    assert.equal(/--smudges: none/.test(s), /--ring: 0;|--ring: 0$/.test(s), s); // a clean record's sleeve has no ring
+    assert.match(s, /^--smudges: [\w(),-]+; --sx: \d+%; --sy: \d+%; --sheen: \d+deg/);
   }
 });

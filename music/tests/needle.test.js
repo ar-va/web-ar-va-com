@@ -16,6 +16,9 @@ test('needleDrop: a loud landing, a quieter groove, silence at the end, never cl
   assert.ok(peak(landing) > 0.5, `landing peak ${peak(landing)}`);
   assert.ok(rms(groove) > 0.005 && rms(groove) < rms(landing) / 3, `groove ${rms(groove)} vs landing ${rms(landing)}`);
   assert.ok(peak(end) < 0.02, `end peak ${peak(end)}`);
+  // the lead-in is crackle, not hiss: silent between the pops
+  const silent = groove.filter((x) => Math.abs(x) < 0.0005).length / groove.length;
+  assert.ok(silent > 0.8, `silent share in the groove ${silent}`);
 });
 
 test('needleLift: groove thins out, a click as the stylus leaves, a soft knock as the arm rests, then quiet', () => {
@@ -29,11 +32,16 @@ test('needleLift: groove thins out, a click as the stylus leaves, a soft knock a
   assert.ok(peak(at(0.88, 0.9)) < 0.02);
 });
 
-test('surfaceLoop: faint, no clipping, and loops without a jump at the seam', () => {
+test('surfaceLoop: only the odd crackle (no hiss: silent between pops), about one a second, no clipping, a quiet seam', () => {
   const sr = 48000;
-  const s = surfaceLoop(sr, 3.6, seeded(5));
-  assert.ok(s.length > 3.5 * sr && s.length < 3.6 * sr);
-  assert.ok(rms(s) > 0.003 && rms(s) < 0.04, `rms ${rms(s)}`);
+  const s = surfaceLoop(sr, 12, seeded(5));
+  assert.equal(s.length, 12 * sr);
   assert.ok(s.every((x) => x >= -1 && x <= 1));
-  assert.ok(Math.abs(s[s.length - 1] - s[0]) < 0.1, `seam ${s[s.length - 1]} → ${s[0]}`);
+  const quiet = s.filter((x) => Math.abs(x) < 0.0005).length / s.length;
+  assert.ok(quiet > 0.97, `silent share ${quiet}`); // a hiss would keep nearly every sample above that
+  // crackles: starts of a run of audible samples after silence
+  let pops = 0;
+  for (let i = 1; i < s.length; i++) if (Math.abs(s[i]) > 0.02 && Math.abs(s[i - 1]) < 0.0005) pops++;
+  assert.ok(pops >= 6 && pops <= 24, `pops ${pops}`);
+  assert.ok(Math.abs(s[s.length - 1]) < 0.01 && Math.abs(s[0]) < 0.3, `seam ${s[s.length - 1]} → ${s[0]}`);
 });

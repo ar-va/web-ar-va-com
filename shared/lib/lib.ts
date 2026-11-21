@@ -649,7 +649,7 @@ export function vinylWear(id: number): string {
   const pick = rnd();
   const smudges = pick < 0.25 ? 'none' : pick < 0.7 ? 'var(--smudges-light)' : 'var(--smudges-more)';
   const pct = (v: number) => `${Math.round(v * 100)}%`;
-  const out = [`--smudges: ${smudges}`, `--sx: ${pct(rnd())}`, `--sy: ${pct(rnd())}`, `--sheen: ${Math.round(rnd() * 360)}deg`, `--ring: ${pick < 0.25 ? 0 : pick < 0.7 ? 0.5 : 1}`];
+  const out = [`--smudges: ${smudges}`, `--sx: ${pct(rnd())}`, `--sy: ${pct(rnd())}`, `--sheen: ${Math.round(rnd() * 360)}deg`];
   if (rnd() < 0.55) {
     // somewhere on the grooves: 30–60 % of the way out from the centre, any angle
     const a = rnd() * 2 * Math.PI, r = 0.15 + rnd() * 0.15;
