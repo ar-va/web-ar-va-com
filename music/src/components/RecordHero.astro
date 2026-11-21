@@ -117,13 +117,10 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
     const button = turntable.querySelector<HTMLElement>('[data-spin]')!;
     const disc = turntable.querySelector<HTMLElement>('.disc');
     const sleeve = disc?.closest<HTMLElement>('.sleeve');
-    const glare = turntable.querySelector<HTMLElement>('.glare');
     if (!disc || !sleeve) return;
     // Album page with tracks on YouTube Music: the record's sound follows the turntable.
     const sound = turntable.dataset.play ? albumPlayer(JSON.parse(turntable.dataset.play), () => halt()) : null;
     const barPlay = sound && document.querySelector<HTMLElement>('[data-bar-play]');
-    // The still glare gives way while the record plays and comes back as it stops.
-    const fadeGlare = (to: number, ms: number) => glare?.animate([{ opacity: getComputedStyle(glare).opacity }, { opacity: to }], { duration: ms, easing: 'ease-in-out', fill: 'forwards' });
     let spin: Animation | null = null;
     let ramp = 0;
     let notes = 0;
@@ -142,8 +139,8 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       };
       ramp = requestAnimationFrame(step);
     };
-    // Spin-down: coasts from its current speed and halts on a whole turn, so the record's faint sheen comes to rest
-    // under the still glare (where it also starts from). Returns how long the stop takes.
+    // Spin-down: coasts from its current speed and halts on a whole turn, back at the resting position it started from.
+    // The light (.glare) stays still above it the whole time: the record turns under it. Returns how long the stop takes.
     const coast = () => {
       cancelAnimationFrame(ramp);
       const s = spin!;
@@ -191,18 +188,17 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
         spin.playbackRate = 0;
         spin.play();
         spinUp(1100);
-        fadeGlare(0, 900);
         emitBurst(sleeve, 'right', 3, 900, 400);
         clearInterval(notes);
         notes = window.setInterval(() => { if (visible && !document.hidden) emitBurst(sleeve, 'right', 1, 300); }, 1600);
       } else {
         set(false);
         clearInterval(notes);
-        if (spin) fadeGlare(1, coast());
+        if (spin) coast();
       }
     };
     // The album ended or the browser refused sound: the record comes to rest without touching the sound.
-    function halt() { if (playing) { set(false); clearInterval(notes); if (spin) fadeGlare(1, coast()); } }
+    function halt() { if (playing) { set(false); clearInterval(notes); if (spin) coast(); } }
     button.addEventListener('click', () => toggle(true));
     turntable.querySelector('[data-spin-cover]')?.addEventListener('click', () => toggle(true));
     // The player bar: play / pause is the record's; previous, next and a track in the queue start it if it's stopped.
