@@ -122,8 +122,9 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
     </div>
   ) : (
     <article class:list={['max-w-5xl mx-auto px-6 w-full flex-grow pt-12 *:max-w-3xl', play.length > 0 ? 'pb-12' : 'pb-24']}>
-      <!-- The top row and the hero use the whole frame; details, tracklist and comments keep the reading measure. -->
-      <div class="flex items-center justify-between gap-4 !max-w-none">
+      <!-- Everything keeps the reading column (Edit ends where Details ends, the player is as wide as the tracklist;
+           user 2026-11-21); only the hero uses the whole frame. -->
+      <div class="flex items-center justify-between gap-4">
         <Breadcrumbs class="min-w-0" share items={[{ label: 'Shelves', href: '/' }, { label: owner.name, href: shelfPath }, { label: v.title }]} />
         {isOwner && (
           <a href={`${path}/edit`} class="ctl pl-2.5">

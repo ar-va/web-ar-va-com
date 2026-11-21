@@ -118,7 +118,7 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
     if (!disc || !sleeve) return;
     // Album page with tracks on YouTube Music: the record's sound follows the turntable.
     const sound = turntable.dataset.play ? albumPlayer(JSON.parse(turntable.dataset.play), () => halt()) : null;
-    const barPlay = sound && document.querySelector<HTMLElement>('[data-bar-play]');
+    const barPlays = sound ? [...document.querySelectorAll<HTMLElement>('[data-bar-play]')] : []; // mini row + full card
     let spin: Animation | null = null;
     let ramp = 0;
     let notes = 0;
@@ -164,9 +164,11 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       const label = on ? 'Stop the record' : 'Play the record';
       button.title = label;
       button.setAttribute('aria-label', label);
-      barPlay?.setAttribute('aria-pressed', String(on));
-      barPlay?.setAttribute('aria-label', on ? 'Pause' : 'Play');
-      if (barPlay) barPlay.title = `${on ? 'Pause' : 'Play'} (Space)`;
+      barPlays.forEach((b) => {
+        b.setAttribute('aria-pressed', String(on));
+        b.setAttribute('aria-label', on ? 'Pause' : 'Play');
+        b.title = `${on ? 'Pause' : 'Play'} (Space)`;
+      });
     };
     // Reduced motion: the record stays still and nothing plays by itself; the player bar still plays the album.
     const toggle = (byUser: boolean) => {
@@ -202,9 +204,9 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
     // The player bar: play / pause is the record's; previous, next and a track in the queue start it if it's stopped.
     if (sound) {
       const start = () => { if (!playing) toggle(true); };
-      barPlay!.addEventListener('click', () => toggle(true));
+      barPlays.forEach((b) => b.addEventListener('click', () => toggle(true)));
       document.querySelector('[data-bar-prev]')?.addEventListener('click', () => { start(); sound.prev(); });
-      document.querySelector('[data-bar-next]')?.addEventListener('click', () => { start(); sound.next(); });
+      document.querySelectorAll('[data-bar-next]').forEach((b) => b.addEventListener('click', () => { start(); sound.next(); }));
       document.querySelectorAll<HTMLElement>('[data-bar-go]').forEach((b) => b.addEventListener('click', () => { start(); sound.go(Number(b.dataset.barGo)); }));
       // Keyboard (user, 2026-11-21): Space / K play-pause, ← → 5 s, Shift+← → previous / next, ↑ ↓ volume (so they
       // don't scroll album pages), Q queue, R repeat, M mute.
@@ -220,7 +222,7 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
         if (key === ' ' && t.closest('button, a, summary')) return;
         const act: Record<string, () => void> = e.shiftKey
           ? { ArrowLeft: () => press('[data-bar-prev]'), ArrowRight: () => press('[data-bar-next]') }
-          : { ' ': () => toggle(true), k: () => toggle(true), ArrowLeft: () => sound.seekBy(-5), ArrowRight: () => sound.seekBy(5), ArrowUp: () => sound.volumeBy(10), ArrowDown: () => sound.volumeBy(-10), q: () => press('[data-bar-queue]'), r: () => press('[data-bar-repeat]'), m: () => press('[data-bar-mute]') };
+          : { ' ': () => toggle(true), k: () => toggle(true), ArrowLeft: () => sound.seekBy(-5), ArrowRight: () => sound.seekBy(5), ArrowUp: () => sound.volumeBy(10), ArrowDown: () => sound.volumeBy(-10), q: () => press(document.querySelector('[data-bar-card].expanded') ? '[data-bar-queue]' : '[data-bar-mini-queue]'), r: () => press('[data-bar-repeat]'), m: () => press('[data-bar-mute]') };
         const run = act[key];
         if (!run) return;
         e.preventDefault();

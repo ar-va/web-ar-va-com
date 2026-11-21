@@ -1,122 +1,194 @@
 ---
-// The album's player, pinned to the bottom of the album page (user, 2026-11-21): the track playing, previous / play /
-// next, its progress (drag to seek), repeat and the queue. The sound is scripts/album-player.ts; play / pause also turns
-// the record in the hero (RecordHero's script wires the buttons).
-// Laid out like a phone's now-playing card (user's reference, 2026-11-21): title and artist with the cover on the right,
-// the progress line with its times under it, then one evenly spaced row: repeat, previous, play, next, queue.
+// The album's player (user, 2026-11-21), sticky at the end of the album page in its reading column. The sound is
+// scripts/album-player.ts; play / pause also turns the record in the hero (RecordHero's script wires the buttons).
+// Mini by default (user's pick, 2026-11-21: the full card took too much room): one row with the cover, track, play, next
+// and Queue, and a thin progress line along its bottom. Tapping the row expands it upward into the full card laid out
+// like the user's phone reference: track and artist with volume and the cover on the right, the queue (when open), the
+// progress with its times, then repeat, previous, play, next, queue.
 interface Props { tracks: { id: string; title: string; duration: string }[]; artist: string; cover: string | null }
 const { tracks, artist, cover } = Astro.props;
-const icon = 'w-10 h-10 grid place-items-center rounded-full cursor-pointer text-zinc-800 dark:text-white hover:bg-[var(--well)] disabled:opacity-35 disabled:pointer-events-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500';
+// Snappy: a press shrinks a button for an instant (none with reduced motion).
+const press = 'motion-safe:active:scale-90 transition-[transform,background-color,color] duration-150';
+const icon = `w-10 h-10 grid place-items-center rounded-full cursor-pointer text-zinc-800 dark:text-white hover:bg-[var(--well)] disabled:opacity-35 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500 ${press}`;
 const side = `${icon} !text-zinc-500 dark:!text-zinc-400 aria-pressed:!text-kikyo-600 dark:aria-pressed:!text-kikyo-400 aria-expanded:!text-kikyo-600 dark:aria-expanded:!text-kikyo-400`;
+const playIcon = 'M7.5 4.8v14.4a.8.8 0 0 0 1.2.7l11.3-7.2a.8.8 0 0 0 0-1.4L8.7 4.1a.8.8 0 0 0-1.2.7z';
+const queueIcon = '<path d="M4 6h11M4 12h11M4 18h7" /><path d="M17 15.5v-9l4 2" /><circle cx="15" cy="16" r="2" />';
 ---
-<!-- Sticky at the end of the album page (user, 2026-11-21: the fixed bar needed padding under the footer, which made it
-     look bigger): it stays at the bottom of the screen while the page scrolls and rests just above the footer at the
-     end. Its own height is the closed card's (set by the script below), and the card sits at its bottom, so opening the
-     queue grows it upward there too. -->
-<div data-player-bar class="sticky bottom-0 z-40 mt-8 h-[11.5rem] !max-w-none max-sm:-mx-3 pointer-events-none">
-  <section aria-label="Album player" class="glass pointer-events-auto absolute inset-x-0 bottom-3 mx-auto w-full max-w-[30rem] rounded-3xl px-5 pt-4 pb-2">
-    <!-- Clicking the track row also opens / closes the queue (user, 2026-11-21); keyboards use the Queue button. -->
-    <div data-bar-head class="flex items-center gap-4 cursor-pointer" title="Show or hide the queue">
-      <div class="min-w-0 flex-1" aria-live="polite">
-        <p data-bar-title class="truncate text-base font-semibold leading-6 text-zinc-900 dark:text-white">{tracks[0].title}</p>
-        <p data-bar-note data-artist={artist} class="truncate text-sm leading-5 text-zinc-500">{artist}</p>
-      </div>
-      <!-- Mute (user, 2026-11-21): its own click doesn't reach the row (which opens the queue). -->
-      <button type="button" data-bar-mute aria-pressed="false" aria-label="Mute" aria-keyshortcuts="M" title="Mute (M)" class={`${side} group -mr-2 shrink-0`}>
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" stroke="none" />
-          <path class="group-aria-pressed:hidden" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" />
-          <path class="group-aria-[pressed=false]:hidden" d="M16 9.5l5 5M21 9.5l-5 5" />
-        </svg>
+<!-- Sticky: at the bottom of the screen while the page scrolls, resting above the footer at the end. Its height in the
+     page is the mini card's (the script keeps it so) and the card sits at its bottom, so expanding grows it upward. -->
+<div data-player-bar class="sticky bottom-0 z-40 mt-8 h-[4.75rem] pointer-events-none">
+  <section data-bar-card aria-label="Album player" class="player-card glass pointer-events-auto absolute inset-x-0 bottom-3 rounded-3xl px-3 py-2.5 sm:px-4">
+    <!-- The row: tapping it expands / collapses the player (keyboards: the title is the button). -->
+    <div data-bar-head class="flex items-center gap-3 cursor-pointer">
+      {cover ? <img src={cover} alt="" class="player-cover w-11 h-11 rounded-lg object-cover shrink-0" /> : <span class="player-cover w-11 h-11 rounded-lg bg-zinc-200 dark:bg-zinc-800 shrink-0"></span>}
+      <button type="button" data-bar-expand aria-expanded="false" aria-controls="player-more" title="Show the full player"
+        class="min-w-0 flex-1 text-left rounded-lg cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500">
+        <span class="block" aria-live="polite">
+          <span data-bar-title class="block truncate text-[0.9375rem] font-semibold leading-5 text-zinc-900 dark:text-white">{tracks[0].title}</span>
+          <span data-bar-note data-artist={artist} class="block truncate text-sm leading-5 text-zinc-500">{artist}</span>
+        </span>
       </button>
-      <!-- Volume: from 640 px up (phones have volume buttons, and iOS ignores a page's volume). -->
-      <input data-bar-volume type="range" min="0" max="100" step="1" value="50" aria-label="Volume" aria-keyshortcuts="ArrowUp ArrowDown"
-        class="player-seek max-sm:hidden w-20 shrink-0 mr-1" />
-      {cover ? <img src={cover} alt="" class="w-12 h-12 rounded-lg object-cover shrink-0" /> : <span class="w-12 h-12 rounded-lg bg-zinc-200 dark:bg-zinc-800 shrink-0"></span>}
+      <!-- Mini controls (collapsed only); their clicks stay theirs (the row would expand). -->
+      <div class="player-mini flex items-center shrink-0 -mr-1">
+        <button type="button" data-bar-play aria-pressed="false" aria-label="Play" aria-keyshortcuts="Space K" title="Play (Space)" class={`${icon} group`}>
+          <svg class="player-pop w-6 h-6 group-aria-pressed:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d={playIcon} /></svg>
+          <svg class="player-pop w-6 h-6 group-aria-[pressed=false]:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2" /><rect x="13.8" y="5" width="4.2" height="14" rx="1.2" /></svg>
+        </button>
+        <button type="button" data-bar-next aria-label="Next track" aria-keyshortcuts="Shift+ArrowRight" title="Next track (Shift+→)" disabled={tracks.length < 2} class={`${icon} motion-safe:active:translate-x-0.5`}>
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 5.5v13L15.5 12z" /><rect x="16.4" y="5" width="2.6" height="14" rx="1" /></svg>
+        </button>
+        <button type="button" data-bar-mini-queue aria-label="Queue" aria-keyshortcuts="Q" title="Queue (Q)" class={side}>
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" aria-hidden="true" set:html={queueIcon} />
+        </button>
+      </div>
+      <!-- Mute and volume (expanded only; the slider from 640 px up: phones have volume buttons, iOS ignores it). -->
+      <div class="player-full flex items-center gap-1 shrink-0">
+        <button type="button" data-bar-mute aria-pressed="false" aria-label="Mute" aria-keyshortcuts="M" title="Mute (M)" class={`${side} group`}>
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" stroke="none" />
+            <path class="group-aria-pressed:hidden" d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" />
+            <path class="group-aria-[pressed=false]:hidden" d="M16 9.5l5 5M21 9.5l-5 5" />
+          </svg>
+        </button>
+        <input data-bar-volume type="range" min="0" max="100" step="1" value="50" aria-label="Volume" aria-keyshortcuts="ArrowUp ArrowDown"
+          class="player-seek max-sm:hidden w-20 mr-2" />
+      </div>
     </div>
-    <!-- The queue opens inside the card, between the track and its progress (user, 2026-11-21): the card is pinned to the
-         bottom, so it grows upward and the track slides up as the list unfolds. -->
-    <div id="player-queue" class="player-queue -mx-2" inert>
-      <div class="min-h-0 overflow-hidden">
-        <div class="mx-2 mt-3 border-t border-zinc-200/70 dark:border-white/10 pt-2">
-          <p class="pb-1.5 flex items-baseline justify-between gap-3 text-xs text-zinc-500">
-            <span class="font-medium text-zinc-700 dark:text-zinc-300">Queue</span>
-            <span>{tracks.length} track{tracks.length === 1 ? '' : 's'} from YouTube Music</span>
-          </p>
-          <ol data-bar-list class="-mx-2 relative max-h-[min(45vh,24rem)] overflow-y-auto overscroll-contain">
-            {tracks.map((t, i) => (
-              <li>
-                <button type="button" data-bar-go={i} class="group w-full flex items-baseline gap-3 rounded-xl px-2 py-2 text-left text-sm cursor-pointer text-zinc-700 dark:text-zinc-300 hover:bg-[var(--well)] aria-[current=true]:bg-[var(--on-bg)] aria-[current=true]:text-[var(--on-text)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-kikyo-500 transition-colors">
-                  <span class="w-5 shrink-0 font-mono text-xs text-zinc-500 group-aria-[current=true]:text-inherit">{i + 1}</span>
-                  <span class="flex-1 min-w-0 truncate">{t.title}</span>
-                  <span class="font-mono text-xs text-zinc-500 group-aria-[current=true]:text-inherit">{t.duration}</span>
-                </button>
-              </li>
-            ))}
-          </ol>
+
+    <!-- The rest of the full player: unfolds upward from the mini row. -->
+    <div id="player-more" class="player-more -mx-2" inert>
+      <div class="min-h-0 overflow-hidden px-2">
+        <!-- The queue opens between the track and its progress; the card grows upward as it unfolds. -->
+        <div id="player-queue" class="player-queue">
+          <div class="min-h-0 overflow-hidden">
+            <div class="mt-3 border-t border-zinc-200/70 dark:border-white/10 pt-2">
+              <p class="pb-1.5 flex items-baseline justify-between gap-3 text-xs text-zinc-500">
+                <span class="font-medium text-zinc-700 dark:text-zinc-300">Queue</span>
+                <span>{tracks.length} track{tracks.length === 1 ? '' : 's'} from YouTube Music</span>
+              </p>
+              <ol data-bar-list class="relative max-h-[min(45vh,24rem)] overflow-y-auto overscroll-contain">
+                {tracks.map((t, i) => (
+                  <li>
+                    <button type="button" data-bar-go={i} class={`group w-full flex items-baseline gap-3 rounded-xl px-2 py-2 text-left text-sm cursor-pointer text-zinc-700 dark:text-zinc-300 hover:bg-[var(--well)] aria-[current=true]:bg-[var(--on-bg)] aria-[current=true]:text-[var(--on-text)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-kikyo-500 motion-safe:active:scale-[0.98] transition-[transform,background-color,color] duration-150`}>
+                      <span class="w-5 shrink-0 font-mono text-xs text-zinc-500 group-aria-[current=true]:text-inherit">{i + 1}</span>
+                      <span class="flex-1 min-w-0 truncate">{t.title}</span>
+                      <span class="font-mono text-xs text-zinc-500 group-aria-[current=true]:text-inherit">{t.duration}</span>
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="pt-3">
+          <input data-bar-seek type="range" min="0" max="0" value="0" step="1" disabled aria-label="Position in the track" aria-keyshortcuts="ArrowLeft ArrowRight" class="player-seek block w-full" />
+          <div class="mt-2 flex justify-between font-mono text-[11px] leading-none text-zinc-500 tabular-nums">
+            <span data-bar-time>0:00</span>
+            <span data-bar-length>{tracks[0].duration || '0:00'}</span>
+          </div>
+        </div>
+        <!-- The five controls stay a compact group, however wide the column. -->
+        <div class="mx-auto max-w-[26rem] mt-0.5 flex items-center justify-between">
+          <button type="button" data-bar-repeat aria-pressed="false" aria-label="Repeat the album" aria-keyshortcuts="R" title="Repeat the album (R)" class={`${side} group`}>
+            <svg class="w-5 h-5 motion-safe:transition-transform motion-safe:duration-300 group-aria-pressed:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2.5l3 3-3 3" /><path d="M4 11.5v-1a5 5 0 0 1 5-5h11" /><path d="M7 21.5l-3-3 3-3" /><path d="M20 12.5v1a5 5 0 0 1-5 5H4" /></svg>
+          </button>
+          <button type="button" data-bar-prev aria-label="Previous track" aria-keyshortcuts="Shift+ArrowLeft" title="Previous track (Shift+←)" class={`${icon} motion-safe:active:-translate-x-0.5`}>
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.6" height="14" rx="1" /><path d="M19 5.5v13L8.5 12z" /></svg>
+          </button>
+          <button type="button" data-bar-play aria-pressed="false" aria-label="Play" aria-keyshortcuts="Space K" title="Play (Space)" class={`${icon} group w-14 h-14`}>
+            <svg class="player-pop w-9 h-9 group-aria-pressed:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d={playIcon} /></svg>
+            <svg class="player-pop w-9 h-9 group-aria-[pressed=false]:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2" /><rect x="13.8" y="5" width="4.2" height="14" rx="1.2" /></svg>
+          </button>
+          <button type="button" data-bar-next aria-label="Next track" aria-keyshortcuts="Shift+ArrowRight" title="Next track (Shift+→)" disabled={tracks.length < 2} class={`${icon} motion-safe:active:translate-x-0.5`}>
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 5.5v13L15.5 12z" /><rect x="16.4" y="5" width="2.6" height="14" rx="1" /></svg>
+          </button>
+          <button type="button" data-bar-queue aria-controls="player-queue" aria-expanded="false" aria-label="Queue" aria-keyshortcuts="Q" title="Queue (Q)" class={side}>
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" aria-hidden="true" set:html={queueIcon} />
+          </button>
         </div>
       </div>
     </div>
-    <div class="mt-4">
-      <input data-bar-seek type="range" min="0" max="0" value="0" step="1" disabled aria-label="Position in the track" aria-keyshortcuts="ArrowLeft ArrowRight" class="player-seek block w-full" />
-      <div class="mt-2 flex justify-between font-mono text-[11px] leading-none text-zinc-500 tabular-nums">
-        <span data-bar-time>0:00</span>
-        <span data-bar-length>{tracks[0].duration || '0:00'}</span>
-      </div>
-    </div>
-    <div class="mt-1 -mx-2 flex items-center justify-between">
-      <button type="button" data-bar-repeat aria-pressed="false" aria-label="Repeat the album" aria-keyshortcuts="R" title="Repeat the album (R)" class={side}>
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2.5l3 3-3 3" /><path d="M4 11.5v-1a5 5 0 0 1 5-5h11" /><path d="M7 21.5l-3-3 3-3" /><path d="M20 12.5v1a5 5 0 0 1-5 5H4" /></svg>
-      </button>
-      <button type="button" data-bar-prev aria-label="Previous track" aria-keyshortcuts="Shift+ArrowLeft" title="Previous track (Shift+←)" class={icon}>
-        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.6" height="14" rx="1" /><path d="M19 5.5v13L8.5 12z" /></svg>
-      </button>
-      <button type="button" data-bar-play aria-pressed="false" aria-label="Play" aria-keyshortcuts="Space K" title="Play (Space)" class={`${icon} group w-14 h-14`}>
-        <svg class="w-9 h-9 group-aria-pressed:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.5 4.8v14.4a.8.8 0 0 0 1.2.7l11.3-7.2a.8.8 0 0 0 0-1.4L8.7 4.1a.8.8 0 0 0-1.2.7z" /></svg>
-        <svg class="w-9 h-9 group-aria-[pressed=false]:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2" /><rect x="13.8" y="5" width="4.2" height="14" rx="1.2" /></svg>
-      </button>
-      <button type="button" data-bar-next aria-label="Next track" aria-keyshortcuts="Shift+ArrowRight" title="Next track (Shift+→)" disabled={tracks.length < 2} class={icon}>
-        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 5.5v13L15.5 12z" /><rect x="16.4" y="5" width="2.6" height="14" rx="1" /></svg>
-      </button>
-      <button type="button" data-bar-queue aria-controls="player-queue" aria-expanded="false" aria-label="Queue" aria-keyshortcuts="Q" title="Queue (Q)" class={side}>
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M4 6h11M4 12h11M4 18h7" /><path d="M17 15.5v-9l4 2" /><circle cx="15" cy="16" r="2" /></svg>
-      </button>
-    </div>
+
+    <!-- Mini only: the track's progress as a thin line along the bottom (the card's --p, set by album-player.ts). -->
+    <span class="player-line" aria-hidden="true"></span>
   </section>
 </div>
 
 <script>
-  // Queue open / closed: the button, Esc, or a click outside the card. Closed, the list is inert (not tabbable).
-  const card = document.querySelector<HTMLElement>('[data-player-bar] section');
-  const button = document.querySelector<HTMLElement>('[data-bar-queue]');
+  // Expanded / collapsed (the row, the title button, Esc, a click outside) and the queue (its buttons, Q). Collapsed,
+  // the full player is inert (not tabbable); collapsing also closes the queue.
+  const card = document.querySelector<HTMLElement>('[data-bar-card]');
+  const more = document.getElementById('player-more');
+  const head = document.querySelector<HTMLElement>('[data-bar-head]');
+  const expandBtn = document.querySelector<HTMLElement>('[data-bar-expand]');
+  const cover = card?.querySelector<HTMLElement>('.player-cover');
+  const queueBtn = document.querySelector<HTMLElement>('[data-bar-queue]');
   const queue = document.getElementById('player-queue');
   const list = document.querySelector<HTMLElement>('[data-bar-list]');
-  const open = (on: boolean) => {
-    if (!queue || !button) return;
-    button.setAttribute('aria-expanded', String(on));
-    queue.toggleAttribute('inert', !on);
+  const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isExpanded = () => !!card?.classList.contains('expanded');
+  const isQueueOpen = () => !!queue?.classList.contains('open');
+
+  const openQueue = (on: boolean) => {
+    if (!queue || !queueBtn) return;
+    if (on) expand(true);
+    queueBtn.setAttribute('aria-expanded', String(on));
     queue.classList.toggle('open', on);
     // Opening: the track playing in view, a third of the way down the list.
     const current = list?.querySelector<HTMLElement>('[aria-current="true"]');
     if (on && list && current) list.scrollTop = current.offsetTop - list.clientHeight / 3;
   };
-  const flip = () => open(button?.getAttribute('aria-expanded') !== 'true');
-  button?.addEventListener('click', flip);
-  document.querySelector('[data-bar-head]')?.addEventListener('click', flip);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && queue?.classList.contains('open')) { open(false); button?.focus(); } });
-  document.addEventListener('click', (e) => { if (queue?.classList.contains('open') && !card?.contains(e.target as Node)) open(false); });
-  // The space the bar takes in the page = the card without the queue (+ its 12 px gap), whatever the queue is doing.
+  function expand(on: boolean) {
+    if (!card || !more || on === isExpanded()) return;
+    if (!on) openQueue(false);
+    // The cover moves from the left of the mini row to the right of the full one: it glides there.
+    const from = cover?.getBoundingClientRect().left ?? 0;
+    card.classList.toggle('expanded', on);
+    more.toggleAttribute('inert', !on);
+    expandBtn?.setAttribute('aria-expanded', String(on));
+    if (expandBtn) expandBtn.title = on ? 'Show the mini player' : 'Show the full player';
+    const dx = from - (cover?.getBoundingClientRect().left ?? 0);
+    if (dx && !still()) cover?.animate([{ transform: `translateX(${dx}px)` }, { transform: 'none' }], { duration: 260, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
+  }
+
+  head?.addEventListener('click', () => expand(!isExpanded()));
+  card?.querySelector('.player-mini')?.addEventListener('click', (e) => e.stopPropagation());
+  card?.querySelector('.player-full')?.addEventListener('click', (e) => e.stopPropagation());
+  document.querySelector('[data-bar-mini-queue]')?.addEventListener('click', () => openQueue(true));
+  queueBtn?.addEventListener('click', () => openQueue(!isQueueOpen()));
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (isQueueOpen()) { openQueue(false); queueBtn?.focus(); } else if (isExpanded()) { expand(false); expandBtn?.focus(); }
+  });
+  document.addEventListener('click', (e) => { if (isExpanded() && !card?.contains(e.target as Node)) expand(false); });
+
+  // The space the bar takes in the page = the mini card (+ its 12 px gap), whatever the full player is doing.
   const wrap = document.querySelector<HTMLElement>('[data-player-bar]');
-  const fit = () => { if (wrap && card) wrap.style.height = `${card.offsetHeight - (queue?.offsetHeight ?? 0) + 12}px`; };
+  const fit = () => { if (wrap && card && more) wrap.style.height = `${card.offsetHeight - more.offsetHeight + 12}px`; };
   if (card) new ResizeObserver(fit).observe(card);
 </script>
 
 <style is:global>
-  /* The queue unfolds: a grid row from 0fr to 1fr animates to the list's own height. */
-  .player-queue { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.25s; }
-  .player-queue.open { grid-template-rows: 1fr; opacity: 1; }
-  @media (prefers-reduced-motion: reduce) { .player-queue { transition: none; } }
-  /* The progress: a thin line filled up to --p (set by album-player.ts), with a round knob at the current position. */
+  /* Mini vs full: which parts of the row show, where the cover sits, the thin line. */
+  .player-card .player-full { display: none; }
+  .player-card.expanded .player-full { display: flex; }
+  .player-card.expanded .player-mini { display: none; }
+  .player-card.expanded .player-cover { order: 1; }
+  .player-line {
+    position: absolute; left: 1.25rem; right: 1.25rem; bottom: 0.3rem; height: 2px; border-radius: 9999px;
+    background: linear-gradient(var(--color-kikyo-600), var(--color-kikyo-600)) 0 / var(--p, 0%) 100% no-repeat, var(--well-hover);
+    transition: opacity 0.15s;
+  }
+  .dark .player-line { background-image: linear-gradient(var(--color-kikyo-400), var(--color-kikyo-400)); }
+  .player-card.expanded .player-line { opacity: 0; }
+  /* Unfolding: grid rows from 0fr to 1fr animate to the content's own height; quick and settling softly. */
+  .player-more, .player-queue { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.28s cubic-bezier(0.2, 0.9, 0.25, 1), opacity 0.2s; opacity: 0; }
+  .player-card.expanded .player-more, .player-queue.open { grid-template-rows: 1fr; opacity: 1; }
+  /* Play / pause: the icon that appears pops in. */
+  @keyframes player-pop { from { transform: scale(0.6); opacity: 0.4; } }
+  @media (prefers-reduced-motion: no-preference) { .player-pop { animation: player-pop 0.18s cubic-bezier(0.3, 1.4, 0.5, 1); } }
+  @media (prefers-reduced-motion: reduce) { .player-more, .player-queue { transition: none; } }
+  /* The progress and volume sliders: a thin line filled up to --p, with a round knob. */
   .player-seek {
     --fill: var(--color-kikyo-600);
     appearance: none; height: 4px; border-radius: 9999px; cursor: pointer;
