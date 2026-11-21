@@ -26,7 +26,7 @@ export function cleanText(raw: unknown) {
 export const excerpt = (s: string, max = 300) => (s.length > max ? `${s.slice(0, max).trimEnd()}…` : s);
 
 /** "November 17, 2026": the day only. Public pages never show the time a message was sent. */
-export const day = (s: number) => new Date(s * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+export const day = (s: number) => new Date(s * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 
 /** "3 hours ago", "yesterday", then the date. */
 export function ago(s: number, at = now()) {

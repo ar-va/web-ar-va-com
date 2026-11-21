@@ -99,7 +99,7 @@ const ago = (s: number | null) => {
 };
 setWho(Astro.cookies, user, Astro.url.hostname);
 const first = user.name.split(' ')[0];
-const since = new Date(user.created_at * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+const since = new Date(user.created_at * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 const shelfUrl = `/${encodeURIComponent(shelfSlug(user))}`;
 const shared: [string, string][] = [
   ['Name', user.name],

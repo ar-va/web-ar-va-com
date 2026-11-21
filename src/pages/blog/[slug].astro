@@ -39,7 +39,7 @@ const displayTitle = h1 ? h1.text : 'Untitled Post';
       <div class="flex flex-wrap items-center gap-3 text-sm tracking-widest text-zinc-500">
         {entry.data.created && (
           <time>
-            Published {entry.data.created.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
+            Published {entry.data.created.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })}
           </time>
         )}
         
@@ -47,7 +47,7 @@ const displayTitle = h1 ? h1.text : 'Untitled Post';
           <span class="flex items-center gap-3">
             <span class="w-1 h-1 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
             <span>
-              Updated {entry.data.modified.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} at {entry.data.modified.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })}
+              Updated {entry.data.modified.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} at {entry.data.modified.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })}
             </span>
           </span>
         )}

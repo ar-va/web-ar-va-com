@@ -104,9 +104,9 @@ test('release detail and dates', () => {
   assert.equal(toReleaseDetail({ id: 2, uri: 'javascript:alert(1)' }, null).uri, 'https://www.discogs.com/release/2');
   assert.equal(toReleaseDetail({ id: 3, uri: 'https://www.discogs.com/release/3-X' }, null).uri, 'https://www.discogs.com/release/3-X');
   assert.deepEqual(d.tracklist.map((t) => t.heading), [true, false]);
-  assert.equal(formatReleased('2026-07-24'), 'July 24, 2026');
+  assert.equal(formatReleased('2026-07-24'), 'Jul 24, 2026');
   assert.equal(formatReleased('1977-00-00'), '1977');
-  assert.equal(formatReleased('1977-03'), 'March 1977');
+  assert.equal(formatReleased('1977-03'), 'Mar 1977');
   assert.equal(formatReleased(null), null);
 });
 
@@ -173,7 +173,7 @@ test('owner edits override Discogs key by key', async () => {
   assert.equal(v.title, 'Blackstar');
   assert.equal(v.artist, 'David Bowie');
   assert.equal(v['field:Gone'], undefined);
-  assert.equal(displayDate('2016-01-08'), 'January 8, 2016');
+  assert.equal(displayDate('2016-01-08'), 'Jan 8, 2016');
   assert.equal(displayDate('around 1975'), 'around 1975');
   const s = shelfView(r, d, { genre: 'Jazz, Art Rock', released: 'January 1975' });
   assert.deepEqual(s.genres, ['Jazz', 'Art Rock']);

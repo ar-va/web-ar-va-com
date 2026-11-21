@@ -191,12 +191,13 @@ export function toReleaseDetail(release: any, masterYear: number | null, firstRe
   };
 }
 
-/** Discogs dates come as "2026", "2026-07" or "2026-07-24" (sometimes with -00 parts). */
+/** Discogs dates come as "2026", "2026-07" or "2026-07-24" (sometimes with -00 parts). Shown with three-letter months,
+ *  "Oct 22, 2012" (user, 2026-11-21; was "October"), like every date on the sites. */
 export function formatReleased(value: string | null) {
   if (!value) return null;
   const [y, m, d] = value.split('-').map(Number);
   if (!m) return String(y);
-  const opts: Intl.DateTimeFormatOptions = d ? { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' } : { year: 'numeric', month: 'long', timeZone: 'UTC' };
+  const opts: Intl.DateTimeFormatOptions = d ? { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' } : { year: 'numeric', month: 'short', timeZone: 'UTC' };
   return new Date(Date.UTC(y, m - 1, d || 1)).toLocaleDateString('en-US', opts);
 }
 
