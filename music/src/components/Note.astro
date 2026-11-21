@@ -47,7 +47,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
   <section id="note" data-note={note && !editing ? '' : undefined} class={`max-w-3xl scroll-mt-6 rounded-2xl bg-kashiwa/[0.07] dark:bg-kashiwa-light/[0.07] px-4 py-4 sm:px-5 ${className}`}>
     <!-- The head: the photo beside the title and its counts line, one block (user 2026-11-21: they felt disconnected). -->
     <div class="flex items-center gap-4">
-      <Avatar photo={photo} name={by} px={58} class="w-[3.625rem] h-[3.625rem]" />
+      <Avatar photo={photo} name={by} px={64} class="w-16 h-16 sm:w-[3.625rem] sm:h-[3.625rem]" />
       <div class="min-w-0 flex-1">
         <Heading class="text-2xl font-bold leading-tight text-zinc-900 dark:text-white">{heading}</Heading>
         <!-- Icons and numbers: records, comments (jumps to them), Telegram. -->
