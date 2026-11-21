@@ -197,6 +197,17 @@ html { scrollbar-gutter: stable; }
   box-shadow: 0 5px 6px -3px rgb(0 0 0 / 0.35), 8px -2px 16px -8px rgb(0 0 0 / 0.35);
   transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
+/* The room's light on the sleeve too (user, 2026-11-21: depth like the vinyl's glare), from the same 45° top right: a soft
+   brightening toward that corner, a little shade toward the opposite one, and the top and right edges catching it.
+   Soft-light blending, so the artwork keeps its colours and contrast (a white overlay would wash it out); matte, no
+   streak. It moves with the sleeve. */
+.sleeve-light {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background: linear-gradient(225deg, rgb(255 255 255 / 0.4) 0%, rgb(255 255 255 / 0.12) 30%, transparent 55%, rgb(0 0 0 / 0.22) 100%);
+  box-shadow: inset -1px 1px 0 rgb(255 255 255 / 0.5), inset 1px -1px 0 rgb(0 0 0 / 0.25);
+  mix-blend-mode: soft-light;
+  transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
 .disc {
   position: absolute;
   inset: 3%;
@@ -268,8 +279,8 @@ html { scrollbar-gutter: stable; }
 .shelf-record:focus-visible .glare { transform: translateY(-26%); opacity: 1; }
 .shelf-record:hover .sleeve::before,
 .shelf-record:focus-visible .sleeve::before { opacity: 1; }
-.shelf-record:hover .sleeve-face,
-.shelf-record:focus-visible .sleeve-face { transform: translateY(-3px); }
+.shelf-record:hover :is(.sleeve-face, .sleeve-light),
+.shelf-record:focus-visible :is(.sleeve-face, .sleeve-light) { transform: translateY(-3px); }
 .shelf-record:focus-visible { outline: 2px solid var(--color-kikyo-500); outline-offset: 4px; }
 
 /* The room's light on the vinyl, falling at 45° (user, 2026-11-21): a streak across the grooves, bright at half past one
@@ -328,7 +339,7 @@ html { scrollbar-gutter: stable; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .disc, .sleeve-face { transition: none; }
+  .disc, .sleeve-face, .sleeve-light { transition: none; }
   .sleeve-open .disc, .sleeve-open .glare, .sleeve-open::before { animation: none; }
   .glare { transition: none; }
 }
