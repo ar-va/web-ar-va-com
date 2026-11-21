@@ -7,7 +7,7 @@
 
 /** A spring like Sileo's, quicker (user, 2026-11-21: Sileo's 0.6 s felt slow): framer-motion's model with bounce 0.28
  *  over 0.38 s, a ~4 % overshoot, as a CSS linear() easing sampled once. */
-const BOUNCE = 0.28, SETTLE = 0.38; // seconds
+const BOUNCE = 0.28, SETTLE = 0.3; // seconds (0.38 until user 2026-11-21: a little quicker)
 export const spring = (() => {
   const bounce = BOUNCE, duration = SETTLE;
   const w0 = (2 * Math.PI) / duration, zeta = 1 - bounce, wd = w0 * Math.sqrt(1 - zeta * zeta);
@@ -17,6 +17,8 @@ export const spring = (() => {
   return `linear(${Array.from({ length: 41 }, (_, i) => x((i / 40) * SETTLE * 1.3).toFixed(4)).join(', ')})`;
 })();
 export const DURATION = SETTLE * 1.3 * 1000; // sampled a little past SETTLE, where it has come to rest
+/** Closing: quicker than opening and without the bounce, accelerating away (menus, folding parts). */
+export const CLOSE_MS = 160, CLOSE_EASE = 'cubic-bezier(0.5, 0, 0.75, 0)';
 // The same spring for CSS transitions elsewhere (the player's volume capsule): var(--spring) over var(--spring-time).
 document.documentElement.style.setProperty('--spring', spring);
 document.documentElement.style.setProperty('--spring-time', `${Math.round(DURATION)}ms`);
@@ -66,24 +68,24 @@ export function growFrom(el: HTMLElement, from?: Element | null) {
   // (data-grow-keep: a child that stays put, like the listen menu's twin of its button)
   [...el.children].filter((c) => !c.hasAttribute('data-grow-keep')).forEach((child, i) => child.animate(
     [{ opacity: 0, transform: `translateY(${p.below ? -4 : 4}px)` }, { opacity: 1, transform: 'none' }],
-    { duration: 220, delay: 30 + i * 15, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'backwards' },
+    { duration: 180, delay: 20 + i * 12, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'backwards' },
   ));
 }
 
 /** Closing (user, 2026-11-21: "extend and subtract"): the panel shrinks back into its button, quicker than it opened
- *  and without the bounce (0.2 s, accelerating), its content fading first; then `hide()` really hides it. Opening it
+ *  and without the bounce (CLOSE_MS, accelerating), its content fading first; then `hide()` really hides it. Opening it
  *  again meanwhile (growFrom) cancels this, and the hide with it. */
 export function shrinkTo(el: HTMLElement, from: Element | null | undefined, hide: () => void) {
   stopClosing(el);
   const p = !still() && pill(el, from);
   if (!p) return hide();
-  const content = [...el.children].filter((c) => !c.hasAttribute('data-grow-keep')).map((child) => child.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 110, easing: 'ease-in', fill: 'forwards' }));
+  const content = [...el.children].filter((c) => !c.hasAttribute('data-grow-keep')).map((child) => child.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 90, easing: 'ease-in', fill: 'forwards' }));
   const shape = el.animate(
     [
       { clipPath: p.full, transform: 'none', transformOrigin: p.origin, opacity: 1 },
       { clipPath: p.small, transform: 'scale(0.94)', transformOrigin: p.origin, opacity: 0.4 },
     ],
-    { duration: 200, easing: 'cubic-bezier(0.5, 0, 0.75, 0)', fill: 'forwards' },
+    { duration: CLOSE_MS, easing: CLOSE_EASE, fill: 'forwards' },
   );
   const all = [shape, ...content];
   closing.set(el, all);
