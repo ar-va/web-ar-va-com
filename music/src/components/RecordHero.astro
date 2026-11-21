@@ -204,8 +204,11 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
     };
     // The album ended or the browser refused sound: the record comes to rest without touching the sound.
     function halt() { if (playing) { set(false); clearInterval(notes); if (spin) coast(); } }
-    button.addEventListener('click', () => toggle(true));
-    turntable.querySelector('[data-spin-cover]')?.addEventListener('click', () => toggle(true));
+    // Music started from the page (this record, a tracklist row) brings a minimised player back (PlayerBar listens);
+    // the player's own buttons don't.
+    const showBar = () => { if (!playing) document.dispatchEvent(new Event('player:show')); };
+    button.addEventListener('click', () => { showBar(); toggle(true); });
+    turntable.querySelector('[data-spin-cover]')?.addEventListener('click', () => { showBar(); toggle(true); });
     // The player bar: play / pause is the record's; previous, next and a track in the queue start it if it's stopped.
     if (sound) {
       const start = () => { if (!playing) toggle(true); };
@@ -220,6 +223,7 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       });
       // A track in the queue or the tracklist: plays it; the current one plays / pauses instead of starting over.
       document.querySelectorAll<HTMLElement>('[data-bar-go]').forEach((b) => b.addEventListener('click', () => {
+        if (!b.closest('[data-player-bar]')) showBar();
         if (b.getAttribute('aria-current') === 'true') toggle(true);
         else { start(); sound.go(Number(b.dataset.barGo)); }
       }));
