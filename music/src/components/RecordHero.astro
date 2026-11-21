@@ -208,8 +208,6 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       document.querySelector('[data-bar-prev]')?.addEventListener('click', () => { start(); sound.prev(); });
       document.querySelector('[data-bar-next]')?.addEventListener('click', () => { start(); sound.next(); });
       document.querySelectorAll<HTMLElement>('[data-bar-go]').forEach((b) => b.addEventListener('click', () => { start(); sound.go(Number(b.dataset.barGo)); }));
-      const queue = document.getElementById('player-queue');
-      queue?.addEventListener('toggle', (e) => document.querySelector('[data-bar-queue]')?.setAttribute('aria-expanded', String((e as ToggleEvent).newState === 'open')));
     }
     // Start playing as the roll-out (CSS `roll-out`, 0.25 s delay + 1.6 s) settles.
     let started = false;
