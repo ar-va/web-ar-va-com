@@ -5,6 +5,8 @@
 // The player bar (components/PlayerBar.astro, 2026-11-21) shows the track, its progress (drag to seek) and the queue.
 // shortcut: the player is hidden, against YouTube's API terms (owner's choice, 2026-11-20); if YouTube blocks it, the
 // record simply plays without sound.
+import { dropNeedle } from './needle';
+
 const TARGET = 50; // percent
 const FADE_IN_MS = 8000; // autoplay: a slow rise
 const RESUME_MS = 2000; // pressing play again
@@ -124,6 +126,8 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     async play(byUser: boolean) {
       if (!byUser && remembered() === 'off') return;
       if (byUser) remember('on');
+      // The needle goes down once the platter has spun up (RecordHero: 1.1 s); the album fades in under its crackle.
+      dropNeedle(700);
       wanted = true;
       await create();
       if (!wanted) return;
