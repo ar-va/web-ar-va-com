@@ -415,14 +415,17 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
    blur to its box, so a glass dropdown inside (the Sort menu) would lose its blur where it hangs outside. */
 .glass-under { isolation: isolate; }
 .glass-under::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; }
-/* 2026-11-21, after the user's CodePen (jh3y's sticky glass product bar): what scrolls under the glass glows through
-   it (saturate 2.8, brightness 1.25 / 1.05 dark) instead of greying out; a hairline edge drawn as an inset shadow (no
-   layout change; very faint in dark: a brighter one was the white edge the user had removed on 2026-10-28); and four
-   layered soft shadows, so it rests on the page. */
+/* 2026-11-21, the user's CodePen (jh3y's sticky glass product bar): the glass gets a 3 px border that is almost clear,
+   with the background painted only inside it (padding-box), while the backdrop filter covers the whole box, border
+   included. So the rim shows a blurred, saturated (2.8), brightened (1.25) copy of whatever is behind: it glows in the
+   colours under it and changes as the page scrolls. Inside is more solid (0.85) than the old 0.6, so the rim reads and
+   text stays clear. Four layered soft shadows rest it on the page. The small round glass buttons (.glass-dark: the
+   record's play button, the photo viewer's controls, the copy tip) keep a plain edge. */
 .glass, .glass-under::before {
-  background: rgb(253 253 251 / 0.62);
+  background-color: rgb(253 253 251 / 0.85);
+  background-clip: padding-box;
+  border: 3px solid rgb(31 35 53 / 0.08);
   box-shadow:
-    inset 0 0 0 1px rgb(31 35 53 / 0.07),
     0 0.5px 0.6px rgb(31 35 53 / 0.06), 0 1.8px 2.3px -0.5px rgb(31 35 53 / 0.07),
     0 4.2px 5.3px -1.1px rgb(31 35 53 / 0.09), 0 9.7px 12.1px -1.6px rgb(31 35 53 / 0.1);
   will-change: transform;
@@ -430,13 +433,11 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
   backdrop-filter: blur(18px) saturate(2.8) brightness(1.25);
 }
 .dark .glass, .dark .glass-under::before {
-  background: rgb(30 32 41 / 0.6);
+  background-color: rgb(30 32 41 / 0.85);
+  border-color: rgb(255 255 255 / 0.1);
   box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.06),
     0 0.5px 0.6px rgb(0 0 0 / 0.15), 0 1.8px 2.3px -0.5px rgb(0 0 0 / 0.18),
     0 4.2px 5.3px -1.1px rgb(0 0 0 / 0.22), 0 9.7px 12.1px -1.6px rgb(0 0 0 / 0.25);
-  -webkit-backdrop-filter: blur(18px) saturate(2.8) brightness(1.05);
-  backdrop-filter: blur(18px) saturate(2.8) brightness(1.05);
 }
 
 /* Theme switch: hovering (or keyboard focus) previews the other theme, whose icon comes alive: the sun turns and
@@ -459,7 +460,9 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
 }
 
 /* Over the photo viewer's dark backdrop the glass is always the dark kind, whatever the site theme. */
-dialog[data-lightbox] .glass, .glass.glass-dark { background: rgb(21 22 28 / 0.5); box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.6); }
+/* Small glass (tooltips): the same idea with a 1 px rim. */
+.glass.glass-thin { border-width: 1px; }
+dialog[data-lightbox] .glass, .glass.glass-dark { background: rgb(21 22 28 / 0.5); border: 0; box-shadow: 0 8px 24px -10px rgb(0 0 0 / 0.6); }
 
 /* Jumps to #sections stop a little below the top (the header scrolls away; list toolbars stick at the top). */
 html { scroll-padding-top: 1.5rem; }
