@@ -39,6 +39,9 @@ const facts = [
   runtime,
 ].filter(Boolean);
 const Heading = href ? 'h2' : 'h1';
+// The row above the hero, only when something is in it: a slot filled inside a condition counts as filled even when the
+// condition is false (visitors on an album page got an empty 52 px gap).
+const above = Astro.slots.has('above') ? (await Astro.slots.render('above')).trim() : '';
 // Album page: artist and title copy themselves on click (src/scripts/copy.ts); on the shelf the title links instead.
 const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500 transition-opacity';
 ---
@@ -47,6 +50,9 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
      sleeve + disc stay inside a 360 px screen's margins. -->
 <!-- overflow-x: clip, with the page's 24 px side margin to spare: the light behind the rolled-out record reaches 120 % of
      the cover past it, which made phones scroll sideways (446 px on a 390 px screen); now it fades out at the screen edge. -->
+<!-- Above the hero, one row in the same place on every hero (user 2026-11-21): the shelf's "Latest", the album page's
+     "Edit record details" for its owner. 32 px tall, 20 px above the hero. -->
+{above && <div class="mb-5 flex h-8 items-center"><Fragment set:html={above} /></div>}
 <!-- Desktop: the text starts 44 px below the cover's top (where centring put the usual text), not centred, so extra lines
      under it (the album page's photos) grow it downward and the title sits at the same height on both heroes. -->
 <div data-hero class="flex flex-col sm:flex-row sm:items-start gap-8 sm:gap-36 overflow-x-clip [overflow-clip-margin:1.5rem]">
