@@ -212,6 +212,12 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       barPlays.forEach((b) => b.addEventListener('click', () => toggle(true)));
       document.querySelector('[data-bar-prev]')?.addEventListener('click', () => { start(); sound.prev(); });
       document.querySelectorAll('[data-bar-next]').forEach((b) => b.addEventListener('click', () => { start(); sound.next(); }));
+      // A click anywhere else on a playable tracklist row does the same as its number (user 2026-11-21); the title
+      // (copies), the heart, the listen menu keep their own clicks.
+      document.querySelectorAll<HTMLElement>('.track-row').forEach((row) => {
+        const play = row.querySelector<HTMLElement>('.track-play');
+        if (play) row.addEventListener('click', (e) => { if (!(e.target as HTMLElement).closest('button, a, input, form, [popover]')) play.click(); });
+      });
       // A track in the queue or the tracklist: plays it; the current one plays / pauses instead of starting over.
       document.querySelectorAll<HTMLElement>('[data-bar-go]').forEach((b) => b.addEventListener('click', () => {
         if (b.getAttribute('aria-current') === 'true') toggle(true);

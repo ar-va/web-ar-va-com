@@ -70,7 +70,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
 
 
   {latest && (
-    <section class="mt-12">
+    <section class="mt-8">
       <h2 class="font-sans mb-5"><span class="inline-block rounded-full bg-bengara-tint px-2.5 py-0.5 text-sm font-medium text-bengara dark:bg-bengara-tint-dark dark:text-bengara-light">Latest</span></h2>
       <RecordHero record={latest} artist={latest.artist} title={latest.title} released={latest.released} genres={latest.genres}
         trackCount={latest.trackCount} links={latest.links} runtime={latest.runtime ?? undefined} href={`${base}/${latest.instanceId}`} />

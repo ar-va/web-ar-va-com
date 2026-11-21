@@ -350,6 +350,7 @@ html { scrollbar-gutter: stable; }
    track playing shows bars instead (moving while it plays, still while paused) and its title in the accent; hovering
    it offers pause (or play when paused). `data-album-started` / `data-album-playing` on <html> come from RecordHero. */
 .track-play > * { grid-area: 1 / 1; }
+.track-row:has(.track-play) { cursor: pointer; }
 .track-play :is(.track-play-icon, .track-pause-icon, .track-eq) { display: none; }
 .track-row:hover .track-play .track-num, .track-play:focus-visible .track-num { display: none; }
 .track-row:hover .track-play .track-play-icon, .track-play:focus-visible .track-play-icon { display: block; }
