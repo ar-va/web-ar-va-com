@@ -1,4 +1,4 @@
-import { inkFrom } from './ink';
+import { growFrom } from './grow';
 // The filters panel that drops down from "All records" / "All writing" in the sticky list toolbar: the button
 // toggles it, it stays open while picking, Esc (focus back to the button) or a click outside closes it.
 export function filtersPanel(toggleId = 'filters-toggle', panelId = 'filters-panel') {
@@ -9,7 +9,7 @@ export function filtersPanel(toggleId = 'filters-toggle', panelId = 'filters-pan
     const was = !panel.hidden;
     panel.hidden = !open;
     toggle.setAttribute('aria-expanded', String(open));
-    if (open && !was) inkFrom(panel, toggle);
+    if (open && !was) growFrom(panel, toggle);
   };
   toggle.addEventListener('click', () => show(panel.hidden));
   document.addEventListener('click', (e) => {

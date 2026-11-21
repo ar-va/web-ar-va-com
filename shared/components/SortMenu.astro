@@ -26,7 +26,7 @@ const options = [['new', 'Newest first'], ['old', 'Oldest first'], ['az', 'A–Z
 </div>
 
 <script>
-  import { inkFrom } from '../scripts/ink';
+  import { growFrom } from '../scripts/grow';
   document.querySelectorAll<HTMLElement>('[data-sort-menu]').forEach((menu) => {
     const button = menu.querySelector<HTMLButtonElement>(':scope > button')!;
     const list = menu.querySelector('ul')!;
@@ -34,7 +34,7 @@ const options = [['new', 'Newest first'], ['old', 'Oldest first'], ['az', 'A–Z
       const was = !list.hidden;
       list.hidden = !yes;
       button.setAttribute('aria-expanded', String(yes));
-      if (yes && !was) inkFrom(list, button);
+      if (yes && !was) growFrom(list, button);
     };
     button.addEventListener('click', () => open(list.hidden));
     document.addEventListener('click', (e) => { if (!menu.contains(e.target as Node)) open(false); });
