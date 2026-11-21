@@ -15,6 +15,9 @@ const spring = (() => {
   return `linear(${Array.from({ length: 41 }, (_, i) => x((i / 40) * SETTLE * 1.3).toFixed(4)).join(', ')})`;
 })();
 const DURATION = SETTLE * 1.3 * 1000; // sampled a little past SETTLE, where it has come to rest
+// The same spring for CSS transitions elsewhere (the player's volume capsule): var(--spring) over var(--spring-time).
+document.documentElement.style.setProperty('--spring', spring);
+document.documentElement.style.setProperty('--spring-time', `${Math.round(DURATION)}ms`);
 
 /** The pill a panel grows out of (and shrinks back into): the button's width and height on the panel's edge nearest
  *  the button, with the transform origin there. Null when either can't be measured. */
