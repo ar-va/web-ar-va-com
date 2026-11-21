@@ -18,6 +18,29 @@ const side = `${icon} !text-zinc-500 dark:!text-zinc-400 aria-pressed:!text-kiky
       </div>
       {cover ? <img src={cover} alt="" class="w-12 h-12 rounded-lg object-cover shrink-0" /> : <span class="w-12 h-12 rounded-lg bg-zinc-200 dark:bg-zinc-800 shrink-0"></span>}
     </div>
+    <!-- The queue opens inside the card, between the track and its progress (user, 2026-11-21): the card is pinned to the
+         bottom, so it grows upward and the track slides up as the list unfolds. -->
+    <div id="player-queue" class="player-queue -mx-2" inert>
+      <div class="min-h-0 overflow-hidden">
+        <div class="mx-2 mt-3 border-t border-zinc-200/70 dark:border-white/10 pt-2">
+          <p class="pb-1.5 flex items-baseline justify-between gap-3 text-xs text-zinc-500">
+            <span class="font-medium text-zinc-700 dark:text-zinc-300">Queue</span>
+            <span>{tracks.length} track{tracks.length === 1 ? '' : 's'} from YouTube Music</span>
+          </p>
+          <ol data-bar-list class="-mx-2 relative max-h-[min(45vh,24rem)] overflow-y-auto overscroll-contain">
+            {tracks.map((t, i) => (
+              <li>
+                <button type="button" data-bar-go={i} class="group w-full flex items-baseline gap-3 rounded-xl px-2 py-2 text-left text-sm cursor-pointer text-zinc-700 dark:text-zinc-300 hover:bg-[var(--well)] aria-[current=true]:bg-[var(--on-bg)] aria-[current=true]:text-[var(--on-text)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-kikyo-500 transition-colors">
+                  <span class="w-5 shrink-0 font-mono text-xs text-zinc-500 group-aria-[current=true]:text-inherit">{i + 1}</span>
+                  <span class="flex-1 min-w-0 truncate">{t.title}</span>
+                  <span class="font-mono text-xs text-zinc-500 group-aria-[current=true]:text-inherit">{t.duration}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </div>
     <div class="mt-4">
       <input data-bar-seek type="range" min="0" max="0" value="0" step="1" disabled aria-label="Position in the track" class="player-seek block w-full" />
       <div class="mt-2 flex justify-between font-mono text-[11px] leading-none text-zinc-500 tabular-nums">
@@ -39,33 +62,38 @@ const side = `${icon} !text-zinc-500 dark:!text-zinc-400 aria-pressed:!text-kiky
       <button type="button" data-bar-next aria-label="Next track" title="Next track" disabled={tracks.length < 2} class={icon}>
         <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 5.5v13L15.5 12z" /><rect x="16.4" y="5" width="2.6" height="14" rx="1" /></svg>
       </button>
-      <button type="button" data-bar-queue popovertarget="player-queue" aria-expanded="false" aria-label="Queue" title="Queue" class={side}>
+      <button type="button" data-bar-queue aria-controls="player-queue" aria-expanded="false" aria-label="Queue" title="Queue" class={side}>
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M4 6h11M4 12h11M4 18h7" /><path d="M17 15.5v-9l4 2" /><circle cx="15" cy="16" r="2" /></svg>
       </button>
     </div>
   </section>
 </div>
 
-<!-- The queue: a popover just above the card, as wide as it (Esc or a click outside closes it). -->
-<div id="player-queue" popover class="fixed inset-x-0 top-auto bottom-[12rem] mx-auto my-0 w-[min(30rem,calc(100vw-1.5rem))] max-h-[min(50vh,28rem)] overflow-y-auto rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-2 text-zinc-700 dark:text-zinc-300 shadow-2xl">
-  <div class="flex items-baseline justify-between gap-3 px-3 pt-2 pb-2">
-    <h2 class="text-base font-bold text-zinc-900 dark:text-white">Queue</h2>
-    <p class="text-xs text-zinc-500">{tracks.length} track{tracks.length === 1 ? '' : 's'} from YouTube Music</p>
-  </div>
-  <ol>
-    {tracks.map((t, i) => (
-      <li>
-        <button type="button" data-bar-go={i} class="group w-full flex items-baseline gap-3 rounded-xl px-3 py-2 text-left text-sm cursor-pointer hover:bg-[var(--well)] aria-[current=true]:bg-[var(--on-bg)] aria-[current=true]:text-[var(--on-text)] focus-visible:outline-2 focus-visible:outline-kikyo-500 transition-colors">
-          <span class="w-5 shrink-0 font-mono text-xs text-zinc-500 group-aria-[current=true]:text-inherit">{i + 1}</span>
-          <span class="flex-1 min-w-0 truncate">{t.title}</span>
-          <span class="font-mono text-xs text-zinc-500 group-aria-[current=true]:text-inherit">{t.duration}</span>
-        </button>
-      </li>
-    ))}
-  </ol>
-</div>
+<script>
+  // Queue open / closed: the button, Esc, or a click outside the card. Closed, the list is inert (not tabbable).
+  const card = document.querySelector<HTMLElement>('[data-player-bar] section');
+  const button = document.querySelector<HTMLElement>('[data-bar-queue]');
+  const queue = document.getElementById('player-queue');
+  const list = document.querySelector<HTMLElement>('[data-bar-list]');
+  const open = (on: boolean) => {
+    if (!queue || !button) return;
+    button.setAttribute('aria-expanded', String(on));
+    queue.toggleAttribute('inert', !on);
+    queue.classList.toggle('open', on);
+    // Opening: the track playing in view, a third of the way down the list.
+    const current = list?.querySelector<HTMLElement>('[aria-current="true"]');
+    if (on && list && current) list.scrollTop = current.offsetTop - list.clientHeight / 3;
+  };
+  button?.addEventListener('click', () => open(button.getAttribute('aria-expanded') !== 'true'));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && queue?.classList.contains('open')) { open(false); button?.focus(); } });
+  document.addEventListener('click', (e) => { if (queue?.classList.contains('open') && !card?.contains(e.target as Node)) open(false); });
+</script>
 
 <style is:global>
+  /* The queue unfolds: a grid row from 0fr to 1fr animates to the list's own height. */
+  .player-queue { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.25s; }
+  .player-queue.open { grid-template-rows: 1fr; opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .player-queue { transition: none; } }
   /* Room under the footer, so the pinned card never covers the end of the page. */
   body:has([data-player-bar]) { padding-bottom: 12.5rem; }
   /* The progress: a thin line filled up to --p (set by album-player.ts), with a round knob at the current position. */
