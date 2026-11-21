@@ -26,14 +26,17 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
   <!-- The cover, blurred, right behind the card and its shape: the glass rim (see .glass) takes the album's colours even
        over the plain page (user 2026-11-21: the player's rim should glow like the toolbar's over covers); the card's
        0.85 inside only shows a hint of it. Kept the card's height by the script below. -->
-  {cover && <div data-bar-ambient aria-hidden="true" class="player-ambient absolute inset-x-0 bottom-3 h-[4.25rem] rounded-3xl overflow-hidden"><img src={cover} alt="" /></div>}
-  <section data-bar-card aria-label="Album player" class="glass pointer-events-auto absolute inset-x-0 bottom-3 rounded-3xl pl-2.5 pr-3 pt-2.5 pb-3.5 sm:pr-4">
+  {cover && <div data-bar-ambient aria-hidden="true" class="player-ambient absolute right-0 bottom-3 w-full h-[4.25rem] rounded-3xl overflow-hidden"><img src={cover} alt="" /></div>}
+  <!-- Minimised (.mini, user 2026-11-21): swipe / drag right or the › button shrink it to the cover and the previous /
+       play / next pill at the right; swipe left, the cover, ‹, or music started from the page (the record, a track)
+       bring it back. -->
+  <section data-bar-card aria-label="Album player" class="player-card glass pointer-events-auto absolute inset-x-0 bottom-3 rounded-3xl pl-2.5 pr-3 pt-2.5 pb-3.5 sm:pr-4">
     <!-- The row: clicking the cover or the track opens / closes the queue (keyboards: the track is a button). -->
     <div data-bar-head class="flex items-center gap-3 cursor-pointer">
       {/* Concentric corners (as in the CodePen the user sent): the card's 24px radius minus its 1px rim and 10px padding. */}
-      {cover ? <img src={cover} alt="" class="w-11 h-11 rounded-[13px] object-cover shrink-0" /> : <span class="w-11 h-11 rounded-[13px] bg-zinc-200 dark:bg-zinc-800 shrink-0"></span>}
+      {cover ? <img src={cover} alt="" data-bar-cover class="w-11 h-11 rounded-[13px] object-cover shrink-0" /> : <span data-bar-cover class="w-11 h-11 rounded-[13px] bg-zinc-200 dark:bg-zinc-800 shrink-0"></span>}
       <button type="button" data-bar-expand aria-expanded="false" aria-controls="player-queue" aria-keyshortcuts="Q" title="Show the queue (Q)"
-        class="min-w-0 flex-1 text-left rounded-lg cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500">
+        class="mini-hide min-w-0 flex-1 text-left rounded-lg cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500">
         <span class="block" aria-live="polite">
           <span data-bar-title class="block truncate text-[0.9375rem] font-semibold leading-5 text-zinc-900 dark:text-white">{tracks[0].title}</span>
           <span data-bar-note data-artist={artist} class="block truncate text-sm leading-5 text-zinc-500">{artist}</span>
@@ -57,7 +60,7 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
         <!-- Volume: the speaker mutes; hovering it (or focusing the slider) stretches the button upward into a capsule
              holding the slider (user 2026-11-21: a separate floating pill didn't feel part of the player). From 640 px
              up: phones have volume buttons (and iOS ignores a page's volume), and the track's title needs the room. -->
-        <div class="player-volume relative max-sm:hidden">
+        <div class="player-volume mini-hide relative max-sm:hidden">
           <button type="button" data-bar-mute aria-pressed="false" aria-label="Mute" aria-keyshortcuts="M" title="Mute (M)" class={`${side} group`}>
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor" stroke="none" />
@@ -70,6 +73,11 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
               class="player-seek player-volume-range" />
           </div>
         </div>
+        <!-- Minimise / show the full player (the swipe's visible, keyboard-reachable twin). -->
+        <button type="button" data-bar-mini aria-expanded="true" aria-label="Minimise the player" title="Minimise the player"
+          class="player-btn group/mini w-8 h-8 grid place-items-center rounded-full cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500 motion-safe:active:scale-90 transition-[transform,color] duration-150">
+          <svg class="w-4 h-4 transition-transform duration-300 group-aria-[expanded=false]/mini:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+        </button>
       </div>
     </div>
 
@@ -103,6 +111,7 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
 </div>
 
 <script>
+  import { spring, DURATION } from '@shared/scripts/grow';
   // The queue: the track row, Q (RecordHero), Esc or a click outside. Closed, the list is inert (not tabbable).
   const card = document.querySelector<HTMLElement>('[data-bar-card]');
   const head = document.querySelector<HTMLElement>('[data-bar-head]');
@@ -120,7 +129,7 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
     const current = list?.querySelector<HTMLElement>('[aria-current="true"]');
     if (on && list && current) list.scrollTop = current.offsetTop - list.clientHeight / 3;
   };
-  head?.addEventListener('click', () => openQueue(!isOpen()));
+  head?.addEventListener('click', () => (isMini() ? setMini(false) : openQueue(!isOpen())));
   document.querySelector('[data-bar-controls]')?.addEventListener('click', (e) => e.stopPropagation());
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) { openQueue(false); expandBtn?.focus(); } });
   document.addEventListener('click', (e) => { if (isOpen() && !card?.contains(e.target as Node)) openQueue(false); });
@@ -130,12 +139,84 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
   const ambient = document.querySelector<HTMLElement>('[data-bar-ambient]');
   const fit = () => {
     if (wrap && card && queue) wrap.style.height = `${card.offsetHeight - queue.offsetHeight + 12}px`;
-    if (ambient && card) ambient.style.height = `${card.offsetHeight}px`;
+    if (ambient && card) { ambient.style.height = `${card.offsetHeight}px`; ambient.style.width = `${card.offsetWidth}px`; }
   };
   if (card) new ResizeObserver(fit).observe(card);
+
+  // Minimised: just the cover and the previous / play / next pill, at the right (user 2026-11-21). The card stays
+  // anchored right while its width springs between the two sizes, so it shrinks into the pill and grows out of it.
+  const miniBtn = document.querySelector<HTMLElement>('[data-bar-mini]');
+  const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function isMini() { return !!card?.classList.contains('mini'); }
+  function setMini(on: boolean, offset = 0) {
+    if (!card || on === isMini()) return;
+    if (on) openQueue(false);
+    const from = card.offsetWidth;
+    card.classList.add('anchor-right');
+    card.classList.toggle('mini', on);
+    miniBtn?.setAttribute('aria-expanded', String(!on));
+    miniBtn?.setAttribute('aria-label', on ? 'Show the full player' : 'Minimise the player');
+    if (miniBtn) miniBtn.title = on ? 'Show the full player' : 'Minimise the player';
+    const to = card.offsetWidth;
+    if (still()) { card.classList.remove('anchor-right'); return; }
+    card.style.overflow = 'hidden';
+    const a = card.animate([{ width: `${from}px`, translate: `${offset}px 0` }, { width: `${to}px`, translate: '0 0' }], { duration: DURATION, easing: spring });
+    if (!on) card.querySelectorAll<HTMLElement>('.mini-hide').forEach((el) => el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220, delay: 60, easing: 'ease-out', fill: 'backwards' }));
+    a.finished.then(() => { card.style.overflow = ''; card.classList.remove('anchor-right'); }, () => {});
+  }
+  miniBtn?.addEventListener('click', () => setMini(!isMini()));
+  // Music started from the page (the record, a track in the tracklist): the full player comes back (RecordHero).
+  document.addEventListener('player:show', () => setMini(false));
+
+  // Swipe (touch) or drag (mouse) sideways: the card follows, a little reluctantly the wrong way; let go past a
+  // quarter of its width (or 60 px) and it minimises / comes back, otherwise it springs home. Sliders, the queue's list
+  // and vertical scrolling (touch-action: pan-y) are left alone; a drag doesn't count as a click.
+  let drag: { x: number; y: number; id: number; dx: number; active: boolean } | null = null;
+  let dragged = false;
+  card?.addEventListener('pointerdown', (e) => {
+    dragged = false;
+    if (e.button !== 0 || (e.target as Element).closest('input, #player-queue')) return;
+    drag = { x: e.clientX, y: e.clientY, id: e.pointerId, dx: 0, active: false };
+  });
+  card?.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!drag.active) {
+      if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { drag = null; return; }
+      if (Math.abs(dx) < 10) return;
+      drag.active = true;
+      card.setPointerCapture(e.pointerId);
+    }
+    drag.dx = dx;
+    const way = isMini() ? -1 : 1;
+    card.style.translate = `${dx * way > 0 ? dx : dx / 4}px 0`;
+  });
+  const endDrag = (e: PointerEvent) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const { active, dx } = drag;
+    drag = null;
+    if (!active || !card) return;
+    dragged = true;
+    const shown = parseFloat(card.style.translate) || 0;
+    card.style.translate = '';
+    const far = Math.max(60, card.offsetWidth * (isMini() ? 0.3 : 0.25));
+    if (isMini() ? dx < -far : dx > far) setMini(!isMini(), shown);
+    else if (!still()) card.animate([{ translate: `${shown}px 0` }, { translate: '0 0' }], { duration: DURATION, easing: spring });
+  };
+  card?.addEventListener('pointerup', endDrag);
+  card?.addEventListener('pointercancel', endDrag);
+  card?.addEventListener('click', (e) => { if (dragged) { e.stopPropagation(); e.preventDefault(); dragged = false; } }, true);
 </script>
 
 <style is:global>
+  /* Minimised: the card shrinks to its content at the right; the track, volume and queue step out; the cover is a
+     small circle (it brings the full player back). pan-y: horizontal drags are the card's, vertical scrolling the page's. */
+  .player-card { touch-action: pan-y; }
+  .player-card.mini, .player-card.anchor-right { left: auto; }
+  .player-card.mini .mini-hide { display: none; }
+  [data-bar-cover] { transition: width 0.25s, height 0.25s, border-radius 0.25s; }
+  .player-card.mini [data-bar-cover] { width: 2.25rem; height: 2.25rem; border-radius: 9999px; }
+  @media (prefers-reduced-motion: reduce) { [data-bar-cover] { transition: none; } }
   .player-btn { position: relative; isolation: isolate; }
   .player-btn::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; background: var(--well-hover); opacity: 0; transition: opacity 0.15s; will-change: opacity; }
   .player-btn:hover::before { opacity: 1; }
