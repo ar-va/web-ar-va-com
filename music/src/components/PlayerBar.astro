@@ -11,7 +11,8 @@ const side = `${icon} !text-zinc-500 dark:!text-zinc-400 aria-pressed:!text-kiky
 ---
 <div data-player-bar class="fixed inset-x-0 bottom-0 z-40 px-3 pb-3 pointer-events-none">
   <section aria-label="Album player" class="glass pointer-events-auto mx-auto w-full max-w-[30rem] rounded-3xl px-5 pt-4 pb-2">
-    <div class="flex items-center gap-4">
+    <!-- Clicking the track row also opens / closes the queue (user, 2026-11-21); keyboards use the Queue button. -->
+    <div data-bar-head class="flex items-center gap-4 cursor-pointer" title="Show or hide the queue">
       <div class="min-w-0 flex-1" aria-live="polite">
         <p data-bar-title class="truncate text-base font-semibold leading-6 text-zinc-900 dark:text-white">{tracks[0].title}</p>
         <p data-bar-note data-artist={artist} class="truncate text-sm leading-5 text-zinc-500">{artist}</p>
@@ -84,7 +85,9 @@ const side = `${icon} !text-zinc-500 dark:!text-zinc-400 aria-pressed:!text-kiky
     const current = list?.querySelector<HTMLElement>('[aria-current="true"]');
     if (on && list && current) list.scrollTop = current.offsetTop - list.clientHeight / 3;
   };
-  button?.addEventListener('click', () => open(button.getAttribute('aria-expanded') !== 'true'));
+  const flip = () => open(button?.getAttribute('aria-expanded') !== 'true');
+  button?.addEventListener('click', flip);
+  document.querySelector('[data-bar-head]')?.addEventListener('click', flip);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && queue?.classList.contains('open')) { open(false); button?.focus(); } });
   document.addEventListener('click', (e) => { if (queue?.classList.contains('open') && !card?.contains(e.target as Node)) open(false); });
 </script>
