@@ -131,6 +131,8 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     next: () => go(current + 1 < tracks.length ? current + 1 : 0),
     // A few seconds in: back to the start of the track; otherwise the one before.
     prev: () => (player && player.getCurrentTime() > 3 ? player.seekTo(0, true) : go(Math.max(0, current - 1))),
+    /** Keyboard ← / →: a few seconds back or forward within the track (not past its end). */
+    seekBy: (s: number) => { if (player) player.seekTo(Math.max(0, Math.min(player.getDuration() - 1, player.getCurrentTime() + s)), true); },
     async play(byUser: boolean) {
       if (!byUser && remembered() === 'off') return;
       if (byUser) remember('on');
