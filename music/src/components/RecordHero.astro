@@ -208,7 +208,7 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       document.querySelector('[data-bar-prev]')?.addEventListener('click', () => { start(); sound.prev(); });
       document.querySelector('[data-bar-next]')?.addEventListener('click', () => { start(); sound.next(); });
       document.querySelectorAll<HTMLElement>('[data-bar-go]').forEach((b) => b.addEventListener('click', () => { start(); sound.go(Number(b.dataset.barGo)); }));
-      // Keyboard (user, 2026-11-21): Space / K play-pause, ← → 5 s, Shift+← → previous / next, Q queue, R repeat.
+      // Keyboard (user, 2026-11-21): Space / K play-pause, ← → 5 s, Shift+← → previous / next, Q queue, R repeat, M mute.
       // Not while typing, not with Ctrl / ⌘ / Alt, not while a dialog or popover (photo viewer, date popup) has the
       // keys, and Space / Enter on a focused button or link stay theirs.
       const press = (sel: string) => document.querySelector<HTMLElement>(sel)?.click();
@@ -221,7 +221,7 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
         if (key === ' ' && t.closest('button, a, summary')) return;
         const act: Record<string, () => void> = e.shiftKey
           ? { ArrowLeft: () => press('[data-bar-prev]'), ArrowRight: () => press('[data-bar-next]') }
-          : { ' ': () => toggle(true), k: () => toggle(true), ArrowLeft: () => sound.seekBy(-5), ArrowRight: () => sound.seekBy(5), q: () => press('[data-bar-queue]'), r: () => press('[data-bar-repeat]') };
+          : { ' ': () => toggle(true), k: () => toggle(true), ArrowLeft: () => sound.seekBy(-5), ArrowRight: () => sound.seekBy(5), q: () => press('[data-bar-queue]'), r: () => press('[data-bar-repeat]'), m: () => press('[data-bar-mute]') };
         const run = act[key];
         if (!run) return;
         e.preventDefault();

@@ -51,6 +51,17 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
   const repeat = () => repeatBtn?.getAttribute('aria-pressed') === 'true';
   const canNext = () => { if (next) next.disabled = tracks.length < 2 || (!repeat() && current >= tracks.length - 1); };
   repeatBtn?.addEventListener('click', () => { repeatBtn.setAttribute('aria-pressed', String(!repeat())); canNext(); });
+  // Mute (the bar's speaker button, key M): YouTube's own mute, so the fades' volume is kept for unmuting; the needle
+  // stays quiet too. This page only.
+  let muted = false;
+  const muteBtn = $('[data-bar-mute]');
+  muteBtn?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    muted = !muted;
+    muteBtn.setAttribute('aria-pressed', String(muted));
+    muteBtn.title = `${muted ? 'Unmute' : 'Mute'} (M)`;
+    if (player) muted ? player.mute() : player.unMute();
+  });
   const show = (i: number) => {
     if (i === current || !tracks[i]) return;
     current = i;
@@ -94,6 +105,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
       events: {
         onReady: () => {
           player.setVolume(0);
+          if (muted) player.mute();
           player.cuePlaylist(tracks.map((t) => t.id));
           if (seek) seek.disabled = false;
           setInterval(tick, 500);
@@ -137,7 +149,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
       if (!byUser && remembered() === 'off') return;
       if (byUser) remember('on');
       // The needle goes down once the platter has spun up (RecordHero: 1.1 s); the album fades in under its crackle.
-      dropNeedle(700);
+      if (!muted) dropNeedle(700);
       wanted = true;
       await create();
       if (!wanted) return;
