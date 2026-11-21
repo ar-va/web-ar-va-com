@@ -26,10 +26,16 @@ const options = [['new', 'Newest first'], ['old', 'Oldest first'], ['az', 'A–Z
 </div>
 
 <script>
+  import { inkFrom } from '../scripts/ink';
   document.querySelectorAll<HTMLElement>('[data-sort-menu]').forEach((menu) => {
     const button = menu.querySelector<HTMLButtonElement>(':scope > button')!;
     const list = menu.querySelector('ul')!;
-    const open = (yes: boolean) => { list.hidden = !yes; button.setAttribute('aria-expanded', String(yes)); };
+    const open = (yes: boolean) => {
+      const was = !list.hidden;
+      list.hidden = !yes;
+      button.setAttribute('aria-expanded', String(yes));
+      if (yes && !was) inkFrom(list, button);
+    };
     button.addEventListener('click', () => open(list.hidden));
     document.addEventListener('click', (e) => { if (!menu.contains(e.target as Node)) open(false); });
     menu.addEventListener('keydown', (e) => { if (e.key === 'Escape') { open(false); button.focus(); } });

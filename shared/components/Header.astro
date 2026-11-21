@@ -123,7 +123,8 @@ const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https
     item('settings').href = `${music}/settings`;
     // Log out is a form post to settings, so only on the music site (Astro refuses cross-site posts).
     if (location.host === `music.${base}`) item('logout').hidden = false;
-    const toggle = (open) => { menu.hidden = !open; a.setAttribute('aria-expanded', String(open)); };
+    // Opening, the menu spreads from the avatar like ink (shared/scripts/ink.ts, loaded by the Layout).
+    const toggle = (open) => { const was = !menu.hidden; menu.hidden = !open; a.setAttribute('aria-expanded', String(open)); if (open && !was) window.inkFrom?.(menu, a); };
     a.addEventListener('click', (e) => { e.preventDefault(); toggle(menu.hidden); });
     document.addEventListener('click', (e) => { if (!menu.hidden && !menu.contains(e.target) && !a.contains(e.target)) toggle(false); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !menu.hidden) { toggle(false); a.focus(); } });

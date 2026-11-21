@@ -346,6 +346,23 @@ html { scrollbar-gutter: stable; }
   .glare { transition: none; }
 }
 
+/* Ink: a menu or panel opening from an icon spreads from it like a drop of ink (shared/scripts/ink.ts sets the
+   variables and the class for one run). Three soft-edged circles, the second and third a little apart and smaller, so
+   the growing edge wobbles. */
+@property --ink { syntax: '<length>'; inherits: false; initial-value: 0px; }
+.ink {
+  -webkit-mask:
+    radial-gradient(circle at var(--ink-x) var(--ink-y), #000 calc(var(--ink) - 22px), transparent var(--ink)),
+    radial-gradient(circle at calc(var(--ink-x) + var(--ink-dx)) calc(var(--ink-y) + var(--ink-dy)), #000 calc(var(--ink) * 0.84 - 24px), transparent calc(var(--ink) * 0.84)),
+    radial-gradient(circle at calc(var(--ink-x) - var(--ink-dy)) calc(var(--ink-y) + var(--ink-dx)), #000 calc(var(--ink) * 0.72 - 20px), transparent calc(var(--ink) * 0.72));
+  mask:
+    radial-gradient(circle at var(--ink-x) var(--ink-y), #000 calc(var(--ink) - 22px), transparent var(--ink)),
+    radial-gradient(circle at calc(var(--ink-x) + var(--ink-dx)) calc(var(--ink-y) + var(--ink-dy)), #000 calc(var(--ink) * 0.84 - 24px), transparent calc(var(--ink) * 0.84)),
+    radial-gradient(circle at calc(var(--ink-x) - var(--ink-dy)) calc(var(--ink-y) + var(--ink-dx)), #000 calc(var(--ink) * 0.72 - 20px), transparent calc(var(--ink) * 0.72));
+  animation: ink-spread 0.55s cubic-bezier(0.3, 0.7, 0.35, 1) both;
+}
+@keyframes ink-spread { from { --ink: 0px; } to { --ink: var(--ink-max); } }
+
 /* Album page tracklist and the player (user, 2026-11-21): a playable track's number turns into play on hover; the
    track playing shows bars instead (moving while it plays, still while paused) and its title in the accent; hovering
    it offers pause (or play when paused). `data-album-started` / `data-album-playing` on <html> come from RecordHero. */

@@ -284,6 +284,7 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
 </Layout>
 
 <script>
+  import { inkFrom } from '@shared/scripts/ink';
   import { renumber, titleKey, textToTracklist, tracklistToText, type Track } from '@shared/lib/lib';
   import { rematch } from '../../../lib/sync';
 
@@ -436,6 +437,7 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
         const open = l.classList.toggle('hidden') === false;
         l.classList.toggle('grid', open);
         button.setAttribute('aria-expanded', String(open));
+        if (open) inkFrom(l, button);
       }
     });
 
