@@ -207,15 +207,17 @@ html { scrollbar-gutter: stable; }
     radial-gradient(circle at 86% 61%, rgb(255 255 255 / 0.18) 0 0.5px, transparent 1px),
     radial-gradient(circle at 37% 20%, rgb(255 255 255 / 0.16) 0 0.5px, transparent 1px),
     var(--vinyl-gaps),
-    /* Uneven sheen around the circle (pressing ripples, light catching the grooves at different angles): it turns with
-       the record, so a playing record visibly spins (user, 2026-11-21, after Instagram's spinning record). Many faint
-       irregular streaks, never one glint; the real light stays still above (.glare). */
-    conic-gradient(from 17deg, rgb(255 255 255 / 0.06) 0deg, transparent 9deg, rgb(0 0 0 / 0.16) 17deg, transparent 28deg,
-      rgb(255 255 255 / 0.045) 38deg, transparent 45deg, rgb(255 255 255 / 0.08) 58deg, rgb(0 0 0 / 0.12) 71deg, transparent 83deg,
-      rgb(255 255 255 / 0.04) 97deg, transparent 105deg, rgb(0 0 0 / 0.14) 121deg, transparent 133deg, rgb(255 255 255 / 0.07) 149deg,
-      transparent 158deg, rgb(0 0 0 / 0.1) 176deg, rgb(255 255 255 / 0.05) 192deg, transparent 205deg, rgb(0 0 0 / 0.15) 224deg,
-      transparent 236deg, rgb(255 255 255 / 0.08) 251deg, transparent 262deg, rgb(0 0 0 / 0.09) 281deg, transparent 291deg,
-      rgb(255 255 255 / 0.045) 308deg, rgb(0 0 0 / 0.12) 327deg, transparent 341deg, rgb(255 255 255 / 0.06) 360deg),
+    /* Imperfections that turn with the record (user, 2026-11-21, after Instagram's record): a fingerprint (an oval of
+       faint oily ridges), then darker smudges and a light haze from a tiny inline SVG noise (sparse blotches where the
+       noise peaks; painted once, then only rotated). */
+    radial-gradient(ellipse 11% 8% at 66% 27%, transparent 0 18%, rgb(255 255 255 / 0.035) 21% 25%, transparent 28% 38%,
+      rgb(255 255 255 / 0.035) 41% 45%, transparent 48% 58%, rgb(255 255 255 / 0.03) 61% 65%, transparent 68% 78%,
+      rgb(255 255 255 / 0.02) 81% 85%, transparent 88%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='d' x='0' y='0' width='1' height='1'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.028' numOctaves='3' seed='11'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.6 0 0 0 -0.36'/%3E%3C/filter%3E%3Cfilter id='l' x='0' y='0' width='1' height='1'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.05' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0.33 0 -0.205'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url%28%23d%29'/%3E%3Crect width='200' height='200' filter='url%28%23l%29'/%3E%3C/svg%3E") center / 100% 100%,
+    /* Uneven sheen around the circle: a few broad, soft variations, so the spin reads at its real, slow speed (many
+       narrow streaks made 33⅓ rpm look fast). The real light stays still above (.glare). */
+    conic-gradient(from 30deg, rgb(255 255 255 / 0.05) 0deg, transparent 55deg, rgb(0 0 0 / 0.14) 100deg, transparent 150deg,
+      rgb(255 255 255 / 0.035) 205deg, transparent 250deg, rgb(0 0 0 / 0.1) 305deg, rgb(255 255 255 / 0.05) 360deg),
     /* each gap's far edge catches a little light, so the gaps show faintly outside the streak too */
     radial-gradient(circle, transparent 0 calc(33.5% + 1px), rgb(255 255 255 / 0.035) calc(33.5% + 1px) calc(33.5% + 2px),
       transparent calc(33.5% + 2px) calc(46.2% + 1px), rgb(255 255 255 / 0.035) calc(46.2% + 1px) calc(46.2% + 2px),
