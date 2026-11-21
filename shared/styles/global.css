@@ -415,22 +415,23 @@ iframe[id^="telegram-login"] { color-scheme: light dark; }
    blur to its box, so a glass dropdown inside (the Sort menu) would lose its blur where it hangs outside. */
 .glass-under { isolation: isolate; }
 .glass-under::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; }
-/* 2026-11-21, the user's CodePen (jh3y's sticky glass product bar): the glass gets a 3 px border that is almost clear,
+/* 2026-11-21, the user's CodePen (jh3y's sticky glass product bar): the glass gets a 2 px border that is almost clear,
    with the background painted only inside it (padding-box), while the backdrop filter covers the whole box, border
-   included. So the rim shows a blurred, saturated (2.8), brightened (1.25) copy of whatever is behind: it glows in the
+   included. So the rim shows a blurred, saturated copy of whatever is behind: it glows in the
    colours under it and changes as the page scrolls. Inside is more solid (0.85) than the old 0.6, so the rim reads and
    text stays clear. Four layered soft shadows rest it on the page. The small round glass buttons (.glass-dark: the
-   record's play button, the photo viewer's controls, the copy tip) keep a plain edge. */
+   record's play button, the photo viewer's controls, the copy tip) keep a plain edge. Values = the user's own pick in
+   the pen's config panel: blur 8, saturate 2.8, brightness 1, contrast 1, border 2. */
 .glass, .glass-under::before {
   background-color: rgb(253 253 251 / 0.85);
   background-clip: padding-box;
-  border: 3px solid rgb(31 35 53 / 0.08);
+  border: 2px solid rgb(31 35 53 / 0.08);
   box-shadow:
     0 0.5px 0.6px rgb(31 35 53 / 0.06), 0 1.8px 2.3px -0.5px rgb(31 35 53 / 0.07),
     0 4.2px 5.3px -1.1px rgb(31 35 53 / 0.09), 0 9.7px 12.1px -1.6px rgb(31 35 53 / 0.1);
   will-change: transform;
-  -webkit-backdrop-filter: blur(18px) saturate(2.8) brightness(1.25);
-  backdrop-filter: blur(18px) saturate(2.8) brightness(1.25);
+  -webkit-backdrop-filter: blur(8px) saturate(2.8) brightness(1) contrast(1);
+  backdrop-filter: blur(8px) saturate(2.8) brightness(1) contrast(1);
 }
 .dark .glass, .dark .glass-under::before {
   background-color: rgb(30 32 41 / 0.85);

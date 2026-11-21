@@ -24,8 +24,8 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
   <section data-bar-card aria-label="Album player" class="glass pointer-events-auto absolute inset-x-0 bottom-3 rounded-3xl pl-2.5 pr-3 pt-2.5 pb-3.5 sm:pr-4">
     <!-- The row: clicking the cover or the track opens / closes the queue (keyboards: the track is a button). -->
     <div data-bar-head class="flex items-center gap-3 cursor-pointer">
-      {/* Concentric corners (as in the CodePen the user sent): the card's 24px radius minus its 3px rim and 10px padding. */}
-      {cover ? <img src={cover} alt="" class="w-11 h-11 rounded-[11px] object-cover shrink-0" /> : <span class="w-11 h-11 rounded-[11px] bg-zinc-200 dark:bg-zinc-800 shrink-0"></span>}
+      {/* Concentric corners (as in the CodePen the user sent): the card's 24px radius minus its 2px rim and 10px padding. */}
+      {cover ? <img src={cover} alt="" class="w-11 h-11 rounded-[12px] object-cover shrink-0" /> : <span class="w-11 h-11 rounded-[12px] bg-zinc-200 dark:bg-zinc-800 shrink-0"></span>}
       <button type="button" data-bar-expand aria-expanded="false" aria-controls="player-queue" aria-keyshortcuts="Q" title="Show the queue (Q)"
         class="min-w-0 flex-1 text-left rounded-lg cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500">
         <span class="block" aria-live="polite">
