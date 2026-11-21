@@ -22,7 +22,7 @@ const icon = size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
       class="w-7 h-7 grid place-items-center rounded-full cursor-pointer text-kikyo-600 dark:text-kikyo-400 hover:bg-[var(--well-hover)] focus-visible:outline-2 focus-visible:outline-kikyo-500 motion-safe:active:scale-90 transition-[transform,background-color]">
       <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3" /><rect x="3.5" y="14" width="4" height="6" rx="1.5" /><rect x="16.5" y="14" width="4" height="6" rx="1.5" /></svg>
     </button>
-    <div id={menuId} popover="manual" class="listen-pop m-0 min-w-48 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-1.5 shadow-xl text-sm">
+    <div id={menuId} popover="manual" class="listen-pop glass m-0 min-w-48 rounded-2xl p-1.5 text-sm">
       {services.map((s) => (
         <a href={(links[s.key] && safeStreamingUrl(links[s.key]!, s.key)) || search[s.key]} target="_blank" rel="noopener noreferrer"
           class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-zinc-800 dark:text-zinc-200 hover:bg-[var(--well)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-kikyo-500 [&>svg]:text-kikyo-600 dark:[&>svg]:text-kikyo-400">
