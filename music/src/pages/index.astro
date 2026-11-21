@@ -44,8 +44,9 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
               </div>
 
               <!-- The latest records on a ledge, then a stack for the rest; they link to the shelf too (above the card's own
-                   link, so hovering a record still lifts it), hidden from keyboards and screen readers. -->
-              <ul class="shelf !grid-cols-3 sm:!grid-cols-5 !gap-y-0 !pt-10 !px-0 mt-1" role="list" aria-hidden="true">
+                   link, so hovering a record still lifts it), hidden from keyboards and screen readers. The shelf itself
+                   lets clicks through to the card's link (user 2026-11-21: anywhere in the box opens the shelf). -->
+              <ul class="shelf !grid-cols-3 sm:!grid-cols-5 !gap-y-0 !pt-10 !px-0 mt-1 pointer-events-none [&_a]:pointer-events-auto" role="list" aria-hidden="true">
                 {s.records.map((r, i) => (
                   <li class:list={['shelf-slot', { 'max-sm:hidden': i >= 2 }]}>
                     <a href={href} tabindex="-1" class="shelf-record block"><Cover record={r} eager={i < 4} /></a>

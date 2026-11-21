@@ -18,7 +18,7 @@ const thread = { shelfId: owner?.id ?? 0, instanceId: SHELF_THREAD };
     <Breadcrumbs class="mb-8" share={!!owner} items={[{ label: 'Shelves', href: '/' }, { label: owner?.name ?? 'Not found' }]} />
     {owner ? (
       <>
-        <Shelf owner={{ name: owner.name, slug: shelfSlug(owner), discogs_username: owner.discogs_username!, telegram: owner.username, note: owner.shelf_note }}
+        <Shelf owner={{ name: owner.name, slug: shelfSlug(owner), discogs_username: owner.discogs_username!, telegram: owner.username, note: owner.shelf_note, photo: owner.photo_url }}
           records={records} commentCount={comments.length} canEdit={user?.id === owner.id} editingNote={editingNote} />
         <section id="comments" class="mt-16 max-w-3xl">
           <CommentThread comments={comments} user={user} canDelete={(id) => canDeleteComment(thread, id, user)} error={error} draft={draft}>

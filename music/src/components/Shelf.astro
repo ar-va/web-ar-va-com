@@ -8,7 +8,7 @@ import Note from './Note.astro';
 import type { shelfView } from '@shared/lib/lib';
 
 interface Props {
-  owner: { name: string; slug: string; discogs_username: string; telegram: string | null; note: string | null };
+  owner: { name: string; slug: string; discogs_username: string; telegram: string | null; note: string | null; photo?: string | null };
   records: ReturnType<typeof shelfView>[];
   commentCount: number;
   /** The visitor owns this shelf: they can write its note (`?note` opens the editor). */
@@ -78,7 +78,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
   )}
 
   <!-- The collector's note between the Latest hero and the whole collection (user, 2026-10-29). -->
-  <Note class="mt-12" note={owner.note} by={owner.name.split(' ')[0]} about="the collection" base={base} canEdit={canEdit} editing={editingNote}
+  <Note class="mt-12" note={owner.note} by={owner.name.split(' ')[0]} photo={owner.photo} about="the collection" base={base} canEdit={canEdit} editing={editingNote}
     addText="Add a short note about your collection: what you collect, how it started. Visitors see it here."
     placeholder="What you collect, how it started, what you’re hunting for…" />
 
