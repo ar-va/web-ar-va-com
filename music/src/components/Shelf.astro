@@ -320,8 +320,6 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
     order.forEach((slot) => { grid?.appendChild(slot); const row = rows.get(slot.dataset.record!); if (row) list?.appendChild(row); });
   });
 
-  // Shelf or list; the choice is remembered in this browser. (The `hidden` attribute, not the class: .shelf's own
-  // display: grid outranks Tailwind's `hidden` class.)
   filtersPanel();
 
   // Labels under the records: on unless turned off in this browser.
@@ -334,6 +332,8 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
   });
   try { if (localStorage.getItem('records-labels') === 'off') setLabels(false); } catch {}
 
+  // Shelf or list; the choice is remembered in this browser. (The `hidden` attribute, not the class: .shelf's own
+  // display: grid outranks Tailwind's `hidden` class.)
   function setView(view: string) {
     // Labels are a shelf-view thing: the toggle stays in place but greys out in the list view.
     if (labels) {
