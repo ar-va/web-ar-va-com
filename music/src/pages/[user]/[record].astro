@@ -131,11 +131,12 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
     <article class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
       <!-- Everything keeps the reading column (Edit ends where Details ends, the player is as wide as the tracklist;
            user 2026-11-21); only the hero uses the whole frame. The Edit pill's -my-1.5 keeps this row as tall as the
-           breadcrumbs, so they sit exactly where the shelf page has them (they moved 6 px down for the owner). -->
-      <div class="flex items-center justify-between gap-4">
+           breadcrumbs, so they sit exactly where the shelf page has them (they moved 6 px down for the owner). Phones:
+           Edit goes under the breadcrumbs (it ran into their copy icon). -->
+      <div class="flex max-sm:flex-col max-sm:items-start sm:items-center justify-between gap-x-4 gap-y-3">
         <Breadcrumbs class="min-w-0" share items={[{ label: 'Shelves', href: '/' }, { label: owner.name, href: shelfPath }, { label: v.title }]} />
         {isOwner && (
-          <a href={`${path}/edit`} class="ctl pl-2.5 -my-1.5">
+          <a href={`${path}/edit`} class="ctl pl-2.5 sm:-my-1.5">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.9 4.1a2.1 2.1 0 0 1 3 3L8.5 18.5 4 20l1.5-4.5z" /></svg>
             Edit
           </a>

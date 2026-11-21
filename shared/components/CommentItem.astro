@@ -14,7 +14,7 @@ interface Props {
 }
 const { comment: c, user, canDelete, action, hidden, small = false } = Astro.props;
 const own = !!user && user.id === c.author_id;
-const date = (s: number) => new Date(s * 1000).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+const date = (s: number) => new Date(s * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 const field = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-3.5 py-2.5 text-zinc-900 dark:text-white leading-relaxed focus:outline-none focus:border-kikyo-500 transition-colors resize-y';
 const primary = 'bg-kikyo-600 dark:bg-kikyo-400 text-white dark:text-zinc-950 text-sm font-medium px-4 py-1.5 rounded-full hover:bg-kikyo-700 dark:hover:bg-kikyo-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors';
 const quiet = 'text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:hover:text-white px-3 py-1.5 rounded-full transition-colors';
