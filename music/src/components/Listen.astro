@@ -23,16 +23,21 @@ const icon = size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
     class={`${button} grid place-items-center rounded-full cursor-pointer text-kikyo-600 dark:text-kikyo-400 hover:bg-[var(--well-hover)] aria-expanded:bg-[var(--on-bg)] aria-expanded:text-[var(--on-text)] focus-visible:outline-2 focus-visible:outline-kikyo-500 motion-safe:active:scale-90 transition-[transform,background-color]`}>
     <svg class={icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3" /><rect x="3.5" y="14" width="4" height="6" rx="1.5" /><rect x="16.5" y="14" width="4" height="6" rx="1.5" /></svg>
   </button>
-  <!-- The menu opens over its button, the button's twin in its top-right corner (bottom-right when it opens upward), so
-       it reads as the button growing into the menu (user 2026-11-21); the twin closes it. -->
-  <div id={menuId} popover="manual" class="listen-pop glass m-0 min-w-48 rounded-2xl p-1.5 text-sm open:flex flex-col">
-    <button type="button" data-listen-close data-grow-keep aria-label="Close the menu" title="Close"
-      class={`${button} self-end grid place-items-center rounded-full cursor-pointer !bg-[var(--on-bg)] text-[var(--on-text)] focus-visible:outline-2 focus-visible:outline-kikyo-500`}>
-      <svg class={icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3" /><rect x="3.5" y="14" width="4" height="6" rx="1.5" /><rect x="16.5" y="14" width="4" height="6" rx="1.5" /></svg>
-    </button>
+  <!-- The menu opens over its button and is the button's own violet ("on") background grown into a card (user
+       2026-11-21): the headphones stay in its top-right corner (bottom-right when it opens upward) and close it. Beside it a "Listen on" title
+       fills the row (user 2026-11-21: the row was empty). The row stays put while the menu grows (data-grow-keep): the
+       twin is the button, and the growing shape reveals the title. -->
+  <div id={menuId} popover="manual" class="listen-pop m-0 min-w-48 rounded-2xl p-1.5 text-sm open:flex flex-col bg-[var(--on-bg)] text-[var(--on-text)] shadow-[0_14px_30px_-12px_rgb(0_0_0/0.5)]">
+    <div data-listen-head data-grow-keep class="flex items-center justify-between gap-3">
+      <span class="pl-3 text-sm font-medium opacity-70">Listen on</span>
+      <button type="button" data-listen-close aria-label="Close the menu" title="Close"
+        class={`${button} shrink-0 grid place-items-center rounded-full cursor-pointer hover:bg-[var(--on-bg-hover)] focus-visible:outline-2 focus-visible:outline-kikyo-500`}>
+        <svg class={icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3" /><rect x="3.5" y="14" width="4" height="6" rx="1.5" /><rect x="16.5" y="14" width="4" height="6" rx="1.5" /></svg>
+      </button>
+    </div>
     {services.map((s) => (
       <a href={(links[s.key] && safeStreamingUrl(links[s.key]!, s.key)) || search[s.key]} target="_blank" rel="noopener noreferrer"
-        class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-zinc-800 dark:text-zinc-200 hover:bg-[var(--well)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-kikyo-500 [&>svg]:text-kikyo-600 dark:[&>svg]:text-kikyo-400">
+        class="flex items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-[var(--on-bg-hover)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-kikyo-500">
         {s.key === 'spotify' && <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9.5" /><path d="M7.3 9.6c3.3-1 6.8-.7 9.6.9M7.9 12.7c2.7-.7 5.4-.4 7.6.8M8.5 15.6c2-.5 3.9-.3 5.6.6" /></svg>}
         {s.key === 'apple' && <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><path d="M15 7.5v7a1.9 1.9 0 1 1-1.4-1.8V9.6L10 10.5v5.3a1.9 1.9 0 1 1-1.4-1.8V8.9z" fill="currentColor" stroke-width="0.6" /></svg>}
         {s.key === 'youtube' && <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9.5" /><path d="M10.2 8.8v6.4l5.3-3.2z" fill="currentColor" stroke-width="0.6" stroke-linejoin="round" /></svg>}
@@ -92,5 +97,5 @@ const icon = size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
 <style is:global>
   .listen-pop { position: fixed; inset: auto; }
   /* opening upward: the twin goes last, the services keep their order */
-  .listen-pop.listen-up > [data-listen-close] { order: 1; }
+  .listen-pop.listen-up > [data-listen-head] { order: 1; }
 </style>
