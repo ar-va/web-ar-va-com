@@ -12,6 +12,8 @@ export const spring = (() => {
   const bounce = BOUNCE, duration = SETTLE;
   const w0 = (2 * Math.PI) / duration, zeta = 1 - bounce, wd = w0 * Math.sqrt(1 - zeta * zeta);
   const x = (t: number) => 1 - Math.exp(-zeta * w0 * t) * (Math.cos(wd * t) + ((zeta * w0) / wd) * Math.sin(wd * t));
+  // Safari before 17.2 has no linear() easing, and animate() throws on it: a plain ease-out there.
+  if (!CSS.supports('animation-timing-function', 'linear(0, 1)')) return 'cubic-bezier(0.2, 0.9, 0.25, 1)';
   return `linear(${Array.from({ length: 41 }, (_, i) => x((i / 40) * SETTLE * 1.3).toFixed(4)).join(', ')})`;
 })();
 export const DURATION = SETTLE * 1.3 * 1000; // sampled a little past SETTLE, where it has come to rest
