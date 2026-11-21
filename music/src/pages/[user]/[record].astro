@@ -121,7 +121,7 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
       <p class="text-zinc-500">This record isn’t on the shelf (any more). <a href={shelfPath} class={link}>Back to the shelf</a></p>
     </div>
   ) : (
-    <article class:list={['max-w-5xl mx-auto px-6 w-full flex-grow pt-12 *:max-w-3xl', play.length > 0 ? 'pb-12' : 'pb-24']}>
+    <article class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
       <!-- Everything keeps the reading column (Edit ends where Details ends, the player is as wide as the tracklist;
            user 2026-11-21); only the hero uses the whole frame. -->
       <div class="flex items-center justify-between gap-4">
@@ -221,13 +221,13 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
       <p class="mt-8 text-sm text-zinc-500">
         Data from Discogs: <a href={detail?.uri ?? `https://www.discogs.com/release/${record.releaseId}`} class={link}>view this release there</a>.
       </p>
+      {play.length > 0 && <PlayerBar tracks={play} artist={hero!.artist} cover={hero!.cover} />}
 
       <section id="comments" class="mt-16">
         <CommentThread comments={comments} user={user} canDelete={(id) => canDeleteComment(thread, id, user)} error={error} draft={draft}>
           <LoginButton slot="login" href={loginHref(Astro.url, `${Astro.url.origin}${path}#comments`)} />
         </CommentThread>
       </section>
-      {play.length > 0 && <PlayerBar tracks={play} artist={hero!.artist} cover={hero!.cover} />}
     </article>
   )}
 </Layout>

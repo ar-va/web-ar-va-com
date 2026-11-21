@@ -1,5 +1,5 @@
 ---
-// The album's player (user, 2026-11-21), sticky at the end of the album page in its reading column. The sound is
+// The album's player (user, 2026-11-21), sticky in the album page's reading column, placed right after the tracklist. The sound is
 // scripts/album-player.ts; play / pause also turns the record in the hero (RecordHero's script wires the buttons).
 // One compact row (the user liked the mini view and dropped the full card and Repeat): cover and track, then previous /
 // play / next in their own pill, volume (a slider rises above it on hover; a click mutes) and Queue. The progress is a
@@ -12,8 +12,9 @@ const press = 'motion-safe:active:scale-90 transition-[transform,background-colo
 const icon = `w-8 h-8 sm:w-9 sm:h-9 grid place-items-center rounded-full cursor-pointer text-zinc-800 dark:text-white hover:bg-[var(--well-hover)] disabled:opacity-35 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500 ${press}`;
 const side = `w-8 h-8 sm:w-9 sm:h-9 grid place-items-center rounded-full cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-[var(--well)] aria-pressed:text-kikyo-600 dark:aria-pressed:text-kikyo-400 aria-expanded:text-kikyo-600 dark:aria-expanded:text-kikyo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500 ${press}`;
 ---
-<!-- Sticky: at the bottom of the screen while the page scrolls, resting above the footer at the end. Its height in the
-     page is the closed card's (the script keeps it so) and the card sits at its bottom, so the queue grows it upward. -->
+<!-- Sticky: at the bottom of the screen until the page reaches the end of the tracklist, where it rests (and scrolls away
+     with the page into the comments). Its height in the page is the closed card's (the script keeps it so) and the card
+     sits at its bottom, so the queue grows it upward. -->
 <div data-player-bar class="sticky bottom-0 z-40 mt-8 h-[4.75rem] pointer-events-none">
   <section data-bar-card aria-label="Album player" class="glass pointer-events-auto absolute inset-x-0 bottom-3 rounded-3xl px-3 pt-2.5 pb-3.5 sm:px-4">
     <!-- The row: clicking the cover or the track opens / closes the queue (keyboards: the track is a button). -->
