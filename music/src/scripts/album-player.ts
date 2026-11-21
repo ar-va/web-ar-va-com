@@ -59,9 +59,11 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     show(playing());
     const d = player.getDuration(), t = player.getCurrentTime();
     if (d && seek && length) { seek.max = String(Math.floor(d)); length.textContent = clock(d); }
-    if (!seeking && seek && time) { seek.value = String(Math.floor(t)); time.textContent = clock(t); }
+    if (!seeking && seek && time) { seek.value = String(Math.floor(t)); time.textContent = clock(t); fill(); }
   };
-  seek?.addEventListener('input', () => { seeking = true; if (time) time.textContent = clock(Number(seek.value)); });
+  // How much of the progress line is filled (the bar's CSS draws it from --p).
+  const fill = () => seek?.style.setProperty('--p', `${(100 * Number(seek.value)) / (Number(seek.max) || 1)}%`);
+  seek?.addEventListener('input', () => { seeking = true; fill(); if (time) time.textContent = clock(Number(seek.value)); });
   seek?.addEventListener('change', () => { seeking = false; player?.seekTo(Number(seek.value), true); });
   const ramp = (to: number, ms: number, done?: () => void) => {
     clearInterval(fade);
