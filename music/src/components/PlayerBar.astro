@@ -10,8 +10,12 @@ interface Props { tracks: { id: string; title: string; duration: string }[]; art
 const { tracks, artist, cover } = Astro.props;
 // Snappy: a press shrinks a button for an instant (none with reduced motion).
 const press = 'motion-safe:active:scale-90 transition-[transform,background-color,color] duration-150';
-const icon = `w-8 h-8 sm:w-9 sm:h-9 grid place-items-center rounded-full cursor-pointer text-zinc-800 dark:text-white hover:bg-[var(--well-hover)] disabled:opacity-35 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500 ${press}`;
-const side = `w-8 h-8 sm:w-9 sm:h-9 grid place-items-center rounded-full cursor-pointer text-zinc-500 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-white hover:bg-[var(--well)] aria-pressed:text-kikyo-600 dark:aria-pressed:text-kikyo-400 aria-expanded:text-kikyo-600 dark:aria-expanded:text-kikyo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500 ${press}`;
+// The site's control colours, like the shelf toolbar (user 2026-11-21): grey well = can press, a lighter well on hover,
+// the violet "on" colour for play / pause (like the view switch's knob) and for mute while it's on.
+const base = `grid place-items-center rounded-full cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500 ${press}`;
+const icon = `w-8 h-8 sm:w-9 sm:h-9 ${base} text-zinc-700 dark:text-zinc-200 hover:bg-[var(--well-hover)] disabled:opacity-35 disabled:pointer-events-none`;
+const playBtn = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--on-bg)] text-[var(--on-text)] hover:bg-[var(--on-bg-hover)]`;
+const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--well-hover)] text-zinc-700 dark:text-zinc-200 aria-pressed:bg-[var(--on-bg)] aria-pressed:text-[var(--on-text)] aria-pressed:hover:bg-[var(--on-bg-hover)]`;
 ---
 <!-- Sticky: at the bottom of the screen until the page reaches the end of the tracklist, where it rests (and scrolls away
      with the page into the comments). Its height in the page is the closed card's (the script keeps it so) and the card
@@ -31,11 +35,11 @@ const side = `w-8 h-8 sm:w-9 sm:h-9 grid place-items-center rounded-full cursor-
       <!-- Everything after the track: its clicks stay its own (the row would open the queue). -->
       <div data-bar-controls class="flex items-center gap-1 sm:gap-2 shrink-0 -mr-1">
         <!-- Previous / play / next together in a pill. -->
-        <div class="flex items-center rounded-full bg-[var(--well)] p-0.5">
+        <div class="flex items-center gap-0.5 rounded-full bg-[var(--well)] p-0.5">
           <button type="button" data-bar-prev aria-label="Previous track" aria-keyshortcuts="Shift+ArrowLeft" title="Previous track (Shift+←)" class={`${icon} motion-safe:active:-translate-x-0.5`}>
             <svg class="w-[1.125rem] h-[1.125rem]" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.6" height="14" rx="1" /><path d="M19 5.5v13L8.5 12z" /></svg>
           </button>
-          <button type="button" data-bar-play aria-pressed="false" aria-label="Play" aria-keyshortcuts="Space K" title="Play (Space)" class={`${icon} group !w-9 !h-9 sm:!w-10 sm:!h-10`}>
+          <button type="button" data-bar-play aria-pressed="false" aria-label="Play" aria-keyshortcuts="Space K" title="Play (Space)" class={`${playBtn} group`}>
             <svg class="player-pop w-6 h-6 group-aria-pressed:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.5 4.8v14.4a.8.8 0 0 0 1.2.7l11.3-7.2a.8.8 0 0 0 0-1.4L8.7 4.1a.8.8 0 0 0-1.2.7z" /></svg>
             <svg class="player-pop w-6 h-6 group-aria-[pressed=false]:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2" /><rect x="13.8" y="5" width="4.2" height="14" rx="1.2" /></svg>
           </button>
