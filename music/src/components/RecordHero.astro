@@ -217,7 +217,8 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
     }
     // Start playing as the roll-out (CSS `roll-out`, 0.25 s delay + 1.6 s) settles.
     let started = false;
-    const autoplay = () => { if (!started && !playing) { started = true; toggle(false); } };
+    // An album whose sound stays off (paused on an earlier visit) rests too: spinning would say it's playing.
+    const autoplay = () => { if (!started && !playing && sound?.willAutoplay() !== false) { started = true; toggle(false); } };
     disc.addEventListener('animationend', (e) => { if (e.animationName === 'roll-out') autoplay(); }, { once: true });
     setTimeout(autoplay, 2000);
   });

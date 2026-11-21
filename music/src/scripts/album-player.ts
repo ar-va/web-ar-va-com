@@ -143,18 +143,23 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
       player.setVolume(0);
       fadeMs = byUser ? RESUME_MS : FADE_IN_MS;
       player.playVideo();
-      // No sound after a few seconds of an autoplay (and not just loading): the browser said no. Stop and wait for a click.
-      if (!byUser) setTimeout(() => {
+      // No sound a few seconds into an autoplay: the browser said no (or YouTube is stuck loading, given up on after
+      // 12 s). Stop and wait for a click, so the record and the bar never show playing without sound.
+      const asked = performance.now();
+      const check = () => {
         const s = player.getPlayerState();
-        if (wanted && s !== PLAYING && s !== BUFFERING) {
-          wanted = false;
-          clearInterval(fade);
-          player.setVolume(0);
-          halt();
-          say('Press play to hear the album');
-        }
-      }, 3000);
+        if (!wanted || s === PLAYING) return;
+        if (s === BUFFERING && performance.now() - asked < 12000) return void setTimeout(check, 1000);
+        wanted = false;
+        clearInterval(fade);
+        player.setVolume(0);
+        halt();
+        say('Press play to hear the album');
+      };
+      if (!byUser) setTimeout(check, 3000);
     },
+    /** False after a remembered pause: then the record stays at rest on arrival instead of spinning in silence. */
+    willAutoplay: () => remembered() !== 'off',
     stop(byUser: boolean) {
       wanted = false;
       if (byUser) remember('off');
