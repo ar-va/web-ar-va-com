@@ -164,6 +164,9 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       const label = on ? 'Stop the record' : 'Play the record';
       button.title = label;
       button.setAttribute('aria-label', label);
+      // The tracklist shows what's playing: bars on the current track (moving while it plays), from the first play on.
+      if (on) document.documentElement.setAttribute('data-album-started', '');
+      document.documentElement.toggleAttribute('data-album-playing', on);
       barPlays.forEach((b) => {
         b.setAttribute('aria-pressed', String(on));
         b.setAttribute('aria-label', on ? 'Pause' : 'Play');
@@ -207,7 +210,11 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       barPlays.forEach((b) => b.addEventListener('click', () => toggle(true)));
       document.querySelector('[data-bar-prev]')?.addEventListener('click', () => { start(); sound.prev(); });
       document.querySelectorAll('[data-bar-next]').forEach((b) => b.addEventListener('click', () => { start(); sound.next(); }));
-      document.querySelectorAll<HTMLElement>('[data-bar-go]').forEach((b) => b.addEventListener('click', () => { start(); sound.go(Number(b.dataset.barGo)); }));
+      // A track in the queue or the tracklist: plays it; the current one plays / pauses instead of starting over.
+      document.querySelectorAll<HTMLElement>('[data-bar-go]').forEach((b) => b.addEventListener('click', () => {
+        if (b.getAttribute('aria-current') === 'true') toggle(true);
+        else { start(); sound.go(Number(b.dataset.barGo)); }
+      }));
       // Keyboard (user, 2026-11-21): Space / K play-pause, ← → 5 s, Shift+← → previous / next, ↑ ↓ volume (so they
       // don't scroll album pages), Q queue, M mute.
       // Not while typing, not with Ctrl / ⌘ / Alt, not while a dialog or popover (photo viewer, date popup) has the
