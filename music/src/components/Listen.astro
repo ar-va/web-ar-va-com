@@ -60,14 +60,18 @@ const icon = size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
 )}
 
 <script>
-  // The listen menu opens under its button, right-aligned (CSS anchoring isn't everywhere yet); scrolling closes it.
+  import { inkFrom } from '@shared/scripts/ink';
+  // The listen menu opens under its button, right-aligned (CSS anchoring isn't everywhere yet), spreading from it like
+  // ink; scrolling closes it.
   document.querySelectorAll<HTMLElement>('.listen-pop').forEach((pop) => {
     pop.addEventListener('toggle', (e) => {
       if ((e as ToggleEvent).newState !== 'open') return;
-      const b = document.querySelector<HTMLElement>(`[popovertarget="${pop.id}"]`)!.getBoundingClientRect();
+      const button = document.querySelector<HTMLElement>(`[popovertarget="${pop.id}"]`)!;
+      const b = button.getBoundingClientRect();
       const below = b.bottom + 6 + pop.offsetHeight < innerHeight;
       pop.style.left = `${Math.max(8, b.right - pop.offsetWidth)}px`;
       pop.style.top = `${below ? b.bottom + 6 : b.top - 6 - pop.offsetHeight}px`;
+      inkFrom(pop, button);
       addEventListener('scroll', () => pop.hidePopover(), { once: true, passive: true });
     });
   });
