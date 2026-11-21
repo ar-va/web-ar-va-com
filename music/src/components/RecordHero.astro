@@ -51,6 +51,7 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       <a href={href} tabindex="-1" aria-hidden="true" class="block"><Cover record={record} eager class="sleeve-open w-[min(15rem,62vw)] sm:w-60" /></a>
     ) : (
       <div data-spin-cover class="motion-safe:cursor-pointer"><Cover record={record} eager class="sleeve-open w-[min(15rem,62vw)] sm:w-60" /></div>
+      <span class="sleeve-shine" aria-hidden="true"></span>
     )}
     <button type="button" data-spin aria-pressed="false" aria-label="Play the record" title="Play the record"
       class="glass glass-dark group absolute right-2 bottom-2 z-10 w-9 h-9 grid place-items-center rounded-full text-white cursor-pointer motion-reduce:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500">
@@ -255,4 +256,37 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
     disc.addEventListener('animationend', (e) => { if (e.animationName === 'roll-out') autoplay(); }, { once: true });
     setTimeout(autoplay, 2000);
   });
+
+  // Album page: the turntable leans toward the mouse, the side under the pointer coming forward, on a spring (stiffness
+  // 120, damping 16, like React Bits' ReflectiveCard); the sleeve's glare follows the pointer and its band of light
+  // slides with the tilt (.sleeve-shine). Mouse only (a tilt under a finger would fight scrolling), none with reduced motion.
+  const TILT = 10;
+  if (matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)').matches) {
+    document.querySelectorAll<HTMLElement>('[data-turntable]:has([data-spin-cover])').forEach((el) => {
+      let tx = 0, ty = 0, rx = 0, ry = 0, vx = 0, vy = 0, last = 0, frame = 0;
+      const step = (now: number) => {
+        const dt = Math.min(0.032, (now - last) / 1000 || 0.016);
+        last = now;
+        vx += (120 * (ty * TILT - rx) - 16 * vx) * dt; rx += vx * dt;
+        vy += (120 * (-tx * TILT - ry) - 16 * vy) * dt; ry += vy * dt;
+        el.style.transform = `perspective(900px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`;
+        el.style.setProperty('--band', `${(50 - (ry / TILT) * 45).toFixed(1)}%`);
+        const resting = Math.abs(ty * TILT - rx) + Math.abs(-tx * TILT - ry) + Math.abs(vx) + Math.abs(vy) < 0.02;
+        if (resting && !tx && !ty) el.style.transform = '';
+        frame = resting ? 0 : requestAnimationFrame(step);
+      };
+      const run = () => { if (!frame) { last = performance.now(); frame = requestAnimationFrame(step); } };
+      el.addEventListener('pointermove', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        const r = el.getBoundingClientRect();
+        tx = Math.max(-1, Math.min(1, ((e.clientX - r.left) / r.width) * 2 - 1));
+        ty = Math.max(-1, Math.min(1, ((e.clientY - r.top) / r.height) * 2 - 1));
+        el.style.setProperty('--gx', `${((tx + 1) * 50).toFixed(1)}%`);
+        el.style.setProperty('--gy', `${((ty + 1) * 50).toFixed(1)}%`);
+        el.style.setProperty('--glare', '1');
+        run();
+      });
+      el.addEventListener('pointerleave', () => { tx = ty = 0; el.style.setProperty('--glare', '0'); run(); });
+    });
+  }
 </script>
