@@ -162,8 +162,10 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
       <!-- Details: a section like the tracklist, not a box (user 2026-11-21: the note is the page's one box, so the two
            don't look alike), still folding. Closed it previews the pressing (label, format, country). Native <details>:
            keyboard and screen readers included. -->
+      {/* The chevrons sit on the heading's line (items-start; the 32px button = the 2xl heading's line), so they stay put
+          while the preview line under the heading comes and goes (user 2026-11-21). */}
       <details id="details" class="group/details">
-        <summary class="group/sum flex items-center gap-4 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-kikyo-500">
+        <summary class="group/sum flex items-start gap-4 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-kikyo-500">
           <span class="min-w-0 flex-1">
             <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Details</h2>
             {preview.length > 0 && <span class="flex mt-1.5 text-sm text-zinc-500 truncate group-open/details:hidden">{preview.map((x) => <span class="fact truncate">{x}</span>)}</span>}
@@ -185,7 +187,7 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
       {tracks.length > 0 ? (
         <details id="tracklist" open class="group/tracks mt-14 scroll-mt-6">
           {/* Folds like Details (user 2026-11-21), open by default; closed it says how many tracks and how long. */}
-          <summary class="group/sum flex items-center gap-4 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-kikyo-500">
+          <summary class="group/sum flex items-start gap-4 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-kikyo-500">
             <span class="min-w-0 flex-1">
               <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Tracklist</h2>
               <span class="flex mt-1.5 text-sm text-zinc-500 group-open/tracks:hidden">
