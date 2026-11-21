@@ -12,7 +12,9 @@ const options = [['new', 'Newest first'], ['old', 'Oldest first'], ['az', 'A–Z
     <span class="max-sm:sr-only">Sort</span>
     <svg class="w-3.5 h-3.5 transition-transform group-aria-expanded:rotate-180 max-sm:hidden" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
   </button>
-  <ul hidden role="menu" class="glass absolute left-0 top-full mt-2 z-30 min-w-44 rounded-2xl p-1.5">
+  <!-- mt-3.5: 8 px below the toolbar's edge, like the Filter panel (this hangs from the button, 6 px above that edge;
+       user 2026-11-21: the two menus sat at different distances). -->
+  <ul hidden role="menu" class="glass absolute left-0 top-full mt-3.5 z-30 min-w-44 rounded-2xl p-1.5">
     {options.map(([key, label]) => (
       <li role="none">
         <button type="button" role="menuitemradio" aria-checked={key === 'new' ? 'true' : 'false'} data-sort={key}
