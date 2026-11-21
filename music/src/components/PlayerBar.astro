@@ -1,50 +1,53 @@
 ---
 // The album's player, pinned to the bottom of the album page (user, 2026-11-21): the track playing, previous / play /
-// next, its progress (drag to seek) and the queue. The sound is scripts/album-player.ts; play / pause also turns the
-// record in the hero (RecordHero's script wires the buttons).
-// One compact card on every width (user, 2026-11-21: the first, page-wide bar had its buttons all over the place):
-// cover and track on the left, every control together on the right, a thin progress line underneath.
+// next, its progress (drag to seek), repeat and the queue. The sound is scripts/album-player.ts; play / pause also turns
+// the record in the hero (RecordHero's script wires the buttons).
+// Laid out like a phone's now-playing card (user's reference, 2026-11-21): title and artist with the cover on the right,
+// the progress line with its times under it, then one evenly spaced row: repeat, previous, play, next, queue.
 interface Props { tracks: { id: string; title: string; duration: string }[]; artist: string; cover: string | null }
 const { tracks, artist, cover } = Astro.props;
-const icon = 'w-8 h-8 grid place-items-center rounded-full cursor-pointer text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white hover:bg-[var(--well)] disabled:opacity-35 disabled:pointer-events-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500';
+const icon = 'w-10 h-10 grid place-items-center rounded-full cursor-pointer text-zinc-800 dark:text-white hover:bg-[var(--well)] disabled:opacity-35 disabled:pointer-events-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500';
+const side = `${icon} !text-zinc-500 dark:!text-zinc-400 aria-pressed:!text-kikyo-600 dark:aria-pressed:!text-kikyo-400 aria-expanded:!text-kikyo-600 dark:aria-expanded:!text-kikyo-400`;
 ---
 <div data-player-bar class="fixed inset-x-0 bottom-0 z-40 px-3 pb-3 pointer-events-none">
-  <section aria-label="Album player" class="glass pointer-events-auto mx-auto w-full max-w-[30rem] rounded-3xl px-3 pt-2.5 pb-2">
-    <div class="flex items-center gap-3">
-      {cover ? <img src={cover} alt="" class="w-10 h-10 rounded-lg object-cover shrink-0" /> : <span class="w-10 h-10 rounded-lg bg-zinc-200 dark:bg-zinc-800 shrink-0"></span>}
+  <section aria-label="Album player" class="glass pointer-events-auto mx-auto w-full max-w-[30rem] rounded-3xl px-5 pt-4 pb-2">
+    <div class="flex items-center gap-4">
       <div class="min-w-0 flex-1" aria-live="polite">
-        <p data-bar-title class="truncate text-sm font-medium leading-5 text-zinc-900 dark:text-white">{tracks[0].title}</p>
-        <p data-bar-note data-artist={artist} class="truncate text-xs leading-4 text-zinc-500">{artist}</p>
+        <p data-bar-title class="truncate text-base font-semibold leading-6 text-zinc-900 dark:text-white">{tracks[0].title}</p>
+        <p data-bar-note data-artist={artist} class="truncate text-sm leading-5 text-zinc-500">{artist}</p>
       </div>
-      <div class="flex items-center gap-0.5 shrink-0">
-        <button type="button" data-bar-prev aria-label="Previous track" title="Previous track" class={icon}>
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5.5" width="2.6" height="13" rx="1" /><path d="M19 5.5v13L8.5 12z" /></svg>
-        </button>
-        <button type="button" data-bar-play aria-pressed="false" aria-label="Play" title="Play"
-          class="group w-9 h-9 grid place-items-center rounded-full cursor-pointer bg-kikyo-600 dark:bg-kikyo-400 text-white dark:text-zinc-950 hover:bg-kikyo-700 dark:hover:bg-kikyo-300 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500">
-          <svg class="w-4 h-4 group-aria-pressed:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" /></svg>
-          <svg class="w-4 h-4 group-aria-[pressed=false]:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5.5" width="3.8" height="13" rx="1" /><rect x="13.7" y="5.5" width="3.8" height="13" rx="1" /></svg>
-        </button>
-        <button type="button" data-bar-next aria-label="Next track" title="Next track" disabled={tracks.length < 2} class={icon}>
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 5.5v13L15.5 12z" /><rect x="16.4" y="5.5" width="2.6" height="13" rx="1" /></svg>
-        </button>
-        <span class="w-px h-5 mx-1 bg-zinc-300 dark:bg-zinc-700" aria-hidden="true"></span>
-        <button type="button" data-bar-queue popovertarget="player-queue" aria-expanded="false" aria-label="Queue" title="Queue"
-          class={`${icon} aria-expanded:text-[var(--on-text)] aria-expanded:bg-[var(--on-bg)]`}>
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M4 6h11M4 12h11M4 18h7" /><path d="M17 15.5v-9l4 2" /><circle cx="15" cy="16" r="2" /></svg>
-        </button>
+      {cover ? <img src={cover} alt="" class="w-12 h-12 rounded-lg object-cover shrink-0" /> : <span class="w-12 h-12 rounded-lg bg-zinc-200 dark:bg-zinc-800 shrink-0"></span>}
+    </div>
+    <div class="mt-4">
+      <input data-bar-seek type="range" min="0" max="0" value="0" step="1" disabled aria-label="Position in the track" class="player-seek block w-full" />
+      <div class="mt-2 flex justify-between font-mono text-[11px] leading-none text-zinc-500 tabular-nums">
+        <span data-bar-time>0:00</span>
+        <span data-bar-length>{tracks[0].duration || '0:00'}</span>
       </div>
     </div>
-    <div class="mt-1.5 flex items-center gap-2.5 font-mono text-[11px] leading-none text-zinc-500 tabular-nums">
-      <span data-bar-time class="w-8">0:00</span>
-      <input data-bar-seek type="range" min="0" max="0" value="0" step="1" disabled aria-label="Position in the track" class="player-seek flex-1 min-w-0" />
-      <span data-bar-length class="w-8 text-right">{tracks[0].duration || '0:00'}</span>
+    <div class="mt-1 -mx-2 flex items-center justify-between">
+      <button type="button" data-bar-repeat aria-pressed="false" aria-label="Repeat the album" title="Repeat the album" class={side}>
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2.5l3 3-3 3" /><path d="M4 11.5v-1a5 5 0 0 1 5-5h11" /><path d="M7 21.5l-3-3 3-3" /><path d="M20 12.5v1a5 5 0 0 1-5 5H4" /></svg>
+      </button>
+      <button type="button" data-bar-prev aria-label="Previous track" title="Previous track" class={icon}>
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.6" height="14" rx="1" /><path d="M19 5.5v13L8.5 12z" /></svg>
+      </button>
+      <button type="button" data-bar-play aria-pressed="false" aria-label="Play" title="Play" class={`${icon} group w-14 h-14`}>
+        <svg class="w-9 h-9 group-aria-pressed:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.5 4.8v14.4a.8.8 0 0 0 1.2.7l11.3-7.2a.8.8 0 0 0 0-1.4L8.7 4.1a.8.8 0 0 0-1.2.7z" /></svg>
+        <svg class="w-9 h-9 group-aria-[pressed=false]:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2" /><rect x="13.8" y="5" width="4.2" height="14" rx="1.2" /></svg>
+      </button>
+      <button type="button" data-bar-next aria-label="Next track" title="Next track" disabled={tracks.length < 2} class={icon}>
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 5.5v13L15.5 12z" /><rect x="16.4" y="5" width="2.6" height="14" rx="1" /></svg>
+      </button>
+      <button type="button" data-bar-queue popovertarget="player-queue" aria-expanded="false" aria-label="Queue" title="Queue" class={side}>
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M4 6h11M4 12h11M4 18h7" /><path d="M17 15.5v-9l4 2" /><circle cx="15" cy="16" r="2" /></svg>
+      </button>
     </div>
   </section>
 </div>
 
 <!-- The queue: a popover just above the card, as wide as it (Esc or a click outside closes it). -->
-<div id="player-queue" popover class="fixed inset-x-0 top-auto bottom-24 mx-auto my-0 w-[min(30rem,calc(100vw-1.5rem))] max-h-[min(60vh,28rem)] overflow-y-auto rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-2 text-zinc-700 dark:text-zinc-300 shadow-2xl">
+<div id="player-queue" popover class="fixed inset-x-0 top-auto bottom-[12rem] mx-auto my-0 w-[min(30rem,calc(100vw-1.5rem))] max-h-[min(50vh,28rem)] overflow-y-auto rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-2 text-zinc-700 dark:text-zinc-300 shadow-2xl">
   <div class="flex items-baseline justify-between gap-3 px-3 pt-2 pb-2">
     <h2 class="text-base font-bold text-zinc-900 dark:text-white">Queue</h2>
     <p class="text-xs text-zinc-500">{tracks.length} track{tracks.length === 1 ? '' : 's'} from YouTube Music</p>
@@ -64,8 +67,8 @@ const icon = 'w-8 h-8 grid place-items-center rounded-full cursor-pointer text-z
 
 <style is:global>
   /* Room under the footer, so the pinned card never covers the end of the page. */
-  body:has([data-player-bar]) { padding-bottom: 6.5rem; }
-  /* The progress: a thin line, filled up to --p (set by album-player.ts); the knob shows on hover / focus. */
+  body:has([data-player-bar]) { padding-bottom: 12.5rem; }
+  /* The progress: a thin line filled up to --p (set by album-player.ts), with a round knob at the current position. */
   .player-seek {
     --fill: var(--color-kikyo-600);
     appearance: none; height: 4px; border-radius: 9999px; cursor: pointer;
@@ -73,9 +76,9 @@ const icon = 'w-8 h-8 grid place-items-center rounded-full cursor-pointer text-z
   }
   .dark .player-seek { --fill: var(--color-kikyo-400); }
   .player-seek:disabled { cursor: default; }
-  .player-seek::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--fill); opacity: 0; transition: opacity 0.15s; }
-  .player-seek::-moz-range-thumb { width: 12px; height: 12px; border: 0; border-radius: 50%; background: var(--fill); opacity: 0; transition: opacity 0.15s; }
-  .player-seek:is(:hover, :focus-visible):not(:disabled)::-webkit-slider-thumb { opacity: 1; }
-  .player-seek:is(:hover, :focus-visible):not(:disabled)::-moz-range-thumb { opacity: 1; }
-  .player-seek:focus-visible { outline: 2px solid var(--color-kikyo-500); outline-offset: 4px; }
+  .player-seek::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--fill); transition: transform 0.15s; }
+  .player-seek::-moz-range-thumb { width: 14px; height: 14px; border: 0; border-radius: 50%; background: var(--fill); transition: transform 0.15s; }
+  .player-seek:is(:hover, :active):not(:disabled)::-webkit-slider-thumb { transform: scale(1.25); }
+  .player-seek:is(:hover, :active):not(:disabled)::-moz-range-thumb { transform: scale(1.25); }
+  .player-seek:focus-visible { outline: 2px solid var(--color-kikyo-500); outline-offset: 6px; }
 </style>

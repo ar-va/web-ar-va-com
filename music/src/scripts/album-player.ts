@@ -46,12 +46,17 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
   const say = (text: string) => { if (note) note.textContent = text || note.dataset.artist || ''; };
   let current = -1;
   let seeking = false;
+  // Repeat the album (the bar's left button): after the last track comes the first, so Next is never off.
+  const repeatBtn = $('[data-bar-repeat]');
+  const repeat = () => repeatBtn?.getAttribute('aria-pressed') === 'true';
+  const canNext = () => { if (next) next.disabled = tracks.length < 2 || (!repeat() && current >= tracks.length - 1); };
+  repeatBtn?.addEventListener('click', () => { repeatBtn.setAttribute('aria-pressed', String(!repeat())); canNext(); });
   const show = (i: number) => {
     if (i === current || !tracks[i]) return;
     current = i;
     if (title) title.textContent = tracks[i].title;
     items.forEach((b, j) => b.setAttribute('aria-current', String(i === j)));
-    if (next) next.disabled = i >= tracks.length - 1;
+    canNext();
   };
   show(0);
   // Which track is playing, by its video: YouTube's getPlaylistIndex() was one ahead (seen 2026-11-21: 1 on the first).
@@ -101,8 +106,11 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
             say('');
             if (fadeMs) { ramp(TARGET, fadeMs); fadeMs = 0; }
           }
-          // The album's end: back to the first track, ready for the next play.
-          if (e.data === ENDED && playing() >= tracks.length - 1) { wanted = false; halt(); player.cuePlaylist(tracks.map((t) => t.id)); }
+          // The album's end: round again with repeat on; otherwise back to the first track, ready for the next play.
+          if (e.data === ENDED && playing() >= tracks.length - 1) {
+            if (repeat()) player.playVideoAt(0);
+            else { wanted = false; halt(); player.cuePlaylist(tracks.map((t) => t.id)); }
+          }
         },
         // A track that can't be embedded: skip it; none playable: the record carries on without sound.
         onError: () => { if (++failures >= tracks.length) { wanted = false; say(''); } else player.nextVideo(); },
@@ -120,7 +128,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
 
   return {
     go,
-    next: () => go(current + 1),
+    next: () => go(current + 1 < tracks.length ? current + 1 : 0),
     // A few seconds in: back to the start of the track; otherwise the one before.
     prev: () => (player && player.getCurrentTime() > 3 ? player.seekTo(0, true) : go(Math.max(0, current - 1))),
     async play(byUser: boolean) {
