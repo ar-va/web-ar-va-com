@@ -42,7 +42,8 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
   let fade = 0;
   let failures = 0;
   const title = $('[data-bar-title]'), note = $('[data-bar-note]'), time = $('[data-bar-time]'), length = $('[data-bar-length]');
-  const seek = $<HTMLInputElement>('[data-bar-seek]'), next = $<HTMLButtonElement>('[data-bar-next]');
+  const seek = $<HTMLInputElement>('[data-bar-seek]'), card = $('[data-bar-card]');
+  const nexts = [...document.querySelectorAll<HTMLButtonElement>('[data-bar-next]')]; // the mini row's and the full card's
   const items = [...document.querySelectorAll<HTMLElement>('[data-bar-go]')];
   const say = (text: string) => { if (note) note.textContent = text || note.dataset.artist || ''; };
   let current = -1;
@@ -50,7 +51,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
   // Repeat the album (the bar's left button): after the last track comes the first, so Next is never off.
   const repeatBtn = $('[data-bar-repeat]');
   const repeat = () => repeatBtn?.getAttribute('aria-pressed') === 'true';
-  const canNext = () => { if (next) next.disabled = tracks.length < 2 || (!repeat() && current >= tracks.length - 1); };
+  const canNext = () => nexts.forEach((b) => { b.disabled = tracks.length < 2 || (!repeat() && current >= tracks.length - 1); });
   repeatBtn?.addEventListener('click', () => { repeatBtn.setAttribute('aria-pressed', String(!repeat())); canNext(); });
   // Mute (the bar's speaker button, key M): YouTube's own mute, so the fades' volume is kept for unmuting; the needle
   // stays quiet too. This page only.
@@ -80,8 +81,12 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
   volume?.addEventListener('click', (e) => e.stopPropagation());
   const show = (i: number) => {
     if (i === current || !tracks[i]) return;
+    const first = current < 0;
     current = i;
     if (title) title.textContent = tracks[i].title;
+    // A new track slides in (not on load, not with reduced motion).
+    if (!first && title && !matchMedia('(prefers-reduced-motion: reduce)').matches)
+      title.animate([{ opacity: 0, transform: 'translateY(0.4rem)' }, { opacity: 1, transform: 'none' }], { duration: 220, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)' });
     items.forEach((b, j) => b.setAttribute('aria-current', String(i === j)));
     canNext();
   };
@@ -96,7 +101,8 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     if (!seeking && seek && time) { seek.value = String(Math.floor(t)); time.textContent = clock(t); fill(); }
   };
   // How much of the progress line is filled (the bar's CSS draws it from --p).
-  const fill = () => seek?.style.setProperty('--p', `${(100 * Number(seek.value)) / (Number(seek.max) || 1)}%`);
+  // Set on the card: the seek slider and the mini player's thin line both draw from it.
+  const fill = () => seek && card?.style.setProperty('--p', `${(100 * Number(seek.value)) / (Number(seek.max) || 1)}%`);
   seek?.addEventListener('input', () => { seeking = true; fill(); if (time) time.textContent = clock(Number(seek.value)); });
   seek?.addEventListener('change', () => { seeking = false; player?.seekTo(Number(seek.value), true); });
   const ramp = (to: number, ms: number, done?: () => void) => {
