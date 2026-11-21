@@ -1,0 +1,13 @@
+---
+// A person's round picture, the same on every site (user 2026-11-21: one look): their Telegram photo, or the first
+// letter of their name on the "on" colour. The caller sets the size (and any ring) with `class`; `px` is the photo's
+// intrinsic size and picks the letter's size. (The header's account avatar is drawn by its script after login, with the
+// same classes.)
+interface Props { photo?: string | null; name: string; px: number; class?: string; lazy?: boolean }
+const { photo, name, px, class: className = '', lazy = false } = Astro.props;
+const src = photo?.startsWith('https://') ? photo : null;
+const letter = px >= 56 ? 'text-2xl' : px >= 44 ? 'text-lg' : px >= 36 ? 'text-sm' : 'text-xs';
+---
+{src
+  ? <img src={src} alt="" width={px} height={px} loading={lazy ? 'lazy' : undefined} referrerpolicy="no-referrer" class={`rounded-full object-cover shrink-0 ${className}`} />
+  : <span aria-hidden="true" class={`rounded-full shrink-0 grid place-items-center bg-(--on-bg) text-(--on-text) font-semibold ${letter} ${className}`}>{name.trim().charAt(0)}</span>}

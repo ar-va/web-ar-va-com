@@ -112,7 +112,7 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
           </label>
           <!-- Save comes first in the form, so Enter saves; the row shows it rightmost. -->
           <div class="flex flex-row-reverse flex-wrap justify-start gap-2">
-            <button name="action" value="added" class="inline-flex items-center h-8 px-4 rounded-full text-sm font-medium bg-kikyo-600 dark:bg-kikyo-400 text-white dark:text-zinc-950 hover:bg-kikyo-700 dark:hover:bg-kikyo-300 transition-colors">Save date</button>
+            <button name="action" value="added" class="btn-primary btn-sm">Save date</button>
             {day && <button name="action" value="added-ok" formnovalidate class="ctl">Discogs’ date is right</button>}
             <button type="button" popovertarget="added-ask" popovertargetaction="hide" class="ctl">Later</button>
           </div>

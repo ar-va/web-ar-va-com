@@ -4,6 +4,7 @@
 // Three views: the public list, the sender's private page ("owner"), and the admin's inbox.
 // Behaviour (edit in place, ⌘/Ctrl+Enter, confirm, copy link): src/scripts/post.ts.
 import type { Message } from '../lib/store';
+import Avatar from '@shared/components/Avatar.astro';
 import { REPLY_MAX, ago, day, linkify, plural } from '../lib/core';
 
 interface Props {
@@ -33,7 +34,7 @@ const icons: Record<string, string> = {
 };
 const act = 'inline-flex items-center gap-1.5 rounded-full px-2.5 h-8 text-sm text-zinc-500 hover:bg-(--well) hover:text-zinc-900 dark:hover:text-white transition-colors';
 const field = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950/40 px-3.5 py-2.5 text-zinc-900 dark:text-white leading-relaxed focus:outline-none focus:border-kikyo-500 transition-colors resize-none [field-sizing:content] min-h-11';
-const primary = 'shrink-0 bg-kikyo-600 dark:bg-kikyo-400 text-white dark:text-zinc-950 text-sm font-semibold px-4 h-9 rounded-full hover:bg-kikyo-700 dark:hover:bg-kikyo-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors';
+const primary = 'btn-primary shrink-0';
 ---
 <article id={`m-${m.id}`} class="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-5 sm:p-6" data-post>
   <header class="flex items-center gap-3">
@@ -111,9 +112,7 @@ const primary = 'shrink-0 bg-kikyo-600 dark:bg-kikyo-400 text-white dark:text-zi
         <ul class="flex flex-col gap-4" id={`answers-${m.id}`}>
           {m.replies.map((r) => (
             <li id={`r-${r.id}`} class="flex gap-3" data-reply>
-              {answerer.photo
-                ? <img src={answerer.photo} alt="" width="32" height="32" loading="lazy" referrerpolicy="no-referrer" class="w-8 h-8 rounded-full object-cover shrink-0" />
-                : <span class="w-8 h-8 rounded-full bg-(--on-bg) text-(--on-text) text-xs font-semibold grid place-items-center shrink-0" aria-hidden="true">{answerer.name.charAt(0)}</span>}
+              <Avatar photo={answerer.photo} name={answerer.name} px={32} lazy class="w-8 h-8" />
               <div class="min-w-0 flex-1">
                 <p class="text-sm flex flex-wrap items-baseline gap-x-2">
                   <span class="font-medium text-zinc-900 dark:text-white">{answerer.name}</span>
@@ -153,9 +152,7 @@ const primary = 'shrink-0 bg-kikyo-600 dark:bg-kikyo-400 text-white dark:text-zi
       {admin && (
         <form method="post" action="/admin" class:list={['flex items-end gap-2.5', { 'mt-4': m.replies.length > 0 }]}>
           <input type="hidden" name="action" value="reply" /><input type="hidden" name="id" value={m.id} /><input type="hidden" name="back" value={`${back}#m-${m.id}`} />
-          {answerer.photo
-            ? <img src={answerer.photo} alt="" width="32" height="32" referrerpolicy="no-referrer" class="w-8 h-8 mb-1.5 rounded-full object-cover shrink-0" />
-            : <span class="w-8 h-8 mb-1.5 rounded-full bg-(--on-bg) text-(--on-text) text-xs font-semibold grid place-items-center shrink-0" aria-hidden="true">{answerer.name.charAt(0)}</span>}
+          <Avatar photo={answerer.photo} name={answerer.name} px={32} class="w-8 h-8 mb-1.5" />
           <textarea name="body" rows="1" required maxlength={REPLY_MAX} aria-label="Write an answer"
             placeholder={published ? 'Answer publicly…' : m.wants_public ? 'Answer (public once you publish)…' : 'Answer privately…'}
             class={`${field} min-w-0 flex-1`}></textarea>

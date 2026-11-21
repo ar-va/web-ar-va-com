@@ -1,0 +1,25 @@
+---
+// A part that folds open and closed, the same on every site (user 2026-11-21: one look): its title, an optional line
+// shown only while closed (`preview` slot), and a round chevron button on the title's line (so it doesn't move as the
+// preview comes and goes). `heading`: a page section with an h2 title (album page: Details, Tracklist), no box; else a
+// question or tip in a soft box (settings, login, anon's FAQ). The caller's `class` adds spacing or a text size.
+interface Props { title: string; heading?: boolean; open?: boolean; id?: string; class?: string }
+const { title, heading = false, open = false, id, class: className = '' } = Astro.props;
+// Rendered first: a preview passed inside a condition counts as given even when the condition is false.
+const preview = Astro.slots.has('preview') ? (await Astro.slots.render('preview')).trim() : '';
+---
+<details id={id} open={open || undefined} class:list={['group/disc', !heading && 'rounded-2xl bg-(--well) px-4 py-3', className]}>
+  <summary class="group/sum flex items-start gap-4 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden rounded-xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-kikyo-500">
+    <span class="min-w-0 flex-1">
+      {heading
+        ? <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">{title}</h2>
+        : <span class="block pt-0.5 font-medium text-zinc-800 dark:text-zinc-200">{title}</span>}
+      {preview && <span class="flex mt-1.5 text-sm text-zinc-500 truncate group-open/disc:hidden"><Fragment set:html={preview} /></span>}
+    </span>
+    <span class:list={['shrink-0 grid place-items-center rounded-full bg-(--well) group-hover/sum:bg-(--well-hover) text-zinc-700 dark:text-zinc-200 transition-colors', heading ? 'w-8 h-8' : 'w-7 h-7']}>
+      <svg class="w-4 h-4 transition-transform group-open/disc:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
+    </span>
+  </summary>
+  {/* A section's body keeps the caller's own spacing (Tracklist's legend sits close under its heading). */}
+  <div class={heading ? undefined : 'mt-2 text-zinc-600 dark:text-zinc-400 leading-relaxed'}><slot /></div>
+</details>

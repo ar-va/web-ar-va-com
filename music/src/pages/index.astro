@@ -6,6 +6,7 @@ export const prerender = false;
 import Layout from '@shared/layouts/Layout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Cover from '@shared/components/Cover.astro';
+import Avatar from '@shared/components/Avatar.astro';
 import { directory, shelfSlug } from '@shared/lib/store';
 
 const SHOWN = 4;
@@ -30,9 +31,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
           return (
             <li class="group/card relative rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-5 sm:p-7 hover:border-kikyo-300 dark:hover:border-kikyo-500/40 transition-colors">
               <div class="flex items-start gap-4">
-                {s.photo_url?.startsWith('https://')
-                  ? <img src={s.photo_url} alt="" width="48" height="48" referrerpolicy="no-referrer" class="w-12 h-12 rounded-full object-cover shrink-0" />
-                  : <span aria-hidden="true" class="w-12 h-12 rounded-full shrink-0 grid place-items-center bg-(--on-bg) text-(--on-text) text-lg font-semibold">{s.name.slice(0, 1)}</span>}
+                <Avatar photo={s.photo_url} name={s.name} px={48} class="w-12 h-12" />
                 <div class="min-w-0 flex-1">
                   <h2 class="text-xl font-bold text-zinc-900 dark:text-white">
                     <!-- The heading's link covers the whole card (after:inset-0), so the card is one link. -->

@@ -43,7 +43,7 @@ const replies = (id: number) => comments.filter((c) => c.parent_id === id);
       class="w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-4 py-3 text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500 transition-colors"
       aria-describedby={error ? 'comment-error' : undefined}>{draft}</textarea>
     {error && <p id="comment-error" class="text-sm text-red-600 dark:text-red-400" role="alert">{error}</p>}
-    <div><button class="bg-kikyo-600 dark:bg-kikyo-400 text-white dark:text-zinc-950 text-sm font-medium px-6 py-2.5 rounded-full hover:bg-kikyo-700 dark:hover:bg-kikyo-300 transition-colors">Post comment</button></div>
+    <div><button class="btn-primary">Post comment</button></div>
   </form>
 ) : (
   <div class="flex flex-col gap-3">

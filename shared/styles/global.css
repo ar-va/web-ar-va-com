@@ -526,6 +526,22 @@ html { scroll-padding-top: 1.5rem; }
 /* A control that doesn't apply right now (the labels toggle in the list view): grey, whatever its state
    (after the on-state rules, which it has to beat). */
 .ctl:disabled, .ctl:disabled:hover { background: var(--well); color: var(--color-zinc-400); cursor: not-allowed; }
+/* Primary buttons, the same on every site (user 2026-11-21: they came in five heights): the accent fill, a pill.
+   40 px for page actions; `.btn-sm` (32 px) inside a form beside a `.ctl` Cancel. In the components layer, so
+   utilities (hidden, w-full, margins) still win. */
+@layer components {
+  .btn-primary {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; height: 2.5rem; padding: 0 1.25rem;
+    border-radius: 9999px; font-size: 0.875rem; line-height: 1.25rem; font-weight: 600; cursor: pointer;
+    background: var(--color-kikyo-600); color: #fff; transition: background-color 0.15s;
+  }
+  .btn-primary:hover { background: var(--color-kikyo-700); }
+  .dark .btn-primary { background: var(--color-kikyo-400); color: var(--color-zinc-950); }
+  .dark .btn-primary:hover { background: var(--color-kikyo-300); }
+  .btn-primary:disabled { opacity: 0.5; cursor: default; }
+  .btn-primary:focus-visible { outline: 2px solid var(--color-kikyo-500); outline-offset: 2px; }
+  .btn-sm { height: 2rem; padding: 0 1rem; }
+}
 .dark .ctl:disabled { color: var(--color-zinc-600); }
 
 /* Filters panel: an open decade (shelf) or year (blog) and its years / months share one well-grey pill; picked

@@ -1,0 +1,7 @@
+---
+// A short message after something happened ("Saved", "Request sent!"), the same on every site (user 2026-11-21: one
+// look): the "on" colour, announced to screen readers. The caller's `class` adds spacing.
+interface Props { class?: string }
+const { class: className = '' } = Astro.props;
+---
+<p role="status" class={`rounded-2xl bg-(--on-bg) text-(--on-text) px-5 py-3.5 text-sm font-medium ${className}`}><slot /></p>
