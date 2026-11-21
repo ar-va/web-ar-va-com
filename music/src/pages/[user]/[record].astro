@@ -88,7 +88,7 @@ const tracks = record ? withSideHeadings(textToTracklist(v.tracklist)) : [];
 // Marks in the tracklist: the most played on YouTube (objective) and the owner's favourites (their pick).
 const popular = popularTracks(tracks, match);
 // The record's sound: every track with a YouTube or YouTube Music link (the owner's or the automatic match), in order.
-const play = tracks.flatMap((t) => { const id = !t.heading && youtubeId(t.links?.youtube); return id ? [{ id, title: t.title }] : []; });
+const play = tracks.flatMap((t) => { const id = !t.heading && youtubeId(t.links?.youtube); return id ? [{ id, title: t.title, duration: t.duration }] : []; });
 const favorites = new Set((v.favorites ?? '').split('\n').filter((x) => x.trim()).map(titleKey));
 const ownerFirst = owner?.name.split(' ')[0] ?? '';
 const hero = record ? shelfView(record, detail, overrides, match) : null;

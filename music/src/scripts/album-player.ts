@@ -2,6 +2,7 @@
 // player that follows the turntable. It starts as the record spins up and fades in to half volume. Browsers may refuse
 // sound before the visitor has clicked anything: then the record stops and waits for its play button. A visitor's
 // pause is remembered (this browser only), so the next album stays quiet until they press play.
+// The player bar (components/PlayerBar.astro, 2026-11-21) shows the track, its progress (drag to seek) and the queue.
 // shortcut: the player is hidden, against YouTube's API terms (owner's choice, 2026-11-20); if YouTube blocks it, the
 // record simply plays without sound.
 const TARGET = 50; // percent
@@ -12,6 +13,8 @@ const KEY = 'album-sound';
 const PLAYING = 1, BUFFERING = 3, ENDED = 0;
 
 type Track = { id: string; title: string };
+const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s);
 declare global { interface Window { YT?: any; onYouTubeIframeAPIReady?: () => void } }
 
 let api: Promise<any> | null = null;
@@ -28,14 +31,38 @@ const remembered = () => { try { return localStorage.getItem(KEY); } catch { ret
 const remember = (v: 'on' | 'off') => { try { localStorage.setItem(KEY, v); } catch {} };
 
 /** `halt` stops the turntable without asking for sound (blocked autoplay, end of the album). */
-export function albumPlayer(tracks: Track[], status: HTMLElement | null, halt: () => void) {
+export function albumPlayer(tracks: Track[], halt: () => void) {
   let player: any = null;
   let ready: Promise<any> | null = null;
   let wanted = false;
   let fadeMs = 0; // > 0: fade in over this long once sound actually starts
   let fade = 0;
   let failures = 0;
-  const say = (text: string) => { if (status) status.textContent = text; };
+  const title = $('[data-bar-title]'), note = $('[data-bar-note]'), time = $('[data-bar-time]'), length = $('[data-bar-length]');
+  const seek = $<HTMLInputElement>('[data-bar-seek]'), next = $<HTMLButtonElement>('[data-bar-next]');
+  const items = [...document.querySelectorAll<HTMLElement>('[data-bar-go]')];
+  const say = (text: string) => { if (note) note.textContent = text || note.dataset.artist || ''; };
+  let current = -1;
+  let seeking = false;
+  const show = (i: number) => {
+    if (i === current || !tracks[i]) return;
+    current = i;
+    if (title) title.textContent = tracks[i].title;
+    items.forEach((b, j) => b.setAttribute('aria-current', String(i === j)));
+    if (next) next.disabled = i >= tracks.length - 1;
+  };
+  show(0);
+  // Which track is playing, by its video: YouTube's getPlaylistIndex() was one ahead (seen 2026-11-21: 1 on the first).
+  const playing = () => tracks.findIndex((t) => t.id === player.getVideoData?.()?.video_id);
+  // The bar follows the player twice a second: whichever way the track changed (next, the end of one, a skipped error).
+  const tick = () => {
+    show(playing());
+    const d = player.getDuration(), t = player.getCurrentTime();
+    if (d && seek && length) { seek.max = String(Math.floor(d)); length.textContent = clock(d); }
+    if (!seeking && seek && time) { seek.value = String(Math.floor(t)); time.textContent = clock(t); }
+  };
+  seek?.addEventListener('input', () => { seeking = true; if (time) time.textContent = clock(Number(seek.value)); });
+  seek?.addEventListener('change', () => { seeking = false; player?.seekTo(Number(seek.value), true); });
   const ramp = (to: number, ms: number, done?: () => void) => {
     clearInterval(fade);
     const from = player.getVolume(), start = performance.now();
@@ -56,16 +83,22 @@ export function albumPlayer(tracks: Track[], status: HTMLElement | null, halt: (
       host: 'https://www.youtube-nocookie.com', width: 1, height: 1,
       playerVars: { playsinline: 1, controls: 0, disablekb: 1, rel: 0 },
       events: {
-        onReady: () => { player.setVolume(0); player.cuePlaylist(tracks.map((t) => t.id)); resolve(player); },
+        onReady: () => {
+          player.setVolume(0);
+          player.cuePlaylist(tracks.map((t) => t.id));
+          if (seek) seek.disabled = false;
+          setInterval(tick, 500);
+          resolve(player);
+        },
         onStateChange: (e: { data: number }) => {
           if (e.data === PLAYING) {
             failures = 0;
             if (!wanted) return player.pauseVideo();
-            const t = tracks[player.getPlaylistIndex()];
-            if (t) say(`Playing “${t.title}” from YouTube Music`);
+            say('');
             if (fadeMs) { ramp(TARGET, fadeMs); fadeMs = 0; }
           }
-          if (e.data === ENDED && player.getPlaylistIndex() >= tracks.length - 1) { wanted = false; say(''); halt(); }
+          // The album's end: back to the first track, ready for the next play.
+          if (e.data === ENDED && playing() >= tracks.length - 1) { wanted = false; halt(); player.cuePlaylist(tracks.map((t) => t.id)); }
         },
         // A track that can't be embedded: skip it; none playable: the record carries on without sound.
         onError: () => { if (++failures >= tracks.length) { wanted = false; say(''); } else player.nextVideo(); },
@@ -73,7 +106,19 @@ export function albumPlayer(tracks: Track[], status: HTMLElement | null, halt: (
     });
   })));
 
+  // Jumps to a track; the caller starts the sound first (the turntable's play), so it plays.
+  const go = async (i: number) => {
+    if (!tracks[i]) return;
+    show(i);
+    await create();
+    player.playVideoAt(i);
+  };
+
   return {
+    go,
+    next: () => go(current + 1),
+    // A few seconds in: back to the start of the track; otherwise the one before.
+    prev: () => (player && player.getCurrentTime() > 3 ? player.seekTo(0, true) : go(Math.max(0, current - 1))),
     async play(byUser: boolean) {
       if (!byUser && remembered() === 'off') return;
       if (byUser) remember('on');
@@ -99,7 +144,6 @@ export function albumPlayer(tracks: Track[], status: HTMLElement | null, halt: (
     stop(byUser: boolean) {
       wanted = false;
       if (byUser) remember('off');
-      say('');
       if (player) ramp(0, FADE_OUT_MS, () => player.pauseVideo());
     },
   };
