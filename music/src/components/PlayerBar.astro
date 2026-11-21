@@ -9,8 +9,12 @@ const { tracks, artist, cover } = Astro.props;
 const icon = 'w-10 h-10 grid place-items-center rounded-full cursor-pointer text-zinc-800 dark:text-white hover:bg-[var(--well)] disabled:opacity-35 disabled:pointer-events-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500';
 const side = `${icon} !text-zinc-500 dark:!text-zinc-400 aria-pressed:!text-kikyo-600 dark:aria-pressed:!text-kikyo-400 aria-expanded:!text-kikyo-600 dark:aria-expanded:!text-kikyo-400`;
 ---
-<div data-player-bar class="fixed inset-x-0 bottom-0 z-40 px-3 pb-3 pointer-events-none">
-  <section aria-label="Album player" class="glass pointer-events-auto mx-auto w-full max-w-[30rem] rounded-3xl px-5 pt-4 pb-2">
+<!-- Sticky at the end of the album page (user, 2026-11-21: the fixed bar needed padding under the footer, which made it
+     look bigger): it stays at the bottom of the screen while the page scrolls and rests just above the footer at the
+     end. Its own height is the closed card's (set by the script below), and the card sits at its bottom, so opening the
+     queue grows it upward there too. -->
+<div data-player-bar class="sticky bottom-0 z-40 mt-8 h-[11.5rem] !max-w-none max-sm:-mx-3 pointer-events-none">
+  <section aria-label="Album player" class="glass pointer-events-auto absolute inset-x-0 bottom-3 mx-auto w-full max-w-[30rem] rounded-3xl px-5 pt-4 pb-2">
     <!-- Clicking the track row also opens / closes the queue (user, 2026-11-21); keyboards use the Queue button. -->
     <div data-bar-head class="flex items-center gap-4 cursor-pointer" title="Show or hide the queue">
       <div class="min-w-0 flex-1" aria-live="polite">
@@ -26,7 +30,7 @@ const side = `${icon} !text-zinc-500 dark:!text-zinc-400 aria-pressed:!text-kiky
         </svg>
       </button>
       <!-- Volume: from 640 px up (phones have volume buttons, and iOS ignores a page's volume). -->
-      <input data-bar-volume type="range" min="0" max="100" step="1" value="50" aria-label="Volume"
+      <input data-bar-volume type="range" min="0" max="100" step="1" value="50" aria-label="Volume" aria-keyshortcuts="ArrowUp ArrowDown"
         class="player-seek max-sm:hidden w-20 shrink-0 mr-1" />
       {cover ? <img src={cover} alt="" class="w-12 h-12 rounded-lg object-cover shrink-0" /> : <span class="w-12 h-12 rounded-lg bg-zinc-200 dark:bg-zinc-800 shrink-0"></span>}
     </div>
@@ -101,6 +105,10 @@ const side = `${icon} !text-zinc-500 dark:!text-zinc-400 aria-pressed:!text-kiky
   document.querySelector('[data-bar-head]')?.addEventListener('click', flip);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && queue?.classList.contains('open')) { open(false); button?.focus(); } });
   document.addEventListener('click', (e) => { if (queue?.classList.contains('open') && !card?.contains(e.target as Node)) open(false); });
+  // The space the bar takes in the page = the card without the queue (+ its 12 px gap), whatever the queue is doing.
+  const wrap = document.querySelector<HTMLElement>('[data-player-bar]');
+  const fit = () => { if (wrap && card) wrap.style.height = `${card.offsetHeight - (queue?.offsetHeight ?? 0) + 12}px`; };
+  if (card) new ResizeObserver(fit).observe(card);
 </script>
 
 <style is:global>
@@ -108,8 +116,6 @@ const side = `${icon} !text-zinc-500 dark:!text-zinc-400 aria-pressed:!text-kiky
   .player-queue { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.25s; }
   .player-queue.open { grid-template-rows: 1fr; opacity: 1; }
   @media (prefers-reduced-motion: reduce) { .player-queue { transition: none; } }
-  /* Room under the footer, so the pinned card never covers the end of the page. */
-  body:has([data-player-bar]) { padding-bottom: 12.5rem; }
   /* The progress: a thin line filled up to --p (set by album-player.ts), with a round knob at the current position. */
   .player-seek {
     --fill: var(--color-kikyo-600);

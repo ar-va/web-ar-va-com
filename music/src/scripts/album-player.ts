@@ -160,6 +160,12 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     // A few seconds in: back to the start of the track; otherwise the one before.
     prev: () => (player && player.getCurrentTime() > 3 ? player.seekTo(0, true) : go(Math.max(0, current - 1))),
     /** Keyboard ← / →: a few seconds back or forward within the track (not past its end). */
+    /** Keyboard ↑ / ↓: moves the bar's volume slider (also when it's hidden on phones), with all its rules. */
+    volumeBy: (d: number) => {
+      if (!volume) return;
+      volume.value = String(Math.max(0, Math.min(100, level + d)));
+      volume.dispatchEvent(new Event('input'));
+    },
     seekBy: (s: number) => { if (player) player.seekTo(Math.max(0, Math.min(player.getDuration() - 1, player.getCurrentTime() + s)), true); },
     async play(byUser: boolean) {
       if (!byUser && remembered() === 'off') return;
