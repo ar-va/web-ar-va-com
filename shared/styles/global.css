@@ -164,6 +164,12 @@ html { scrollbar-gutter: stable; }
 .sleeve {
   --vinyl: #131316;
   --glow: color-mix(in srgb, var(--vinyl) 40%, var(--color-kikyo-400));
+  /* The quiet gaps between tracks (5 a side), shared by the disc and the light on it, so they cut the light streak like
+     on a real record (user's reference photo, 2026-11-21). Radii are % of the gradient's corner ray: the disc's edge is
+     at 70.7 %. */
+  --vinyl-gaps: radial-gradient(circle, transparent 0 24.6%, rgb(0 0 0 / 0.5) 24.6% 25.2%, transparent 25.2% 33.6%,
+    rgb(0 0 0 / 0.5) 33.6% 34.2%, transparent 34.2% 41.8%, rgb(0 0 0 / 0.5) 41.8% 42.4%, transparent 42.4% 50.6%,
+    rgb(0 0 0 / 0.5) 50.6% 51.2%, transparent 51.2% 59.6%, rgb(0 0 0 / 0.5) 59.6% 60.2%, transparent 60.2%);
   isolation: isolate;
 }
 .sleeve-face {
@@ -173,6 +179,8 @@ html { scrollbar-gutter: stable; }
   transition: transform 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
 .disc {
+  /* the pressing's colour, deepened: real vinyl reads near black (the photo), coloured vinyl richer */
+  --vinyl-deep: color-mix(in srgb, var(--vinyl) 60%, black);
   position: absolute;
   inset: 3%;
   z-index: 0;
@@ -183,7 +191,11 @@ html { scrollbar-gutter: stable; }
        made 33⅓ rpm look twice as fast). At the hero's resting turn (300°) it sits at 3 o'clock, under the still .glare;
        the hero starts from and stops on a whole turn, so the two meet there. */
     conic-gradient(from 110deg, transparent 0 6%, rgb(255 255 255 / 0.08) 11%, transparent 16%),
-    repeating-radial-gradient(circle, var(--vinyl) 0 1px, color-mix(in srgb, var(--vinyl) 85%, white) 1px 3px);
+    var(--vinyl-gaps),
+    /* smooth, groove-less vinyl: the run-out around the label and the rim, with a hairline of light on the edge */
+    radial-gradient(circle, transparent 0 18.5%, var(--vinyl-deep) 18.5% 24.6%, transparent 24.6% 68.6%, var(--vinyl-deep) 68.6% 70.1%, rgb(255 255 255 / 0.1) 70.1%),
+    /* the grooves: barely there in the dark, the light streak (.glare) brings them out */
+    repeating-radial-gradient(circle, var(--vinyl-deep) 0 1px, color-mix(in srgb, var(--vinyl-deep) 97%, white) 1px 2px);
   box-shadow: 0 0 0 1px rgb(255 255 255 / 0.05);
   transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.45s;
 }
@@ -226,8 +238,10 @@ html { scrollbar-gutter: stable; }
 .shelf-record:focus-visible .sleeve-face { transform: translateY(-3px); }
 .shelf-record:focus-visible { outline: 2px solid var(--color-kikyo-500); outline-offset: 4px; }
 
-/* The room's light on the vinyl: one soft white wedge that follows the record out of the sleeve but never rotates.
-   Hidden inside the sleeve; skips the centre label. The hero fades it out while the record plays (RecordHero.astro). */
+/* The room's light on the vinyl: a streak across the grooves, bright on one side and faint on the opposite one (like the
+   user's reference photo, 2026-11-21), made of fine rings and cut by the gaps between tracks. It follows the record
+   out of the sleeve but never rotates. Hidden inside the sleeve; skips the label and is softer on the smooth run-out.
+   The hero fades it out while the record plays (RecordHero.astro). */
 .glare {
   position: absolute;
   inset: 3%;
@@ -235,9 +249,12 @@ html { scrollbar-gutter: stable; }
   border-radius: 9999px;
   pointer-events: none;
   /* at 3 o'clock, where the rolled-out record shows; turned for the shelf (12 o'clock) */
-  background: conic-gradient(transparent 0 17%, rgb(255 255 255 / 0.22) 25%, transparent 33%);
-  -webkit-mask: radial-gradient(circle, transparent 0 18.5%, #000 21%);
-  mask: radial-gradient(circle, transparent 0 18.5%, #000 21%);
+  background:
+    var(--vinyl-gaps),
+    repeating-radial-gradient(circle, rgb(0 0 0 / 0.35) 0 1px, transparent 1px 2px),
+    conic-gradient(transparent 0 9%, rgb(255 255 255 / 0.05) 15%, rgb(255 255 255 / 0.2) 22%, rgb(255 255 255 / 0.24) 25%, rgb(255 255 255 / 0.1) 31%, transparent 40% 60%, rgb(255 255 255 / 0.04) 66%, rgb(255 255 255 / 0.09) 73%, transparent 84%);
+  -webkit-mask: radial-gradient(circle, transparent 0 18.5%, rgb(0 0 0 / 0.3) 19.5% 24%, #000 25.5%);
+  mask: radial-gradient(circle, transparent 0 18.5%, rgb(0 0 0 / 0.3) 19.5% 24%, #000 25.5%);
   mix-blend-mode: screen;
   opacity: 0;
   transform: rotate(-90deg);
