@@ -23,7 +23,13 @@ const icon = size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
     class={`${button} grid place-items-center rounded-full cursor-pointer text-kikyo-600 dark:text-kikyo-400 hover:bg-[var(--well-hover)] aria-expanded:bg-[var(--on-bg)] aria-expanded:text-[var(--on-text)] focus-visible:outline-2 focus-visible:outline-kikyo-500 motion-safe:active:scale-90 transition-[transform,background-color]`}>
     <svg class={icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3" /><rect x="3.5" y="14" width="4" height="6" rx="1.5" /><rect x="16.5" y="14" width="4" height="6" rx="1.5" /></svg>
   </button>
-  <div id={menuId} popover="manual" class="listen-pop glass m-0 min-w-48 rounded-2xl p-1.5 text-sm">
+  <!-- The menu opens over its button, the button's twin in its top-right corner (bottom-right when it opens upward), so
+       it reads as the button growing into the menu (user 2026-11-21); the twin closes it. -->
+  <div id={menuId} popover="manual" class="listen-pop glass m-0 min-w-48 rounded-2xl p-1.5 text-sm open:flex flex-col">
+    <button type="button" data-listen-close data-grow-keep aria-label="Close the menu" title="Close"
+      class={`${button} self-end grid place-items-center rounded-full cursor-pointer !bg-[var(--on-bg)] text-[var(--on-text)] focus-visible:outline-2 focus-visible:outline-kikyo-500`}>
+      <svg class={icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 15v-3a8 8 0 0 1 16 0v3" /><rect x="3.5" y="14" width="4" height="6" rx="1.5" /><rect x="16.5" y="14" width="4" height="6" rx="1.5" /></svg>
+    </button>
     {services.map((s) => (
       <a href={(links[s.key] && safeStreamingUrl(links[s.key]!, s.key)) || search[s.key]} target="_blank" rel="noopener noreferrer"
         class="flex items-center gap-2.5 rounded-xl px-3 py-2 text-zinc-800 dark:text-zinc-200 hover:bg-[var(--well)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-kikyo-500 [&>svg]:text-kikyo-600 dark:[&>svg]:text-kikyo-400">
@@ -39,10 +45,12 @@ const icon = size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
 <script>
   import { growFrom, shrinkTo } from '@shared/scripts/grow';
   // The listen menu: a manual popover (on top of everything) that this script opens and closes, so it can spring out
-  // of its button and shrink back into it (a browser-closed popover vanishes at once; user 2026-11-21). Placed before
-  // it's shown (top / right: no width needed; it once flashed in the top-left corner), under the button, right-aligned
-  // (or above it when there's no room below). One open at a time; a click outside, Esc, scrolling or picking a
-  // service closes it.
+  // of its button and shrink back into it (a browser-closed popover vanishes at once; user 2026-11-21). It opens over
+  // the button: its twin (data-listen-close) lands exactly on it, so the button seems to grow into the menu (user
+  // 2026-11-21: it was a separate box under it, 6 px down and, beside a desktop scrollbar, ~15 px to the right, as
+  // innerWidth counts the scrollbar). Downward, or upward with the twin at the bottom when there's no room below. Placed
+  // before it's shown (it once flashed in the top-left corner). One open at a time; the twin, a click outside, Esc,
+  // scrolling or picking a service closes it.
   let current: { pop: HTMLElement; button: HTMLElement } | null = null;
   const close = (focus = false) => {
     if (!current) return;
@@ -55,10 +63,17 @@ const icon = size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
   const open = (pop: HTMLElement, button: HTMLElement) => {
     close();
     const b = button.getBoundingClientRect();
-    pop.style.right = `${Math.max(8, innerWidth - b.right)}px`;
-    pop.style.top = `${b.bottom + 6}px`;
+    const twin = pop.querySelector<HTMLElement>('[data-listen-close]')!;
+    pop.classList.remove('listen-up');
+    pop.style.right = `${document.documentElement.clientWidth - b.right}px`;
+    pop.style.top = `${b.top}px`;
     if (!pop.matches(':popover-open')) pop.showPopover();
-    if (b.bottom + 6 + pop.offsetHeight > innerHeight) pop.style.top = `${Math.max(8, b.top - 6 - pop.offsetHeight)}px`;
+    // No room below: open upward, the twin last (at the bottom, over the button), the services in their order.
+    if (b.top + pop.offsetHeight > innerHeight - 8) pop.classList.add('listen-up');
+    // Then nudge it so the twin sits exactly on the button (the menu's padding and rim).
+    const t = twin.getBoundingClientRect(), p = pop.getBoundingClientRect();
+    pop.style.right = `${document.documentElement.clientWidth - p.right - (b.right - t.right)}px`;
+    pop.style.top = `${p.top + (b.top - t.top)}px`;
     button.setAttribute('aria-expanded', 'true');
     growFrom(pop, button);
     current = { pop, button };
@@ -67,6 +82,7 @@ const icon = size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
     const pop = document.getElementById(button.dataset.listenMenu!)!;
     button.addEventListener('click', (e) => { e.stopPropagation(); if (current?.pop === pop) close(); else open(pop, button); });
     pop.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => close()));
+    pop.querySelector('[data-listen-close]')?.addEventListener('click', () => close(true));
   });
   document.addEventListener('click', (e) => { if (current && !current.pop.contains(e.target as Node)) close(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && current) close(true); });
@@ -75,4 +91,6 @@ const icon = size === 'md' ? 'w-5 h-5' : 'w-4 h-4';
 
 <style is:global>
   .listen-pop { position: fixed; inset: auto; }
+  /* opening upward: the twin goes last, the services keep their order */
+  .listen-pop.listen-up > [data-listen-close] { order: 1; }
 </style>

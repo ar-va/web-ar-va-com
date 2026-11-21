@@ -32,13 +32,16 @@ function pill(el: HTMLElement, from?: Element | null) {
   const right = clamp(box.right - o.right, 0, box.width - 1 - left);
   const below = o.top + o.height / 2 < box.top + box.height / 2; // the panel opens below the button
   const h = Math.min(o.height, box.height);
-  const top = below ? 0 : box.height - h;
-  const bottom = below ? box.height - h : 0;
+  // A panel laid over its button (the listen menu) starts as exactly the button; others as a button-sized pill on
+  // their edge nearest it.
+  const over = o.top >= box.top - 1 && o.bottom <= box.bottom + 1;
+  const top = over ? o.top - box.top : below ? 0 : box.height - h;
+  const bottom = Math.max(0, box.height - top - h);
   const radius = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 16;
   return {
     small: `inset(${top}px ${right}px ${bottom}px ${left}px round ${h / 2}px)`,
     full: `inset(0px 0px 0px 0px round ${radius}px)`,
-    origin: `${o.left + o.width / 2 - box.left}px ${below ? 0 : box.height}px`,
+    origin: `${o.left + o.width / 2 - box.left}px ${over ? top + h / 2 : below ? 0 : box.height}px`,
     below,
   };
 }
@@ -60,7 +63,8 @@ export function growFrom(el: HTMLElement, from?: Element | null) {
     { duration: DURATION, easing: spring },
   );
   // the content follows: fades in and settles from a few pixels toward the button
-  [...el.children].forEach((child, i) => child.animate(
+  // (data-grow-keep: a child that stays put, like the listen menu's twin of its button)
+  [...el.children].filter((c) => !c.hasAttribute('data-grow-keep')).forEach((child, i) => child.animate(
     [{ opacity: 0, transform: `translateY(${p.below ? -4 : 4}px)` }, { opacity: 1, transform: 'none' }],
     { duration: 220, delay: 30 + i * 15, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)', fill: 'backwards' },
   ));
@@ -73,7 +77,7 @@ export function shrinkTo(el: HTMLElement, from: Element | null | undefined, hide
   stopClosing(el);
   const p = !still() && pill(el, from);
   if (!p) return hide();
-  const content = [...el.children].map((child) => child.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 110, easing: 'ease-in', fill: 'forwards' }));
+  const content = [...el.children].filter((c) => !c.hasAttribute('data-grow-keep')).map((child) => child.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 110, easing: 'ease-in', fill: 'forwards' }));
   const shape = el.animate(
     [
       { clipPath: p.full, transform: 'none', transformOrigin: p.origin, opacity: 1 },
