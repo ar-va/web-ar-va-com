@@ -4,7 +4,7 @@
 const toast = (anchor: HTMLElement, text: string) => {
   const tip = Object.assign(document.createElement('span'), {
     textContent: text,
-    className: 'glass absolute z-50 -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium text-zinc-700 dark:text-zinc-200 pointer-events-none',
+    className: 'glass glass-thin absolute z-50 -top-9 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium text-zinc-700 dark:text-zinc-200 pointer-events-none',
     role: 'status',
   });
   anchor.style.position ||= 'relative';
