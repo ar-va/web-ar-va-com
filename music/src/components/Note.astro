@@ -1,19 +1,26 @@
 ---
-// The owner's note, on a shelf (about the collection) and under each album (about the record): a soft Kashiwa box.
-// On a shelf the box is also the shelf's card (user 2026-11-21): its name, counts and Telegram (`head` slot), the note
-// under them; it shows even without a note.
-// headed by their photo and "Artur’s note" (user 2026-11-21: the "— Artur, about this record" signature read oddly),
-// two lines, then the whole note when tapped anywhere (or "View more"). The owner gets "Edit" (or a dashed "Add a note…" box when empty),
-// which opens ?note: a form rendered by the server here (no script needed) that posts `action=note` to the page.
-// At most NOTE_MAX characters.
+// The owner's card, on a shelf (about the collection) and under each album (about the record), the same on both (user
+// 2026-11-21): a soft Kashiwa box headed by their photo, a title ("Artur Doyle’s records" on a shelf, the page's h1;
+// "Artur’s note" under an album) and one line of counts (records: the list on a shelf, the shelf from an album; comments;
+// Telegram), then their note: two lines, the whole note when tapped anywhere (or "View more"). The owner gets "Edit" (or
+// "Add a note…" when empty), which opens ?note: a form rendered by the server here (no script needed) that posts
+// `action=note` to the page. At most NOTE_MAX characters. A shelf's card shows even without a note (`always`); an
+// album's only with one (else, for the owner, a dashed "Add a note" box).
 import { NOTE_MAX } from '@shared/lib/lib';
 
 interface Props {
   note: string | null;
-  /** First name of the owner, for the heading. */
+  /** The owner's full name (the avatar's initial when there's no photo). */
   by: string;
-  /** Their Telegram photo, beside it (else their initial). */
+  /** Their Telegram photo (else their initial). */
   photo?: string | null;
+  /** The card's title, and its heading level (the shelf's is the page's h1). */
+  heading: string;
+  level?: 'h1' | 'h2';
+  /** The counts line: records (and where that number leads), comments on this page, the owner's Telegram @username. */
+  stats: { records: number; recordsHref: string; recordsTitle: string; comments: number; telegram: string | null };
+  /** Show the card even without a note (a shelf: it carries the shelf's name and counts). */
+  always?: boolean;
   /** "the collection" or "this record". */
   about: string;
   /** The page's own path, for Edit and Cancel. */
@@ -24,31 +31,48 @@ interface Props {
   placeholder: string;
   class?: string;
 }
-const { note, by, photo, about, base, canEdit, editing, addText, placeholder, class: className = '' } = Astro.props;
-// A shelf passes its name, counts and Telegram as the `head` slot: then the box always shows (with or without a note).
-const head = Astro.slots.has('head');
+const { note, by, photo, heading, level = 'h2', stats, always = false, about, base, canEdit, editing, addText, placeholder, class: className = '' } = Astro.props;
+const Heading = level;
 const pencil = '<svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.9 4.1a2.1 2.1 0 0 1 3 3L8.5 18.5 4 20l1.5-4.5z" /></svg>';
+const statLink = 'inline-flex items-center gap-1.5 py-0.5 tabular-nums hover:text-kikyo-600 dark:hover:text-kikyo-400 transition-colors';
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 ---
-{!head && !note && !editing ? (canEdit && (
+{!always && !note && !editing ? (canEdit && (
   <a id="note" href={`${base}?note#note`} class={`max-w-3xl scroll-mt-6 flex items-start gap-3 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-500 hover:text-kikyo-600 dark:hover:text-kikyo-400 hover:border-kikyo-400 transition-colors ${className}`}>
     <Fragment set:html={pencil} />
     {addText}
   </a>
 )) : (
-  <section id="note" data-note={note && !editing ? '' : undefined} class={`max-w-3xl scroll-mt-6 rounded-2xl bg-kashiwa/[0.07] dark:bg-kashiwa-light/[0.07] px-4 py-3.5 sm:px-5 sm:py-4 ${className}`}>
-    <!-- The head: what the page passes in (a shelf: its name, counts and Telegram), else "Artur’s note"; Edit beside it. -->
-    <div class="flex items-start gap-3">
+  <section id="note" data-note={note && !editing ? '' : undefined} class={`max-w-3xl scroll-mt-6 rounded-2xl bg-kashiwa/[0.07] dark:bg-kashiwa-light/[0.07] px-4 py-4 sm:px-5 ${className}`}>
+    <!-- The head: the photo beside the title and its counts line, one block (user 2026-11-21: they felt disconnected). -->
+    <div class="flex items-center gap-4">
+      {photo?.startsWith('https://')
+        ? <img src={photo} alt="" width="64" height="64" referrerpolicy="no-referrer" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover shrink-0" />
+        : <span aria-hidden="true" class="w-14 h-14 sm:w-16 sm:h-16 rounded-full shrink-0 grid place-items-center bg-kashiwa/15 dark:bg-kashiwa-light/15 text-2xl font-semibold text-kashiwa dark:text-kashiwa-light">{by.slice(0, 1)}</span>}
       <div class="min-w-0 flex-1">
-        <slot name="head">
-          <p class="flex items-center gap-2.5 text-sm">
-            {photo?.startsWith('https://')
-              ? <img src={photo} alt="" width="24" height="24" referrerpolicy="no-referrer" class="w-6 h-6 rounded-full object-cover shrink-0" />
-              : <span aria-hidden="true" class="w-6 h-6 rounded-full shrink-0 grid place-items-center bg-kashiwa/15 dark:bg-kashiwa-light/15 text-xs font-semibold text-kashiwa dark:text-kashiwa-light">{by.slice(0, 1)}</span>}
-            <span class="font-medium text-kashiwa dark:text-kashiwa-light">{by}’s note</span>
-          </p>
-        </slot>
+        <Heading class="text-2xl font-bold leading-tight text-zinc-900 dark:text-white">{heading}</Heading>
+        <!-- Icons and numbers: records, comments (jumps to them), Telegram. -->
+        <p class="mt-1 flex flex-wrap items-center gap-x-4 gap-y-0.5 text-sm text-zinc-500">
+          {stats.records > 0 && (
+            <a href={stats.recordsHref} title={stats.recordsTitle} aria-label={`${plural(stats.records, 'record')}: ${stats.recordsTitle.toLowerCase()}`} class={statLink}>
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /><path d="M12 5.5a6.5 6.5 0 0 0-6.5 6.5" stroke-linecap="round" /></svg>
+              {stats.records}
+            </a>
+          )}
+          <a href="#comments" title="Comments: jump to them" aria-label={`${plural(stats.comments, 'comment')}, jump to them`} class={statLink}>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 18.5V6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8z" /></svg>
+            {stats.comments}
+          </a>
+          {stats.telegram && (
+            <a href={`https://t.me/${stats.telegram}`} target="_blank" rel="noopener noreferrer" title={`${by} on Telegram`} class={statLink}>
+              <svg class="w-4 h-4" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
+              @{stats.telegram}
+            </a>
+          )}
+        </p>
+        <slot />
       </div>
-      {canEdit && note && !editing && <a href={`${base}?note#note`} class="shrink-0 text-sm font-medium text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">Edit</a>}
+      {canEdit && note && !editing && <a href={`${base}?note#note`} class="self-start shrink-0 text-sm font-medium text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">Edit</a>}
     </div>
     {editing ? (
       <form method="post" class="mt-4">
@@ -67,7 +91,7 @@ const pencil = '<svg class="w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24
       </form>
     ) : note ? (
       <>
-        <blockquote class={head ? 'mt-3' : 'mt-2'}>
+        <blockquote class="mt-3">
           <p data-note-text class="text-[0.9375rem] leading-relaxed text-zinc-700 dark:text-zinc-300 break-words line-clamp-2">{note}</p>
         </blockquote>
         <button type="button" data-note-more hidden class="mt-1 text-sm font-medium text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">View more</button>

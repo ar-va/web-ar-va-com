@@ -15,7 +15,7 @@ import { addComment, canDeleteComment, currentUser, deleteComment, editComment, 
 import { notify } from '@shared/lib/notify';
 
 const instanceId = Number(Astro.params.record);
-const [user, { owner, record, overrides, detail, match, comments, sameDay }] = await Promise.all([
+const [user, { owner, record, overrides, detail, match, comments, sameDay, shelfSize }] = await Promise.all([
   currentUser(Astro.cookies),
   recordData(Astro.params.user!, Number.isSafeInteger(instanceId) ? instanceId : 0),
 ]);
@@ -155,7 +155,9 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
         </RecordHero>
       </header>
 
-      <Note class="mb-12" note={v.note || null} by={owner.name.split(' ')[0]} photo={owner.photo_url} about="this record" base={path} canEdit={isOwner}
+      <Note class="mb-12" note={v.note || null} by={owner.name} photo={owner.photo_url} heading={`${ownerFirst}’s note`}
+        stats={{ records: shelfSize, recordsHref: shelfPath, recordsTitle: `Records: ${owner.name}’s shelf`, comments: comments.length, telegram: owner.username }}
+        about="this record" base={path} canEdit={isOwner}
         editing={isOwner && Astro.url.searchParams.has('note')}
         addText="Add a note about this record: where you found it, why it matters, a favourite moment."
         placeholder="Where you found it, why it matters, what to listen for…" />

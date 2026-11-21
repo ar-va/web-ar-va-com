@@ -16,7 +16,6 @@ interface Props {
   editingNote: boolean;
 }
 const { owner, records, commentCount, canEdit, editingNote } = Astro.props;
-const meta = 'inline-flex items-center gap-1.5 py-1 tabular-nums hover:text-kikyo-600 dark:hover:text-kikyo-400 transition-colors';
 const base = `/${encodeURIComponent(owner.slug)}`;
 const latest = records[0];
 
@@ -51,36 +50,12 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
 
   <!-- The shelf's card, between the Latest hero and the whole collection (user, 2026-10-29): the collector's photo, the
        shelf's name, its counts and Telegram (user 2026-11-21: merged into it from the top of the page), then their note. -->
-  <Note class={latest ? 'mt-12' : 'mt-2'} note={owner.note} by={owner.name.split(' ')[0]} photo={owner.photo} about="the collection" base={base} canEdit={canEdit} editing={editingNote}
+  <Note class={latest ? 'mt-12' : 'mt-2'} note={owner.note} by={owner.name} photo={owner.photo} heading={`${owner.name}’s records`} level="h1" always
+    stats={{ records: records.length, recordsHref: '#all-records', recordsTitle: 'Records: jump to the list', comments: commentCount, telegram: owner.telegram }}
+    about="the collection" base={base} canEdit={canEdit} editing={editingNote}
     addText="Add a short note about your collection: what you collect, how it started. Visitors see it here."
     placeholder="What you collect, how it started, what you’re hunting for…">
-    <div slot="head" class="flex items-center gap-3.5">
-      {owner.photo?.startsWith('https://')
-        ? <img src={owner.photo} alt="" width="48" height="48" referrerpolicy="no-referrer" class="w-12 h-12 rounded-full object-cover shrink-0" />
-        : <span aria-hidden="true" class="w-12 h-12 rounded-full shrink-0 grid place-items-center bg-kashiwa/15 dark:bg-kashiwa-light/15 text-lg font-semibold text-kashiwa dark:text-kashiwa-light">{owner.name.slice(0, 1)}</span>}
-      <div class="min-w-0">
-        <h1 class="text-2xl font-bold leading-tight text-zinc-900 dark:text-white">{owner.name}’s records</h1>
-        <p class="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-zinc-500">
-          {records.length > 0 && (
-            <a href="#all-records" title="Records: jump to the list" aria-label={`${records.length} record${records.length === 1 ? '' : 's'}, jump to the list`} class={meta}>
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" /><path d="M12 5.5a6.5 6.5 0 0 0-6.5 6.5" stroke-linecap="round" /></svg>
-              {records.length}
-            </a>
-          )}
-          <a href="#comments" title="Comments: jump to them" aria-label={`${commentCount} comment${commentCount === 1 ? '' : 's'}, jump to them`} class={meta}>
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 18.5V6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8z" /></svg>
-            {commentCount}
-          </a>
-          {owner.telegram && (
-            <a href={`https://t.me/${owner.telegram}`} target="_blank" rel="noopener noreferrer" title={`${owner.name} on Telegram`} class={meta}>
-              <svg class="w-4 h-4" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
-              @{owner.telegram}
-            </a>
-          )}
-        </p>
-        <p id="sync-progress" class="mt-1 text-xs text-zinc-500 empty:hidden" role="status" aria-live="polite"></p>
-      </div>
-    </div>
+    <p id="sync-progress" class="mt-1 text-xs text-zinc-500 empty:hidden" role="status" aria-live="polite"></p>
   </Note>
 
   {records.length === 0 ? (
