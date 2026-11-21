@@ -5,7 +5,7 @@
 // The player bar (components/PlayerBar.astro, 2026-11-21) shows the track, its progress (drag to seek) and the queue.
 // shortcut: the player is hidden, against YouTube's API terms (owner's choice, 2026-11-20); if YouTube blocks it, the
 // record simply plays without sound.
-import { dropNeedle } from './needle';
+import { dropNeedle, liftNeedle, surfaceVolume } from './needle';
 
 const TARGET = 50; // percent: the volume until the visitor picks one with the bar's slider
 const FADE_IN_MS = 8000; // autoplay: a slow rise
@@ -59,6 +59,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     if (muteBtn) muteBtn.title = `${on ? 'Unmute' : 'Mute'} (M)`;
     if (player) on ? player.mute() : player.unMute();
     showVolume(); // muted, the volume bar reads zero; unmuted, it's back where it was
+    surfaceVolume(loud());
   };
   muteBtn?.addEventListener('click', (e) => { e.stopPropagation(); setMuted(!muted); });
   // Volume (the bar's slider, user 2026-11-21): what the fades rise to, remembered in this browser. Moving it while
@@ -66,6 +67,8 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
   const stored = Number((() => { try { return localStorage.getItem(VOLUME_KEY); } catch { return null; } })() ?? NaN);
   let level = Number.isFinite(stored) && stored >= 0 && stored <= 100 ? stored : TARGET;
   const volume = $<HTMLInputElement>('[data-bar-volume]');
+  // The record's own sounds (needle, surface hiss) play at the music's volume: YouTube's 0–100 as 0–1, none when muted.
+  const loud = () => (muted ? 0 : level / 100);
   function showVolume() {
     if (!volume) return;
     const v = muted ? 0 : level;
@@ -78,6 +81,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     volume.style.setProperty('--p', `${level}%`);
     try { localStorage.setItem(VOLUME_KEY, String(level)); } catch {}
     if (muted && level > 0) setMuted(false);
+    surfaceVolume(loud());
     if (player && wanted) { clearInterval(fade); player.setVolume(level); }
   });
   volume?.addEventListener('click', (e) => e.stopPropagation());
@@ -151,10 +155,10 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
             if (fadeMs) { ramp(level, fadeMs); fadeMs = 0; }
           }
           // The album's end: back to the first track, ready for the next play.
-          if (e.data === ENDED && playing() >= tracks.length - 1) { wanted = false; halt(); player.cuePlaylist(tracks.map((t) => t.id)); }
+          if (e.data === ENDED && playing() >= tracks.length - 1) { wanted = false; halt(); liftNeedle(loud()); player.cuePlaylist(tracks.map((t) => t.id)); }
         },
         // A track that can't be embedded: skip it; none playable: the record carries on without sound.
-        onError: () => { if (++failures >= tracks.length) { wanted = false; say(''); } else player.nextVideo(); },
+        onError: () => { if (++failures >= tracks.length) { wanted = false; liftNeedle(0, true); say(''); } else player.nextVideo(); },
       },
     });
   })));
@@ -183,8 +187,9 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     async play(byUser: boolean) {
       if (!byUser && remembered() === 'off') return;
       if (byUser) remember('on');
-      // The needle goes down once the platter has spun up (RecordHero: 1.1 s); the album fades in under its crackle.
-      if (!muted && level > 0) dropNeedle(700, 0.6 * Math.min(1.5, level / TARGET));
+      // The needle goes down once the platter has spun up (RecordHero: 1.1 s), as loud as the music will be; the album
+      // fades in under its crackle and the surface hiss stays faintly under the music (silent while muted).
+      dropNeedle(700, loud());
       wanted = true;
       await create();
       if (!wanted) return;
@@ -202,6 +207,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
         wanted = false;
         clearInterval(fade);
         player.setVolume(0);
+        liftNeedle(0, true); // nothing was heard: no lift sound, just stop the hiss
         halt();
         say('Press play to hear the album');
       };
@@ -212,6 +218,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     stop(byUser: boolean) {
       wanted = false;
       if (byUser) remember('off');
+      liftNeedle(loud());
       if (player) ramp(0, FADE_OUT_MS, () => player.pauseVideo());
     },
   };

@@ -201,7 +201,7 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
                     2026-11-21). data-bar-go joins it to the player's queue rows (RecordHero wires the click). */}
                 {playIndex.has(t) ? (
                   <button type="button" data-bar-go={playIndex.get(t)} aria-label={`Play ${t.title}`} title="Play this track"
-                    class="track-play w-7 h-6 shrink-0 -ml-1 pl-1 grid place-items-center justify-items-start rounded-md cursor-pointer font-mono text-sm text-zinc-500 tabular-nums focus-visible:outline-2 focus-visible:outline-kikyo-500">
+                    class="track-play w-7 h-6 shrink-0 grid place-items-center justify-items-start rounded-md cursor-pointer font-mono text-sm text-zinc-500 tabular-nums focus-visible:outline-2 focus-visible:outline-kikyo-500">
                     <span class="track-num">{t.position}</span>
                     <svg class="track-play-icon w-4 h-4 text-zinc-900 dark:text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.5 4.8v14.4a.8.8 0 0 0 1.2.7l11.3-7.2a.8.8 0 0 0 0-1.4L8.7 4.1a.8.8 0 0 0-1.2.7z" /></svg>
                     <svg class="track-pause-icon w-4 h-4 text-zinc-900 dark:text-white" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2" /><rect x="13.8" y="5" width="4.2" height="14" rx="1.2" /></svg>
@@ -231,8 +231,8 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
                     </span>
                   )}
                 </span>
-                <span class="sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity">
-                  <Listen query={`${v.artist} ${t.title}`} label={`Listen to ${t.title}`} links={t.links} kind="track" />
+                <span class="sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 sm:has-[:popover-open]:opacity-100 transition-opacity">
+                  <Listen menu query={`${v.artist} ${t.title}`} label={`Listen to ${t.title}`} links={t.links} kind="track" />
                 </span>
                 {t.duration && <span class="w-12 shrink-0 text-right font-mono text-sm text-zinc-500 tabular-nums">{t.duration}</span>}
               </li>

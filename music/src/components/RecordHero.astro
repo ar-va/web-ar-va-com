@@ -39,16 +39,18 @@ const Heading = href ? 'h2' : 'h1';
 // Album page: artist and title copy themselves on click (src/scripts/copy.ts); on the shelf the title links instead.
 const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500 transition-opacity';
 ---
-<!-- The rolled-out disc sticks out 38 % of the sleeve's width: the gap leaves it ~60 px clear of the text. -->
+<!-- The rolled-out disc sticks out 38 % of the sleeve's width: the gap leaves it ~60 px clear of the text.
+     Phones: the sleeve takes 62 % of the screen up to the desktop size (user 2026-11-21: it had room; was 12rem), so
+     sleeve + disc stay inside a 360 px screen's margins. -->
 <!-- overflow-x: clip, with the page's 24 px side margin to spare: the light behind the rolled-out record reaches 120 % of
      the cover past it, which made phones scroll sideways (446 px on a 390 px screen); now it fades out at the screen edge. -->
 <div data-hero class="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-36 overflow-x-clip [overflow-clip-margin:1.5rem]">
   <div data-turntable data-play={play?.length ? JSON.stringify(play) : undefined} class="relative shrink-0 self-start sm:self-auto">
     <!-- Shelf: the cover links too (for mouse and touch; keyboards and screen readers use the title's link). -->
     {href ? (
-      <a href={href} tabindex="-1" aria-hidden="true" class="block"><Cover record={record} eager class="sleeve-open w-48 sm:w-60" /></a>
+      <a href={href} tabindex="-1" aria-hidden="true" class="block"><Cover record={record} eager class="sleeve-open w-[min(15rem,62vw)] sm:w-60" /></a>
     ) : (
-      <div data-spin-cover class="motion-safe:cursor-pointer"><Cover record={record} eager class="sleeve-open w-48 sm:w-60" /></div>
+      <div data-spin-cover class="motion-safe:cursor-pointer"><Cover record={record} eager class="sleeve-open w-[min(15rem,62vw)] sm:w-60" /></div>
     )}
     <button type="button" data-spin aria-pressed="false" aria-label="Play the record" title="Play the record"
       class="glass glass-dark group absolute right-2 bottom-2 z-10 w-9 h-9 grid place-items-center rounded-full text-white cursor-pointer motion-reduce:hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500">
