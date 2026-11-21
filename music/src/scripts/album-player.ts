@@ -41,18 +41,14 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
   let fadeMs = 0; // > 0: fade in over this long once sound actually starts
   let fade = 0;
   let failures = 0;
-  const title = $('[data-bar-title]'), note = $('[data-bar-note]'), time = $('[data-bar-time]'), length = $('[data-bar-length]');
+  const title = $('[data-bar-title]'), note = $('[data-bar-note]');
   const seek = $<HTMLInputElement>('[data-bar-seek]'), card = $('[data-bar-card]');
   const nexts = [...document.querySelectorAll<HTMLButtonElement>('[data-bar-next]')]; // the mini row's and the full card's
   const items = [...document.querySelectorAll<HTMLElement>('[data-bar-go]')];
   const say = (text: string) => { if (note) note.textContent = text || note.dataset.artist || ''; };
   let current = -1;
   let seeking = false;
-  // Repeat the album (the bar's left button): after the last track comes the first, so Next is never off.
-  const repeatBtn = $('[data-bar-repeat]');
-  const repeat = () => repeatBtn?.getAttribute('aria-pressed') === 'true';
-  const canNext = () => nexts.forEach((b) => { b.disabled = tracks.length < 2 || (!repeat() && current >= tracks.length - 1); });
-  repeatBtn?.addEventListener('click', () => { repeatBtn.setAttribute('aria-pressed', String(!repeat())); canNext(); });
+  const canNext = () => nexts.forEach((b) => { b.disabled = current >= tracks.length - 1; });
   // Mute (the bar's speaker button, key M): YouTube's own mute, so the fades' volume is kept for unmuting; the needle
   // stays quiet too. This page only.
   let muted = false;
@@ -103,13 +99,20 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
   const tick = () => {
     show(playing());
     const d = player.getDuration(), t = player.getCurrentTime();
-    if (d && seek && length) { seek.max = String(Math.floor(d)); length.textContent = clock(d); }
-    if (!seeking && seek && time) { seek.value = String(Math.floor(t)); time.textContent = clock(t); fill(); }
+    if (d && seek) seek.max = String(Math.floor(d));
+    if (!seeking && seek) { seek.value = String(Math.floor(t)); fill(); }
   };
   // How much of the progress line is filled (the bar's CSS draws it from --p).
   // Set on the card: the seek slider and the mini player's thin line both draw from it.
-  const fill = () => seek && card?.style.setProperty('--p', `${(100 * Number(seek.value)) / (Number(seek.max) || 1)}%`);
-  seek?.addEventListener('input', () => { seeking = true; fill(); if (time) time.textContent = clock(Number(seek.value)); });
+  // Also the position in words, for screen readers and the line's tooltip ("1:02 of 4:38").
+  const fill = () => {
+    if (!seek) return;
+    card?.style.setProperty('--p', `${(100 * Number(seek.value)) / (Number(seek.max) || 1)}%`);
+    const words = `${clock(Number(seek.value))} of ${clock(Number(seek.max))}`;
+    seek.setAttribute('aria-valuetext', words);
+    seek.title = words;
+  };
+  seek?.addEventListener('input', () => { seeking = true; fill(); });
   seek?.addEventListener('change', () => { seeking = false; player?.seekTo(Number(seek.value), true); });
   const ramp = (to: number, ms: number, done?: () => void) => {
     clearInterval(fade);
@@ -146,11 +149,8 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
             say('');
             if (fadeMs) { ramp(level, fadeMs); fadeMs = 0; }
           }
-          // The album's end: round again with repeat on; otherwise back to the first track, ready for the next play.
-          if (e.data === ENDED && playing() >= tracks.length - 1) {
-            if (repeat()) player.playVideoAt(0);
-            else { wanted = false; halt(); player.cuePlaylist(tracks.map((t) => t.id)); }
-          }
+          // The album's end: back to the first track, ready for the next play.
+          if (e.data === ENDED && playing() >= tracks.length - 1) { wanted = false; halt(); player.cuePlaylist(tracks.map((t) => t.id)); }
         },
         // A track that can't be embedded: skip it; none playable: the record carries on without sound.
         onError: () => { if (++failures >= tracks.length) { wanted = false; say(''); } else player.nextVideo(); },
@@ -168,7 +168,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
 
   return {
     go,
-    next: () => go(current + 1 < tracks.length ? current + 1 : 0),
+    next: () => go(current + 1),
     // A few seconds in: back to the start of the track; otherwise the one before.
     prev: () => (player && player.getCurrentTime() > 3 ? player.seekTo(0, true) : go(Math.max(0, current - 1))),
     /** Keyboard ← / →: a few seconds back or forward within the track (not past its end). */

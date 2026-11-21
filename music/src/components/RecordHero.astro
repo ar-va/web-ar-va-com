@@ -209,7 +209,7 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       document.querySelectorAll('[data-bar-next]').forEach((b) => b.addEventListener('click', () => { start(); sound.next(); }));
       document.querySelectorAll<HTMLElement>('[data-bar-go]').forEach((b) => b.addEventListener('click', () => { start(); sound.go(Number(b.dataset.barGo)); }));
       // Keyboard (user, 2026-11-21): Space / K play-pause, ← → 5 s, Shift+← → previous / next, ↑ ↓ volume (so they
-      // don't scroll album pages), Q queue, R repeat, M mute.
+      // don't scroll album pages), Q queue, M mute.
       // Not while typing, not with Ctrl / ⌘ / Alt, not while a dialog or popover (photo viewer, date popup) has the
       // keys, and Space / Enter on a focused button or link stay theirs.
       const press = (sel: string) => document.querySelector<HTMLElement>(sel)?.click();
@@ -222,7 +222,7 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
         if (key === ' ' && t.closest('button, a, summary')) return;
         const act: Record<string, () => void> = e.shiftKey
           ? { ArrowLeft: () => press('[data-bar-prev]'), ArrowRight: () => press('[data-bar-next]') }
-          : { ' ': () => toggle(true), k: () => toggle(true), ArrowLeft: () => sound.seekBy(-5), ArrowRight: () => sound.seekBy(5), ArrowUp: () => sound.volumeBy(10), ArrowDown: () => sound.volumeBy(-10), q: () => press(document.querySelector('[data-bar-card].expanded') ? '[data-bar-queue]' : '[data-bar-mini-queue]'), r: () => press('[data-bar-repeat]'), m: () => press('[data-bar-mute]') };
+          : { ' ': () => toggle(true), k: () => toggle(true), ArrowLeft: () => sound.seekBy(-5), ArrowRight: () => sound.seekBy(5), ArrowUp: () => sound.volumeBy(10), ArrowDown: () => sound.volumeBy(-10), q: () => press('[data-bar-queue]'), m: () => press('[data-bar-mute]') };
         const run = act[key];
         if (!run) return;
         e.preventDefault();
