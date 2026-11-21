@@ -69,7 +69,7 @@ Use **only** the CSS variables from `arva-tokens.css`. Do not write hex values i
 | `--kikyo-hover` | #3D3891 | #B7BDFF | Hover state of Kikyō |
 | `--on-kikyo` | #FFFFFF | #15161C | Text and icons placed on a Kikyō fill |
 | `--kikyo-tint` | #E4E8FF | #3F3F75 | Tags, selected rows, info banners, text selection |
-| `--kashiwa` | #15683F Kashiwa | #5FCF8F Kashiwa (dark) | Belong: the leaf, people, the owner's voice, the facts separator (see below) |
+| `--kashiwa` | #15683F Kashiwa | #5FCF8F Kashiwa (dark) | Belong: the leaf, people, the owner's voice (see below) |
 | `--bengara` | #A3442B Bengara | #E57F57 Bengara (dark) | Notice: Latest, New, the most played flame, the favourite heart (see below) |
 | `--bengara-tint` | #F7E6DF | #4A2B22 | Quiet ground behind a Bengara label (Bengara text on it 5.1:1 light, 4.5:1 dark) |
 | `--success` | #2F7D3A | #9ECE6A | Success messages and icons |
@@ -91,7 +91,7 @@ ARVA has three named colours, each with **one job**. If a colour doesn't mean it
 | Job | **Act**: you can press, follow or choose this | **Belong**: who made, owns or is speaking | **Notice**: worth a second look, no click needed |
 | Story | The Japanese bellflower's blue-violet, once worn by the nobility | The oak in the logo, which keeps its old leaves until new ones grow | The iron-oxide red of Kyoto's old wooden shopfronts, a workshop pigment |
 | Tokens | `--kikyo` #4A45B5 / #979CF7, `--kikyo-hover`, `--on-kikyo`, `--kikyo-tint` | `--kashiwa` #15683F / #5FCF8F | `--bengara` #A3442B / #E57F57, `--bengara-tint` |
-| Use it for | Primary buttons, links, streaming buttons, the Telegram link, picked filters, the current view, open menus (its tint), count badges, focus rings | The leaf in the logo and the site name beside it, the artist above an album title, the owner's note (its rule and signature), the small leaf between facts, the shelf's "just now" | The "Latest" label (shelves, blog), anon's "New" marker, the most played flame, the owner's favourite-track heart |
+| Use it for | Primary buttons, links, streaming buttons, the Telegram link, picked filters, the current view, open menus (its tint), count badges, focus rings | The leaf in the logo and the site name beside it, the artist above an album title, the owner's note (its rule and signature), the shelf's "just now" | The "Latest" label (shelves, blog), anon's "New" marker, the most played flame, the owner's favourite-track heart |
 | Form | The only one that fills shapes | Text-sized, or the leaf | Small marks or a tinted pill |
 | Share of a screen | up to about 8% | about 4% | 1–2% |
 | Never | On text that can't be pressed, as a large background or decoration | On buttons or links, next to a success message | On buttons, links or errors; more than one label per view or a few marks in a list (three flames at most) |
@@ -208,7 +208,7 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 - Photography shows real materials, hands, tools, workshops, and products in use. Use natural light and warm, slightly muted grading. No stock-photo smiles, no glowing abstract tech.
 - Images sit in 12 px radius frames or run full-bleed. To place text over a photo, add a `--bg`-coloured overlay at 70% or more opacity.
 - Icons are line icons with a 1.5px stroke, round joins, 20 or 24 px, coloured `--text` or `--text-2`. Lucide is a good match. Never use filled multicolour icons or emoji.
-- Don't add decorative leaves, leaf patterns, or nature illustrations. The logo is the only leaf, with one exception (2026-11-20): the logo's small leaf, in Kashiwa at 0.7em, divides separate facts in a line (between "1959", "Jazz" and "5 tracks" on album pages). One leaf per gap, never a row of leaves on its own.
+- Don't add decorative leaves, leaf patterns, or nature illustrations. The logo is the only leaf, with one exception (2026-11-20): the logo's small leaf, in the secondary text grey (`zinc-500`, like "Added to the shelf") at 0.7em, divides separate facts in a line (between "1959", "Jazz" and "5 tracks" on album pages). One leaf per gap, never a row of leaves on its own.
 - If an image is missing, use a `--sunken` placeholder box with a short caption describing what goes there. Never invent images with SVG.
 
 ---
@@ -247,6 +247,8 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 
 ## Changelog
 
+- **2026-11-21 (facts separator):** the small leaf between facts is the secondary text grey (`zinc-500`), no longer
+  Kashiwa: in green it was the loudest thing in the line and competed with the artist's name above it.
 - **2026-11-20 (logo names):** the two-tone and green logo files named after Kashiwa: `-moss.svg` →
   `-kashiwa.svg` (`arva-mark-moss.svg` → `arva-mark-kashiwa.svg`). Files unchanged otherwise.
 - **2026-11-20 (avatar names):** avatar files named after the brand colours: `-moss` → `-kashiwa`, `-indigo` →
