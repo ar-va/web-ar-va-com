@@ -1,14 +1,17 @@
 ---
-// The owner's note, on a shelf (about the collection) and under each album (about the record): a quote signed with
-// their first name, two lines then "View more". The owner gets "Edit" (or a dashed "Add a note…" box when empty),
+// The owner's note, on a shelf (about the collection) and under each album (about the record): a soft Kashiwa box
+// headed by their photo and "Artur’s note" (user 2026-11-21: the "— Artur, about this record" signature read oddly),
+// two lines, then the whole note when tapped anywhere (or "View more"). The owner gets "Edit" (or a dashed "Add a note…" box when empty),
 // which opens ?note: a form rendered by the server here (no script needed) that posts `action=note` to the page.
 // At most NOTE_MAX characters.
 import { NOTE_MAX } from '@shared/lib/lib';
 
 interface Props {
   note: string | null;
-  /** First name of the owner, for the signature. */
+  /** First name of the owner, for the heading. */
   by: string;
+  /** Their Telegram photo, beside it (else their initial). */
+  photo?: string | null;
   /** "the collection" or "this record". */
   about: string;
   /** The page's own path, for Edit and Cancel. */
@@ -19,7 +22,7 @@ interface Props {
   placeholder: string;
   class?: string;
 }
-const { note, by, about, base, canEdit, editing, addText, placeholder, class: className = '' } = Astro.props;
+const { note, by, photo, about, base, canEdit, editing, addText, placeholder, class: className = '' } = Astro.props;
 ---
 {editing ? (
   <form id="note" method="post" class={`max-w-2xl scroll-mt-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-4 sm:p-5 ${className}`}>
@@ -37,14 +40,18 @@ const { note, by, about, base, canEdit, editing, addText, placeholder, class: cl
     </div>
   </form>
 ) : note ? (
-  <figure id="note" data-note class={`max-w-2xl scroll-mt-6 ${className}`}>
-    <blockquote class="border-l-2 border-kashiwa dark:border-kashiwa-light pl-4">
-      <p data-note-text class="text-[0.9375rem] leading-relaxed text-zinc-600 dark:text-zinc-400 break-words line-clamp-2">{note}</p>
-      <button type="button" data-note-more hidden class="mt-1 text-sm font-medium text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">View more</button>
-    </blockquote>
-    <figcaption class="mt-2 pl-4 text-xs font-medium text-kashiwa dark:text-kashiwa-light">
-      — {by}, about {about}{canEdit && <a href={`${base}?note#note`} class="ml-3 font-medium text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">Edit</a>}
+  <figure id="note" data-note class={`max-w-2xl scroll-mt-6 rounded-2xl bg-kashiwa/[0.07] dark:bg-kashiwa-light/[0.07] px-4 py-3.5 sm:px-5 sm:py-4 ${className}`}>
+    <figcaption class="flex items-center gap-2.5 text-sm">
+      {photo?.startsWith('https://')
+        ? <img src={photo} alt="" width="24" height="24" referrerpolicy="no-referrer" class="w-6 h-6 rounded-full object-cover shrink-0" />
+        : <span aria-hidden="true" class="w-6 h-6 rounded-full shrink-0 grid place-items-center bg-kashiwa/15 dark:bg-kashiwa-light/15 text-xs font-semibold text-kashiwa dark:text-kashiwa-light">{by.slice(0, 1)}</span>}
+      <span class="font-medium text-kashiwa dark:text-kashiwa-light">{by}’s note</span>
+      {canEdit && <a href={`${base}?note#note`} class="ml-auto font-medium text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">Edit</a>}
     </figcaption>
+    <blockquote class="mt-2">
+      <p data-note-text class="text-[0.9375rem] leading-relaxed text-zinc-700 dark:text-zinc-300 break-words line-clamp-2">{note}</p>
+    </blockquote>
+    <button type="button" data-note-more hidden class="mt-1 text-sm font-medium text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">View more</button>
   </figure>
 ) : canEdit && (
   <a id="note" href={`${base}?note#note`} class={`max-w-2xl scroll-mt-6 flex items-start gap-3 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-700 px-4 py-3 text-sm text-zinc-500 hover:text-kikyo-600 dark:hover:text-kikyo-400 hover:border-kikyo-400 transition-colors ${className}`}>
@@ -55,11 +62,16 @@ const { note, by, about, base, canEdit, editing, addText, placeholder, class: cl
 
 <script>
   // The two-line preview runs the paragraphs together (a short first line and a blank one would leave a lonely
-  // "…"); "View more", shown only when the preview cuts something off, brings back the whole note with its line breaks.
+  // "…"). When it cuts something off, a tap anywhere in the note (or "View more") brings back the whole note with its
+  // line breaks (user 2026-11-21); Edit stays a link.
+  const box = document.querySelector<HTMLElement>('[data-note]');
   const text = document.querySelector<HTMLElement>('[data-note-text]');
   const more = document.querySelector<HTMLButtonElement>('[data-note-more]');
-  if (text && more && (text.scrollHeight > text.clientHeight + 1 || /\n/.test(text.textContent ?? ''))) {
+  if (box && text && more && (text.scrollHeight > text.clientHeight + 1 || /\n/.test(text.textContent ?? ''))) {
     more.hidden = false;
-    more.addEventListener('click', () => { text.classList.remove('line-clamp-2'); text.classList.add('whitespace-pre-line'); more.hidden = true; });
+    box.classList.add('cursor-pointer');
+    const open = () => { text.classList.remove('line-clamp-2'); text.classList.add('whitespace-pre-line'); more.hidden = true; box.classList.remove('cursor-pointer'); box.removeEventListener('click', onClick); };
+    const onClick = (e: MouseEvent) => { if (!(e.target as HTMLElement).closest('a')) open(); };
+    box.addEventListener('click', onClick);
   }
 </script>
