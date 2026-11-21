@@ -44,7 +44,9 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
      sleeve + disc stay inside a 360 px screen's margins. -->
 <!-- overflow-x: clip, with the page's 24 px side margin to spare: the light behind the rolled-out record reaches 120 % of
      the cover past it, which made phones scroll sideways (446 px on a 390 px screen); now it fades out at the screen edge. -->
-<div data-hero class="flex flex-col sm:flex-row sm:items-center gap-8 sm:gap-36 overflow-x-clip [overflow-clip-margin:1.5rem]">
+<!-- Desktop: the text starts 44 px below the cover's top (where centring put the usual text), not centred, so extra lines
+     under it (the album page's photos) grow it downward and the title sits at the same height on both heroes. -->
+<div data-hero class="flex flex-col sm:flex-row sm:items-start gap-8 sm:gap-36 overflow-x-clip [overflow-clip-margin:1.5rem]">
   <div data-turntable data-play={play?.length ? JSON.stringify(play) : undefined} class="relative shrink-0 self-start sm:self-auto">
     <!-- Shelf: the cover links too (for mouse and touch; keyboards and screen readers use the title's link). -->
     {href ? (
@@ -59,11 +61,11 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       <svg class="w-4 h-4 group-aria-[pressed=false]:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6.5" y="5.5" width="3.8" height="13" rx="1" /><rect x="13.7" y="5.5" width="3.8" height="13" rx="1" /></svg>
     </button>
   </div>
-  <div class="min-w-0 flex-1">
+  <div class="min-w-0 flex-1 sm:pt-11">
     <p class="text-lg font-medium text-kashiwa dark:text-kashiwa-light mb-1">{href ? artist : <button type="button" data-copy title="Click to copy" class={copy}>{artist}</button>}</p>
-    <!-- The title, and at the very end of its first line the headphones: a menu of the streaming services (user 2026-11-21,
-         instead of three buttons under the facts). -->
-    <div class="flex items-start justify-between gap-3">
+    <!-- The title, and right after its first line the headphones: a menu of the streaming services (user 2026-11-21,
+         instead of three buttons under the facts; at the frame's far edge they sat apart from everything else). -->
+    <div class="flex items-start gap-4">
       <Heading class="min-w-0 text-3xl sm:text-5xl font-bold leading-[1.05] text-zinc-900 dark:text-white">
         {href ? <a href={href} class="hover:text-kikyo-600 dark:hover:text-kikyo-400 transition-colors">{title}</a> : <button type="button" data-copy title="Click to copy" class={copy}>{title}</button>}
       </Heading>

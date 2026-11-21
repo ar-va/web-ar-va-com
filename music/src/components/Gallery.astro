@@ -5,7 +5,7 @@ interface Props { images: string[]; title: string }
 const { images, title } = Astro.props;
 ---
 {images.length > 1 && (
-  <div class="mt-6">
+  <div class="mt-5">
     <h2 class="sr-only">Photos</h2>
     <ul class="flex flex-wrap gap-2" role="list" data-gallery>
       {images.map((src, i) => (

@@ -147,13 +147,12 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
 
       <header class="mt-10 mb-12 !max-w-none">
         <RecordHero record={hero!} artist={hero!.artist} title={hero!.title} released={hero!.released} genres={hero!.genres} trackCount={hero!.trackCount} links={hero!.links} runtime={hero!.runtime ?? undefined}
-          askAdded={isOwner && addedNeedsDate(record.added, overrides, sameDay) ? { sameDay } : undefined} play={play} />
-        <!-- The photos sit under the hero, in line with its text (cover 15rem + gap 9rem), not inside it: inside, they
-             made the vertically centred text taller, so the title rode higher than on the shelf's identical Latest hero
-             (user 2026-11-21). Phones: under the text, as before. -->
-        <div class="sm:pl-96">
+          askAdded={isOwner && addedNeedsDate(record.added, overrides, sameDay) ? { sameDay } : undefined} play={play}>
+          <!-- The photos follow the text, 20 px under "Added" like its other lines (user 2026-11-21: under the cover they
+               left a gap). The hero's text starts at a fixed height, so this doesn't lift the title above the shelf's
+               identical Latest hero. -->
           <Gallery images={photos} title={hero!.title} />
-        </div>
+        </RecordHero>
       </header>
 
       <Note class="mb-12" note={v.note || null} by={owner.name.split(' ')[0]} photo={owner.photo_url} about="this record" base={path} canEdit={isOwner}
