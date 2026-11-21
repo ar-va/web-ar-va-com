@@ -168,7 +168,7 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       button.setAttribute('aria-label', label);
       barPlay?.setAttribute('aria-pressed', String(on));
       barPlay?.setAttribute('aria-label', on ? 'Pause' : 'Play');
-      if (barPlay) barPlay.title = on ? 'Pause' : 'Play';
+      if (barPlay) barPlay.title = `${on ? 'Pause' : 'Play'} (Space)`;
     };
     // Reduced motion: the record stays still and nothing plays by itself; the player bar still plays the album.
     const toggle = (byUser: boolean) => {
@@ -208,6 +208,25 @@ const copy = 'cursor-copy text-left [text-transform:inherit] rounded-sm hover:op
       document.querySelector('[data-bar-prev]')?.addEventListener('click', () => { start(); sound.prev(); });
       document.querySelector('[data-bar-next]')?.addEventListener('click', () => { start(); sound.next(); });
       document.querySelectorAll<HTMLElement>('[data-bar-go]').forEach((b) => b.addEventListener('click', () => { start(); sound.go(Number(b.dataset.barGo)); }));
+      // Keyboard (user, 2026-11-21): Space / K play-pause, ← → 5 s, Shift+← → previous / next, Q queue, R repeat.
+      // Not while typing, not with Ctrl / ⌘ / Alt, not while a dialog or popover (photo viewer, date popup) has the
+      // keys, and Space / Enter on a focused button or link stay theirs.
+      const press = (sel: string) => document.querySelector<HTMLElement>(sel)?.click();
+      document.addEventListener('keydown', (e) => {
+        const t = e.target as HTMLElement;
+        if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+        if (t.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) return;
+        if (document.querySelector('dialog[open], [popover]:popover-open')) return;
+        const key = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+        if (key === ' ' && t.closest('button, a, summary')) return;
+        const act: Record<string, () => void> = e.shiftKey
+          ? { ArrowLeft: () => press('[data-bar-prev]'), ArrowRight: () => press('[data-bar-next]') }
+          : { ' ': () => toggle(true), k: () => toggle(true), ArrowLeft: () => sound.seekBy(-5), ArrowRight: () => sound.seekBy(5), q: () => press('[data-bar-queue]'), r: () => press('[data-bar-repeat]') };
+        const run = act[key];
+        if (!run) return;
+        e.preventDefault();
+        run();
+      });
     }
     // Start playing as the roll-out (CSS `roll-out`, 0.25 s delay + 1.6 s) settles.
     let started = false;

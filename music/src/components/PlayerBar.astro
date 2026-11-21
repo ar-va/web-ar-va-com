@@ -43,27 +43,27 @@ const side = `${icon} !text-zinc-500 dark:!text-zinc-400 aria-pressed:!text-kiky
       </div>
     </div>
     <div class="mt-4">
-      <input data-bar-seek type="range" min="0" max="0" value="0" step="1" disabled aria-label="Position in the track" class="player-seek block w-full" />
+      <input data-bar-seek type="range" min="0" max="0" value="0" step="1" disabled aria-label="Position in the track" aria-keyshortcuts="ArrowLeft ArrowRight" class="player-seek block w-full" />
       <div class="mt-2 flex justify-between font-mono text-[11px] leading-none text-zinc-500 tabular-nums">
         <span data-bar-time>0:00</span>
         <span data-bar-length>{tracks[0].duration || '0:00'}</span>
       </div>
     </div>
     <div class="mt-1 -mx-2 flex items-center justify-between">
-      <button type="button" data-bar-repeat aria-pressed="false" aria-label="Repeat the album" title="Repeat the album" class={side}>
+      <button type="button" data-bar-repeat aria-pressed="false" aria-label="Repeat the album" aria-keyshortcuts="R" title="Repeat the album (R)" class={side}>
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 2.5l3 3-3 3" /><path d="M4 11.5v-1a5 5 0 0 1 5-5h11" /><path d="M7 21.5l-3-3 3-3" /><path d="M20 12.5v1a5 5 0 0 1-5 5H4" /></svg>
       </button>
-      <button type="button" data-bar-prev aria-label="Previous track" title="Previous track" class={icon}>
+      <button type="button" data-bar-prev aria-label="Previous track" aria-keyshortcuts="Shift+ArrowLeft" title="Previous track (Shift+←)" class={icon}>
         <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.6" height="14" rx="1" /><path d="M19 5.5v13L8.5 12z" /></svg>
       </button>
-      <button type="button" data-bar-play aria-pressed="false" aria-label="Play" title="Play" class={`${icon} group w-14 h-14`}>
+      <button type="button" data-bar-play aria-pressed="false" aria-label="Play" aria-keyshortcuts="Space K" title="Play (Space)" class={`${icon} group w-14 h-14`}>
         <svg class="w-9 h-9 group-aria-pressed:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7.5 4.8v14.4a.8.8 0 0 0 1.2.7l11.3-7.2a.8.8 0 0 0 0-1.4L8.7 4.1a.8.8 0 0 0-1.2.7z" /></svg>
         <svg class="w-9 h-9 group-aria-[pressed=false]:hidden" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4.2" height="14" rx="1.2" /><rect x="13.8" y="5" width="4.2" height="14" rx="1.2" /></svg>
       </button>
-      <button type="button" data-bar-next aria-label="Next track" title="Next track" disabled={tracks.length < 2} class={icon}>
+      <button type="button" data-bar-next aria-label="Next track" aria-keyshortcuts="Shift+ArrowRight" title="Next track (Shift+→)" disabled={tracks.length < 2} class={icon}>
         <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 5.5v13L15.5 12z" /><rect x="16.4" y="5" width="2.6" height="14" rx="1" /></svg>
       </button>
-      <button type="button" data-bar-queue aria-controls="player-queue" aria-expanded="false" aria-label="Queue" title="Queue" class={side}>
+      <button type="button" data-bar-queue aria-controls="player-queue" aria-expanded="false" aria-label="Queue" aria-keyshortcuts="Q" title="Queue (Q)" class={side}>
         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.9" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M4 6h11M4 12h11M4 18h7" /><path d="M17 15.5v-9l4 2" /><circle cx="15" cy="16" r="2" /></svg>
       </button>
     </div>
