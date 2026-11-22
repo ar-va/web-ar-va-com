@@ -2,7 +2,8 @@
 import { env } from 'cloudflare:workers';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { AstroCookies } from 'astro';
-import { activeLink, nameKey, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
+import { activeLink, commentNotices, nameKey, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
+import { notify } from './notify';
 
 // Tables are created lazily (no migration step in the deploy).
 const SCHEMA = [
@@ -502,6 +503,32 @@ export async function editComment(t: Thread, commentId: number, user: User, body
 /** Who may delete: the author and the admin; on a record also the shelf's owner. */
 export const canDeleteComment = (t: Thread, authorId: number, user: User | null) =>
   !!user && (user.id === authorId || isAdmin(user) || (!('slug' in t) && t.shelfId === user.id));
+
+/**
+ * A comment form posted to a page (new comment, reply, edit or delete): the same on shelves, records and blog posts.
+ * A new comment tells the people concerned on Telegram (`about.ownerId`: the place's owner; `about.url`: the page,
+ * without its #). Returns the anchor to go back to, or an error (with the text to put back in the box).
+ */
+export async function commentForm(t: Thread, form: FormData, user: User, about: { ownerId: number | null; title: string; url: string },
+  waitUntil: (p: Promise<unknown>) => void): Promise<{ anchor: string } | { error: string; draft: string }> {
+  const id = Number(form.get('id'));
+  const body = String(form.get('body') ?? '');
+  if (form.get('action') === 'delete') {
+    await deleteComment(t, id, user);
+    return { anchor: 'comments' };
+  }
+  if (form.get('action') === 'edit') {
+    const error = await editComment(t, id, user, body);
+    return error ? { error, draft: '' } : { anchor: `comment-${id}` };
+  }
+  const saved = await addComment(t, user, body, Number(form.get('parent_id')) || null);
+  if ('error' in saved) return { error: saved.error, draft: body };
+  waitUntil(notify(commentNotices({
+    authorId: user.id, authorName: user.name, ownerId: about.ownerId, parentAuthorId: saved.parentAuthorId,
+    title: about.title, body: body.trim(), url: `${about.url}#comment-${saved.id}`,
+  })));
+  return { anchor: `comment-${saved.id}` };
+}
 
 /** Deleting a comment also deletes its replies. */
 export async function deleteComment(t: Thread, commentId: number, user: User) {

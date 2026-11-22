@@ -30,7 +30,8 @@ if (Astro.request.method === 'POST') {
   if (revert !== '*') {
     for (const key of Object.keys(defaults)) {
       const raw = key === 'vinyl' ? vinylPick(String(form.get('vinyl') ?? ''), String(form.get('vinylCustom') ?? ''), form.has('vinylSeeThrough')) : form.get(key);
-      const typed = String(raw ?? '').replace(/\r\n/g, '\n').trim().slice(0, 5000);
+      // The tracklist carries every track's links (~170 characters a track): at 5,000 a 30-track album lost its end.
+      const typed = String(raw ?? '').replace(/\r\n/g, '\n').trim().slice(0, key === 'tracklist' ? 100_000 : 5000);
       const value = key === 'note' ? cleanNote(typed) ?? '' : typed;
       if (!value || value === defaults[key] || key === revert) continue;
       if (key === 'cover' && !safeCoverUrl(value)) continue;

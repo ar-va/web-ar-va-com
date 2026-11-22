@@ -115,7 +115,8 @@ test('return paths and music paths', () => {
   assert.equal(safeReturnPath('/arabor/1#comments', h), '/arabor/1#comments');
   assert.equal(safeReturnPath('https://ar-va.com/blog/x#comments', h), 'https://ar-va.com/blog/x#comments');
   assert.equal(safeReturnPath('https://music.ar-va.com/arabor', 'ar-va.com'), 'https://music.ar-va.com/arabor');
-  for (const bad of ['//evil.com', '/\\evil.com', 'https://evil.com', 'https://ar-va.com.evil.com/', 'https://evilar-va.com/', 'javascript:alert(1)', '', null]) {
+  // Browsers delete tabs and line breaks from addresses: "/\t/evil.com" would become "//evil.com".
+  for (const bad of ['//evil.com', '/\\evil.com', '/\t/evil.com', '/\n/evil.com', '/ /evil.com', 'https://evil.com', 'https://ar-va.com.evil.com/', 'https://evilar-va.com/', 'javascript:alert(1)', '', null]) {
     assert.equal(safeReturnPath(bad, h), '/', String(bad));
   }
   assert.equal(siteDomain('music.ar-va.com'), 'ar-va.com');

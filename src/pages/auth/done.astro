@@ -17,15 +17,11 @@ import Layout from '@shared/layouts/Layout.astro';
 </Layout>
 
 <script>
+  import { safeReturnPath } from '@shared/lib/lib';
   const params = new URLSearchParams(location.search);
-  const next = params.get('next') ?? '';
-  // Only on to this site's own pages.
-  const safeNext = (() => {
-    try {
-      const u = new URL(next);
-      return u.protocol === 'https:' && (u.hostname === 'ar-va.com' || u.hostname.endsWith('.ar-va.com')) || u.hostname.endsWith('localhost') ? u.href : null;
-    } catch { return null; }
-  })();
+  // Only on to this site's own pages: the same check as the login's return address ('/' means it wasn't one).
+  const checked = safeReturnPath(params.get('next'), location.hostname);
+  const safeNext = checked === '/' ? null : checked;
   const status = document.getElementById('done-status')!;
   const result = location.hash.match(/tgAuthResult=([A-Za-z0-9\-_=]*)$/)?.[1];
 

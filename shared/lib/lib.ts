@@ -216,7 +216,8 @@ export const siteDomain = (hostname: string) => hostname.replace(/^music\./, '')
 /** Post-login destination: a path on this host, or a page on the site or one of its subdomains. */
 export function safeReturnPath(target: string | null | undefined, hostname: string) {
   if (!target) return '/';
-  if (/^\/(?![/\\])/.test(target)) return target;
+  // No whitespace: browsers delete tabs and line breaks from addresses, so "/\t/evil.com" would turn into "//evil.com".
+  if (/^\/(?![/\\])[^\s]*$/.test(target)) return target;
   try {
     const u = new URL(target);
     const site = siteDomain(hostname);

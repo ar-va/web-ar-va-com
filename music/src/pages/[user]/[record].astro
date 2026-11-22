@@ -11,9 +11,8 @@ import Note from '../../components/Note.astro';
 import LoginButton from '@shared/components/LoginButton.astro';
 import CommentThread from '@shared/components/CommentThread.astro';
 import Listen from '../../components/Listen.astro';
-import { youtubeId, addedNeedsDate, cleanNote, commentNotices, safeDay, displayDate, formatReleased, gallery, loginHref, popularTracks, recordDefaults, shortCount, recordValues, shelfView, textToTracklist, titleKey, withSideHeadings } from '@shared/lib/lib';
-import { addComment, canDeleteComment, currentUser, deleteComment, editComment, recordData, saveOverrides, shelfSlug } from '@shared/lib/store';
-import { notify } from '@shared/lib/notify';
+import { youtubeId, addedNeedsDate, cleanNote, safeDay, displayDate, formatReleased, gallery, loginHref, popularTracks, recordDefaults, shortCount, recordValues, shelfView, textToTracklist, titleKey, withSideHeadings } from '@shared/lib/lib';
+import { canDeleteComment, commentForm, currentUser, recordData, saveOverrides, shelfSlug } from '@shared/lib/store';
 import SkippingRecord from '../../components/SkippingRecord.astro';
 
 const instanceId = Number(Astro.params.record);
@@ -30,7 +29,6 @@ if (owner && record && Astro.request.method === 'POST') {
   if (!user) return Astro.redirect(loginHref(Astro.url), 303);
   const form = await Astro.request.formData();
   const action = form.get('action');
-  const id = Number(form.get('id'));
   // The "Added on" popup: the owner's day, or Discogs' confirmed (so it stops asking).
   if (action === 'added' || action === 'added-ok') {
     if (user.id === owner.id) {
@@ -62,27 +60,11 @@ if (owner && record && Astro.request.method === 'POST') {
     }
     return Astro.redirect(`${path}#note`, 303);
   }
-  if (action === 'delete') {
-    await deleteComment(thread, id, user);
-    return Astro.redirect(`${path}#comments`, 303);
-  }
-  if (action === 'edit') {
-    error = await editComment(thread, id, user, String(form.get('body') ?? ''));
-    if (!error) return Astro.redirect(`${path}#comment-${id}`, 303);
-  } else {
-    draft = String(form.get('body') ?? '');
-    const saved = await addComment(thread, user, draft, Number(form.get('parent_id')) || null);
-    if ('error' in saved) {
-      error = saved.error;
-    } else {
-      const title = overrides.title ?? record.title;
-      Astro.locals.cfContext.waitUntil(notify(commentNotices({
-        authorId: user.id, authorName: user.name, ownerId: owner.id, parentAuthorId: saved.parentAuthorId,
-        title, body: draft.trim(), url: `${Astro.url.origin}${path}#comment-${saved.id}`,
-      })));
-      return Astro.redirect(`${path}#comment-${saved.id}`, 303);
-    }
-  }
+  // Otherwise the comment form (new, reply, edit, delete).
+  const result = await commentForm(thread, form, user, { ownerId: owner.id, title: overrides.title ?? record.title, url: `${Astro.url.origin}${path}` },
+    (p) => Astro.locals.cfContext.waitUntil(p));
+  if ('anchor' in result) return Astro.redirect(`${path}#${result.anchor}`, 303);
+  ({ error, draft } = result);
 }
 
 if (!owner || !record) Astro.response.status = 404;
