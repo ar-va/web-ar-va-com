@@ -383,8 +383,10 @@ export async function listCollectors() {
 
 /**
  * music.ar-va.com/: every shelf with its latest records, most recently added to first, in one round trip.
- * shortcut: reads every record row on each visit (fine for dozens of shelves); past a few hundred collectors, keep a
- * per-shelf summary row updated on sync instead.
+ * shortcut: reads every record row on each visit, about 9 rows read per stored record (measured 2026-11-22: 65
+ * records → ~600 rows). Also used by ar-va.com/login and invite pages. The free plan's 5 M rows a day (whole account,
+ * every query fails after) then lasts 5M / (9 × records) visits: ~8,500 a day now, ~55 at 10,000 records. Past ~3,000
+ * records in all, keep a per-shelf summary row (count, newest date, newest records) updated on sync instead.
  */
 export async function directory(perShelf = 5) {
   const latest = `SELECT user_id, instance_id, data FROM (SELECT user_id, instance_id, data,
