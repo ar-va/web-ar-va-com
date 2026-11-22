@@ -35,8 +35,27 @@ const { title, description, noindex = false, header = {} } = Astro.props;
     {noindex && <meta name="robots" content="noindex, nofollow" />}
     <script is:inline>
       // Back / Forward can restore a page exactly as it was left, with a pressed button still switched off ("Sending…",
-      // "Opening Discogs…"): such a page loads fresh instead.
-      addEventListener('pageshow', (e) => { if (e.persisted) location.reload(); });
+      // "Opening Discogs…"): a page left through a form, or marked busy (`data-busy` on <html>), loads fresh instead.
+      // Other pages are kept as they were, so going back animates (the cover's move below).
+      addEventListener('submit', () => { document.documentElement.dataset.busy = '1'; });
+      addEventListener('pageshow', (e) => { if (e.persisted && document.documentElement.dataset.busy) location.reload(); });
+
+      // Between pages the record's cover moves into its new place (global.css, `@view-transition`): on both pages the
+      // cover of the record on the other page is named `cover`; on an album page (no link to the other page's record)
+      // its hero's cover. Only for the move: the name comes off once it's done (a theme switch would move it again).
+      const coverFor = (url) => {
+        if (!url) return null;
+        const path = new URL(url, location.href).pathname;
+        const linked = [...document.querySelectorAll('a .sleeve')].find((s) => s.closest('a').pathname === path && s.checkVisibility?.() !== false);
+        return linked ?? (document.querySelector('[data-spin-cover] .sleeve'));
+      };
+      const named = (el, t) => {
+        if (!el || !t) return;
+        el.style.viewTransitionName = 'cover';
+        t.finished.finally(() => { el.style.viewTransitionName = ''; });
+      };
+      addEventListener('pageswap', (e) => named(coverFor(e.activation?.entry?.url), e.viewTransition));
+      addEventListener('pagereveal', (e) => named(coverFor(window.navigation?.activation?.from?.url ?? document.referrer), e.viewTransition));
     </script>
     
     <!-- Single, optimized theme script to prevent flashing -->

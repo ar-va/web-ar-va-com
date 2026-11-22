@@ -39,7 +39,24 @@
     const isDark = document.documentElement.classList.contains("dark");
     themeToggleBtn.setAttribute("aria-checked", isDark ? "true" : "false");
 
+    // The new theme spreads from the switch as a growing circle (user 2026-11-22), where the browser can; otherwise,
+    // and with reduced motion, it switches at once as before.
     const handleToggleClick = () => {
+      const root = document.documentElement;
+      if (!document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) return switchTheme();
+      const box = themeToggleBtn.getBoundingClientRect();
+      const x = box.left + box.width / 2, y = box.top + box.height / 2;
+      const r = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+      root.classList.add("theme-vt");
+      const t = document.startViewTransition(switchTheme);
+      t.ready.then(() => root.animate(
+        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${r}px at ${x}px ${y}px)`] },
+        { duration: 550, easing: "cubic-bezier(0.4, 0, 0.2, 1)", pseudoElement: "::view-transition-new(root)" },
+      )).catch(() => {});
+      t.finished.finally(() => root.classList.remove("theme-vt"));
+    };
+
+    const switchTheme = () => {
       const element = document.documentElement;
       element.classList.toggle("dark");
       

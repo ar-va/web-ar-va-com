@@ -30,6 +30,9 @@ const loadApi = () => (api ??= new Promise((resolve) => {
   s.async = true;
   document.head.append(s);
 }));
+// While the album plays, the tab says so (user 2026-11-22): "▶ <track> · <page title>", and a record as the tab's icon
+// (it turns in browsers that animate SVG icons, e.g. Firefox; others show it still).
+const RECORD_ICON = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><style>@keyframes s{to{transform:rotate(360deg)}}g{transform-origin:16px 16px;animation:s 1.8s linear infinite}</style><g><circle cx="16" cy="16" r="15.5" fill="#131316"/><circle cx="16" cy="16" r="12" fill="none" stroke="#fff" stroke-opacity=".12"/><circle cx="16" cy="16" r="9" fill="none" stroke="#fff" stroke-opacity=".12"/><path d="M16 16L28 6A15.5 15.5 0 0 1 31 13z" fill="#fff" fill-opacity=".28"/><circle cx="16" cy="16" r="5.5" fill="#5d59cc"/><circle cx="16" cy="16" r="1.2" fill="#131316"/></g></svg>')}`;
 const remembered = () => { try { return localStorage.getItem(KEY); } catch { return null; } };
 const remember = (v: 'on' | 'off') => { try { localStorage.setItem(KEY, v); } catch {} };
 
@@ -48,6 +51,14 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
   const say = (text: string) => { if (note) note.textContent = text || note.dataset.artist || ''; };
   let current = -1;
   let seeking = false;
+  const pageTitle = document.title;
+  const icons = [...document.querySelectorAll<HTMLLinkElement>('link[rel="icon"]')].map((l) => [l, l.href] as const);
+  let onTab = false;
+  const tab = (on: boolean) => {
+    onTab = on;
+    document.title = on && tracks[current] ? `▶ ${tracks[current].title} · ${pageTitle}` : pageTitle;
+    for (const [link, href] of icons) link.href = on ? RECORD_ICON : href;
+  };
   const canNext = () => nexts.forEach((b) => { b.disabled = current >= tracks.length - 1; });
   // Mute (the bar's speaker button, key M): YouTube's own mute, so the fades' volume is kept for unmuting; the needle
   // stays quiet too. This page only.
@@ -96,6 +107,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     // The queue's rows and the tracklist's play buttons: matched by their track number, not their order on the page.
     items.forEach((b) => b.setAttribute('aria-current', String(Number(b.dataset.barGo) === i)));
     canNext();
+    if (onTab) tab(true);
   };
   show(0);
   // Which track is playing, by its video: YouTube's getPlaylistIndex() was one ahead (seen 2026-11-21: 1 on the first).
@@ -152,13 +164,14 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
             failures = 0;
             if (!wanted) return player.pauseVideo();
             say('');
+            tab(true);
             if (fadeMs) { ramp(level, fadeMs); fadeMs = 0; }
           }
           // The album's end: back to the first track, ready for the next play.
-          if (e.data === ENDED && playing() >= tracks.length - 1) { wanted = false; halt(); liftNeedle(loud()); player.cuePlaylist(tracks.map((t) => t.id)); }
+          if (e.data === ENDED && playing() >= tracks.length - 1) { wanted = false; tab(false); halt(); liftNeedle(loud()); player.cuePlaylist(tracks.map((t) => t.id)); }
         },
         // A track that can't be embedded: skip it; none playable: the record carries on without sound.
-        onError: () => { if (++failures >= tracks.length) { wanted = false; liftNeedle(0, true); say(''); } else player.nextVideo(); },
+        onError: () => { if (++failures >= tracks.length) { wanted = false; tab(false); liftNeedle(0, true); say(''); } else player.nextVideo(); },
       },
     });
   })));
@@ -166,6 +179,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
   // No sound is coming: the record and the bar stop, and say why.
   const giveUp = (why: string) => {
     wanted = false;
+    tab(false);
     clearInterval(fade);
     player?.setVolume(0);
     liftNeedle(0, true); // nothing was heard: no lift sound, just stop the crackle
@@ -226,6 +240,7 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
     willAutoplay: () => remembered() !== 'off',
     stop(byUser: boolean) {
       wanted = false;
+      tab(false);
       if (byUser) remember('off');
       liftNeedle(loud());
       if (player) ramp(0, FADE_OUT_MS, () => player.pauseVideo());

@@ -384,6 +384,7 @@ const steps = [
 
   document.querySelectorAll<HTMLButtonElement>('[data-connect]').forEach((b) => b.addEventListener('click', () => {
     b.disabled = true;
+    document.documentElement.dataset.busy = '1'; // Back from Discogs: a fresh page, not this one with the button off
     say('Opening Discogs…');
     startConnect().catch((e) => { say(`Couldn’t reach Discogs: ${e.message}`); b.disabled = false; });
   }));
