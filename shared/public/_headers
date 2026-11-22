@@ -1,0 +1,5 @@
+# Every static file on the four sites (all share this public folder). The same two headers as shared/security.ts,
+# which adds them to the pages the Workers render: keep both in step.
+/*
+  X-Content-Type-Options: nosniff
+  Content-Security-Policy: frame-ancestors 'self'
