@@ -237,33 +237,37 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
         </section>
       ))}
 
+      <!-- One track or heading. Sized for fingers (user 2026-11-22: icons were hard to hit on a phone): 40 px buttons with
+           20 px icons, 16 px text (smaller text also makes iPhones zoom in on focus). Phones: two lines, handle +
+           position + title on top, then the length (under the position) and the buttons. Headings: handle, title, remove on one line. -->
       <template id="track-row">
-        <div class="track rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
-          <div class="flex items-center gap-0.5 sm:gap-1.5 p-1 sm:p-1.5">
+        <div class="track group/track rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950">
+          <div class="flex flex-wrap sm:flex-nowrap items-center gap-x-1 gap-y-0.5 p-1.5">
             <button type="button" data-act="drag" aria-label="Move this line: drag it, or use the up and down arrow keys" title="Drag to reorder"
-              class="shrink-0 w-6 sm:w-7 h-8 grid place-items-center rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-grab active:cursor-grabbing touch-none focus-visible:outline-2 focus-visible:outline-kikyo-500">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6" /><circle cx="15" cy="6" r="1.6" /><circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" /><circle cx="9" cy="18" r="1.6" /><circle cx="15" cy="18" r="1.6" /></svg>
+              class="shrink-0 w-10 h-10 grid place-items-center rounded-lg text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-grab active:cursor-grabbing touch-none focus-visible:outline-2 focus-visible:outline-kikyo-500">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6" /><circle cx="15" cy="6" r="1.6" /><circle cx="9" cy="12" r="1.6" /><circle cx="15" cy="12" r="1.6" /><circle cx="9" cy="18" r="1.6" /><circle cx="15" cy="18" r="1.6" /></svg>
             </button>
-            <input data-k="position" aria-label="Position" placeholder="A1" class="w-9 sm:w-12 shrink-0 rounded-lg bg-transparent px-1 sm:px-2 py-1.5 font-mono text-sm text-zinc-500 focus:bg-white dark:focus:bg-night-surface focus:outline-none focus:ring-1 focus:ring-kikyo-500" />
-            <input data-k="title" aria-label="Title" placeholder="Title" class="min-w-0 flex-grow rounded-lg bg-transparent px-1 sm:px-2 py-1.5 text-sm text-zinc-900 dark:text-white focus:bg-white dark:focus:bg-night-surface focus:outline-none focus:ring-1 focus:ring-kikyo-500" />
-            <input data-k="duration" aria-label="Length" placeholder="4:52" class="w-11 sm:w-14 shrink-0 rounded-lg bg-transparent px-1 sm:px-2 py-1.5 font-mono text-sm tabular-nums text-zinc-500 text-right focus:bg-white dark:focus:bg-night-surface focus:outline-none focus:ring-1 focus:ring-kikyo-500" />
+            <input data-k="position" aria-label="Position" placeholder="A1" class="w-12 sm:w-14 h-10 shrink-0 rounded-lg bg-transparent px-2 font-mono text-base text-zinc-500 focus:bg-white dark:focus:bg-night-surface focus:outline-none focus:ring-1 focus:ring-kikyo-500" />
+            <input data-k="title" aria-label="Title" placeholder="Title" class="min-w-0 flex-1 max-sm:basis-[calc(100%-6rem)] max-sm:group-data-heading/track:basis-0 h-10 rounded-lg bg-transparent px-2 text-base text-zinc-900 dark:text-white focus:bg-white dark:focus:bg-night-surface focus:outline-none focus:ring-1 focus:ring-kikyo-500" />
+            <input data-k="duration" aria-label="Length" placeholder="4:52" class="w-16 h-10 shrink-0 max-sm:ml-[2.75rem] max-sm:mr-auto rounded-lg bg-transparent px-2 font-mono text-base tabular-nums text-zinc-500 sm:text-right focus:bg-white dark:focus:bg-night-surface focus:outline-none focus:ring-1 focus:ring-kikyo-500" />
             <button type="button" data-act="fav" aria-pressed="false" aria-label="Favourite" title="Mark as one of your favourites"
-              class="group/fav shrink-0 w-7 sm:w-8 h-8 grid place-items-center rounded-lg text-zinc-400 hover:text-kikyo-600 dark:hover:text-kikyo-400 aria-pressed:text-bengara dark:aria-pressed:text-bengara-light focus-visible:outline-2 focus-visible:outline-kikyo-500">
-              <svg class="w-4 h-4 group-aria-pressed/fav:fill-current" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linejoin="round" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
+              class="group/fav shrink-0 w-10 h-10 grid place-items-center rounded-lg text-zinc-400 hover:text-kikyo-600 dark:hover:text-kikyo-400 aria-pressed:text-bengara dark:aria-pressed:text-bengara-light focus-visible:outline-2 focus-visible:outline-kikyo-500">
+              <svg class="w-5 h-5 group-aria-pressed/fav:fill-current" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linejoin="round" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" /></svg>
             </button>
+            <!-- Fixed width, icon in the same place whether or not a count follows it (rows without links shifted). -->
             <button type="button" data-act="links" aria-label="Streaming links for this track" aria-expanded="false" title="Streaming links"
-              class="shrink-0 h-8 px-1 sm:px-2 inline-flex items-center gap-1 rounded-lg text-xs font-medium text-zinc-400 hover:text-kikyo-600 dark:hover:text-kikyo-400 aria-expanded:text-kikyo-600 dark:aria-expanded:text-kikyo-400">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" /></svg>
+              class="shrink-0 w-14 h-10 pl-2.5 inline-flex items-center gap-1 rounded-lg text-sm font-medium text-zinc-400 hover:text-kikyo-600 dark:hover:text-kikyo-400 aria-expanded:text-kikyo-600 dark:aria-expanded:text-kikyo-400 focus-visible:outline-2 focus-visible:outline-kikyo-500">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.7" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" /></svg>
               <span data-count></span>
             </button>
-            <button type="button" data-act="remove" aria-label="Remove this line" title="Remove" class="shrink-0 w-7 sm:w-8 h-8 grid place-items-center rounded-lg text-zinc-400 hover:text-red-600 dark:hover:text-red-400">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+            <button type="button" data-act="remove" aria-label="Remove this line" title="Remove" class="shrink-0 w-10 h-10 grid place-items-center rounded-lg text-zinc-400 hover:text-red-600 dark:hover:text-red-400 focus-visible:outline-2 focus-visible:outline-kikyo-500">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
             </button>
           </div>
           <div data-links class="hidden grid-cols-1 sm:grid-cols-3 gap-2 px-2.5 pb-2.5">
-            <input data-k="spotify" type="url" aria-label="Spotify link" placeholder="Spotify link" class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500" />
-            <input data-k="apple" type="url" aria-label="Apple Music link" placeholder="Apple Music link" class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500" />
-            <input data-k="youtube" type="url" aria-label="YouTube Music link" placeholder="YouTube Music link" class="rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500" />
+            <input data-k="spotify" type="url" aria-label="Spotify link" placeholder="Spotify link" class="h-10 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-3 text-base sm:text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500" />
+            <input data-k="apple" type="url" aria-label="Apple Music link" placeholder="Apple Music link" class="h-10 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-3 text-base sm:text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500" />
+            <input data-k="youtube" type="url" aria-label="YouTube Music link" placeholder="YouTube Music link" class="h-10 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-3 text-base sm:text-sm text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500" />
           </div>
         </div>
       </template>
@@ -382,7 +386,7 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
         row.querySelectorAll('[data-k="position"], [data-k="duration"], [data-act="fav"], [data-act="links"], [data-links]').forEach((el) => el.remove());
         const title = row.querySelector<HTMLInputElement>('[data-k="title"]')!;
         title.placeholder = 'Heading, e.g. Side B';
-        title.classList.add('text-sm', 'font-semibold');
+        title.classList.add('font-semibold');
         row.classList.add('mt-2');
       } else {
         set('position', t.position);
@@ -415,7 +419,7 @@ const dated = new Set(['released', 'vinylRelease', 'added']);
 
     const actions = document.createElement('div');
     actions.className = 'flex gap-2 pt-2';
-    actions.innerHTML = '<button type="button" data-add="track" class="ctl">+ Track</button><button type="button" data-add="heading" class="ctl">+ Heading</button>';
+    actions.innerHTML = '<button type="button" data-add="track" class="ctl !h-10 !px-4">+ Track</button><button type="button" data-add="heading" class="ctl !h-10 !px-4">+ Heading</button>';
     editor.append(actions);
     actions.addEventListener('click', (e) => {
       const kind = (e.target as HTMLElement).closest<HTMLElement>('[data-add]')?.dataset.add;
