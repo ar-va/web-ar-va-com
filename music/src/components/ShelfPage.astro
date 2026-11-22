@@ -7,6 +7,7 @@ import LoginButton from '@shared/components/LoginButton.astro';
 import Shelf from './Shelf.astro';
 import { loginHref } from '@shared/lib/lib';
 import { SHELF_THREAD, canDeleteComment, shelfSlug, type User, type shelfData } from '@shared/lib/store';
+import SkippingRecord from './SkippingRecord.astro';
 
 type Props = Awaited<ReturnType<typeof shelfData>> & { user: User | null; error: string | null; draft: string; editingNote: boolean };
 const { owner, records, comments, user, error, draft, editingNote } = Astro.props;
@@ -27,7 +28,7 @@ const thread = { shelfId: owner?.id ?? 0, instanceId: SHELF_THREAD };
         </section>
       </>
     ) : (
-      <p class="text-zinc-500">There’s no shelf here. <a href="/" class="text-kikyo-600 dark:text-kikyo-400 underline underline-offset-4">See all shelves</a></p>
+      <SkippingRecord heading="Shelf not found">There’s no shelf here. <a href="/" class="text-kikyo-600 dark:text-kikyo-400 underline underline-offset-4">See all shelves</a></SkippingRecord>
     )}
   </div>
 </Layout>

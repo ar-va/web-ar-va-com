@@ -14,6 +14,7 @@ import Listen from '../../components/Listen.astro';
 import { youtubeId, addedNeedsDate, cleanNote, commentNotices, safeDay, displayDate, formatReleased, gallery, loginHref, popularTracks, recordDefaults, shortCount, recordValues, shelfView, textToTracklist, titleKey, withSideHeadings } from '@shared/lib/lib';
 import { addComment, canDeleteComment, currentUser, deleteComment, editComment, recordData, saveOverrides, shelfSlug } from '@shared/lib/store';
 import { notify } from '@shared/lib/notify';
+import SkippingRecord from '../../components/SkippingRecord.astro';
 
 const instanceId = Number(Astro.params.record);
 const [user, { owner, record, overrides, detail, match, comments, sameDay, shelfSize }] = await Promise.all([
@@ -126,7 +127,7 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
   {!record || !owner ? (
     <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
       <Breadcrumbs class="mb-8" items={[{ label: 'Shelves', href: '/' }, ...(owner ? [{ label: owner.name, href: shelfPath }] : []), { label: 'Not found' }]} />
-      <p class="text-zinc-500">This record isn’t on the shelf (any more). <a href={shelfPath} class={link}>Back to the shelf</a></p>
+      <SkippingRecord heading="Record not found">This record isn’t on the shelf (any more). <a href={shelfPath} class={link}>Back to the shelf</a></SkippingRecord>
     </div>
   ) : (
     <article class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
@@ -258,12 +259,33 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/
   import '@shared/scripts/comments';
   import '../../scripts/copy';
 
+  // A heart turned on pops and throws off a few specks in its own colour (2026-11-22). None with reduced motion.
+  function burst(button: HTMLElement) {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    button.animate([{ scale: 1 }, { scale: 1.4 }, { scale: 0.9 }, { scale: 1 }], { duration: 420, easing: 'ease-out' });
+    const box = button.getBoundingClientRect();
+    for (let i = 0; i < 7; i++) {
+      const angle = (i / 7) * Math.PI * 2 + Math.random() * 0.5, far = 14 + Math.random() * 8;
+      const speck = document.createElement('span');
+      speck.setAttribute('aria-hidden', 'true');
+      // On <body>: inside the row, `fixed` was measured from a transformed parent; the heart's colour fades in, so it's named.
+      speck.className = 'text-bengara dark:text-bengara-light';
+      speck.style.cssText = `position:fixed;left:${box.left + box.width / 2 - 2}px;top:${box.top + box.height / 2 - 2}px;width:4px;height:4px;border-radius:9999px;background:currentColor;pointer-events:none;z-index:50`;
+      document.body.append(speck);
+      speck.animate(
+        [{ translate: '0 0', scale: 1, opacity: 1 }, { translate: `${Math.cos(angle) * far}px ${Math.sin(angle) * far}px`, scale: 0.3, opacity: 0 }],
+        { duration: 520 + Math.random() * 160, easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)' },
+      ).finished.then(() => speck.remove());
+    }
+  }
+
   // The owner's hearts save in the background (the form still works without script): flip it at once, undo on failure.
   document.querySelectorAll<HTMLFormElement>('form[data-fav]').forEach((form) => form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const button = form.querySelector('button')!;
     const on = button.getAttribute('aria-pressed') !== 'true';
     button.setAttribute('aria-pressed', String(on));
+    if (on) burst(button);
     const ok = await fetch(location.pathname, { method: 'POST', body: new FormData(form) }).then((r) => r.ok, () => false);
     if (!ok) button.setAttribute('aria-pressed', String(!on));
   }));

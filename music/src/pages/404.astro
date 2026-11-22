@@ -1,0 +1,14 @@
+---
+// Any other address on music.ar-va.com that leads nowhere (a missing shelf or record has its own message).
+export const prerender = false;
+import Layout from '@shared/layouts/Layout.astro';
+import Breadcrumbs from '../components/Breadcrumbs.astro';
+import SkippingRecord from '../components/SkippingRecord.astro';
+Astro.response.status = 404;
+---
+<Layout title="Not found - ARVA">
+  <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24">
+    <Breadcrumbs class="mb-8" items={[{ label: 'Shelves', href: '/' }, { label: 'Not found' }]} />
+    <SkippingRecord>The needle jumped past this one: there’s nothing at this address. <a href="/" class="text-kikyo-600 dark:text-kikyo-400 underline underline-offset-4">See all shelves</a></SkippingRecord>
+  </div>
+</Layout>

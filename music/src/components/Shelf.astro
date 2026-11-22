@@ -60,7 +60,11 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
   </Note>
 
   {records.length === 0 ? (
-    <p class="text-zinc-500 py-12">The shelf is still empty. Records appear here a few minutes after they’re added on Discogs.</p>
+    <div class="py-12 text-center">
+      <!-- The crate from the crate view, with nothing in it yet. -->
+      <div class="crate-stage crate-empty" aria-hidden="true"><div class="crate-front"><span class="crate-name">{owner.name}’s records</span></div></div>
+      <p class="mt-6 text-zinc-500">The shelf is still empty. Records appear here a few minutes after they’re added on Discogs.</p>
+    </div>
   ) : (
     <>
 
@@ -195,7 +199,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
                   </a>
                 </li>
               ))}
-              <li class="crate-front" aria-hidden="true"></li>
+              <li class="crate-front" aria-hidden="true"><span class="crate-name">{owner.name}’s records</span></li>
             </ul>
           </div>
           <div class="relative z-10 mt-12 flex items-center justify-center gap-3">

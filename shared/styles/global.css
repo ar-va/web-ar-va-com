@@ -653,3 +653,59 @@ html.theme-vt *, html.theme-vt *::before, html.theme-vt *::after { transition: n
 .dark .crate-front { background: linear-gradient(to bottom, #2b2e3b, #22242f); box-shadow: 0 18px 30px -18px rgb(0 0 0 / 0.7), inset 0 1px 0 rgb(255 255 255 / 0.06); }
 .dark .crate-front::before { background: rgb(0 0 0 / 0.4); }
 @media (prefers-reduced-motion: reduce) { .crate-item, .crate-item::after { transition: none; } }
+
+/* Hero record tucks back in as you scroll past (2026-11-22): on the album page and the shelf's Latest, the disc (and
+   its light) slides back into the sleeve while the sleeve leaves the screen, and out again on the way back up. Tied to
+   scrolling (a view timeline on the sleeve); the `translate` and `scale` properties, so the roll-out and the spin (both
+   `transform`) carry on untouched. Browsers without scroll-driven animations, and reduced motion: it stays out. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .sleeve-open { view-timeline: --hero block; }
+    .sleeve-open .disc { animation: roll-out 1.6s cubic-bezier(0.2, 0.7, 0.2, 1) 0.25s both, tuck linear both; }
+    .sleeve-open .glare { animation: glare-out 1.6s cubic-bezier(0.2, 0.7, 0.2, 1) 0.25s both, tuck linear both; }
+    .sleeve-open::before { transform-origin: 30% 50%; animation: light-in 1.6s ease-out 0.25s both, dim linear both; }
+    .sleeve-open :is(.disc, .glare), .sleeve-open::before { animation-timeline: auto, --hero; animation-range: normal, exit 0% exit 70%; }
+  }
+}
+@keyframes tuck { to { translate: -38% 0; } }
+@keyframes dim { to { scale: 0.4; } }
+
+/* The track playing fills its row as it plays (2026-11-22): album-player.ts sets --track-p (0–100 %) on that row. */
+[data-album-started] .track-row:has(.track-play[aria-current="true"]) {
+  background-image: linear-gradient(to right, rgb(74 69 181 / 0.08) var(--track-p, 0%), transparent var(--track-p, 0%));
+}
+.dark[data-album-started] .track-row:has(.track-play[aria-current="true"]) {
+  background-image: linear-gradient(to right, rgb(151 156 247 / 0.09) var(--track-p, 0%), transparent var(--track-p, 0%));
+}
+
+/* A comment you've just posted (or opened from a notification link, #comment-<id>) glows once where it landed. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-comment]:target { border-radius: 0.75rem; animation: comment-land 2.4s ease-out; }
+}
+@keyframes comment-land {
+  0% { background: var(--on-bg); box-shadow: 0 0 0 0.6rem var(--on-bg); translate: 0 0.4rem; }
+  15% { translate: 0 0; }
+  60% { background: var(--on-bg); box-shadow: 0 0 0 0.6rem var(--on-bg); }
+  100% { background: transparent; box-shadow: 0 0 0 0.6rem transparent; }
+}
+
+/* The crate's front board carries the collector's name, as if stencilled on (Shelf.astro). */
+.crate-name { position: absolute; left: 8%; right: 8%; top: 52%; text-align: center; font-family: var(--font-heading);
+  font-weight: 600; font-size: calc(var(--w) * 0.085); letter-spacing: 0.06em; line-height: 1.1; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; color: rgb(31 35 53 / 0.42); }
+.dark .crate-name { color: rgb(255 255 255 / 0.2); }
+/* An empty shelf: just the empty crate. */
+.crate-stage.crate-empty { height: calc(var(--w) * 0.6); perspective: none; }
+.crate-empty .crate-front { transform: none; }
+
+/* Not found (SkippingRecord.astro): a record that skips. Every 2.4 s the needle jolts and the record jumps back a
+   groove, and the heading stutters once. None with reduced motion. */
+.skip-record .glare { opacity: 1; }
+@media (prefers-reduced-motion: no-preference) {
+  .skip-record .disc { animation: skip-spin 2.4s linear infinite; }
+  .skip-arm { animation: skip-arm 2.4s ease-out infinite; }
+  .skip-text { animation: skip-text 0.5s steps(1) 0.9s 1; }
+}
+@keyframes skip-spin { 0% { rotate: 0deg; } 68% { rotate: 245deg; } 70% { rotate: 228deg; } 100% { rotate: 360deg; } }
+@keyframes skip-arm { 0%, 67% { rotate: 0deg; } 69% { rotate: -5deg; } 73% { rotate: 1.5deg; } 78%, 100% { rotate: 0deg; } }
+@keyframes skip-text { 0% { translate: 0 -3px; } 20% { translate: 2px 1px; } 40% { translate: -1px -2px; } 60% { translate: 0 0; } }

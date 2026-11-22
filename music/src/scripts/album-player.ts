@@ -124,7 +124,10 @@ export function albumPlayer(tracks: Track[], halt: () => void) {
   // Also the position in words, for screen readers and the line's tooltip ("1:02 of 4:38").
   const fill = () => {
     if (!seek) return;
-    card?.style.setProperty('--p', `${(100 * Number(seek.value)) / (Number(seek.max) || 1)}%`);
+    const p = `${(100 * Number(seek.value)) / (Number(seek.max) || 1)}%`;
+    card?.style.setProperty('--p', p);
+    // The tracklist's row for this track fills as it plays (global.css).
+    document.querySelector('.track-play[aria-current="true"]')?.closest<HTMLElement>('.track-row')?.style.setProperty('--track-p', p);
     const words = `${clock(Number(seek.value))} of ${clock(Number(seek.max))}`;
     seek.setAttribute('aria-valuetext', words);
     seek.title = words;
