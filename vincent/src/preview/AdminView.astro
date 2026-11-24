@@ -1,0 +1,67 @@
+---
+import Icon from './Icon.astro';
+import Logo from './Logo.astro';
+import Shell from './Shell.astro';
+import {
+  mdiAccountGroupOutline, mdiAccountMultiple, mdiAccountOutline, mdiBellOutline, mdiCalendarBlankOutline, mdiCellphone, mdiCogOutline, mdiCreationOutline, mdiFormatPaint, mdiHumanGreetingVariant,
+  mdiImageOutline, mdiKeyOutline, mdiLockOutline, mdiMonitor, mdiPalette, mdiShareVariant, mdiTuneVariant, mdiUndoVariant, mdiViewDashboardOutline, mdiWeb,
+} from './icons';
+
+const personal = [['Profile & contact', mdiAccountOutline], ['Language & locale', mdiWeb], ['Security', mdiLockOutline], ['Notifications', mdiBellOutline], ['Mobile & desktop', mdiCellphone], ['Appearance and accessibility', mdiHumanGreetingVariant, 'appearance'], ['Sharing', mdiShareVariant], ['Availability', mdiCalendarBlankOutline], ['Privacy', mdiKeyOutline]];
+const admin = [['Overview', mdiTuneVariant], ['Basic settings', mdiCogOutline], ['Sharing', mdiShareVariant], ['Security', mdiLockOutline], ['External storage', mdiMonitor], ['Guests', mdiAccountMultiple], ['Theming', mdiFormatPaint, 'theming'], ['Groupware', mdiAccountGroupOutline], ['Assistant', mdiCreationOutline], ['Dashboard', mdiViewDashboardOutline]];
+const item = ([name, icon, pane]: string[]) => ({ name, icon, pane });
+const images = ['Favicon', 'Logo', 'Navigation bar logo'];
+const themes = [
+  ['System default theme', 'Using the default system appearance.', 'Enable the system default', true],
+  ['Light theme', 'The default light appearance.', 'Enable the default light theme', false],
+  ['Dark theme', 'A dark theme to ease your eyes by reducing the overall luminosity and brightness.', 'Enable dark theme', false],
+  ['High contrast mode', 'A high contrast mode to ease your navigation. Visual quality will be reduced but clarity will be increased.', 'Enable high contrast mode', false],
+] as [string, string, string, boolean][];
+const sample = `/* Nextcloud theme made with Vincent */
+html:root {
+  --color-primary-element: var(--your-colour);
+}`;
+---
+<Shell view="admin" app="Settings">
+  <div class="admin" data-panes>
+    <nav class="nc-nav" aria-label="Settings">
+      <h3 class="nav-caption">Personal</h3>
+      <ul>{personal.map(item).map((i) => <li><a class:list={['nav-item']} data-pane={i.pane}><Icon path={i.icon} /> <span>{i.name}</span></a></li>)}</ul>
+      <h3 class="nav-caption">Administration</h3>
+      <ul>{admin.map(item).map((i) => <li><a class:list={['nav-item', i.pane === 'theming' && 'active']} data-pane={i.pane}><Icon path={i.icon} /> <span>{i.name}</span></a></li>)}</ul>
+    </nav>
+    <main class="nc-main admin-main">
+      <div class="scroller admin-scroller" data-pane-id="theming">
+        <h1>Theming</h1>
+        <p class="muted-text">Theming makes it possible to easily customize the look and feel of your instance and supported clients. This will be visible for all users.</p>
+        <div class="admin-fields">
+          {[['Name', 'Fernhill Studio'], ['Web link', 'https://fernhill.example'], ['Slogan', 'A safe home for your work']].map(([label, value]) => <label class="field field-legend"><span>{label}</span><input readonly tabindex="-1" value={value} /></label>)}
+        </div>
+        <h2>Background and color</h2>
+        <div class="setting-row"><button class="btn setting-btn setting-primary"><Icon path={mdiPalette} /> Primary color</button><button class="icon-btn" aria-label="Reset"><Icon path={mdiUndoVariant} /></button></div>
+        <p class="muted-text">Set the default primary color, used to highlight important elements. The color used for elements such as primary buttons might differ a bit as it gets adjusted to fulfill accessibility requirements.</p>
+        <div class="setting-row"><button class="btn setting-btn setting-background"><Icon path={mdiPalette} /> Background color</button><button class="icon-btn" aria-label="Reset"><Icon path={mdiUndoVariant} /></button></div>
+        <p class="muted-text">When no background image is set the background color will be used. Otherwise the background color is by default generated from the background image, but can be adjusted to fine tune the color of the navigation icons.</p>
+        <div class="switch-row"><button class="switch" role="switch" aria-checked="true" aria-label="Remove background image"></button><div><strong>Remove background image</strong><small>Use a plain background color instead of a background image.</small></div></div>
+        <div class="setting-row"><button class="btn setting-btn" disabled><Icon path={mdiImageOutline} /> Background image</button></div>
+        {images.map((name) => <div class="setting-row"><button class="btn setting-btn setting-soft"><Icon path={mdiImageOutline} /> {name}</button><span class="image-tile"><Logo size={40} /></span><button class="icon-btn" aria-label="Reset"><Icon path={mdiUndoVariant} /></button></div>)}
+        <h2>Custom CSS</h2>
+        <p class="muted-text">You can specify your own CSS here. Be aware that this might break something after upgrade.</p>
+        <textarea class="code-field" readonly tabindex="-1" rows="5">{sample}</textarea>
+        <button class="btn btn-primary">Save</button>
+      </div>
+      <div class="scroller admin-scroller" data-pane-id="appearance" hidden>
+        <h1>Appearance and accessibility settings</h1>
+        <p class="muted-text">Universal access is very important to us. We follow web standards and check to make everything usable also without mouse, and assistive software such as screenreaders.</p>
+        <div role="radiogroup" aria-label="Theme" class="theme-list">
+          {themes.map(([title, text, label, on], i) => (
+            <div class="theme-card">
+              <span class:list={['theme-thumb', `thumb-${i}`]} aria-hidden="true"><i></i><b></b><u></u></span>
+              <div><h2>{title}</h2><p>{text}</p><button class="radio-row" role="radio" aria-checked={on ? 'true' : 'false'}><span class="radio"></span> {label}</button></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </main>
+  </div>
+</Shell>

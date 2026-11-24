@@ -1,0 +1,22 @@
+---
+import Icon from './Icon.astro';
+import Logo from './Logo.astro';
+import { COMPANY } from './data';
+import { mdiAlertCircleOutline, mdiArrowRight, mdiEye } from './icons';
+// A picture of a login page: no form and no inputs, so it can't take a password.
+---
+<div class="view view-login" data-view-panel="login" hidden>
+  <span class="preview-badge">Preview, nothing here can be typed or sent</span>
+  <div class="login-logo"><Logo size={110} /></div>
+  <div class="guest-box login-card">
+    <h2>Log in to {COMPANY}</h2>
+    <div class="login-alert" id="login-error" hidden><Icon path={mdiAlertCircleOutline} /> Wrong login or password.</div>
+    <div class="mock-field focused"><span class="mock-label">Account name or email</span></div>
+    <div class="mock-field"><span>Password</span><Icon path={mdiEye} /></div>
+    <div class="mock-check"><span class="check" aria-hidden="true" data-static></span> Remember me</div>
+    <button class="btn btn-primary login-submit" data-login-submit><Icon path={mdiArrowRight} /> Log in</button>
+    <a class="login-link">Log in with a device</a>
+    <a class="login-link">Forgot password?</a>
+  </div>
+  <footer class="guest-box login-footer"><strong>{COMPANY}</strong></footer>
+</div>

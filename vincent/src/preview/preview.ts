@@ -61,6 +61,26 @@ document.addEventListener('click', (e) => {
     }
     return;
   }
+  const pane = target.closest<HTMLElement>('[data-pane]');
+  if (pane) {
+    const group = pane.closest<HTMLElement>('[data-panes]')!;
+    for (const b of group.querySelectorAll<HTMLElement>('[data-pane]')) b.classList.toggle('active', b.dataset.pane === pane.dataset.pane);
+    for (const c of group.querySelectorAll<HTMLElement>('[data-pane-id]')) c.hidden = c.dataset.paneId !== pane.dataset.pane;
+    return;
+  }
+  if (target.closest('[data-login-submit]')) {
+    document.getElementById('login-error')!.hidden = false;
+    return;
+  }
+  const toggle = target.closest<HTMLElement>('.switch, .radio-row');
+  if (toggle?.classList.contains('switch')) {
+    toggle.setAttribute('aria-checked', String(toggle.getAttribute('aria-checked') !== 'true'));
+    return;
+  }
+  if (toggle) {
+    for (const r of toggle.closest('[role="radiogroup"]')!.querySelectorAll('.radio-row')) r.setAttribute('aria-checked', String(r === toggle));
+    return;
+  }
   const tab = target.closest<HTMLElement>('[role="tab"]');
   if (tab) for (const t of tab.parentElement!.children) t.setAttribute('aria-selected', String(t === tab));
 });

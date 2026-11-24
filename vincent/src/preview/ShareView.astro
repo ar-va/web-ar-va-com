@@ -1,0 +1,37 @@
+---
+import FileTable from './FileTable.astro';
+import Icon from './Icon.astro';
+import Shell from './Shell.astro';
+import { COMPANY, sharedFiles } from './data';
+import { mdiCalendarBlankOutline, mdiChevronDown, mdiChevronRight, mdiFileOutline, mdiInformation, mdiLinkVariant, mdiPlus, mdiTagOutline, mdiUpload, mdiViewGridOutline } from './icons';
+---
+<Shell view="share" public shareName="Artist">
+  <main class="nc-main" data-panes>
+    <div class="toolbar">
+      <button class="btn btn-primary"><Icon path={mdiPlus} /> New</button>
+      <span class="crumb-static"><Icon path={mdiLinkVariant} size={18} /> Public share</span>
+      <Icon class="crumb-sep" path={mdiChevronRight} size={18} />
+      <button class="crumb">2026 <Icon path={mdiChevronDown} size={18} /></button>
+      <span class="grow"></span>
+      <span class="segmented">
+        <button class="active" data-pane="folder">Shared folder</button>
+        <button data-pane="request">File request</button>
+      </span>
+      {[['Type', mdiFileOutline], ['Modified', mdiCalendarBlankOutline], ['Tags', mdiTagOutline]].map(([name, icon]) => <button class="btn btn-tertiary"><Icon path={icon} /> {name}</button>)}
+      <button class="icon-btn" aria-label="Grid view"><Icon path={mdiViewGridOutline} /></button>
+    </div>
+    <div class="scroller share-scroller" data-pane-id="folder">
+      <div class="notecard note-info"><Icon path={mdiInformation} /><div><strong>Note:</strong><br />Click "+" to upload files.</div></div>
+      <FileTable rows={sharedFiles} share footer="4 folders and 5 files" total="22.8 GB" />
+    </div>
+    <div class="scroller request" data-pane-id="request" hidden>
+      <div class="guest-box request-box">
+        <h2>Upload files to Artist</h2>
+        <p class="muted">Shared by {COMPANY}. Your files go straight to their folder.</p>
+        <div class="drop"><Icon path={mdiUpload} size={36} /><span>Drop files here or</span><button class="btn btn-primary">Choose files</button></div>
+        <div class="upload"><div class="upload-text"><span>shoot-0412.raw</span><span>38%</span></div><div class="progress"><span style="width:38%"></span></div></div>
+      </div>
+    </div>
+    <footer class="guest-footer guest-box"><strong>{COMPANY}</strong><a>Get your own free account</a></footer>
+  </main>
+</Shell>
