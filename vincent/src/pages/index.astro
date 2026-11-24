@@ -1,6 +1,7 @@
 ---
 import Layout from '@shared/layouts/Layout.astro';
 import Controls from '../components/Controls.astro';
+import ExportDialog from '../components/ExportDialog.astro';
 import Palette from '../components/Palette.astro';
 import Wheel from '../components/Wheel.astro';
 import '../styles/vincent.css';
@@ -35,6 +36,7 @@ const views = [['files', 'Files'], ['share', 'Public share'], ['login', 'Login']
       <div id="preview-stage"><iframe id="preview" src="/preview" title="Preview of the theme on a Nextcloud-style screen"></iframe></div>
     </section>
   </main>
+  <ExportDialog />
 </Layout>
 
 <script>

@@ -1,5 +1,5 @@
 import { hexToOklch, maxChroma, oklchToHex, oklchToRgb, parseColor, type Oklch } from '../lib/color';
-import { exportCss } from '../lib/export';
+import { exportCss, settings } from '../lib/export';
 import { OFFSETS, type Harmony } from '../lib/harmony';
 import { dominantColors } from '../lib/image';
 import { checkPairs, decodeChoices, encodeChoices, generateTheme, type Mode, type Page, type Style, type Theme } from '../lib/theme';
@@ -340,6 +340,41 @@ $<HTMLInputElement>('image-input').addEventListener('change', (e) => {
   input.value = '';
 });
 $<HTMLInputElement>('image-logo').addEventListener('change', (e) => showLogo((e.target as HTMLInputElement).checked ? imageUrl : null));
+
+const dialog = $<HTMLDialogElement>('export-dialog');
+$('export-open').addEventListener('click', () => {
+  render();
+  const { primary: main, background } = settings(theme);
+  $<HTMLInputElement>('export-primary').value = main;
+  $<HTMLInputElement>('export-background').value = background;
+  $('export-primary-chip').style.background = main;
+  $('export-background-chip').style.background = background;
+  $<HTMLTextAreaElement>('export-css').value = exportCss(theme);
+  dialog.showModal();
+});
+$('export-close').addEventListener('click', () => dialog.close());
+dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+
+for (const button of all<HTMLButtonElement>('[data-copy-from]')) {
+  const label = button.textContent!;
+  let timer = 0;
+  button.addEventListener('click', async () => {
+    const field = $<HTMLInputElement | HTMLTextAreaElement>(button.dataset.copyFrom!);
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(field.value);
+      copied = true;
+    } catch {
+      // No clipboard access (an insecure page, a browser setting): leave it selected to copy by hand.
+      field.focus();
+      field.select();
+    }
+    button.textContent = copied ? 'Copied' : /Mac|iPhone|iPad/.test(navigator.platform) ? 'Press ⌘C' : 'Press Ctrl+C';
+    $('export-status').textContent = copied ? 'Copied' : 'Selected. Use your keyboard or menu to copy it.';
+    clearTimeout(timer);
+    timer = window.setTimeout(() => { button.textContent = label; }, copied ? 1600 : 4000);
+  });
+}
 
 const stage = $('preview-stage');
 function fitPreview() {
