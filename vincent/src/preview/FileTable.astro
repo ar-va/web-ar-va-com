@@ -1,0 +1,43 @@
+---
+import Icon from './Icon.astro';
+import type { Row } from './data';
+import { mdiAccountMultiple, mdiAccountPlus, mdiChevronUp, mdiDotsHorizontal, mdiStar } from './icons';
+
+interface Props { rows: Row[]; share?: boolean; footer: string; total: string }
+const { rows, share = false, footer, total } = Astro.props;
+---
+<div class="files" role="table" aria-label="Files">
+  <div class="file-row file-head" role="row">
+    <span class="cell-check"><span class="check" role="checkbox" aria-checked="false" aria-label="Select all"></span></span>
+    <span class="cell-icon"></span>
+    <span class="cell-name">Name <Icon path={mdiChevronUp} size={16} /></span>
+    <span class="cell-actions"></span>
+    <span class="cell-type">File type</span>
+    <span class="cell-size">Size</span>
+    <span class="cell-date">Modified</span>
+  </div>
+  {rows.map((r) => (
+    <div class="file-row" role="row" data-file aria-selected={r.selected ? 'true' : 'false'}>
+      <span class="cell-check"><span class="check" role="checkbox" aria-checked={r.selected ? 'true' : 'false'} aria-label={`Select ${r.name}`}></span></span>
+      <span class={`cell-icon tone-${r.tone}`}>
+        <Icon path={r.icon} size={r.tone === 'folder' ? 30 : 28} />
+        {r.favorite && <span class="fav"><Icon path={mdiStar} size={13} /></span>}
+      </span>
+      <span class="cell-name"><span class="file-name">{r.name}<span class="ext">{r.ext}</span></span>{r.tags?.map((t) => <span class="tag">{t}</span>)}</span>
+      <span class="cell-actions">
+        {!share && (r.shared
+          ? <span class="share-state"><span>Shared</span><Icon path={mdiAccountMultiple} /></span>
+          : <button class="icon-btn share-add" aria-label="Share"><Icon path={mdiAccountPlus} /></button>)}
+        <button class="icon-btn" data-menu="row-menu" aria-label="Actions"><Icon path={mdiDotsHorizontal} /></button>
+      </span>
+      <span class="cell-type">{r.type}</span>
+      <span class="cell-size">{r.size}</span>
+      <span class="cell-date">{r.modified}</span>
+    </div>
+  ))}
+  <div class="file-row file-foot" role="row">
+    <span class="cell-check"></span><span class="cell-icon"></span>
+    <span class="cell-name">{footer}</span><span class="cell-actions"></span><span class="cell-type"></span>
+    <span class="cell-size">{total}</span><span class="cell-date"></span>
+  </div>
+</div>

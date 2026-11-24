@@ -344,7 +344,7 @@ $<HTMLInputElement>('image-logo').addEventListener('change', (e) => showLogo((e.
 const stage = $('preview-stage');
 function fitPreview() {
   const width = stage.clientWidth;
-  const desktop = Math.max(width, 1240);
+  const desktop = Math.max(width, 1360);
   const scale = width / desktop;
   const room = window.innerWidth >= 1024 ? window.innerHeight - stage.getBoundingClientRect().top - 16 : width * 0.72;
   const height = Math.max(420, Math.min(room, 1100));

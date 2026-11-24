@@ -1,0 +1,80 @@
+---
+import FileTable from './FileTable.astro';
+import Icon from './Icon.astro';
+import Shell from './Shell.astro';
+import { files } from './data';
+import {
+  mdiAccountMultiplePlus, mdiCalendarBlankOutline, mdiChartPie, mdiChevronDown, mdiClose, mdiCogOutline, mdiContentCopy, mdiDeleteOutline, mdiDownload,
+  mdiFileDocumentOutline, mdiFileOutline, mdiFolderMultipleOutline, mdiFolderOutline, mdiFolderPlusOutline, mdiHistory, mdiInformationOutline, mdiLinkVariant, mdiMonitor,
+  mdiAccountOutline, mdiPencil, mdiPlus, mdiStarOutline, mdiTagOutline, mdiUpload, mdiViewGridOutline, mdiViewSplitVertical, mdiAccountPlus, mdiMagnify,
+} from './icons';
+
+const nav = [
+  ['All files', mdiFolderOutline, true], ['Personal files', mdiAccountOutline], ['Recent', mdiHistory], ['Favorites', mdiStarOutline],
+  ['Shares', mdiAccountPlus, false, true], ['Tags', mdiTagOutline], ['External storage', mdiMonitor], ['Folder tree', mdiFolderMultipleOutline, false, true],
+] as [string, string, boolean?, boolean?][];
+const filters = [['Type', mdiFileOutline], ['Modified', mdiCalendarBlankOutline], ['Tags', mdiTagOutline], ['People', mdiAccountOutline]];
+const selected = files.find((f) => f.selected)!;
+---
+<Shell view="files">
+  <nav class="nc-nav" aria-label="Files">
+    <label class="field field-search"><span class="sr">Search here</span><input readonly placeholder="Search here" tabindex="-1" /><Icon path={mdiMagnify} /></label>
+    <ul class="nav-list">
+      {nav.map(([name, icon, active, more]) => <li><a class:list={['nav-item', active && 'active']}><Icon path={icon} /> <span>{name}</span>{more && <Icon class="nav-more" path={mdiChevronDown} />}</a></li>)}
+    </ul>
+    <div class="nav-bottom">
+      <div class="upload">
+        <div class="upload-text"><span>Uploading 3 files</span><span>64%</span></div>
+        <div class="progress"><span style="width:64%"></span></div>
+      </div>
+      <a class="nav-item"><Icon path={mdiDeleteOutline} /> <span>Deleted files</span></a>
+      <a class="nav-item quota"><Icon path={mdiChartPie} /> <span>6 TB of 10 TB used</span></a>
+      <div class="progress quota-bar"><span style="width:60%"></span></div>
+      <a class="nav-item"><Icon path={mdiCogOutline} /> <span>Files settings</span></a>
+    </div>
+  </nav>
+  <main class="nc-main">
+    <div class="toolbar">
+      <button class="icon-btn" aria-label="Toggle navigation"><Icon path={mdiViewSplitVertical} /></button>
+      <span class="menu-anchor">
+        <button class="btn btn-primary" data-menu="new-menu"><Icon path={mdiPlus} /> New</button>
+        <div class="menu" id="new-menu" hidden>
+          <a><Icon path={mdiUpload} /> Upload files</a>
+          <a><Icon path={mdiFolderPlusOutline} /> New folder</a>
+          <hr />
+          <a><Icon path={mdiFileDocumentOutline} /> New text file</a>
+          <a><Icon path={mdiPencil} /> New whiteboard</a>
+        </div>
+      </span>
+      <button class="crumb">All files <Icon path={mdiChevronDown} size={18} /></button>
+      <span class="grow"></span>
+      {filters.map(([name, icon]) => <button class="btn btn-tertiary"><Icon path={icon} /> {name}</button>)}
+      <button class="icon-btn" aria-label="Grid view"><Icon path={mdiViewGridOutline} /></button>
+    </div>
+    <div class="scroller"><FileTable rows={files} footer="4 folders and 10 files" total="1.2 TB" /></div>
+    <div class="menu row-menu" id="row-menu" hidden>
+      <a><Icon path={mdiInformationOutline} /> Open details</a>
+      <a><Icon path={mdiStarOutline} /> Add to favorites</a>
+      <a><Icon path={mdiDownload} /> Download</a>
+      <a><Icon path={mdiPencil} /> Rename</a>
+      <a><Icon path={mdiContentCopy} /> Move or copy</a>
+      <hr />
+      <a class="danger"><Icon path={mdiDeleteOutline} /> Delete file</a>
+    </div>
+  </main>
+  <aside class="sidebar" aria-label="Details">
+    <button class="icon-btn sidebar-close" aria-label="Close"><Icon path={mdiClose} /></button>
+    <div class="sidebar-hero tone-error"><Icon path={selected.icon} size={64} /></div>
+    <h2>{selected.name}{selected.ext}</h2>
+    <p class="muted">{selected.size}, {selected.modified}</p>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="false">Activity</button>
+      <button role="tab" aria-selected="true">Sharing</button>
+      <button role="tab" aria-selected="false">Versions</button>
+    </div>
+    <label class="field field-floating"><span>Search for internal recipients</span><input readonly tabindex="-1" /></label>
+    <div class="share-line"><span class="avatar avatar-sm tone-a">MK</span><span class="grow">Maya Kovac<small>Can edit</small></span><button class="icon-btn" aria-label="Options"><Icon path={mdiChevronDown} /></button></div>
+    <div class="share-line"><span class="avatar avatar-sm tone-b"><Icon path={mdiAccountMultiplePlus} size={16} /></span><span class="grow">Design team<small>Can view</small></span><button class="icon-btn" aria-label="Options"><Icon path={mdiChevronDown} /></button></div>
+    <div class="share-line"><span class="avatar avatar-sm avatar-primary"><Icon path={mdiLinkVariant} size={16} /></span><span class="grow">Share link<small>Expires in 7 days</small></span><button class="btn btn-secondary btn-small"><Icon path={mdiContentCopy} size={16} /> Copy</button></div>
+  </aside>
+</Shell>
