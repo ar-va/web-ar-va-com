@@ -1,12 +1,19 @@
 import { contrast, hexToOklch, maxChroma, oklchToHex, oklchToRgb, parseColor, type Oklch } from '../lib/color';
 import { exportCss, settings } from '../lib/export';
-import { OFFSETS, type Harmony } from '../lib/harmony';
+import { HARMONIES, OFFSETS, type Harmony } from '../lib/harmony';
 import { dominantColors } from '../lib/image';
 import { checkPairs, decodeChoices, encodeChoices, generateTheme, type Mode, type Page, type Style, type Theme } from '../lib/theme';
 import { colorToPoint, pointToColor } from '../lib/wheel';
+import { DURATION, spring } from '../../../shared/scripts/grow';
+import { countTo, reducedMotion, tween } from './motion';
 
 type View = 'files' | 'share' | 'login' | 'admin' | 'components';
-interface PreviewApi { applyCss(css: string, mode: Mode, settings?: { primary: string; primaryText: string; background: string; backgroundText: string }): void; show(view: View): void; setLogo(url: string | null): void }
+type Point = { x: number; y: number };
+interface PreviewOptions { smooth?: boolean; reveal?: Point }
+interface PreviewApi {
+  applyCss(css: string, mode: Mode, settings?: { primary: string; primaryText: string; background: string; backgroundText: string }, options?: PreviewOptions): void;
+  show(view: View): void; setLogo(url: string | null): void; highlight(name: string | null): void;
+}
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const all = <T extends HTMLElement = HTMLElement>(selector: string) => [...document.querySelectorAll<T>(selector)];
@@ -22,13 +29,23 @@ let logoUrl: string | null = null;
 let imageUrl: string | null = null;
 let queued = false;
 let paintedL = -1;
+// What the next render should animate: a discrete change cross-fades and glides, a drag stays instant.
+let smoothNext = false;
+let spinNext = false;
+let revealNext: Point | null = null;
+let highlighted: string | null = null;
+let comparing = false;
 
 const wheel = $('wheel');
 const canvas = $<HTMLCanvasElement>('wheel-canvas');
 const handles = $('wheel-handles');
 const lines = $('wheel-lines');
 const frame = $<HTMLIFrameElement>('preview');
-const previewApi = () => (frame.contentWindow as (Window & { preview?: PreviewApi }) | null)?.preview;
+// A second preview, shown in dark beside the first while comparing.
+let frameB: HTMLIFrameElement | null = null;
+const apiOf = (f: HTMLIFrameElement | null) => (f?.contentWindow as (Window & { preview?: PreviewApi }) | null)?.preview;
+const previewApi = () => apiOf(frame);
+const previews = () => (comparing && frameB ? [frame, frameB] : [frame]).map(apiOf).filter((a): a is PreviewApi => Boolean(a));
 
 function paintWheel(l: number) {
   const size = canvas.width;
@@ -53,7 +70,22 @@ function paintWheel(l: number) {
 
 const colourAt = (i: number) => (i === 0 ? primary : hexToOklch(theme.accents[i - 1]));
 
-function placeHandles() {
+// Handle positions as angle and distance from the centre, so a glide follows the wheel round rather than cutting across.
+let shown: { a: number; r: number }[] = [];
+let stopGlide = () => {};
+
+function drawHandles(polar: { a: number; r: number }[]) {
+  const radius = wheel.clientWidth / 2;
+  const points = polar.map(({ a, r }) => ({ x: radius + Math.cos(a) * r, y: radius + Math.sin(a) * r }));
+  [...handles.children].forEach((node, i) => {
+    (node as HTMLElement).style.left = `${points[i].x}px`;
+    (node as HTMLElement).style.top = `${points[i].y}px`;
+  });
+  lines.innerHTML = `<path d="${points.map((p) => `M${radius} ${radius}L${p.x} ${p.y}`).join('')}" stroke="#fff" stroke-opacity=".75" stroke-width="1.5" fill="none" />`;
+  shown = polar;
+}
+
+function placeHandles(glide = false, spin = false) {
   const count = theme.accents.length + 1;
   while (handles.children.length > count) handles.lastElementChild!.remove();
   while (handles.children.length < count) {
@@ -70,19 +102,41 @@ function placeHandles() {
     handles.append(el);
   }
   const radius = wheel.clientWidth / 2;
-  const points: string[] = [];
-  [...handles.children].forEach((node, i) => {
+  const target = [...handles.children].map((node, i) => {
     const el = node as HTMLElement;
     const color = colourAt(i);
-    const { x, y } = colorToPoint({ ...color, l: primary.l }, radius);
-    el.style.left = `${radius + x}px`;
-    el.style.top = `${radius + y}px`;
     el.style.background = i === 0 ? choices.primary : theme.accents[i - 1];
     el.setAttribute('aria-valuenow', String(Math.round(color.h)));
     el.setAttribute('aria-valuetext', `${i === 0 ? choices.primary : theme.accents[i - 1]}, hue ${Math.round(color.h)} degrees, chroma ${color.c.toFixed(3)}`);
-    points.push(`M${radius} ${radius}L${radius + x} ${radius + y}`);
+    const { x, y } = colorToPoint({ ...color, l: primary.l }, radius);
+    return { a: Math.atan2(y, x), r: Math.hypot(x, y) };
   });
-  lines.innerHTML = `<path d="${points.join('')}" stroke="#fff" stroke-opacity=".75" stroke-width="1.5" fill="none" />`;
+  stopGlide();
+  if (!glide || reducedMotion() || !shown.length) return drawHandles(target);
+  // New handles fan out from the primary's place.
+  const from = target.map((_, i) => shown[i] ?? shown[0]);
+  const turn = (i: number) => {
+    const d = ((target[i].a - from[i].a) % (2 * Math.PI) + 3 * Math.PI) % (2 * Math.PI) - Math.PI;
+    return d + (spin ? 2 * Math.PI : 0);
+  };
+  const turns = target.map((_, i) => turn(i));
+  stopGlide = tween(spin ? 900 : 450, (t) => drawHandles(target.map((p, i) => ({
+    a: from[i].a + turns[i] * t,
+    r: from[i].r + (p.r - from[i].r) * t,
+  }))));
+}
+
+const loupe = $('wheel-loupe');
+function showLoupe(i: number | null) {
+  if (i === null || !shown[i]) { loupe.hidden = true; return; }
+  const radius = wheel.clientWidth / 2;
+  const hex = i === 0 ? choices.primary : theme.accents[i - 1];
+  loupe.hidden = false;
+  loupe.textContent = hex;
+  loupe.style.left = `${radius + Math.cos(shown[i].a) * shown[i].r}px`;
+  loupe.style.top = `${radius + Math.sin(shown[i].a) * shown[i].r}px`;
+  loupe.style.background = hex;
+  loupe.style.color = textOn(hex);
 }
 
 function setValue(input: HTMLInputElement | HTMLSelectElement, value: string) {
@@ -109,22 +163,39 @@ const ROLES: [string, string][] = [
   ['Error', '--color-element-error'], ['Warning', '--color-element-warning'], ['Success', '--color-element-success'], ['Info', '--color-element-info'],
 ];
 
-function renderPalette() {
+// The palette's swatches: built once, so focus and hover survive updates. Hovering or focusing one marks where that
+// colour appears in the preview.
+const swatches = ROLES.map(([name, key]) => {
+  const item = document.createElement('button');
+  item.type = 'button';
+  item.dataset.var = key;
+  item.className = 'text-left rounded-lg outline-offset-2 focus-visible:outline-2 focus-visible:outline-kikyo-500';
+  item.setAttribute('aria-label', `${name}: show where it appears in the preview`);
+  item.innerHTML = '<span class="v-swatch"></span><span class="mt-1 block text-xs font-medium text-zinc-800 dark:text-zinc-200"></span><span class="block font-mono text-[11px] text-zinc-500"></span>';
+  (item.children[1] as HTMLElement).textContent = name;
+  return item;
+});
+$('palette').replaceChildren(...swatches);
+const highlight = (name: string | null) => {
+  highlighted = name;
+  for (const api of previews()) api.highlight(name);
+};
+for (const item of swatches) {
+  item.addEventListener('pointerenter', () => highlight(item.dataset.var!));
+  item.addEventListener('focus', () => highlight(item.dataset.var!));
+  item.addEventListener('pointerleave', () => { if (document.activeElement !== item) highlight(null); });
+  item.addEventListener('blur', () => highlight(null));
+}
+
+const contrastRows = new Map<string, { li: HTMLElement; chip: HTMLElement; ratio: HTMLElement; mark: HTMLElement; value: number; pass: boolean | null }>();
+
+function renderPalette(smooth = false) {
   const vars = theme[mode];
-  $('palette').replaceChildren(...ROLES.map(([name, key]) => {
-    const item = document.createElement('div');
-    const swatch = document.createElement('span');
-    swatch.className = 'v-swatch';
-    swatch.style.background = vars[key];
-    const title = document.createElement('span');
-    title.className = 'mt-1 block text-xs font-medium text-zinc-800 dark:text-zinc-200';
-    title.textContent = name;
-    const hex = document.createElement('span');
-    hex.className = 'block font-mono text-[11px] text-zinc-500';
-    hex.textContent = vars[key];
-    item.append(swatch, title, hex);
-    return item;
-  }));
+  swatches.forEach((item, i) => {
+    const value = vars[ROLES[i][1]];
+    (item.children[0] as HTMLElement).style.background = value;
+    (item.children[2] as HTMLElement).textContent = value;
+  });
   const note = theme.notes.find((n) => n.mode === mode);
   $('notes').hidden = !note;
   if (note) {
@@ -135,33 +206,43 @@ function renderPalette() {
   const pairs = checkPairs(vars, mode);
   const failing = pairs.filter((p) => !p.pass).length;
   $('contrast-summary').textContent = failing ? `${failing} of ${pairs.length} pairs below target` : `All ${pairs.length} pairs pass in ${mode} mode`;
-  $('contrast-list').replaceChildren(...pairs.map((p) => {
-    const li = document.createElement('li');
-    li.className = 'flex items-center gap-2';
-    const chip = document.createElement('span');
-    chip.className = 'shrink-0 w-7 h-5 rounded grid place-items-center font-semibold';
-    chip.style.background = p.bg;
-    chip.style.color = p.fg;
-    chip.textContent = 'Aa';
-    chip.setAttribute('aria-hidden', 'true');
-    const label = document.createElement('span');
-    label.className = 'min-w-0 flex-1 truncate';
-    label.textContent = p.label;
-    const ratio = document.createElement('span');
-    ratio.className = 'font-mono';
-    ratio.textContent = `${p.ratio.toFixed(1)}:1`;
-    li.append(chip, label, ratio);
-    return li;
-  }));
+  for (const p of pairs) {
+    let row = contrastRows.get(p.label);
+    if (!row) {
+      const li = document.createElement('li');
+      li.className = 'flex items-center gap-2';
+      li.innerHTML = '<span class="shrink-0 w-7 h-5 rounded grid place-items-center font-semibold" aria-hidden="true">Aa</span><span class="min-w-0 flex-1 truncate"></span><span class="v-mark"></span><span class="font-mono" data-ratio></span>';
+      (li.children[1] as HTMLElement).textContent = p.label;
+      $('contrast-list').append(li);
+      row = { li, chip: li.children[0] as HTMLElement, mark: li.children[2] as HTMLElement, ratio: li.children[3] as HTMLElement, value: p.ratio, pass: null };
+      contrastRows.set(p.label, row);
+    }
+    row.chip.style.background = p.bg;
+    row.chip.style.color = p.fg;
+    const final = `${p.ratio.toFixed(1)}:1`;
+    row.ratio.dataset.ratio = final;
+    if (smooth) countTo(row.ratio, row.value, p.ratio, (n) => `${n.toFixed(1)}:1`, final);
+    else row.ratio.textContent = final;
+    row.value = p.ratio;
+    row.mark.textContent = p.pass ? '✓' : '!';
+    row.mark.title = p.pass ? `Passes ${p.min}:1` : `Below ${p.min}:1`;
+    if (row.pass !== null && row.pass !== p.pass && !reducedMotion()) {
+      row.mark.animate([{ transform: 'scale(0.4)', opacity: 0 }, { transform: 'scale(1)', opacity: 1 }], { duration: DURATION, easing: spring });
+    }
+    row.pass = p.pass;
+  }
 }
 
 // Nextcloud picks white or black text for the admin colour buttons, as it does for its primary colour.
 const textOn = (hex: string) => (contrast('#ffffff', hex) >= 4.5 ? '#ffffff' : '#000000');
-function pushPreview() {
+function pushPreview(options: PreviewOptions = {}) {
   const saved = settings(theme);
-  previewApi()?.applyCss(exportCss(theme), mode, {
-    primary: saved.primary, primaryText: textOn(saved.primary), background: saved.background, backgroundText: textOn(saved.background),
-  });
+  const css = exportCss(theme);
+  const colours = { primary: saved.primary, primaryText: textOn(saved.primary), background: saved.background, backgroundText: textOn(saved.background) };
+  // Comparing: light on the left, dark on the right.
+  apiOf(frame)?.applyCss(css, comparing ? 'light' : mode, colours, options);
+  if (comparing) apiOf(frameB)?.applyCss(css, 'dark', colours, { smooth: options.smooth });
+  if (highlighted) for (const api of previews()) api.highlight(highlighted);
 }
 
 function render() {
@@ -170,10 +251,14 @@ function render() {
   theme = generateTheme(choices);
   saveAddress();
   if (Math.abs(paintedL - primary.l) > 0.001) paintWheel(primary.l);
-  placeHandles();
+  const [smooth, spin, reveal] = [smoothNext, spinNext, revealNext];
+  smoothNext = spinNext = false;
+  revealNext = null;
+  placeHandles(smooth, spin);
+  showLoupe(dragging);
   syncControls();
-  renderPalette();
-  pushPreview();
+  renderPalette(smooth);
+  pushPreview({ smooth, reveal: reveal ?? undefined });
 }
 
 // Browsers cap how often a page may rewrite its address (Chrome drops the rest, Safari and Firefox throw), so a drag
@@ -196,10 +281,13 @@ addEventListener('pagehide', writeAddress);
 addEventListener('hashchange', () => {
   Object.assign(choices, decodeChoices(location.hash));
   primary = hexToOklch(choices.primary);
-  update();
+  update({ smooth: true });
 });
 
-function update() {
+function update(options: { smooth?: boolean; spin?: boolean; reveal?: Point } = {}) {
+  smoothNext ||= Boolean(options.smooth);
+  spinNext ||= Boolean(options.spin);
+  if (options.reveal) revealNext = options.reveal;
   if (queued) return;
   queued = true;
   requestAnimationFrame(render);
@@ -257,7 +345,7 @@ wheel.addEventListener('pointerdown', (e) => {
 wheel.addEventListener('pointermove', (e) => {
   if (dragging !== null) moveHandle(dragging, ...(fromCentre(e) as [number, number]));
 });
-for (const type of ['pointerup', 'pointercancel']) wheel.addEventListener(type, () => { dragging = null; writeAddress(); });
+for (const type of ['pointerup', 'pointercancel']) wheel.addEventListener(type, () => { dragging = null; showLoupe(null); writeAddress(); });
 wheel.addEventListener('keydown', (e) => {
   const handle = (e.target as HTMLElement).closest<HTMLElement>('.v-wheel-handle');
   if (!handle) return;
@@ -270,11 +358,12 @@ wheel.addEventListener('keydown', (e) => {
 
 $<HTMLInputElement>('lightness').addEventListener('input', (e) => setPrimary({ ...primary, l: Number((e.target as HTMLInputElement).value) / 100 }));
 
-function useColour(hex: string) {
+function useColour(hex: string, smooth = true) {
   primary = hexToOklch(hex);
-  update();
+  update({ smooth });
 }
-$<HTMLInputElement>('colour-native').addEventListener('input', (e) => useColour((e.target as HTMLInputElement).value));
+// The system picker fires continuously while its own control is dragged: no glide.
+$<HTMLInputElement>('colour-native').addEventListener('input', (e) => useColour((e.target as HTMLInputElement).value, false));
 $<HTMLInputElement>('colour-text').addEventListener('input', (e) => {
   const input = e.target as HTMLInputElement;
   const hex = parseColor(input.value);
@@ -300,18 +389,39 @@ $<HTMLSelectElement>('harmony').addEventListener('change', (e) => {
   const next = (e.target as HTMLSelectElement).value as Harmony;
   if (next === 'custom') choices.custom = [...theme.accents];
   choices.harmony = next;
-  update();
+  update({ smooth: true });
+});
+
+// A random but readable starting point: a clear colour in the middle lightness range and any linked harmony.
+$('surprise').addEventListener('click', () => {
+  const h = Math.random() * 360;
+  const l = 0.42 + Math.random() * 0.22;
+  primary = { l, h, c: maxChroma(l, h) * (0.55 + Math.random() * 0.4) };
+  const linked = HARMONIES.filter((x) => x.id !== 'custom');
+  choices.harmony = linked[Math.floor(Math.random() * linked.length)].id;
+  choices.style = (['balanced', 'balanced', 'vivid', 'muted'] as Style[])[Math.floor(Math.random() * 4)];
+  choices.tint = Math.round((0.15 + Math.random() * 0.4) * 100) / 100;
+  update({ smooth: true, spin: true });
 });
 $<HTMLInputElement>('tint').addEventListener('input', (e) => { choices.tint = Number((e.target as HTMLInputElement).value) / 100; update(); });
 for (const b of all('[data-choice]')) b.addEventListener('click', () => {
   if (b.dataset.choice === 'style') choices.style = b.dataset.value as Style;
   else choices.page = b.dataset.value as Page;
-  update();
+  update({ smooth: true });
 });
-for (const b of all('[data-mode]')) b.addEventListener('click', () => { mode = b.dataset.mode as Mode; update(); });
+// The new mode grows as a circle from the button, mapped into the preview's own coordinates.
+for (const b of all('[data-mode]')) b.addEventListener('click', () => {
+  if (comparing || mode === b.dataset.mode) return;
+  mode = b.dataset.mode as Mode;
+  const box = b.getBoundingClientRect();
+  const area = frame.getBoundingClientRect();
+  const scale = area.width / frame.offsetWidth;
+  update({ reveal: { x: (box.left + box.width / 2 - area.left) / scale, y: (box.top + box.height / 2 - area.top) / scale } });
+});
 for (const b of all('[data-view]')) b.addEventListener('click', () => {
   view = b.dataset.view as View;
-  previewApi()?.show(view);
+  for (const api of previews()) api.show(view);
+  if (highlighted) for (const api of previews()) api.highlight(highlighted);
   syncControls();
 });
 
@@ -353,7 +463,14 @@ async function readImage(file: File) {
       b.addEventListener('click', () => useColour(hex));
       return b;
     }));
+    const thumb = document.createElement('img');
+    thumb.id = 'image-thumb';
+    thumb.alt = '';
+    thumb.src = url;
+    thumb.className = 'w-10 h-10 rounded-lg object-contain bg-(--well)';
+    $('image-thumb-slot').replaceChildren(thumb);
     $('image-result').hidden = false;
+    flyFrom(thumb, [...$('image-colours').children] as HTMLElement[]);
     if ($<HTMLInputElement>('image-logo').checked) showLogo(url);
     useColour(colours[0]);
   } catch {
@@ -362,10 +479,25 @@ async function readImage(file: File) {
   }
 }
 
+// The colours found in an image fly out of its thumbnail into their places.
+function flyFrom(source: HTMLElement, items: HTMLElement[]) {
+  if (reducedMotion()) return;
+  const from = source.getBoundingClientRect();
+  items.forEach((item, i) => {
+    const to = item.getBoundingClientRect();
+    const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+    const dy = from.top + from.height / 2 - (to.top + to.height / 2);
+    item.animate([
+      { transform: `translate(${dx}px, ${dy}px) scale(0.3)`, opacity: 0 },
+      { transform: 'none', opacity: 1 },
+    ], { duration: DURATION, easing: spring, delay: i * 70, fill: 'backwards' });
+  });
+}
+
 function showLogo(url: string | null) {
   if (logoUrl && logoUrl !== url && logoUrl !== imageUrl) URL.revokeObjectURL(logoUrl);
   logoUrl = url;
-  previewApi()?.setLogo(url);
+  for (const api of previews()) api.setLogo(url);
 }
 $<HTMLInputElement>('image-input').addEventListener('change', (e) => {
   const input = e.target as HTMLInputElement;
@@ -420,18 +552,90 @@ function fitPreview() {
   const room = window.innerWidth >= 1024 ? window.innerHeight - stage.getBoundingClientRect().top - 16 : width * 0.72;
   const height = Math.max(420, Math.min(room, 1100));
   stage.style.height = `${height}px`;
-  frame.style.width = `${desktop}px`;
-  frame.style.height = `${height / scale}px`;
-  frame.style.transform = `scale(${scale})`;
+  for (const f of frameB ? [frame, frameB] : [frame]) {
+    f.style.width = `${desktop}px`;
+    f.style.height = `${height / scale}px`;
+    f.style.transform = `scale(${scale})`;
+  }
 }
 new ResizeObserver(fitPreview).observe(stage);
 addEventListener('resize', () => { fitPreview(); placeHandles(); });
 function frameReady() {
-  previewApi()?.show(view);
-  previewApi()?.setLogo(logoUrl);
+  for (const api of previews()) {
+    api.show(view);
+    api.setLogo(logoUrl);
+  }
   pushPreview();
+  syncScrolling();
 }
 frame.addEventListener('load', frameReady);
+
+// Compare: the same screen in light and dark, split by a divider that drags and takes arrow keys.
+const splitHandle = $('split-handle');
+function setSplit(percent: number) {
+  const value = Math.min(95, Math.max(5, percent));
+  stage.style.setProperty('--split', `${value}%`);
+  splitHandle.setAttribute('aria-valuenow', String(Math.round(value)));
+  splitHandle.setAttribute('aria-valuetext', `${Math.round(value)}% light`);
+}
+$('compare').addEventListener('click', () => {
+  comparing = !comparing;
+  $('compare').setAttribute('aria-pressed', String(comparing));
+  for (const b of all<HTMLButtonElement>('[data-mode]')) b.disabled = comparing;
+  if (comparing && !frameB) {
+    frameB = document.createElement('iframe');
+    frameB.id = 'preview-b';
+    frameB.title = 'The same screen in dark mode';
+    frameB.src = '/preview/';
+    frameB.addEventListener('load', frameReady);
+    frame.after(frameB);
+    fitPreview();
+  }
+  if (frameB) frameB.hidden = !comparing;
+  splitHandle.hidden = !comparing;
+  for (const side of all('.v-side')) side.hidden = !comparing;
+  setSplit(50);
+  if (comparing && apiOf(frameB)) frameReady(); else pushPreview();
+});
+let splitting = false;
+splitHandle.addEventListener('pointerdown', (e) => { splitting = true; splitHandle.setPointerCapture(e.pointerId); e.preventDefault(); });
+splitHandle.addEventListener('pointermove', (e) => {
+  if (!splitting) return;
+  const box = stage.getBoundingClientRect();
+  setSplit((e.clientX - box.left) / box.width * 100);
+});
+for (const type of ['pointerup', 'pointercancel']) splitHandle.addEventListener(type, () => { splitting = false; });
+splitHandle.addEventListener('keydown', (e) => {
+  const now = Number(splitHandle.getAttribute('aria-valuenow'));
+  const step = e.shiftKey ? 10 : 5;
+  const next = { ArrowLeft: now - step, ArrowRight: now + step, Home: 5, End: 95 }[e.key];
+  if (next === undefined) return;
+  e.preventDefault();
+  setSplit(next);
+});
+
+// Both sides scroll together: a scroll in one list moves the same list in the other preview.
+let mirroring = false;
+const previewDocs = () => [frame, frameB].map((f) => f?.contentDocument).filter((d): d is Document => Boolean(d));
+function syncScrolling() {
+  for (const doc of previewDocs()) {
+    if ((doc as Document & { vincentSync?: boolean }).vincentSync) continue;
+    (doc as Document & { vincentSync?: boolean }).vincentSync = true;
+    doc.addEventListener('scroll', (e) => {
+      const source = e.target as HTMLElement;
+      if (mirroring || !comparing || !source.classList?.contains('scroller')) return;
+      const other = previewDocs().find((d) => d !== doc);
+      if (!other) return;
+      const index = [...doc.querySelectorAll('.scroller')].indexOf(source);
+      const twin = other.querySelectorAll<HTMLElement>('.scroller')[index];
+      if (!twin) return;
+      mirroring = true;
+      twin.scrollTop = source.scrollTop;
+      twin.scrollLeft = source.scrollLeft;
+      requestAnimationFrame(() => { mirroring = false; });
+    }, true);
+  }
+}
 
 fitPreview();
 render();

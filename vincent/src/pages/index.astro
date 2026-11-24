@@ -31,9 +31,14 @@ const views = [['files', 'Files'], ['share', 'Public share'], ['login', 'Login']
             <button type="button" class="ctl" data-mode="light">Light</button>
             <button type="button" class="ctl" data-mode="dark">Dark</button>
           </div>
+          <button type="button" id="compare" class="ctl" aria-pressed="false">Compare</button>
         </div>
       </div>
-      <div id="preview-stage"><iframe id="preview" src="/preview" title="Preview of the theme on a Nextcloud-style screen"></iframe></div>
+      <div id="preview-stage">
+        <iframe id="preview" src="/preview/" title="Preview of the theme on a Nextcloud-style screen"></iframe>
+        <span class="v-side v-side-left" hidden>Light</span><span class="v-side v-side-right" hidden>Dark</span>
+        <div id="split-handle" class="v-split" role="slider" tabindex="0" aria-label="Divider between light and dark" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" hidden></div>
+      </div>
     </section>
   </main>
   <ExportDialog />

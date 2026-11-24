@@ -1,13 +1,17 @@
 import { oklchToHex, parseColor, type Oklch } from './color.ts';
 
-export type Harmony = 'complementary' | 'split' | 'analogous' | 'triadic' | 'tetradic' | 'monochromatic' | 'custom';
+export type Harmony = 'complementary' | 'split' | 'analogous' | 'accented' | 'triadic' | 'tetradic' | 'rectangle' | 'monochromatic' | 'custom';
 
 export const HARMONIES: { id: Harmony; label: string }[] = [
   { id: 'complementary', label: 'Complementary' },
   { id: 'split', label: 'Split-complementary' },
   { id: 'analogous', label: 'Analogous' },
+  // Neighbours for calm soft states, one opposite for the accent: suits interfaces.
+  { id: 'accented', label: 'Accented analogous' },
   { id: 'triadic', label: 'Triadic' },
-  { id: 'tetradic', label: 'Tetradic' },
+  // `tetradic` keeps its id (and old links) for the square form; the rectangle is two complementary pairs.
+  { id: 'tetradic', label: 'Tetradic (square)' },
+  { id: 'rectangle', label: 'Tetradic (rectangle)' },
   { id: 'monochromatic', label: 'Monochromatic' },
   { id: 'custom', label: 'Custom' },
 ];
@@ -16,8 +20,10 @@ export const OFFSETS: Record<string, number[]> = {
   complementary: [180],
   split: [150, 210],
   analogous: [30, -30],
+  accented: [30, 180],
   triadic: [120, 240],
   tetradic: [90, 180, 270],
+  rectangle: [60, 180, 240],
 };
 
 /** The accent colours that go with `primary`, without primary itself. */

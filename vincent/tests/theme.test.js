@@ -5,7 +5,7 @@ import { harmonyColors } from '../src/lib/harmony.ts';
 import { NEXTCLOUD_COLOR_VARS } from '../src/lib/nextcloud-vars.ts';
 import { CONTRAST_PAIRS, DEFAULT_CHOICES, checkPairs, decodeChoices, encodeChoices, generateTheme } from '../src/lib/theme.ts';
 
-const HARMONIES = ['complementary', 'split', 'analogous', 'triadic', 'tetradic', 'monochromatic', 'custom'];
+const HARMONIES = ['complementary', 'split', 'analogous', 'accented', 'triadic', 'tetradic', 'rectangle', 'monochromatic', 'custom'];
 const STYLES = ['muted', 'balanced', 'vivid'];
 const PAGES = ['neutral', 'primary', 'secondary'];
 const hueGap = (a, b) => Math.abs(((a - b + 540) % 360) - 180);
@@ -28,7 +28,7 @@ test('each mode sets exactly Nextcloud\'s colour variables', () => {
 
 test('harmony offsets', () => {
   const primary = hexToOklch('#2f7fbf');
-  const offsets = { complementary: [180], split: [150, 210], analogous: [30, -30], triadic: [120, 240], tetradic: [90, 180, 270] };
+  const offsets = { complementary: [180], split: [150, 210], analogous: [30, -30], accented: [30, 180], triadic: [120, 240], tetradic: [90, 180, 270], rectangle: [60, 180, 240] };
   for (const [name, list] of Object.entries(offsets)) {
     const accents = harmonyColors(primary, name, []);
     assert.equal(accents.length, list.length, name);
@@ -63,7 +63,7 @@ test('every contrast pair passes across the colour grid', () => {
     for (let n = 0; n < 4; n++, i++) {
       assertPairs({
         ...DEFAULT_CHOICES, primary,
-        harmony: HARMONIES[i % 7], style: STYLES[i % 3], page: PAGES[(i >> 1) % 3], tint: [0, 0.35, 1][(i >> 2) % 3],
+        harmony: HARMONIES[i % 9], style: STYLES[i % 3], page: PAGES[(i >> 1) % 3], tint: [0, 0.35, 1][(i >> 2) % 3],
       });
     }
   }
@@ -226,4 +226,14 @@ test('the dark search bar label stays readable on every page background', async 
     const label = composite(t['--color-background-plain-text'], 0.7, plain);
     assert.ok(contrast(label, composite('#ffffff', 0.08, plain)) >= 4.5, `${page} ${plain}`);
   }
+});
+
+test('the harmony list names both tetradic forms and keeps old links', async () => {
+  const { HARMONIES: list } = await import('../src/lib/harmony.ts');
+  const label = (id) => list.find((h) => h.id === id)?.label;
+  assert.equal(label('tetradic'), 'Tetradic (square)');
+  assert.equal(label('rectangle'), 'Tetradic (rectangle)');
+  assert.equal(label('accented'), 'Accented analogous');
+  assert.equal(decodeChoices('h=tetradic').harmony, 'tetradic');
+  assert.equal(decodeChoices('h=rectangle').harmony, 'rectangle');
 });

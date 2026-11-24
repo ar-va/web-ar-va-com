@@ -1,4 +1,8 @@
+import { circleReveal } from '../../../shared/scripts/reveal';
+
 type Mode = 'light' | 'dark';
+/** `smooth`: cross-fade (a discrete change, not a drag); `reveal`: grow the new mode as a circle from that point. */
+type Options = { smooth?: boolean; reveal?: { x: number; y: number } };
 /** The saved admin colours, which the Theming page's buttons show in any mode. */
 type Settings = { primary: string; primaryText: string; background: string; backgroundText: string };
 
@@ -9,20 +13,53 @@ function closeMenus() {
   for (const m of document.querySelectorAll<HTMLElement>('.menu:not(.menu-static)')) m.hidden = true;
 }
 
+let fadeTimer = 0;
+function apply(css: string, mode: Mode, settings?: Settings) {
+  style.textContent = css;
+  const root = document.documentElement.style;
+  if (settings) {
+    root.setProperty('--setting-primary', settings.primary);
+    root.setProperty('--setting-primary-text', settings.primaryText);
+    root.setProperty('--setting-background', settings.background);
+    root.setProperty('--setting-background-text', settings.backgroundText);
+  }
+  document.body.toggleAttribute('data-theme-light', mode === 'light');
+  document.body.toggleAttribute('data-theme-dark', mode === 'dark');
+  document.documentElement.style.colorScheme = mode;
+  document.body.classList.add('ready');
+}
+
 (window as unknown as { preview: unknown }).preview = {
-  applyCss(css: string, mode: Mode, settings?: Settings) {
-    style.textContent = css;
-    const root = document.documentElement.style;
-    if (settings) {
-      root.setProperty('--setting-primary', settings.primary);
-      root.setProperty('--setting-primary-text', settings.primaryText);
-      root.setProperty('--setting-background', settings.background);
-      root.setProperty('--setting-background-text', settings.backgroundText);
+  applyCss(css: string, mode: Mode, settings?: Settings, options: Options = {}) {
+    const modeChanges = !document.body.hasAttribute(`data-theme-${mode}`);
+    if (options.reveal && modeChanges) {
+      circleReveal(options.reveal.x, options.reveal.y, () => apply(css, mode, settings));
+      return;
     }
-    document.body.toggleAttribute('data-theme-light', mode === 'light');
-    document.body.toggleAttribute('data-theme-dark', mode === 'dark');
-    document.documentElement.style.colorScheme = mode;
-    document.body.classList.add('ready');
+    if (options.smooth && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.body.classList.add('fading');
+      clearTimeout(fadeTimer);
+      fadeTimer = window.setTimeout(() => document.body.classList.remove('fading'), 400);
+    }
+    apply(css, mode, settings);
+  },
+  highlight(name: string | null) {
+    for (const e of document.querySelectorAll('.v-highlight')) e.classList.remove('v-highlight');
+    if (!name) return;
+    const probe = document.body.appendChild(document.createElement('i'));
+    probe.style.color = `var(${name})`;
+    const target = getComputedStyle(probe).color;
+    probe.remove();
+    const panel = panels().find((p) => !p.hidden);
+    if (!panel) return;
+    for (const el of panel.querySelectorAll<HTMLElement>('*')) {
+      if (!el.getClientRects().length) continue;
+      const c = getComputedStyle(el);
+      // Text colour is inherited by everything: count it only where the element draws text or an icon itself.
+      const ownText = el instanceof SVGElement || [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent!.trim());
+      const borders = (['Top', 'Right', 'Bottom', 'Left'] as const).some((side) => parseFloat(c[`border${side}Width`]) > 0 && c[`border${side}Color`] === target);
+      if (c.backgroundColor === target || borders || (ownText && c.color === target)) el.classList.add('v-highlight');
+    }
   },
   show(view: string) {
     closeMenus();

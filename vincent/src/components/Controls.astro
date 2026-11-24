@@ -34,7 +34,10 @@ const hint = 'mt-1.5 text-xs text-zinc-500';
     <p class={hint}>Stays on your device.</p>
     <p id="image-error" role="alert" class="mt-1.5 text-xs text-bengara dark:text-bengara-light" hidden></p>
     <div id="image-result" hidden class="mt-2">
-      <div id="image-colours" class="grid grid-cols-5 gap-1.5"></div>
+      <div class="flex items-center gap-2">
+        <span id="image-thumb-slot" class="shrink-0"></span>
+        <div id="image-colours" class="grid flex-1 grid-cols-5 gap-1.5"></div>
+      </div>
       <label class="mt-2 flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300"><input id="image-logo" type="checkbox" class="accent-kikyo-600" /> Show it as the preview's logo</label>
     </div>
   </div>
@@ -43,7 +46,13 @@ const hint = 'mt-1.5 text-xs text-zinc-500';
 <section aria-labelledby="match-title" class="space-y-4">
   <h2 id="match-title" class="text-lg font-bold text-zinc-900 dark:text-white">Matching colours</h2>
   <div>
-    <label for="harmony" class={label}>Harmony</label>
+    <div class="flex items-end justify-between gap-2">
+      <label for="harmony" class={label}>Harmony</label>
+      <button id="surprise" type="button" class="ctl mb-1.5 !h-7 !px-2.5 text-xs">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="4" /><circle cx="8.5" cy="8.5" r="1.2" fill="currentColor" /><circle cx="15.5" cy="15.5" r="1.2" fill="currentColor" /><circle cx="15.5" cy="8.5" r="1.2" fill="currentColor" /><circle cx="8.5" cy="15.5" r="1.2" fill="currentColor" /><circle cx="12" cy="12" r="1.2" fill="currentColor" /></svg>
+        Surprise me
+      </button>
+    </div>
     <select id="harmony" class="v-field">{HARMONIES.map((h) => <option value={h.id}>{h.label}</option>)}</select>
   </div>
   <div role="group" aria-labelledby="style-label">
