@@ -154,14 +154,15 @@ Material Design Icons (Apache-2.0).
 
 A dialog with numbered steps and copy buttons:
 
-1. Install and enable **Custom CSS** from Apps.
-2. In **Administration settings > Theming**, set **Primary color** and **Background color** to the given values, and turn on
-   **Remove background image**.
-3. On the same page, turn on **Disable user theming**, since the CSS overrides personal colours anyway.
-4. In **Personal settings > Appearance and accessibility**, choose **System default theme** to follow each device, or
+In the order you meet them (updated 2026-11-24, user: no going back and forth between pages):
+
+1. Install and enable **Custom CSS** from Apps, with a link to its App Store page.
+2. In **Administration settings > Theming**, under **Background and color** (top to bottom): **Primary color**,
+   **Background color**, turn on **Remove background image**, then **Disable user theming**.
+3. At the bottom of the same page, paste the code into **Custom CSS** and save.
+4. Reload. If anything breaks, run the recovery command shown.
+5. In **Personal settings > Appearance and accessibility**, choose **System default theme** to follow each device, or
    Light or Dark to fix it. Every choice is covered, and high contrast stays Nextcloud's own.
-5. Paste the code into **Custom CSS** and save.
-6. Reload. If anything breaks, run the recovery command shown.
 
 The admin colours matter for what CSS cannot reach, such as emails and the first paint.
 

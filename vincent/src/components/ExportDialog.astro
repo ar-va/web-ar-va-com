@@ -1,6 +1,8 @@
 ---
 // The steps that reproduce the theme on a real server, with the exact labels Nextcloud uses.
 const RECOVERY = 'occ config:app:delete theming_customcss customcss';
+const APP_STORE = 'https://apps.nextcloud.com/apps/theming_customcss';
+const link = 'font-medium text-kikyo-600 dark:text-kikyo-400 underline underline-offset-2 hover:text-kikyo-700 dark:hover:text-kikyo-300';
 const step = 'grid grid-cols-[1.75rem_minmax(0,1fr)] gap-x-2';
 const number = 'grid place-items-center w-7 h-7 rounded-full bg-(--on-bg) text-(--on-text) text-sm font-semibold';
 const title = 'pt-0.5 font-semibold text-zinc-900 dark:text-white';
@@ -14,16 +16,17 @@ const path = 'font-medium text-zinc-800 dark:text-zinc-200';
       <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6 6 18" /></svg>
     </button>
   </div>
+  <!-- In the order you meet them: the App Store, then the Theming page from top to bottom, then personal settings. -->
   <ol class="space-y-6 px-6 pb-6">
     <li class={step}>
       <span class={number} aria-hidden="true">1</span>
-      <div><h3 class={title}>Install Custom CSS</h3><p class={body}>In <span class={path}>Apps</span>, search for <span class={path}>Custom CSS</span>, then download and enable it.</p></div>
+      <div><h3 class={title}>Install Custom CSS</h3><p class={body}>In <span class={path}>Apps</span>, search for <span class={path}>Custom CSS</span>, then download and enable it. It's also on the <a href={APP_STORE} target="_blank" rel="noopener noreferrer" class={link}>Nextcloud App Store<span class="sr-only"> (opens in a new tab)</span></a>.</p></div>
     </li>
     <li class={step}>
       <span class={number} aria-hidden="true">2</span>
       <div>
         <h3 class={title}>Set the colours</h3>
-        <p class={body}>In <span class={path}>Administration settings &gt; Theming</span>, under Background and color:</p>
+        <p class={body}>Open <span class={path}>Administration settings &gt; Theming</span>. Under <span class={path}>Background and color</span>:</p>
         <div class="mt-2 grid gap-2 sm:grid-cols-2">
           {[['primary', 'Primary color'], ['background', 'Background color']].map(([id, label]) => (
             <div>
@@ -36,29 +39,21 @@ const path = 'font-medium text-zinc-800 dark:text-zinc-200';
             </div>
           ))}
         </div>
-        <p class={body}>Then turn on <span class={path}>Remove background image</span>.</p>
+        <p class={body}>Turn on <span class={path}>Remove background image</span>. Further down the same section, turn on <span class={path}>Disable user theming</span>: the theme replaces personal colours, so that setting would do nothing for your users.</p>
       </div>
     </li>
     <li class={step}>
       <span class={number} aria-hidden="true">3</span>
-      <div><h3 class={title}>Keep it consistent</h3><p class={body}>On the same page, turn on <span class={path}>Disable user theming</span>. The theme replaces personal colours, so that setting would do nothing for your users.</p></div>
-    </li>
-    <li class={step}>
-      <span class={number} aria-hidden="true">4</span>
-      <div><h3 class={title}>Choose light, dark or both</h3><p class={body}>In <span class={path}>Personal settings &gt; Appearance and accessibility</span>, pick <span class={path}>System default theme</span> to follow each device, or <span class={path}>Light theme</span> or <span class={path}>Dark theme</span> to fix it. Each person chooses their own. Visitors on share links follow their device, and high contrast keeps Nextcloud's own colours.</p></div>
-    </li>
-    <li class={step}>
-      <span class={number} aria-hidden="true">5</span>
       <div>
         <h3 class={title}>Paste the code</h3>
-        <p class={body}>At the bottom of <span class={path}>Theming</span>, replace everything in <span class={path}>Custom CSS</span> with this, then press <span class={path}>Save</span>.</p>
+        <p class={body}>Scroll to the bottom of the same page. Replace everything in <span class={path}>Custom CSS</span> with this, then press <span class={path}>Save</span>.</p>
         <label for="export-css" class="sr-only">Custom CSS code</label>
         <textarea id="export-css" readonly rows="7" spellcheck="false" class="v-field !h-auto mt-2 py-2 font-mono !text-xs resize-y"></textarea>
         <button type="button" class="btn-primary btn-sm mt-2" data-copy-from="export-css">Copy code</button>
       </div>
     </li>
     <li class={step}>
-      <span class={number} aria-hidden="true">6</span>
+      <span class={number} aria-hidden="true">4</span>
       <div>
         <h3 class={title}>Reload and check</h3>
         <p class={body}>Reload Nextcloud. If the old colours stay, do a hard refresh. If anything looks broken, this command on the server removes the code:</p>
@@ -68,6 +63,10 @@ const path = 'font-medium text-zinc-800 dark:text-zinc-200';
           <button type="button" class="ctl !h-10 shrink-0" data-copy-from="export-recovery">Copy</button>
         </div>
       </div>
+    </li>
+    <li class={step}>
+      <span class={number} aria-hidden="true">5</span>
+      <div><h3 class={title}>Choose light, dark or both</h3><p class={body}>In <span class={path}>Personal settings &gt; Appearance and accessibility</span>, pick <span class={path}>System default theme</span> to follow each device, or <span class={path}>Light theme</span> or <span class={path}>Dark theme</span> to fix it. Each person chooses their own. Visitors on share links follow their device, and high contrast keeps Nextcloud's own colours.</p></div>
     </li>
   </ol>
   <p id="export-status" role="status" class="sr-only"></p>
