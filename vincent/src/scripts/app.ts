@@ -79,7 +79,7 @@ function placeHandles() {
     el.style.top = `${radius + y}px`;
     el.style.background = i === 0 ? choices.primary : theme.accents[i - 1];
     el.setAttribute('aria-valuenow', String(Math.round(color.h)));
-    el.setAttribute('aria-valuetext', i === 0 ? choices.primary : theme.accents[i - 1]);
+    el.setAttribute('aria-valuetext', `${i === 0 ? choices.primary : theme.accents[i - 1]}, hue ${Math.round(color.h)} degrees, chroma ${color.c.toFixed(3)}`);
     points.push(`M${radius} ${radius}L${radius + x} ${radius + y}`);
   });
   lines.innerHTML = `<path d="${points.join('')}" stroke="#fff" stroke-opacity=".75" stroke-width="1.5" fill="none" />`;
@@ -127,7 +127,11 @@ function renderPalette() {
   }));
   const note = theme.notes.find((n) => n.mode === mode);
   $('notes').hidden = !note;
-  if (note) $('notes').textContent = `In ${mode} mode your colour ${note.from} becomes ${note.to} so that controls stay readable.`;
+  if (note) {
+    $('notes').textContent = note.reason === 'dark'
+      ? `In dark mode your colour ${note.from} becomes ${note.to}, lighter so it stands out on dark backgrounds.`
+      : `In ${mode} mode your colour ${note.from} becomes ${note.to} so that controls stay readable.`;
+  }
   const pairs = checkPairs(vars, mode);
   const failing = pairs.filter((p) => !p.pass).length;
   $('contrast-summary').textContent = failing ? `${failing} of ${pairs.length} pairs below target` : `All ${pairs.length} pairs pass in ${mode} mode`;
@@ -159,13 +163,36 @@ function render() {
   queued = false;
   choices.primary = oklchToHex(primary);
   theme = generateTheme(choices);
-  history.replaceState(null, '', `#${encodeChoices(choices)}`);
+  saveAddress();
   if (Math.abs(paintedL - primary.l) > 0.001) paintWheel(primary.l);
   placeHandles();
   syncControls();
   renderPalette();
   pushPreview();
 }
+
+// Browsers cap how often a page may rewrite its address (Chrome drops the rest, Safari and Firefox throw), so a drag
+// writes it once it settles.
+let addressTimer = 0;
+function writeAddress() {
+  clearTimeout(addressTimer);
+  try {
+    history.replaceState(null, '', `#${encodeChoices(choices)}`);
+  } catch {
+    saveAddress();
+  }
+}
+function saveAddress() {
+  clearTimeout(addressTimer);
+  addressTimer = window.setTimeout(writeAddress, 250);
+}
+addEventListener('pagehide', writeAddress);
+// A Vincent link pasted into this tab only changes the fragment: load its theme.
+addEventListener('hashchange', () => {
+  Object.assign(choices, decodeChoices(location.hash));
+  primary = hexToOklch(choices.primary);
+  update();
+});
 
 function update() {
   if (queued) return;
@@ -185,7 +212,8 @@ function moveHandle(i: number, x: number, y: number) {
   if (i === 0) return setPrimary(pointToColor(x, y, radius, primary.l));
   if (choices.harmony === 'custom') {
     const custom = [...theme.accents];
-    custom[i - 1] = oklchToHex(pointToColor(x, y, radius, hexToOklch(custom[i - 1]).l));
+    // The wheel shows the primary's lightness, so a colour moved on it takes that lightness and stays under the pointer.
+    custom[i - 1] = oklchToHex(pointToColor(x, y, radius, primary.l));
     choices.custom = custom;
     return update();
   }
@@ -224,7 +252,7 @@ wheel.addEventListener('pointerdown', (e) => {
 wheel.addEventListener('pointermove', (e) => {
   if (dragging !== null) moveHandle(dragging, ...(fromCentre(e) as [number, number]));
 });
-for (const type of ['pointerup', 'pointercancel']) wheel.addEventListener(type, () => { dragging = null; });
+for (const type of ['pointerup', 'pointercancel']) wheel.addEventListener(type, () => { dragging = null; writeAddress(); });
 wheel.addEventListener('keydown', (e) => {
   const handle = (e.target as HTMLElement).closest<HTMLElement>('.v-wheel-handle');
   if (!handle) return;
@@ -353,7 +381,10 @@ $('export-open').addEventListener('click', () => {
   dialog.showModal();
 });
 $('export-close').addEventListener('click', () => dialog.close());
-dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+// Only a click that starts and ends on the backdrop closes it, not a text selection released there.
+let pressedOnBackdrop = false;
+dialog.addEventListener('pointerdown', (e) => { pressedOnBackdrop = e.target === dialog; });
+dialog.addEventListener('click', (e) => { if (e.target === dialog && pressedOnBackdrop) dialog.close(); });
 
 for (const button of all<HTMLButtonElement>('[data-copy-from]')) {
   const label = button.textContent!;
@@ -390,11 +421,14 @@ function fitPreview() {
 }
 new ResizeObserver(fitPreview).observe(stage);
 addEventListener('resize', () => { fitPreview(); placeHandles(); });
-frame.addEventListener('load', () => {
+function frameReady() {
   previewApi()?.show(view);
   previewApi()?.setLogo(logoUrl);
   pushPreview();
-});
+}
+frame.addEventListener('load', frameReady);
 
 fitPreview();
 render();
+// The frame may have finished loading before this script ran.
+if (frame.contentDocument?.readyState === 'complete' && previewApi()) frameReady();

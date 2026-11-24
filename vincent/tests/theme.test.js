@@ -195,3 +195,24 @@ test('one bad field keeps the good ones', () => {
   assert.equal(c.primary, '#112233');
   assert.equal(c.harmony, DEFAULT_CHOICES.harmony);
 });
+
+test('a colourless primary gives true greys at any tint', () => {
+  for (const primary of ['#808080', '#000000', '#ffffff', '#333333']) {
+    const t = generateTheme({ ...DEFAULT_CHOICES, primary, tint: 1 });
+    for (const mode of ['light', 'dark']) {
+      for (const name of ['--color-main-background', '--color-background-hover', '--color-main-text', '--color-text-maxcontrast', '--color-background-plain']) {
+        assert.ok(hexToOklch(t[mode][name]).c < 0.004, `${primary} ${mode} ${name} ${t[mode][name]}`);
+      }
+    }
+  }
+});
+
+test('notes name the colour the person chose, and only for a visible change', () => {
+  const muted = generateTheme({ ...DEFAULT_CHOICES, style: 'muted' });
+  for (const n of muted.notes) assert.equal(n.from, DEFAULT_CHOICES.primary);
+  assert.equal(muted.notes.filter((n) => n.mode === 'light').length, 0, 'style alone is not a contrast change');
+  const dark = generateTheme(DEFAULT_CHOICES).notes.find((n) => n.mode === 'dark');
+  assert.equal(dark.from, '#624db4');
+  assert.equal(dark.reason, 'dark');
+  assert.equal(generateTheme({ ...DEFAULT_CHOICES, primary: '#ffff00' }).notes.find((n) => n.mode === 'light').reason, 'contrast');
+});

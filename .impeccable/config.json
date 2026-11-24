@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "vincent/src/preview/base.css"
+        ],
+        "createdAt": "2026-11-24T03:43:11.539Z",
+        "reason": "Claude: base.css replicates Nextcloud's own UI; its selected-item bar and note-card side border are in the real Nextcloud 35 screens (user's screenshots and the local test server)"
+      }
+    ]
+  }
+}

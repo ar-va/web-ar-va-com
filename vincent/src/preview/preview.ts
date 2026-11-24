@@ -21,10 +21,14 @@ function closeMenus() {
     for (const p of panels()) p.hidden = p.dataset.viewPanel !== match;
   },
   setLogo(url: string | null) {
-    for (const img of document.querySelectorAll<HTMLImageElement>('.logo-own')) {
-      if (url) img.src = url; else img.removeAttribute('src');
-      img.hidden = !url;
-      (img.previousElementSibling as HTMLElement).style.display = url ? 'none' : '';
+    for (const logo of document.querySelectorAll<HTMLElement>('.logo')) {
+      logo.querySelector('img')?.remove();
+      (logo.querySelector('.logo-sample') as HTMLElement).style.display = url ? 'none' : '';
+      if (!url) continue;
+      const img = document.createElement('img');
+      img.alt = '';
+      img.src = url;
+      logo.append(img);
     }
   },
 };

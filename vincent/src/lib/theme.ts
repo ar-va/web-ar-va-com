@@ -12,7 +12,8 @@ export type Page = 'neutral' | 'primary' | 'secondary';
 export type Vars = Record<string, string>;
 
 export interface Choices { primary: string; harmony: Harmony; custom: string[]; style: Style; tint: number; page: Page }
-export interface Note { role: string; mode: Mode; from: string; to: string }
+/** A visible change to the chosen colour: `dark` = lifted for dark backgrounds, `contrast` = moved to stay readable. */
+export interface Note { role: string; mode: Mode; from: string; to: string; reason: 'contrast' | 'dark' }
 export interface Theme { light: Vars; dark: Vars; accents: string[]; notes: Note[] }
 
 export const DEFAULT_CHOICES: Choices = { primary: '#624db4', harmony: 'triadic', custom: [], style: 'balanced', tint: 0.35, page: 'neutral' };
@@ -96,7 +97,8 @@ function hoverOf(color: Oklch, text: string, backgrounds: string[], away: number
 
 function generateMode(mode: Mode, choices: Choices, primary: Oklch, accents: string[]) {
   const dark = mode === 'dark';
-  const { tint } = choices;
+  // A colourless primary has no real hue: its neutrals stay grey rather than taking a random tint.
+  const tint = choices.tint * Math.min(1, primary.c / 0.03);
   const away = dark ? 1 : -1;
   const hex = oklchToHex;
   const fit = (color: Oklch, against: string[], min: number) => hex(fitContrast(color, against, min));
@@ -240,9 +242,19 @@ export function generateTheme(choices: Choices): Theme {
   const notes: Note[] = [];
   for (const [mode, vars] of [['light', light], ['dark', dark]] as const) {
     const to = vars['--color-primary-element'];
-    if (to !== start) notes.push({ role: 'Primary', mode, from: start, to });
+    // Style alone is the person's choice, and a one-step rounding isn't a change worth a note.
+    if (difference(to, start) < 0.02) continue;
+    const lifted = mode === 'dark' && (primary.l < 0.72 || primary.l > 0.88);
+    notes.push({ role: 'Primary', mode, from: choices.primary, to, reason: lifted ? 'dark' : 'contrast' });
   }
   return { light, dark, accents, notes };
+}
+
+function difference(a: string, b: string) {
+  const [x, y] = [hexToOklch(a), hexToOklch(b)];
+  const ab = (c: Oklch) => [c.c * Math.cos(c.h * Math.PI / 180), c.c * Math.sin(c.h * Math.PI / 180)];
+  const [[xa, xb], [ya, yb]] = [ab(x), ab(y)];
+  return Math.hypot(x.l - y.l, xa - ya, xb - yb);
 }
 
 const HEX6 = /^[0-9a-f]{6}$/i;

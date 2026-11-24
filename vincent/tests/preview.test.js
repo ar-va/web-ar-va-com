@@ -46,3 +46,7 @@ test('the admin view has Theming and Appearance', { skip }, () => {
   const admin = panel('admin');
   for (const text of ['Background and color', 'Primary color', 'Custom CSS', 'Appearance and accessibility', 'High contrast']) assert.ok(admin.includes(text), text);
 });
+
+test('no image ships without a source', { skip }, () => {
+  assert.ok(!/<img\b(?![^>]*\bsrc=)[^>]*>/i.test(html));
+});
