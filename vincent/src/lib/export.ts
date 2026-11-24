@@ -32,6 +32,15 @@ ${declarations(theme.light, '  ')}
 body[data-theme-dark] {
 ${declarations(theme.dark, '  ')}
 }
+
+/* Nextcloud tints the header search bar with the primary colour only for its Dark theme. A dark device on the
+   system default gets the same, instead of a black overlay that disappears into a dark header. */
+@media (prefers-color-scheme: dark) and (not (prefers-contrast: more)) {
+  body:not([data-theme-light], ${HIGH_CONTRAST}) .unified-search-input .unified-search-input__field {
+    --resting-background: color-mix(in srgb, var(--color-primary-element) 16%, transparent);
+    --resting-background-hover: color-mix(in srgb, var(--color-primary-element) 22%, transparent);
+  }
+}
 `;
 }
 

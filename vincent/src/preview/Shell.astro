@@ -20,7 +20,7 @@ const { view, app = 'Files', public: isPublic = false, shareName } = Astro.props
     </> : <>
       <button class="header-btn" aria-label="Apps"><Icon path={mdiDotsGrid} /></button>
       <span class="nc-app"><Icon path={app === 'Files' ? mdiFolder : mdiCog} /> {app}</span>
-      <span class="grow nc-search-wrap"><span class="nc-search"><Icon path={mdiMagnify} /> Apps, files, messages, and more <kbd>⌘</kbd><kbd>K</kbd></span></span>
+      <span class="grow nc-search-wrap unified-search-input"><span class="nc-search unified-search-input__field"><Icon path={mdiMagnify} /> Apps, files, messages, and more <kbd>⌘</kbd><kbd>K</kbd></span></span>
       <button class="header-btn" aria-label="Notifications"><Icon path={mdiBellOutline} /><span class="dot"></span></button>
       <button class="header-btn" aria-label="Contacts"><Icon path={mdiAccountOutline} /></button>
       <span class="avatar" title={PERSON}>{PERSON[0]}</span>

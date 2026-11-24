@@ -16,7 +16,8 @@ const blocks = () => {
 
 test('has the device-light, device-dark, chosen-light and chosen-dark blocks', () => {
   assert.equal(css.match(/@media not \(prefers-contrast: more\)/g).length, 1);
-  assert.equal(css.match(/@media \(prefers-color-scheme: dark\) and \(not \(prefers-contrast: more\)\)/g).length, 1);
+  // One for the dark-device colours, one for the dark-device search bar.
+  assert.equal(css.match(/@media \(prefers-color-scheme: dark\) and \(not \(prefers-contrast: more\)\)/g).length, 2);
   assert.equal(css.match(/html:root/g).length, 2);
   assert.equal(css.match(/body\[data-theme-light\] \{/g).length, 1);
   assert.equal(css.match(/body\[data-theme-dark\] \{/g).length, 1);
@@ -55,4 +56,11 @@ test('is safe to paste', () => {
 
 test('settings give the values for the admin panel', () => {
   assert.deepEqual(settings(theme), { primary: theme.light['--color-primary-element'], background: theme.light['--color-background-plain'] });
+});
+
+test('System default and guests on a dark device get the search bar tint Nextcloud gives its Dark theme', () => {
+  const m = css.match(/@media \(prefers-color-scheme: dark\) and \(not \(prefers-contrast: more\)\) \{\s*body:not\(\[data-theme-light\], \[data-theme-light-highcontrast\], \[data-theme-dark-highcontrast\]\) \.unified-search-input[^{]*\.unified-search-input__field[^{]*\{([^}]*)\}/);
+  assert.ok(m, 'a dark-device search bar rule');
+  assert.ok(m[1].includes('--resting-background: color-mix(in srgb, var(--color-primary-element) 16%, transparent);'));
+  assert.ok(m[1].includes('--resting-background-hover: color-mix(in srgb, var(--color-primary-element) 22%, transparent);'));
 });
