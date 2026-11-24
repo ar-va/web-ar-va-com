@@ -1,4 +1,6 @@
 type Mode = 'light' | 'dark';
+/** The saved admin colours, which the Theming page's buttons show in any mode. */
+type Settings = { primary: string; primaryText: string; background: string; backgroundText: string };
 
 const style = document.head.appendChild(document.createElement('style'));
 const panels = () => [...document.querySelectorAll<HTMLElement>('[data-view-panel]')];
@@ -8,8 +10,15 @@ function closeMenus() {
 }
 
 (window as unknown as { preview: unknown }).preview = {
-  applyCss(css: string, mode: Mode) {
+  applyCss(css: string, mode: Mode, settings?: Settings) {
     style.textContent = css;
+    const root = document.documentElement.style;
+    if (settings) {
+      root.setProperty('--setting-primary', settings.primary);
+      root.setProperty('--setting-primary-text', settings.primaryText);
+      root.setProperty('--setting-background', settings.background);
+      root.setProperty('--setting-background-text', settings.backgroundText);
+    }
     document.body.toggleAttribute('data-theme-light', mode === 'light');
     document.body.toggleAttribute('data-theme-dark', mode === 'dark');
     document.documentElement.style.colorScheme = mode;

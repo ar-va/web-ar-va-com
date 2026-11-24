@@ -1,5 +1,7 @@
-/* Nextcloud's layout, sizes and colour roles. Every colour is one of its variables, except where Nextcloud itself
-   fixes one (the header search bar's resting overlay), which is copied as it is. */
+/* Nextcloud's layout, sizes and colour roles, checked rule by rule against Nextcloud 35.0.3 and @nextcloud/vue 9.14.1
+   (and computed colours on a real server). Every colour is one of its variables, except where Nextcloud itself fixes
+   one, copied as it is: the header search bar's resting overlay, avatars, user status dots, the dialog shadow and
+   file type icons. */
 :root {
   --font-face: system-ui, -apple-system, 'Segoe UI', Roboto, Oxygen-Sans, Cantarell, Ubuntu, 'Helvetica Neue', 'Noto Sans', 'Liberation Sans', Arial, sans-serif;
   --default-font-size: 15px; --font-size-small: 13px;
@@ -63,23 +65,29 @@ kbd { font: inherit; }
 .header-btn { position: relative; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: inherit; }
 .header-btn:hover { background: color-mix(in srgb, var(--color-background-plain-text) 14%, transparent); }
 .dot { position: absolute; top: 6px; right: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-element-error); }
+/* Nextcloud draws avatars as images coloured from the person's name, not from the theme: fixed here too. */
 .avatar {
   flex: none; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; font-size: 12px; font-weight: var(--font-weight-heading);
-  background: var(--color-primary-light); color: var(--color-primary-light-text);
+  background: #8c6a3f; color: #fff;
 }
 .avatar-guest { background: var(--color-background-darker); color: var(--color-text-maxcontrast); }
 .avatar-sm { width: 30px; height: 30px; }
 .avatar-primary { background: var(--color-primary-element); color: var(--color-primary-element-text); }
-.tone-a { background: var(--color-mark); color: var(--color-main-text); }
-.tone-b { background: var(--color-background-dark); color: var(--color-main-text); }
+.tone-a { background: #3f7f8c; }
+.tone-b { background: var(--color-background-darker); color: var(--color-main-text); }
 
 /* The page body */
 .nc-body {
   flex: 1; min-height: 0; display: flex; overflow: hidden; position: relative;
   margin: 0 var(--body-container-margin) var(--body-container-margin);
-  border-radius: var(--body-container-radius); background: var(--color-main-background);
+  /* NcContent: the container is the blurred background; navigation shows through it, the app content is solid. */
+  border-radius: var(--body-container-radius); background-color: var(--color-main-background-blur);
+  -webkit-backdrop-filter: var(--filter-background-blur); backdrop-filter: var(--filter-background-blur);
 }
-.nc-nav { flex: none; width: var(--navigation-width); display: flex; flex-direction: column; padding: 8px; background: var(--color-main-background-blur); border-inline-end: 1px solid var(--color-border); overflow: hidden; }
+.nc-nav {
+  --color-text-maxcontrast: var(--color-text-maxcontrast-background-blur, var(--color-text-maxcontrast-default));
+  flex: none; width: var(--navigation-width); display: flex; flex-direction: column; padding: 8px; overflow: hidden;
+}
 .nav-list { margin-top: 8px; flex: 1; min-height: 0; overflow: hidden; }
 .nav-item { position: relative; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 10px; border-radius: var(--border-radius-element); font-weight: var(--font-weight-element); font-size: 14px; }
 .nav-item:hover { background: color-mix(in srgb, var(--color-primary-element) 8%, transparent); }
@@ -91,39 +99,52 @@ kbd { font: inherit; }
 .upload { padding: 8px 10px; margin-bottom: 4px; border-radius: var(--border-radius-element); background: var(--color-background-hover); font-size: var(--font-size-small); }
 .upload-text { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--color-text-maxcontrast); }
 .progress { height: 4px; border-radius: 4px; overflow: hidden; background: var(--color-background-darker); }
-.progress > span { display: block; height: 100%; border-radius: 4px; background: var(--color-primary-element); }
+.progress { background: var(--color-background-dark); }
+/* NcProgressBar: the value is the primary gradient. */
+.progress > span { display: block; height: 100%; border-radius: 4px; background-image: var(--gradient-primary-background); }
 .quota-bar { margin: -6px 10px 6px 40px; }
-.nc-main { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
+.nc-main { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; background-color: var(--color-main-background); }
 .scroller { flex: 1; min-height: 0; overflow: auto; scrollbar-color: var(--color-scrollbar); scrollbar-width: thin; }
 
 /* Toolbar */
 .toolbar { flex: none; display: flex; align-items: center; gap: 6px; height: 50px; padding: 0 8px; }
 .crumb { flex: none; display: flex; align-items: center; gap: 4px; height: 34px; padding: 0 10px; white-space: nowrap; border-radius: var(--border-radius-element); font-weight: var(--font-weight-element); }
-.crumb:hover { background: var(--color-background-hover); }
+/* NcButton tertiary (and breadcrumbs) hover: a light tint of primary. */
+.crumb:hover { background: color-mix(in srgb, var(--color-primary-element) 8%, transparent); }
 .menu-anchor { position: relative; }
 
 /* Buttons */
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--default-clickable-area); padding: 0 12px;
-  border-radius: var(--border-radius-element); font-weight: var(--font-weight-element); font-size: 14px; white-space: nowrap;
+  border: 1px solid transparent; border-bottom-width: 2px; border-radius: var(--border-radius-element); font-weight: var(--font-weight-element); font-size: 14px; white-space: nowrap;
   transition: background-color var(--animation-quick, 100ms);
 }
-.btn-primary { background: var(--color-primary-element); color: var(--color-primary-element-text); }
+/* NcButton: filled variants carry a 1px border in their hover colour. */
+.btn-primary { background: var(--color-primary-element); color: var(--color-primary-element-text); border-color: var(--color-primary-element-hover); }
 .btn-primary:hover { background: var(--color-primary-element-hover); }
-.btn-secondary { background: var(--color-primary-light); color: var(--color-primary-light-text); }
+.btn-secondary { background: var(--color-primary-light); color: var(--color-primary-light-text); border-color: var(--color-primary-light-hover); }
 .btn-secondary:hover { background: var(--color-primary-light-hover); }
 .btn-tertiary { color: var(--color-main-text); }
-.btn-tertiary:hover { background: var(--color-background-hover); }
+.btn-tertiary:hover { background: color-mix(in srgb, var(--color-primary-element) 8%, transparent); }
 .btn-small { height: 28px; padding: 0 8px; font-size: var(--font-size-small); }
 .icon-btn { flex: none; display: grid; place-items: center; width: var(--default-clickable-area); height: var(--default-clickable-area); border-radius: var(--border-radius-element); color: var(--color-main-text); }
-.icon-btn:hover { background: var(--color-background-hover); }
+.icon-btn:hover { background: color-mix(in srgb, var(--color-primary-element) 8%, transparent); }
 
 /* Fields */
 .field { position: relative; display: flex; align-items: center; }
-.field input {
-  width: 100%; height: 36px; padding: 0 10px; border: var(--border-width-input, 1px) solid var(--color-border-maxcontrast); border-radius: var(--border-radius-element);
-  background: var(--color-main-background); outline: 0;
+/* NcInputField: no border; a shadow line (above in light, below in dark) plus a faint 1px ring. */
+/* (Custom CSS's textarea is an older core field: a plain 2px border, see .code-field.) */
+.field input, .mock-field, .mock-select {
+  --input-border-color: var(--color-border-maxcontrast);
+  border: 0; outline: 0; border-radius: var(--border-radius-element); background-color: var(--color-main-background);
+  box-shadow: 0 -1px var(--input-border-color), 0 0 0 1px color-mix(in srgb, var(--input-border-color), 65% transparent);
 }
+/* Only an explicit Dark theme moves the line below; guests (share, login) never have one. */
+[data-theme-dark] :is([data-view-panel=files], [data-view-panel=admin], [data-view-panel=components]) :is(.field input, .mock-select) {
+  box-shadow: 0 1px var(--input-border-color), 0 0 0 1px color-mix(in srgb, var(--input-border-color), 65% transparent);
+}
+:is(.field input, .mock-field, .mock-select):hover { box-shadow: 0 0 0 1px var(--input-border-color); }
+.field input { width: 100%; height: 36px; padding: 0 10px; color: var(--color-main-text); }
 .field input::placeholder { color: var(--color-text-maxcontrast); }
 .field-search input { padding-inline-end: 34px; }
 .field-search .icon { position: absolute; inset-inline-end: 8px; color: var(--color-text-maxcontrast); }
@@ -141,8 +162,9 @@ kbd { font: inherit; }
 
 /* File table */
 .file-row { display: flex; align-items: center; height: 44px; padding-inline-end: 12px; border-bottom: 1px solid var(--color-border); font-size: 14px; }
-.file-row[data-file]:hover { background: var(--color-background-hover); }
-.file-row[aria-selected="true"], .file-row[aria-selected="true"]:hover { background: var(--color-background-dark); }
+/* Files: hovered rows and the row open in the sidebar get the hover colour, and their grey text turns full colour.
+   Ticked rows keep no background. */
+.file-row[data-file]:hover, .file-row.is-active { background: var(--color-background-hover); --color-text-maxcontrast: var(--color-main-text); }
 .file-head { color: var(--color-text-maxcontrast); }
 .file-foot { border-bottom: 0; color: var(--color-text-maxcontrast); }
 .cell-check { flex: none; width: 44px; display: grid; place-items: center; }
@@ -152,15 +174,17 @@ kbd { font: inherit; }
 .ext { color: var(--color-text-maxcontrast); }
 .cell-actions { flex: none; width: 124px; display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
 .cell-type { flex: none; width: 190px; padding-inline-start: 16px; color: var(--color-text-maxcontrast); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cell-size { flex: none; width: 84px; text-align: end; white-space: nowrap; }
+.cell-size { flex: none; width: 84px; text-align: end; white-space: nowrap; color: var(--color-text-maxcontrast); }
 .cell-date { flex: none; width: 124px; padding-inline-start: 18px; color: var(--color-text-maxcontrast); white-space: nowrap; }
 .tone-folder { color: var(--color-primary-element); }
-.tone-error { color: var(--color-element-error); }
-.tone-success { color: var(--color-element-success); }
-.tone-info { color: var(--color-element-info); }
-.tone-warning { color: var(--color-element-warning); }
+/* Nextcloud's file type icons (core/img/filetypes) are fixed images: their colours, unthemed. */
+.tone-pdf { color: #dc5047; }
+.tone-doc { color: #49abea; }
+.tone-sheet { color: #9abd4e; }
+.tone-slides { color: #f0965f; }
+.tone-other { color: #969696; }
 .fav { position: absolute; top: 0; right: 2px; color: var(--color-favorite); }
-.tag { flex: none; padding: 0 8px; border: 1px solid var(--color-border-dark); border-radius: var(--border-radius-pill); font-size: 12px; line-height: 20px; color: var(--color-text-maxcontrast); }
+.tag { flex: none; padding: 0 8px; border: 1px solid var(--color-border); border-radius: var(--border-radius-pill); font-size: 12px; line-height: 20px; color: var(--color-text-maxcontrast); }
 .share-state { display: flex; align-items: center; gap: 6px; margin-inline-end: 6px; color: var(--color-primary-element); font-weight: var(--font-weight-element); }
 .share-add { color: var(--color-primary-element); }
 
@@ -186,9 +210,10 @@ kbd { font: inherit; }
 .sidebar-hero { display: grid; place-items: center; height: 120px; margin-bottom: 10px; border-radius: var(--border-radius-container); background: var(--color-background-hover); }
 .sidebar h2 { font-size: 17px; font-weight: var(--font-weight-heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tabs { display: flex; margin: 12px 0 4px; border-bottom: 1px solid var(--color-border); }
-.tabs [role="tab"] { flex: 1; height: 36px; border-bottom: 2px solid transparent; margin-bottom: -1px; color: var(--color-text-maxcontrast); font-weight: var(--font-weight-element); font-size: 14px; }
-.tabs [role="tab"]:hover { background: var(--color-background-hover); }
-.tabs [role="tab"][aria-selected="true"] { color: var(--color-main-text); border-bottom-color: var(--color-primary-element); }
+/* NcAppSidebarTabs: main-text tabs; the selected one tinted with primary and underlined in it. */
+.tabs [role="tab"] { flex: 1; height: 36px; border-bottom: 2px solid transparent; margin-bottom: -1px; color: var(--color-main-text); background-color: var(--color-main-background); font-weight: var(--font-weight-element); font-size: 14px; }
+.tabs [role="tab"]:hover { background-color: var(--color-background-hover); }
+.tabs [role="tab"][aria-selected="true"], .tabs [role="tab"][aria-selected="true"]:hover { background-color: color-mix(in srgb, var(--color-primary-element) 8%, transparent); border-bottom-color: var(--color-primary-element); }
 .share-line { display: flex; align-items: center; gap: 10px; min-height: 48px; font-size: 14px; }
 
 /* Guest pages: the card shows the page through it, so its secondary text has its own variable. */
@@ -222,16 +247,14 @@ kbd { font: inherit; }
 .segmented button { padding: 3px 10px; border-radius: var(--border-radius-small); font-weight: var(--font-weight-element); white-space: nowrap; }
 .segmented .active { background: var(--color-main-background); color: var(--color-main-text); }
 .share-scroller { padding-bottom: 64px; }
-.notecard { display: flex; gap: 12px; align-items: center; margin: 4px 44px 14px; padding: 8px 12px; border-inline-start: 4px solid var(--color-element-info); border-radius: var(--border-radius-small); background: var(--color-info); color: var(--color-main-text); font-size: 14px; }
-.notecard .icon { color: var(--color-element-info); }
-.note-success { background: var(--color-success); border-color: var(--color-element-success); }
-.note-success .icon { color: var(--color-element-success); }
-.note-warning { background: var(--color-warning); border-color: var(--color-element-warning); }
-.note-warning .icon { color: var(--color-element-warning); }
-.note-error { background: var(--color-error); border-color: var(--color-element-error); }
-.note-error .icon { color: var(--color-element-error); }
+/* NcNoteCard: the soft status background, with its bar and icon in the status text colour. */
+.notecard { --note-background: var(--color-info); --note-theme: var(--color-info-text); display: flex; gap: 12px; align-items: center; margin: 4px 44px 14px; padding: 8px 12px; border-inline-start: 4px solid var(--note-theme); border-radius: var(--border-radius-small); background: var(--note-background); color: var(--color-main-text); font-size: 14px; }
+.notecard .icon { color: var(--note-theme); }
+.note-success { --note-background: var(--color-success); --note-theme: var(--color-success-text); }
+.note-warning { --note-background: var(--color-warning); --note-theme: var(--color-warning-text); }
+.note-error { --note-background: var(--color-error); --note-theme: var(--color-error-text); }
 .guest-footer { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: min(90%, 900px); padding: 6px 12px; display: flex; flex-direction: column; align-items: center; font-size: 14px; }
-.guest-footer a { color: var(--color-text-maxcontrast); }
+.guest-footer a { color: var(--color-main-text); }
 .request { display: grid; place-items: start center; padding: 24px; background: var(--color-background-plain); }
 .request[hidden] { display: none; }
 .request-box { width: min(100%, 480px); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
@@ -254,15 +277,23 @@ kbd { font: inherit; }
 .field-legend > span { position: absolute; left: 8px; top: -8px; padding: 0 4px; font-size: 11px; background: var(--color-main-background); color: var(--color-text-maxcontrast); }
 .setting-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .setting-btn { width: 340px; height: 44px; justify-content: flex-start; padding: 0 16px; gap: 12px; border-radius: var(--border-radius-element); }
-.setting-primary { background: var(--color-primary); color: var(--color-primary-text); justify-content: center; }
-.setting-background { background: var(--color-background-plain); color: var(--color-background-plain-text); border: 2px solid var(--color-border-maxcontrast); justify-content: center; }
-.setting-soft { background: var(--color-background-hover); }
+/* The colour buttons show the saved admin colours in either mode (Nextcloud sets them inline on the button). */
+.setting-primary, .setting-background {
+  justify-content: center; background-color: var(--fill); color: var(--on-fill);
+  border-color: color-mix(in srgb, var(--fill) 70%, var(--on-fill));
+}
+.setting-primary { --fill: var(--setting-primary, var(--color-primary-element)); --on-fill: var(--setting-primary-text, var(--color-primary-element-text)); }
+.setting-background { --fill: var(--setting-background, var(--color-background-plain)); --on-fill: var(--setting-background-text, var(--color-background-plain-text)); }
+.setting-soft { background-color: var(--color-primary-light); color: var(--color-primary-light-text); border-color: var(--color-primary-light-hover); }
+/* Core's older form buttons (Custom CSS's Save): no border. */
+.btn-legacy { border: 0; }
 .setting-btn:disabled { background: var(--color-background-hover); color: var(--color-text-maxcontrast); opacity: .7; cursor: default; }
 .image-tile { display: grid; place-items: center; width: 92px; height: 44px; border: 2px solid var(--color-border-maxcontrast); border-radius: var(--border-radius-element); background: var(--color-background-plain); color: var(--color-background-plain-text); overflow: hidden; }
 .image-tile .logo { margin: 0; --logo-size: 26px !important; }
 .image-tile svg { width: 26px; height: 26px; }
 .switch-row { display: flex; align-items: flex-start; gap: 12px; margin: 10px 0 14px 8px; }
-.switch { position: relative; flex: none; width: 36px; height: 20px; margin-top: 2px; border-radius: 10px; background: var(--color-border-maxcontrast); transition: background-color var(--animation-quick, 100ms); }
+/* NcCheckboxRadioSwitch: an off switch is drawn in the secondary text colour. */
+.switch { position: relative; flex: none; width: 36px; height: 20px; margin-top: 2px; border-radius: 10px; background: var(--color-text-maxcontrast); transition: background-color var(--animation-quick, 100ms); }
 .switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--color-main-background); transition: transform var(--animation-quick, 100ms); }
 .switch[aria-checked="true"] { background: var(--color-primary-element); }
 .switch[aria-checked="true"]::after { transform: translateX(16px); background: var(--color-primary-element-text); }

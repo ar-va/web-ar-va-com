@@ -5,6 +5,14 @@ import { mdiAccountMultiple, mdiAccountPlus, mdiChevronUp, mdiDotsHorizontal, md
 
 interface Props { rows: Row[]; share?: boolean; footer: string; total: string }
 const { rows, share = false, footer, total } = Astro.props;
+// Nextcloud mixes the grey of the size and date columns toward full text for big and recent files.
+const UNITS: Record<string, number> = { KB: 2 ** 10, MB: 2 ** 20, GB: 2 ** 30, TB: 2 ** 40 };
+const toward = (percent: number) => `color: color-mix(in srgb, var(--color-main-text) ${Math.round(percent)}%, var(--color-text-maxcontrast))`;
+const sizeStyle = (size: string) => {
+  const [n, unit] = size.replace('< ', '').split(' ');
+  return toward(Math.min(100, 100 * (Number(n) * (UNITS[unit] ?? 1) / (10 * 2 ** 20)) ** 2));
+};
+const ageStyle = (days: number) => toward(Math.max(0, 31 - days) * 100 / 31);
 ---
 <div class="files" role="table" aria-label="Files">
   <div class="file-row file-head" role="row">
@@ -17,7 +25,7 @@ const { rows, share = false, footer, total } = Astro.props;
     <span class="cell-date">Modified</span>
   </div>
   {rows.map((r) => (
-    <div class="file-row" role="row" data-file aria-selected={r.selected ? 'true' : 'false'}>
+    <div class:list={['file-row', r.active && 'is-active']} role="row" data-file aria-selected={r.selected ? 'true' : 'false'}>
       <span class="cell-check"><span class="check" role="checkbox" aria-checked={r.selected ? 'true' : 'false'} aria-label={`Select ${r.name}`}></span></span>
       <span class={`cell-icon tone-${r.tone}`}>
         <Icon path={r.icon} size={r.tone === 'folder' ? 30 : 28} />
@@ -31,8 +39,8 @@ const { rows, share = false, footer, total } = Astro.props;
         <button class="icon-btn" data-menu="row-menu" aria-label="Actions"><Icon path={mdiDotsHorizontal} /></button>
       </span>
       <span class="cell-type">{r.type}</span>
-      <span class="cell-size">{r.size}</span>
-      <span class="cell-date">{r.modified}</span>
+      <span class="cell-size" style={sizeStyle(r.size)}>{r.size}</span>
+      <span class="cell-date" style={ageStyle(r.age)}>{r.modified}</span>
     </div>
   ))}
   <div class="file-row file-foot" role="row">

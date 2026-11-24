@@ -1,4 +1,4 @@
-import { hexToOklch, maxChroma, oklchToHex, oklchToRgb, parseColor, type Oklch } from '../lib/color';
+import { contrast, hexToOklch, maxChroma, oklchToHex, oklchToRgb, parseColor, type Oklch } from '../lib/color';
 import { exportCss, settings } from '../lib/export';
 import { OFFSETS, type Harmony } from '../lib/harmony';
 import { dominantColors } from '../lib/image';
@@ -6,7 +6,7 @@ import { checkPairs, decodeChoices, encodeChoices, generateTheme, type Mode, typ
 import { colorToPoint, pointToColor } from '../lib/wheel';
 
 type View = 'files' | 'share' | 'login' | 'admin' | 'components';
-interface PreviewApi { applyCss(css: string, mode: Mode): void; show(view: View): void; setLogo(url: string | null): void }
+interface PreviewApi { applyCss(css: string, mode: Mode, settings?: { primary: string; primaryText: string; background: string; backgroundText: string }): void; show(view: View): void; setLogo(url: string | null): void }
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const all = <T extends HTMLElement = HTMLElement>(selector: string) => [...document.querySelectorAll<T>(selector)];
@@ -155,8 +155,13 @@ function renderPalette() {
   }));
 }
 
+// Nextcloud picks white or black text for the admin colour buttons, as it does for its primary colour.
+const textOn = (hex: string) => (contrast('#ffffff', hex) >= 4.5 ? '#ffffff' : '#000000');
 function pushPreview() {
-  previewApi()?.applyCss(exportCss(theme), mode);
+  const saved = settings(theme);
+  previewApi()?.applyCss(exportCss(theme), mode, {
+    primary: saved.primary, primaryText: textOn(saved.primary), background: saved.background, backgroundText: textOn(saved.background),
+  });
 }
 
 function render() {

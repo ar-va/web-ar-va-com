@@ -64,7 +64,7 @@ const selected = files.find((f) => f.selected)!;
   </main>
   <aside class="sidebar" aria-label="Details">
     <button class="icon-btn sidebar-close" aria-label="Close"><Icon path={mdiClose} /></button>
-    <div class="sidebar-hero tone-error"><Icon path={selected.icon} size={64} /></div>
+    <div class="sidebar-hero tone-pdf"><Icon path={selected.icon} size={64} /></div>
     <h2>{selected.name}{selected.ext}</h2>
     <p class="muted">{selected.size}, {selected.modified}</p>
     <div class="tabs" role="tablist">
