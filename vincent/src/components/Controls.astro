@@ -1,0 +1,63 @@
+---
+import { HARMONIES } from '../lib/harmony';
+
+const styles = [['muted', 'Muted'], ['balanced', 'Balanced'], ['vivid', 'Vivid']];
+const pages = [['neutral', 'Neutral'], ['primary', 'Primary'], ['secondary', 'Secondary']];
+const label = 'block mb-1.5 text-sm font-medium text-zinc-800 dark:text-zinc-200';
+const hint = 'mt-1.5 text-xs text-zinc-500';
+---
+<section aria-labelledby="colour-title" class="space-y-4">
+  <h2 id="colour-title" class="text-lg font-bold text-zinc-900 dark:text-white">Your colour</h2>
+  <slot />
+  <div>
+    <label for="lightness" class={label}>Lightness</label>
+    <input id="lightness" type="range" min="5" max="95" step="0.5" />
+  </div>
+  <div>
+    <label for="colour-text" class={label}>Primary colour</label>
+    <div class="flex gap-2">
+      <input id="colour-native" type="color" aria-label="Pick from your system's colour picker" class="h-10 w-12 shrink-0 cursor-pointer rounded-xl bg-(--well) p-1" />
+      <input id="colour-text" class="v-field font-mono" spellcheck="false" autocomplete="off" aria-describedby="colour-error" />
+    </div>
+    <p id="colour-error" class="mt-1.5 text-xs text-bengara dark:text-bengara-light" hidden>Use a colour like #624db4, rgb(98 77 180), hsl(252 40% 50%) or oklch(0.47 0.15 285).</p>
+  </div>
+  <div class="grid grid-cols-3 gap-2">
+    <div><label for="num-l" class={label}>L</label><input id="num-l" class="v-field" type="number" min="5" max="95" step="0.5" aria-label="Lightness, percent" /></div>
+    <div><label for="num-c" class={label}>C</label><input id="num-c" class="v-field" type="number" min="0" max="0.4" step="0.005" aria-label="Chroma" /></div>
+    <div><label for="num-h" class={label}>H</label><input id="num-h" class="v-field" type="number" min="0" max="360" step="1" aria-label="Hue, degrees" /></div>
+  </div>
+  <div>
+    <label class="ctl w-full justify-center !h-10 cursor-pointer focus-within:outline-2 focus-within:outline-kikyo-500">
+      <input id="image-input" type="file" accept="image/*" class="sr-only" />
+      From a logo or image
+    </label>
+    <p class={hint}>Stays on your device.</p>
+    <p id="image-error" role="alert" class="mt-1.5 text-xs text-bengara dark:text-bengara-light" hidden></p>
+    <div id="image-result" hidden class="mt-2">
+      <div id="image-colours" class="grid grid-cols-5 gap-1.5"></div>
+      <label class="mt-2 flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300"><input id="image-logo" type="checkbox" class="accent-kikyo-600" /> Show it as the preview's logo</label>
+    </div>
+  </div>
+</section>
+
+<section aria-labelledby="match-title" class="space-y-4">
+  <h2 id="match-title" class="text-lg font-bold text-zinc-900 dark:text-white">Matching colours</h2>
+  <div>
+    <label for="harmony" class={label}>Harmony</label>
+    <select id="harmony" class="v-field">{HARMONIES.map((h) => <option value={h.id}>{h.label}</option>)}</select>
+  </div>
+  <div role="group" aria-labelledby="style-label">
+    <span id="style-label" class={label}>Style</span>
+    <div class="grid grid-cols-3 gap-1.5">{styles.map(([id, name]) => <button type="button" class="ctl justify-center" data-choice="style" data-value={id}>{name}</button>)}</div>
+  </div>
+  <div>
+    <label for="tint" class={label}>Neutral tint</label>
+    <input id="tint" type="range" min="0" max="100" step="1" />
+    <p class={hint}>How much of your colour reaches backgrounds, borders and text.</p>
+  </div>
+  <div role="group" aria-labelledby="page-label">
+    <span id="page-label" class={label}>Page background</span>
+    <div class="grid grid-cols-3 gap-1.5">{pages.map(([id, name]) => <button type="button" class="ctl justify-center" data-choice="page" data-value={id}>{name}</button>)}</div>
+    <p class={hint}>Behind the header, login and public share pages.</p>
+  </div>
+</section>

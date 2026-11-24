@@ -1,6 +1,42 @@
 ---
 import Layout from '@shared/layouts/Layout.astro';
+import Controls from '../components/Controls.astro';
+import Palette from '../components/Palette.astro';
+import Wheel from '../components/Wheel.astro';
+import '../styles/vincent.css';
+
+const views = [['files', 'Files'], ['share', 'Public share'], ['login', 'Login'], ['admin', 'Admin'], ['components', 'Components']];
 ---
-<Layout title="Vincent, a Nextcloud theme generator" header={{ label: 'vincent', home: '/', minimal: true }}>
-  <main class="max-w-5xl mx-auto px-6 w-full pt-12 pb-24"><h1 class="font-bold text-3xl">Vincent</h1></main>
+<Layout title="Vincent: a theme generator for Nextcloud" description="Pick a colour, get a matching light and dark Nextcloud theme, preview it on every screen and export the exact settings and Custom CSS." header={{ label: 'vincent', home: '/', minimal: true }}>
+  <button slot="header-actions" id="export-open" type="button" class="btn-primary btn-sm">Export</button>
+  <main class="w-full max-w-[100rem] mx-auto px-4 sm:px-6 pt-4 pb-8 grid gap-6 lg:grid-cols-[21rem_minmax(0,1fr)] lg:items-start">
+    <div class="space-y-7">
+      <header>
+        <h1 class="font-bold text-2xl text-zinc-900 dark:text-white">Theme your Nextcloud</h1>
+        <p class="mt-1.5 text-sm text-zinc-600 dark:text-zinc-400 text-pretty">Pick a colour. Vincent builds a readable light and dark theme and tells you exactly how to apply it.</p>
+      </header>
+      <Controls><Wheel /></Controls>
+      <Palette />
+      <p class="text-xs text-zinc-500">Not affiliated with Nextcloud GmbH.</p>
+    </div>
+    <section aria-label="Preview" class="min-w-0 lg:sticky lg:top-3">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div role="group" aria-label="Screen" class="flex flex-wrap gap-1.5">
+          {views.map(([id, name]) => <button type="button" class="ctl" data-view={id}>{name}</button>)}
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-xs text-zinc-500">Preview</span>
+          <div role="group" aria-label="Theme mode" class="flex gap-1.5">
+            <button type="button" class="ctl" data-mode="light">Light</button>
+            <button type="button" class="ctl" data-mode="dark">Dark</button>
+          </div>
+        </div>
+      </div>
+      <div id="preview-stage"><iframe id="preview" src="/preview" title="Preview of the theme on a Nextcloud-style screen"></iframe></div>
+    </section>
+  </main>
 </Layout>
+
+<script>
+  import '../scripts/app';
+</script>

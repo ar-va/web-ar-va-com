@@ -25,7 +25,7 @@ export function hexToOklch(hex: string): Oklch {
 }
 
 // Gamma-encoded sRGB, 0..1 when the colour is displayable.
-function oklchToRgb({ l: L, c, h }: Oklch): [number, number, number] {
+export function oklchToRgb({ l: L, c, h }: Oklch): [number, number, number] {
   const A = c * Math.cos(h * Math.PI / 180);
   const B = c * Math.sin(h * Math.PI / 180);
   const l = (L + 0.3963377774 * A + 0.2158037573 * B) ** 3;
