@@ -58,9 +58,16 @@ test('settings give the values for the admin panel', () => {
   assert.deepEqual(settings(theme), { primary: theme.light['--color-primary-element'], background: theme.light['--color-background-plain'] });
 });
 
-test('System default and guests on a dark device get the search bar tint Nextcloud gives its Dark theme', () => {
-  const m = css.match(/@media \(prefers-color-scheme: dark\) and \(not \(prefers-contrast: more\)\) \{\s*body:not\(\[data-theme-light\], \[data-theme-light-highcontrast\], \[data-theme-dark-highcontrast\]\) \.unified-search-input[^{]*\.unified-search-input__field[^{]*\{([^}]*)\}/);
-  assert.ok(m, 'a dark-device search bar rule');
-  assert.ok(m[1].includes('--resting-background: color-mix(in srgb, var(--color-primary-element) 16%, transparent);'));
-  assert.ok(m[1].includes('--resting-background-hover: color-mix(in srgb, var(--color-primary-element) 22%, transparent);'));
+test('the search bar in dark mode is a faint white lift, for the Dark theme and dark devices alike', () => {
+  const lift = '--resting-background: color-mix(in srgb, #ffffff 8%, transparent);';
+  const hover = '--resting-background-hover: color-mix(in srgb, #ffffff 12%, transparent);';
+  const device = css.match(/@media \(prefers-color-scheme: dark\) and \(not \(prefers-contrast: more\)\) \{\s*body:not\(\[data-theme-light\], \[data-theme-light-highcontrast\], \[data-theme-dark-highcontrast\]\) \.unified-search-input \.unified-search-input__field \{([^}]*)\}/);
+  assert.ok(device, 'a dark-device rule');
+  const chosen = css.match(/body\[data-theme-dark\] \.unified-search-input \.unified-search-input__field \{([^}]*)\}/);
+  assert.ok(chosen, 'a Dark theme rule');
+  for (const block of [device[1], chosen[1]]) {
+    assert.ok(block.includes(lift), block);
+    assert.ok(block.includes(hover), block);
+  }
+  assert.ok(!css.includes('primary-element) 16%'), 'no primary tint on the bar');
 });

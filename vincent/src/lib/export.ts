@@ -8,6 +8,9 @@ const declarations = (vars: Vars, indent: string) =>
 // answers with its high contrast themes: those stay Nextcloud's own.
 const HIGH_CONTRAST = '[data-theme-light-highcontrast], [data-theme-dark-highcontrast]';
 
+const SEARCH_LIFT = `    --resting-background: color-mix(in srgb, #ffffff 8%, transparent);
+    --resting-background-hover: color-mix(in srgb, #ffffff 12%, transparent);`;
+
 /** The code for the Custom CSS app. */
 export function exportCss(theme: Theme): string {
   return `/* Nextcloud theme made with vincent.ar-va.com. Light and dark. High contrast themes are left alone. */
@@ -33,13 +36,17 @@ body[data-theme-dark] {
 ${declarations(theme.dark, '  ')}
 }
 
-/* Nextcloud tints the header search bar with the primary colour only for its Dark theme. A dark device on the
-   system default gets the same, instead of a black overlay that disappears into a dark header. */
+/* The header search bar in dark mode: Nextcloud gives a dark device on the system default a black overlay that
+   disappears into a dark header, and its Dark theme a primary tint that glares with strong colours. Both get a faint
+   white lift instead: visible on a dark header, and on a light one it moves away from the dark label (≥ 5.3:1). */
 @media (prefers-color-scheme: dark) and (not (prefers-contrast: more)) {
   body:not([data-theme-light], ${HIGH_CONTRAST}) .unified-search-input .unified-search-input__field {
-    --resting-background: color-mix(in srgb, var(--color-primary-element) 16%, transparent);
-    --resting-background-hover: color-mix(in srgb, var(--color-primary-element) 22%, transparent);
+${SEARCH_LIFT}
   }
+}
+
+body[data-theme-dark] .unified-search-input .unified-search-input__field {
+${SEARCH_LIFT}
 }
 `;
 }

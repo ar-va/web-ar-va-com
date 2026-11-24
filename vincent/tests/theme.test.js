@@ -216,3 +216,14 @@ test('notes name the colour the person chose, and only for a visible change', ()
   assert.equal(dark.reason, 'dark');
   assert.equal(generateTheme({ ...DEFAULT_CHOICES, primary: '#ffff00' }).notes.find((n) => n.mode === 'light').reason, 'contrast');
 });
+
+test('the dark search bar label stays readable on every page background', async () => {
+  const { composite } = await import('../src/lib/color.ts');
+  for (let h = 0; h < 360; h += 30) for (const l of [0.2, 0.5, 0.8]) for (const c of [0, 0.1, 0.18]) for (const page of ['neutral', 'primary', 'secondary']) {
+    const t = generateTheme({ ...DEFAULT_CHOICES, primary: oklchToHex({ l, c, h }), page }).dark;
+    const plain = t['--color-background-plain'];
+    // Nextcloud's label colour on the exported bar (8% white over the header).
+    const label = composite(t['--color-background-plain-text'], 0.7, plain);
+    assert.ok(contrast(label, composite('#ffffff', 0.08, plain)) >= 4.5, `${page} ${plain}`);
+  }
+});
