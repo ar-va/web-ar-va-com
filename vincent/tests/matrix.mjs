@@ -10,8 +10,12 @@ import { DEFAULT_CHOICES, generateTheme } from '../src/lib/theme.ts';
 const CHROME = process.env.CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const NAMES = ['--color-main-background', '--color-primary-element'];
 const own = (id) => NAMES.map((n, i) => `${n}:#${id}0${i}`).join(';');
+// The same media queries a real page has: a device asking for more contrast gets high contrast without choosing it.
 const NEXTCLOUD = `:root{${own('1111')}}
+@media (prefers-color-scheme: light){:root{${own('1212')}}}
 @media (prefers-color-scheme: dark){:root{${own('2222')}}}
+@media (prefers-contrast: more){:root{${own('5555')}}}
+@media (prefers-color-scheme: dark) and (prefers-contrast: more){:root{${own('6666')}}}
 [data-theme-light]{${own('3333')}}
 [data-theme-dark]{${own('4444')}}
 [data-theme-light-highcontrast]{${own('5555')}}
@@ -29,6 +33,12 @@ const CASES = [
   ['data-theme-dark', 'light', values(theme.dark)], ['data-theme-dark', 'dark', values(theme.dark)],
   ['data-theme-light-highcontrast', 'light', ownValues('5555')], ['data-theme-light-highcontrast', 'dark', ownValues('5555')],
   ['data-theme-dark-highcontrast', 'light', ownValues('6666')], ['data-theme-dark-highcontrast', 'dark', ownValues('6666')],
+  ['', 'light', ownValues('5555'), 'more'], ['', 'dark', ownValues('6666'), 'more'],
+  ['data-theme-default', 'light', ownValues('5555'), 'more'], ['data-theme-default', 'dark', ownValues('6666'), 'more'],
+  ['data-theme-light', 'light', values(theme.light), 'more'], ['data-theme-light', 'dark', values(theme.light), 'more'],
+  ['data-theme-dark', 'light', values(theme.dark), 'more'], ['data-theme-dark', 'dark', values(theme.dark), 'more'],
+  ['data-theme-light-highcontrast', 'light', ownValues('5555'), 'more'], ['data-theme-light-highcontrast', 'dark', ownValues('5555'), 'more'],
+  ['data-theme-dark-highcontrast', 'light', ownValues('6666'), 'more'], ['data-theme-dark-highcontrast', 'dark', ownValues('6666'), 'more'],
 ];
 
 const profile = await mkdtemp(join(tmpdir(), 'vincent-matrix-'));
@@ -61,8 +71,8 @@ try {
   let passed = 0;
   for (const order of ['after', 'before']) {
     const sheets = order === 'after' ? [NEXTCLOUD, css] : [css, NEXTCLOUD];
-    for (const [attr, device, expected] of CASES) {
-      await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: device }] });
+    for (const [attr, device, expected, pref = 'no-preference'] of CASES) {
+      await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: device }, { name: 'prefers-contrast', value: pref }] });
       await send('Page.setDocumentContent', { frameId: frame, html: `<!doctype html><html><head>${sheets.map((s) => `<style>${s}</style>`).join('')}</head><body ${attr}></body></html>` });
       const { result } = await send('Runtime.evaluate', {
         expression: `JSON.stringify(${JSON.stringify(NAMES)}.map((n) => getComputedStyle(document.body).getPropertyValue(n).trim()))`,
@@ -70,7 +80,7 @@ try {
       });
       const got = JSON.parse(result.value);
       if (JSON.stringify(got) === JSON.stringify(expected)) passed++;
-      else { failed++; console.error(`FAIL css ${order}, body [${attr || 'guest'}], device ${device}: got ${got}, expected ${expected}`); }
+      else { failed++; console.error(`FAIL css ${order}, body [${attr || 'guest'}], device ${device}, contrast ${pref}: got ${got}, expected ${expected}`); }
     }
   }
   console.log(`${passed}/${CASES.length * 2}`);

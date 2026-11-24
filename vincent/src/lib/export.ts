@@ -4,22 +4,29 @@ const declarations = (vars: Vars, indent: string) =>
   Object.entries(vars).map(([name, value]) => `${indent}${name}: ${value};`).join('\n');
 
 // Nextcloud sets each chosen theme directly on <body> and loads this file in no fixed order, so these selectors win by
-// specificity. Guests have no theme attribute, so they follow the device. High contrast stays Nextcloud's own.
+// specificity. Guests and "system default" follow the device, including its request for more contrast, which Nextcloud
+// answers with its high contrast themes: those stay Nextcloud's own.
 const HIGH_CONTRAST = '[data-theme-light-highcontrast], [data-theme-dark-highcontrast]';
 
 /** The code for the Custom CSS app. */
 export function exportCss(theme: Theme): string {
   return `/* Nextcloud theme made with vincent.ar-va.com. Light and dark. High contrast themes are left alone. */
-html:root,
-body:not([data-theme-dark], ${HIGH_CONTRAST}) {
-${declarations(theme.light, '  ')}
+@media not (prefers-contrast: more) {
+  html:root,
+  body:not([data-theme-dark], ${HIGH_CONTRAST}) {
+${declarations(theme.light, '    ')}
+  }
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark) and (not (prefers-contrast: more)) {
   html:root,
   body:not([data-theme-light], ${HIGH_CONTRAST}) {
 ${declarations(theme.dark, '    ')}
   }
+}
+
+body[data-theme-light] {
+${declarations(theme.light, '  ')}
 }
 
 body[data-theme-dark] {

@@ -44,6 +44,8 @@ Nextcloud screen, and leave with the exact settings and Custom CSS that reproduc
 - `<body>` carries a `data-theme-<id>` attribute for each enabled theme. A signed-in person on the system default has
   `data-theme-default`. **Guests have none**, so public share and login pages follow the device's light or dark setting.
 - A scoped theme sets its variables directly on `<body>`, so a value set only on `:root` loses there.
+- Real pages also load both high contrast themes under `(prefers-contrast: more)`, so guests and system-default users on
+  a device asking for more contrast get them automatically. The export must not override that (found on a real 35).
 - A person's own primary colour wins over the admin's unless `disable-user-theming` is on.
 - `enforce_theme` in `config.php` can lock one theme. Vincent does not need it.
 - The Custom CSS app (`theming_customcss`, 1.22.0, Nextcloud 26 to 35) adds one plain stylesheet to user, public and login
@@ -166,14 +168,17 @@ The admin colours matter for what CSS cannot reach, such as emails and the first
 Shape of the exported CSS:
 
 ```css
-html:root,
-body:not([data-theme-dark], [data-theme-light-highcontrast], [data-theme-dark-highcontrast]) { /* light */ }
+@media not (prefers-contrast: more) {
+  html:root,
+  body:not([data-theme-dark], [data-theme-light-highcontrast], [data-theme-dark-highcontrast]) { /* light */ }
+}
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark) and (not (prefers-contrast: more)) {
   html:root,
   body:not([data-theme-light], [data-theme-light-highcontrast], [data-theme-dark-highcontrast]) { /* dark */ }
 }
 
+body[data-theme-light] { /* light */ }
 body[data-theme-dark] { /* dark */ }
 ```
 
