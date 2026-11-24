@@ -25,7 +25,7 @@ input[type="range"] { width: 100%; accent-color: var(--color-kikyo-600); }
 
 /* The preview keeps its desktop size and is scaled to fit. */
 #preview-stage { position: relative; overflow: hidden; border-radius: 1rem; background: var(--well); }
-#preview { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; background: transparent; }
+#preview, #preview-b { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; background: transparent; }
 
 /* The loupe above a handle while dragging. */
 .v-loupe {
@@ -45,8 +45,9 @@ input[type="range"] { width: 100%; accent-color: var(--color-kikyo-600); }
   content: '‹ ›'; position: relative; display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; font-size: 0.875rem; font-weight: 600;
   background: #fff; color: #222; box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
 }
-.v-split:focus-visible { outline: 2px solid var(--color-kikyo-500); }
-.v-side { position: absolute; top: 0.5rem; z-index: 2; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background: rgb(0 0 0 / 0.55); color: #fff; pointer-events: none; }
+.v-split:focus-visible { outline: none; }
+.v-split:focus-visible::after { outline: 2px solid var(--color-kikyo-500); outline-offset: 2px; }
+.v-side { position: absolute; bottom: 0.5rem; z-index: 2; padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; background: rgb(0 0 0 / 0.55); color: #fff; pointer-events: none; }
 .v-side-left { left: 0.5rem; }
 .v-side-right { right: 0.5rem; }
 .v-mark { width: 1rem; text-align: center; font-weight: 600; color: var(--color-zinc-500); }
