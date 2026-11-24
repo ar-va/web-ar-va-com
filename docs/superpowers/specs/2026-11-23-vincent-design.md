@@ -161,7 +161,7 @@ In the order you meet them (updated 2026-11-24, user: no going back and forth be
    **Background color**, turn on **Remove background image**, then **Disable user theming**.
 3. At the bottom of the same page, paste the code into **Custom CSS** and save.
 4. Reload. If anything breaks, run the recovery command shown.
-5. In **Personal settings > Appearance and accessibility**, choose **System default theme** to follow each device, or
+5. Optional (new accounts already follow each device): in **Personal settings > Appearance and accessibility**, choose **System default theme** to follow each device, or
    Light or Dark to fix it. Every choice is covered, and high contrast stays Nextcloud's own.
 
 The admin colours matter for what CSS cannot reach, such as emails and the first paint.
