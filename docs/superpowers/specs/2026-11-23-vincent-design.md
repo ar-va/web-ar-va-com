@@ -104,8 +104,8 @@ The current theme lives in the page address, so reloading keeps it and a link sh
 
 | Role | Comes from | Nextcloud variables |
 | --- | --- | --- |
-| Primary | chosen colour | `--color-primary*`, `--color-primary-element*`, `--color-background-selection`, invert flags |
-| Secondary | harmony | `--color-primary-light*` and aliases: selected navigation, soft buttons |
+| Primary | chosen colour | `--color-primary*`, `--color-primary-element*`, `--color-background-selection`, invert flags. Nextcloud also tints the selected navigation item with it (16%, 22% on hover) |
+| Secondary | harmony | `--color-primary-light*` and aliases: soft buttons, selected tags, avatars |
 | Tertiary | harmony | `--color-favorite`, `--color-mark` |
 | Assistant | all harmony hues | `--color-background-assistant`, `--color-border-assistant`, `--color-element-assistant*` |
 | Neutral | primary hue, low chroma | main background and its `-rgb`, hover, dark, darker, placeholders, text, borders, shadows, loading, scrollbar |
@@ -202,7 +202,7 @@ body[data-theme-dark] { /* dark */ }
 
 ## Calls made without asking
 
-- The role mapping above, including Secondary driving soft selected states.
+- The role mapping above, including Secondary driving soft buttons.
 - OKLCH generation with WCAG 2.1 AA checks, because that is Nextcloud's stated accessibility target.
 - The login page as a fourth view and Components as a fifth.
 - Theme stored in the address instead of accounts.

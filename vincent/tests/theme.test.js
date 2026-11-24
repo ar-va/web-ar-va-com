@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { contrast, hexToOklch, hexToRgbList, oklchToHex } from '../src/lib/color.ts';
+import { composite, contrast, hexToOklch, hexToRgbList, oklchToHex } from '../src/lib/color.ts';
 import { harmonyColors } from '../src/lib/harmony.ts';
 import { NEXTCLOUD_COLOR_VARS } from '../src/lib/nextcloud-vars.ts';
 import { CONTRAST_PAIRS, DEFAULT_CHOICES, checkPairs, decodeChoices, encodeChoices, generateTheme } from '../src/lib/theme.ts';
@@ -160,7 +160,20 @@ test('the guest card keeps its text readable over the page', () => {
 test('contrast pairs name real variables', () => {
   for (const p of CONTRAST_PAIRS) {
     assert.ok(NEXTCLOUD_COLOR_VARS.includes(p.fg), p.fg);
-    assert.ok(p.bg === '@guest-card' || NEXTCLOUD_COLOR_VARS.includes(p.bg), p.bg);
+    assert.ok(p.bg.startsWith('@') || NEXTCLOUD_COLOR_VARS.includes(p.bg), p.bg);
+  }
+});
+
+test('the selected menu item is checked as Nextcloud draws it, a tint of primary', () => {
+  const t = generateTheme(DEFAULT_CHOICES);
+  for (const mode of ['light', 'dark']) {
+    const vars = t[mode];
+    const pairs = checkPairs(vars, mode);
+    for (const [label, alpha] of [['Text on selected menu item', 0.16], ['Text on selected menu item, hover', 0.22]]) {
+      const pair = pairs.find((p) => p.label === label);
+      assert.ok(pair, label);
+      assert.equal(pair.bg, composite(vars['--color-primary-element'], alpha, vars['--color-main-background']));
+    }
   }
 });
 

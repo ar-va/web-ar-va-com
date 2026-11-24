@@ -22,6 +22,9 @@ const TEXT = 4.5;
 const UI = 3.2;
 const STYLE_CHROMA: Record<Style, number> = { muted: 0.55, balanced: 1, vivid: 1.35 };
 const GUEST_ALPHA: Record<Mode, number> = { light: 0.8, dark: 0.85 };
+// Nextcloud draws the selected navigation item as this share of the primary colour.
+const NAV_ACTIVE = 0.16;
+const NAV_ACTIVE_HOVER = 0.22;
 const STATUS = { error: 29, warning: 72, success: 143, info: 247 };
 
 const v = (name: string) => `--color-${name}`;
@@ -32,13 +35,15 @@ const statusPairs = Object.keys(STATUS).flatMap((s) => [
   pair(v(`element-${s}`), v('main-background'), UI, `${s} icon`),
 ]);
 
-/** What must stay readable. `@guest-card` is the blurred card on login and public share pages. */
+/** What must stay readable. `@guest-card` is the blurred card on login and share pages; `@nav-active` the selected menu item. */
 export const CONTRAST_PAIRS = [
   pair(v('main-text'), v('main-background'), TEXT, 'Text'),
   pair(v('main-text'), v('background-hover'), TEXT, 'Text on hover'),
   pair(v('main-text'), v('background-dark'), TEXT, 'Text on selected row'),
   pair(v('main-text'), v('mark'), TEXT, 'Text on highlight'),
   pair(v('main-text'), '@guest-card', TEXT, 'Text on guest card'),
+  pair(v('main-text'), '@nav-active', TEXT, 'Text on selected menu item'),
+  pair(v('main-text'), '@nav-active-hover', TEXT, 'Text on selected menu item, hover'),
   pair(v('text-maxcontrast'), v('main-background'), TEXT, 'Secondary text'),
   pair(v('text-maxcontrast'), v('background-hover'), TEXT, 'Secondary text on hover'),
   pair(v('text-maxcontrast'), v('background-dark'), TEXT, 'Secondary text on selected row'),
@@ -61,9 +66,15 @@ export const CONTRAST_PAIRS = [
 export interface PairResult { label: string; fg: string; bg: string; min: number; ratio: number; pass: boolean }
 
 export function checkPairs(vars: Vars, mode: Mode): PairResult[] {
-  const guest = composite(vars[v('main-background')], GUEST_ALPHA[mode], vars[v('background-plain')]);
+  const main = vars[v('main-background')];
+  const element = vars[v('primary-element')];
+  const mixed: Record<string, string> = {
+    '@guest-card': composite(main, GUEST_ALPHA[mode], vars[v('background-plain')]),
+    '@nav-active': composite(element, NAV_ACTIVE, main),
+    '@nav-active-hover': composite(element, NAV_ACTIVE_HOVER, main),
+  };
   return CONTRAST_PAIRS.map(({ fg, bg, min, label }) => {
-    const [f, b] = [vars[fg], bg === '@guest-card' ? guest : vars[bg]];
+    const [f, b] = [vars[fg], mixed[bg] ?? vars[bg]];
     const ratio = contrast(f, b);
     return { label, fg: f, bg: b, min, ratio, pass: ratio >= min };
   });
@@ -134,7 +145,7 @@ function generateMode(mode: Mode, choices: Choices, primary: Oklch, accents: str
   const favorite = fit({ l: dark ? 0.82 : 0.52, c: Math.min(tertiary.c, 0.16), h: tertiary.h }, [main, hover], UI);
 
   const textHue = { c: tint * 0.025, h: primary.h };
-  const mainText = fit({ ...textHue, l: dark ? 0.93 : 0.25 }, [main, hover, backgroundDark, guest, mark], TEXT);
+  const mainText = fit({ ...textHue, l: dark ? 0.93 : 0.25 }, [main, hover, backgroundDark, guest, mark, composite(element, NAV_ACTIVE, main), composite(element, NAV_ACTIVE_HOVER, main)], TEXT);
   const maxContrast = fit({ ...textHue, l: dark ? 0.74 : 0.5 }, [main, hover, backgroundDark], TEXT);
   const maxBlur = fit(hexToOklch(maxContrast), [guest], TEXT);
   const borderMax = fit({ ...textHue, l: dark ? 0.6 : 0.62 }, [main, hover], UI);
