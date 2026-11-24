@@ -51,7 +51,7 @@ const selected = files.find((f) => f.selected)!;
       {filters.map(([name, icon]) => <button class="btn btn-tertiary"><Icon path={icon} /> {name}</button>)}
       <button class="icon-btn" aria-label="Grid view"><Icon path={mdiViewGridOutline} /></button>
     </div>
-    <div class="scroller"><FileTable rows={files} footer="4 folders and 10 files" total="1.2 TB" /></div>
+    <div class="scroller"><FileTable rows={files} footer="5 folders and 11 files" total="1.2 TB" /></div>
     <div class="menu row-menu" id="row-menu" hidden>
       <a><Icon path={mdiInformationOutline} /> Open details</a>
       <a><Icon path={mdiStarOutline} /> Add to favorites</a>

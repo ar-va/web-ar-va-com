@@ -2,7 +2,7 @@
 import FileTable from './FileTable.astro';
 import Icon from './Icon.astro';
 import Shell from './Shell.astro';
-import { COMPANY, sharedFiles } from './data';
+import { COMPANY, PERSON, sharedFiles } from './data';
 import { mdiCalendarBlankOutline, mdiChevronDown, mdiChevronRight, mdiFileOutline, mdiInformation, mdiLinkVariant, mdiPlus, mdiTagOutline, mdiUpload, mdiViewGridOutline } from './icons';
 ---
 <Shell view="share" public shareName="Artist">
@@ -27,7 +27,7 @@ import { mdiCalendarBlankOutline, mdiChevronDown, mdiChevronRight, mdiFileOutlin
     <div class="scroller request" data-pane-id="request" hidden>
       <div class="guest-box request-box">
         <h2>Upload files to Artist</h2>
-        <p class="muted">Shared by {COMPANY}. Your files go straight to their folder.</p>
+        <p class="muted">Shared by {PERSON} at {COMPANY}. Your files go straight to their folder.</p>
         <div class="drop"><Icon path={mdiUpload} size={36} /><span>Drop files here or</span><button class="btn btn-primary">Choose files</button></div>
         <div class="upload"><div class="upload-text"><span>shoot-0412.raw</span><span>38%</span></div><div class="progress"><span style="width:38%"></span></div></div>
       </div>

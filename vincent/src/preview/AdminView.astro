@@ -2,6 +2,7 @@
 import Icon from './Icon.astro';
 import Logo from './Logo.astro';
 import Shell from './Shell.astro';
+import { COMPANY } from './data';
 import {
   mdiAccountGroupOutline, mdiAccountMultiple, mdiAccountOutline, mdiBellOutline, mdiCalendarBlankOutline, mdiCellphone, mdiCogOutline, mdiCreationOutline, mdiFormatPaint, mdiHumanGreetingVariant,
   mdiImageOutline, mdiKeyOutline, mdiLockOutline, mdiMonitor, mdiPalette, mdiShareVariant, mdiTuneVariant, mdiUndoVariant, mdiViewDashboardOutline, mdiWeb,
@@ -35,7 +36,7 @@ html:root {
         <h1>Theming</h1>
         <p class="muted-text">Theming makes it possible to easily customize the look and feel of your instance and supported clients. This will be visible for all users.</p>
         <div class="admin-fields">
-          {[['Name', 'Fernhill Studio'], ['Web link', 'https://fernhill.example'], ['Slogan', 'A safe home for your work']].map(([label, value]) => <label class="field field-legend"><span>{label}</span><input readonly tabindex="-1" value={value} /></label>)}
+          {[['Name', COMPANY], ['Web link', 'https://yellowhouse.example'], ['Slogan', 'A safe home for your work']].map(([label, value]) => <label class="field field-legend"><span>{label}</span><input readonly tabindex="-1" value={value} /></label>)}
         </div>
         <h2>Background and color</h2>
         <div class="setting-row"><button class="btn setting-btn setting-primary"><Icon path={mdiPalette} /> Primary color</button><button class="icon-btn" aria-label="Reset"><Icon path={mdiUndoVariant} /></button></div>

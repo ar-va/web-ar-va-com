@@ -1,7 +1,7 @@
 ---
 import Icon from './Icon.astro';
 import Logo from './Logo.astro';
-import { COMPANY } from './data';
+import { PERSON } from './data';
 import { mdiBellOutline, mdiDotsGrid, mdiDotsHorizontal, mdiDownload, mdiFolder, mdiCog, mdiMagnify, mdiAccountOutline } from './icons';
 
 // The frame around a Nextcloud page. `public` is the header visitors get on a share link.
@@ -23,7 +23,7 @@ const { view, app = 'Files', public: isPublic = false, shareName } = Astro.props
       <span class="grow nc-search-wrap"><span class="nc-search"><Icon path={mdiMagnify} /> Apps, files, messages, and more <kbd>⌘</kbd><kbd>K</kbd></span></span>
       <button class="header-btn" aria-label="Notifications"><Icon path={mdiBellOutline} /><span class="dot"></span></button>
       <button class="header-btn" aria-label="Contacts"><Icon path={mdiAccountOutline} /></button>
-      <span class="avatar" title={COMPANY}>FS</span>
+      <span class="avatar" title={PERSON}>{PERSON[0]}</span>
     </>}
   </header>
   <div class="nc-body"><slot /></div>

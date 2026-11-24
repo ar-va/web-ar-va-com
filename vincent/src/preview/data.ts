@@ -4,7 +4,9 @@ import {
   mdiFolder, mdiFolderAccount, mdiMonitorShare,
 } from './icons';
 
-export const COMPANY = 'Fernhill Studio';
+export const COMPANY = 'Yellow House Studio';
+// The signed-in person, after the painter the tool is named for.
+export const PERSON = 'Vincent';
 
 // Colours come from theme roles: `folder` is the primary colour, the others its status hues.
 export type Tone = 'folder' | 'error' | 'success' | 'info' | 'warning' | 'muted';
@@ -17,6 +19,7 @@ export const files: Row[] = [
   { name: 'Backups', icon: mdiMonitorShare, tone: 'folder', type: 'Folder', size: '28.2 MB', modified: '2 weeks ago' },
   { name: 'Brand assets', icon: mdiFolder, tone: 'folder', type: 'Folder', size: '5.9 GB', modified: '3 days ago', favorite: true },
   { name: 'Client projects', icon: mdiFolderAccount, tone: 'folder', type: 'Folder', size: '1.2 TB', modified: '2 days ago', shared: true },
+  { name: 'Letters to Theo', icon: mdiFolder, tone: 'folder', type: 'Folder', size: '312 MB', modified: 'Last week' },
   { name: 'Invoices 2026', icon: mdiFolder, tone: 'folder', type: 'Folder', size: '84 MB', modified: 'Yesterday', tags: ['Finance'] },
   { name: 'Annual report', ext: '.pdf', icon: mdiFilePdfBox, tone: 'error', type: 'PDF document', size: '12.4 MB', modified: '4 hours ago', selected: true, shared: true },
   { name: 'Autumn campaign', ext: '.mp4', icon: mdiFileVideo, tone: 'muted', type: 'MP4 video', size: '842 MB', modified: 'October 2' },
@@ -24,7 +27,8 @@ export const files: Row[] = [
   { name: 'Interview with Maya', ext: '.mp3', icon: mdiFileMusic, tone: 'muted', type: 'MP3 audio', size: '46.1 MB', modified: 'September 18' },
   { name: 'Kickoff deck', ext: '.pptx', icon: mdiFilePowerpoint, tone: 'warning', type: 'PowerPoint presentation', size: '23.7 MB', modified: '5 days ago' },
   { name: 'Meeting notes', ext: '.md', icon: mdiFileDocument, tone: 'muted', type: 'Markdown document', size: '4 KB', modified: '12 minutes ago' },
-  { name: 'Portrait session', ext: '.jpg', icon: mdiFileImage, tone: 'info', type: 'JPEG image', size: '7.8 MB', modified: 'March 2024' },
+  { name: 'Starry night palette', ext: '.pdf', icon: mdiFilePdfBox, tone: 'error', type: 'PDF document', size: '2.6 MB', modified: 'Tuesday' },
+  { name: 'Sunflowers study', ext: '.jpg', icon: mdiFileImage, tone: 'info', type: 'JPEG image', size: '7.8 MB', modified: 'March 2024' },
   { name: 'Project archive', ext: '.zip', icon: mdiArchive, tone: 'muted', type: 'ZIP archive', size: '3.1 GB', modified: 'July 31' },
   { name: 'Proposal', ext: '.docx', icon: mdiFileWord, tone: 'info', type: 'Word document', size: '86 KB', modified: 'August 4' },
   { name: 'site-config', ext: '.json', icon: mdiCodeTags, tone: 'muted', type: 'JSON file', size: '2 KB', modified: '3 weeks ago' },
