@@ -1,11 +1,12 @@
 // Loads the exported CSS in real Chrome beside stylesheets built like Nextcloud's, for every kind of visitor, device
 // mode and load order. Run: npm run test:browser -w vincent
 import { spawn } from 'node:child_process';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { exportCss } from '../src/lib/export.ts';
-import { DEFAULT_CHOICES, generateTheme } from '../src/lib/theme.ts';
+import { DEFAULT_CHOICES, NEXTCLOUD_COLOR_VARS, generateTheme } from '../src/lib/theme.ts';
 
 const CHROME = process.env.CHROME ?? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 const NAMES = ['--color-main-background', '--color-primary-element'];
@@ -89,5 +90,23 @@ try {
   chrome.kill();
   await new Promise((r) => { chrome.once('exit', r); setTimeout(r, 2000); });
   await rm(profile, { recursive: true, force: true, maxRetries: 3 });
+}
+
+// Every colour Nextcloud has should show on some preview screen. Deprecated names only alias a colour already shown.
+const assets = new URL('../dist/_astro/', import.meta.url);
+if (existsSync(assets)) {
+  const built = readdirSync(assets).filter((f) => f.endsWith('.css')).map((f) => readFileSync(new URL(f, assets), 'utf8')).join('');
+  const deprecated = (n) => /^--color-(error|warning|success|info)-rgb$/.test(n) || n.startsWith('--color-primary-element-light');
+  const used = new Set();
+  const visit = (text) => {
+    for (const [, name] of text.matchAll(/var\((--[a-z0-9-]+)/g)) {
+      if (used.has(name)) continue;
+      used.add(name);
+      if (theme.light[name]) visit(theme.light[name]);
+    }
+  };
+  visit(built);
+  const missing = NEXTCLOUD_COLOR_VARS.filter((n) => !deprecated(n) && !used.has(n));
+  if (missing.length) { failed++; console.error(`coverage: not shown: ${missing.join(', ')}`); } else console.log('coverage: all used');
 }
 process.exit(failed ? 1 : 0);

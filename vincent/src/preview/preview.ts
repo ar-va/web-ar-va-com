@@ -4,7 +4,7 @@ const style = document.head.appendChild(document.createElement('style'));
 const panels = () => [...document.querySelectorAll<HTMLElement>('[data-view-panel]')];
 
 function closeMenus() {
-  for (const m of document.querySelectorAll<HTMLElement>('.menu')) m.hidden = true;
+  for (const m of document.querySelectorAll<HTMLElement>('.menu:not(.menu-static)')) m.hidden = true;
 }
 
 (window as unknown as { preview: unknown }).preview = {
@@ -49,13 +49,15 @@ document.addEventListener('click', (e) => {
 
   const check = target.closest<HTMLElement>('.check');
   if (check) {
+    if (check.hasAttribute('data-static')) return;
     const on = check.getAttribute('aria-checked') !== 'true';
     const row = check.closest<HTMLElement>('[data-file]');
     if (row) {
       check.setAttribute('aria-checked', String(on));
       row.setAttribute('aria-selected', String(on));
     } else {
-      const table = check.closest('.files')!;
+      const table = check.closest('.files');
+      if (!table) { check.setAttribute('aria-checked', String(on)); return; }
       for (const c of table.querySelectorAll('.check')) c.setAttribute('aria-checked', String(on));
       for (const r of table.querySelectorAll('[data-file]')) r.setAttribute('aria-selected', String(on));
     }

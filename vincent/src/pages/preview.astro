@@ -1,10 +1,11 @@
 ---
 // The isolated page inside the tool's iframe. Every colour on it is a Nextcloud variable, set by the exported CSS.
+import '../preview/base.css';
 import AdminView from '../preview/AdminView.astro';
+import ComponentsView from '../preview/ComponentsView.astro';
 import FilesView from '../preview/FilesView.astro';
 import LoginView from '../preview/LoginView.astro';
 import ShareView from '../preview/ShareView.astro';
-import '../preview/base.css';
 ---
 <!doctype html>
 <html lang="en">
@@ -19,6 +20,7 @@ import '../preview/base.css';
     <ShareView />
     <LoginView />
     <AdminView />
+    <ComponentsView />
     <script>
       import '../preview/preview';
     </script>

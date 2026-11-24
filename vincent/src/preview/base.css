@@ -13,7 +13,7 @@ html, body { height: 100%; margin: 0; }
 body {
   position: relative; overflow: hidden; visibility: hidden;
   font: var(--font-weight-default) var(--default-font-size) / 1.5 var(--font-face);
-  color: var(--color-main-text); background-color: var(--color-background-plain);
+  color: var(--color-main-text); background-color: var(--color-background-plain); background-image: var(--image-background);
 }
 body.ready { visibility: visible; }
 h1, h2, h3, p, ul { margin: 0; padding: 0; }
