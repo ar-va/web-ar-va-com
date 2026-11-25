@@ -46,10 +46,12 @@ test('only own collection, identity and public release data can be signed', () =
   assert.ok(signablePath('/oauth/identity', null));
   assert.ok(signablePath('/releases/37956252', null));
   for (const bad of ['/users/someone/collection/fields', '/users/arabor/collection/folders/0/releases/1/instances/2', '/marketplace/orders',
-    'https://evil.example/releases/1', '//evil.example/releases/1', '/users/arabor/wants', '/releases/1/rating/x']) {
+    'https://evil.example/releases/1', '//evil.example/releases/1', '/users/someone/wants', '/users/arabor/wants/1', '/releases/1/rating/x']) {
     assert.equal(signablePath(bad, 'arabor'), null, bad);
   }
   assert.equal(signablePath('/users/arabor/collection/fields', null), null);
+  // The owner's own wantlist (the wishlist), with its pages.
+  assert.equal(signablePath('/users/arabor/wants?per_page=100&page=2', 'arabor'), 'https://api.discogs.com/users/arabor/wants?per_page=100&page=2');
 });
 
 test('seal/unseal round trip; another key cannot open it', async () => {
@@ -257,6 +259,7 @@ test('streaming matches, cover sources, gallery', async () => {
 
   assert.ok(safeCoverUrl('https://is3-ssl.mzstatic.com/image/x.jpg'));
   assert.ok(safeCoverUrl('https://i.discogs.com/abc.jpeg'));
+  for (const ok of ['https://i.scdn.co/image/ab67', 'https://lh3.googleusercontent.com/x=w544', 'https://i.ytimg.com/vi/x/hq.jpg']) assert.ok(safeCoverUrl(ok), ok);
   for (const bad of ['https://evil.example/x.jpg', 'http://i.discogs.com/x', 'javascript:alert(1)', '', null]) assert.equal(safeCoverUrl(bad), null);
 
   assert.deepEqual(gallery('https://i.discogs.com/c', 'https://i.discogs.com/c', ['https://i.discogs.com/p1', 'https://i.discogs.com/p2']), ['https://i.discogs.com/c', 'https://i.discogs.com/p2']);

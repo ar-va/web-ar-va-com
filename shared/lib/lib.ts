@@ -72,10 +72,10 @@ export async function oauthHeader(
 export function signablePath(path: string, discogsUsername: string | null) {
   const u = new URL(path, 'https://api.discogs.com');
   if (u.origin !== 'https://api.discogs.com') return null;
-  const own = discogsUsername ? `/users/${encodeURIComponent(discogsUsername)}/collection/` : null;
+  const user = discogsUsername ? `/users/${encodeURIComponent(discogsUsername)}/` : null;
   const ok = u.pathname === '/oauth/identity'
     || /^\/(releases|masters)\/\d+$/.test(u.pathname)
-    || (own !== null && (u.pathname === `${own}fields` || u.pathname === `${own}folders/0/releases`));
+    || (user !== null && [`${user}collection/fields`, `${user}collection/folders/0/releases`, `${user}wants`].includes(u.pathname));
   return ok ? u.href : null;
 }
 
@@ -671,7 +671,9 @@ export function safeCoverUrl(value: string | null | undefined) {
   if (!value) return null;
   try {
     const u = new URL(value);
-    return u.protocol === 'https:' && (u.hostname === 'i.discogs.com' || /^is\d+-ssl\.mzstatic\.com$/.test(u.hostname)) ? u.href : null;
+    // Discogs, Apple Music; Spotify and YouTube Music covers come with wishlist albums added from their links.
+    const hosts = ['i.discogs.com', 'i.scdn.co', 'lh3.googleusercontent.com', 'i.ytimg.com'];
+    return u.protocol === 'https:' && (hosts.includes(u.hostname) || /^is\d+-ssl\.mzstatic\.com$/.test(u.hostname)) ? u.href : null;
   } catch {
     return null;
   }
