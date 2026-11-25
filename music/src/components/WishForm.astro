@@ -7,7 +7,8 @@ import { NOTE_MAX } from '@shared/lib/lib';
 
 interface Props {
   /** The values shown: an album being edited, or what was typed before an error. */
-  values?: { artist?: string; title?: string; year?: string | number | null; cover?: string | null; tracklist?: string; note?: string | null; links?: Record<string, string> };
+  values?: { artist?: string; title?: string; year?: string | number | null; cover?: string | null; tracklist?: string; note?: string | null;
+    links?: Record<string, string>; where?: string | null; top?: boolean };
   /** The album being edited (absent when adding). */
   editId?: number;
   error?: string | null;
@@ -36,6 +37,9 @@ const label = 'flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text
       <label class={label}>Year <input name="year" inputmode="numeric" pattern="\d{4}" maxlength="4" value={values.year ?? ''} class={input} /></label>
     </div>
   </div>
+  <label class={label}>Where to get it <span class="font-normal text-zinc-500">(optional: a shop’s name or a link)</span>
+    <input name="where" maxlength="300" value={values.where ?? ''} placeholder="Rough Trade, or https://…" class={input} />
+  </label>
   <label class={label}>A note for whoever gives it <span class="font-normal text-zinc-500">(optional: “the red pressing, please”)</span>
     <textarea name="note" rows="2" maxlength={NOTE_MAX} class={input}>{values.note ?? ''}</textarea>
   </label>
@@ -51,6 +55,10 @@ const label = 'flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text
       </div>
     </div>
   </Disclosure>
+  <label class="flex items-center gap-2.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 cursor-pointer">
+    <input type="checkbox" name="top" checked={values.top} class="w-4 h-4 accent-kikyo-600" />
+    Most wanted <span class="font-normal text-zinc-500">(shown first, under its own heading)</span>
+  </label>
   <div class="flex items-center gap-2">
     <button class="btn-primary">{editId ? 'Save' : 'Add to the wishlist'}</button>
     {editId && <a href="?#add" class="ctl">Cancel</a>}

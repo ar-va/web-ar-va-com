@@ -36,6 +36,11 @@ test('wishes: text stays text, foreign hosts dropped, limits kept', () => {
   assert.equal(toWish({ artist: 'x', title: 'y', year: '1700' }).year, null);
   assert.equal(toWish({ artist: 'x', title: 'y'.repeat(400) }).title.length, 300);
   assert.deepEqual(toWish({ artist: '', title: 'y' }), { error: 'Add the artist and the album.' });
+  // Where to get it: a shop's name and / or link, as text (links are made clickable when shown), one line, capped.
+  assert.equal(toWish({ artist: 'x', title: 'y', where: '  Rough Trade https://www.roughtrade.com/x \n\n second line ' }).where, 'Rough Trade https://www.roughtrade.com/x second line');
+  assert.equal(toWish({ artist: 'x', title: 'y', where: 'z'.repeat(400) }).where.length, 300);
+  assert.equal(toWish({ artist: 'x', title: 'y', where: '   ' }).where, null);
+  assert.equal(toWish({ artist: 'x', title: 'y' }).where, null);
   assert.deepEqual(toWish(null), { error: 'Add the artist and the album.' });
 });
 

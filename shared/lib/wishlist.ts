@@ -56,6 +56,8 @@ export interface Wish {
   tracklist: string;
   links: Record<LinkService, string>;
   note: string | null;
+  /** Where to get it: a shop's name and / or link (user 2026-11-25), one line; links become clickable when shown. */
+  where: string | null;
 }
 
 const text = (v: unknown, max = 300) => (typeof v === 'string' || typeof v === 'number' ? String(v).trim().slice(0, max) : '');
@@ -78,6 +80,7 @@ export function toWish(input: any): Wish | { error: string } {
       youtube: safeStreamingUrl(text(links.youtube, 1000), 'youtube') ?? '',
     },
     note: cleanNote(text(input.note, 2000)),
+    where: text(input.where, 2000).replace(/\s+/g, ' ').slice(0, 300) || null,
   };
 }
 

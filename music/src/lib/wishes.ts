@@ -30,6 +30,10 @@ export interface WishItem {
   tracks: Track[];
   links: { spotify: string; apple: string; youtube: string };
   note: string | null;
+  /** Where to get it (albums added on the site): a shop's name and / or link. */
+  where: string | null;
+  /** The owner's "Most wanted" star. */
+  top: boolean;
   /** ISO date it was added, for the order (newest first). */
   added: string;
   /** The stored wish (custom items), for the edit form. */
@@ -54,12 +58,12 @@ export function wishNotice(q: URLSearchParams, ownerFirst: string) {
 const fromWant = (r: ShelfRecord, d: ReleaseDetail | null, m: Match | null): WishItem => ({
   key: `d:${r.releaseId}`, instanceId: r.releaseId, masterId: r.masterId, releaseId: r.releaseId, artist: r.artist, title: r.title,
   year: d?.originalYear ?? r.year, genres: r.genres, cover: r.cover ?? m?.apple?.artwork ?? null, vinyl: null, tracks: withMatchLinks(d?.tracklist ?? [], m),
-  links: { spotify: m?.spotify?.url ?? '', apple: m?.apple?.url ?? '', youtube: m?.youtube?.url ?? '' }, note: null, added: r.added,
+  links: { spotify: m?.spotify?.url ?? '', apple: m?.apple?.url ?? '', youtube: m?.youtube?.url ?? '' }, note: null, where: null, top: false, added: r.added,
 });
 
 const fromWish = (id: number, w: Wish, createdAt: number): WishItem => ({
   key: `c:${id}`, instanceId: id, masterId: 0, releaseId: 0, artist: w.artist, title: w.title, year: w.year, genres: [], cover: w.cover, vinyl: null,
-  tracks: textToTracklist(w.tracklist), links: w.links, note: w.note, added: new Date(createdAt * 1000).toISOString(), wish: w,
+  tracks: textToTracklist(w.tracklist), links: w.links, note: w.note, where: w.where ?? null, top: false, added: new Date(createdAt * 1000).toISOString(), wish: w,
 });
 
 type ShelfKeys = { masters: Set<number>; releases: Set<number>; names: Set<string> };
@@ -84,13 +88,14 @@ export async function wishlistData(name: string, viewer: User | null) {
   const owner = `(SELECT id FROM users WHERE ${ownerWhere()})`;
   const d = await db();
   const q = (sql: string) => d.prepare(sql).bind(name);
-  const [users, wants, wishes, shelf, releases, matches, reservations] = await d.batch([
+  const [users, wants, wishes, shelf, releases, matches, stars, reservations] = await d.batch([
     q(`SELECT * FROM users WHERE id = ${owner}`),
     q(`SELECT data FROM wants WHERE user_id = ${owner}`),
     q(`SELECT id, data, created_at FROM wishes WHERE user_id = ${owner}`),
     q(shelfKeysSql(owner)),
     q(`SELECT id, data FROM releases WHERE id IN (SELECT release_id FROM wants WHERE user_id = ${owner})`),
     q(`SELECT release_id, data FROM matches WHERE release_id IN (SELECT release_id FROM wants WHERE user_id = ${owner})`),
+    q(`SELECT item FROM wish_stars WHERE owner_id = ${owner}`),
     d.prepare(`SELECT item, gifted_at IS NOT NULL AS gifted, CASE WHEN ?2 != 0 AND ?2 != owner_id THEN user_id END AS user_id,
       CASE WHEN ?2 != 0 AND ?2 = user_id THEN give_on END AS give_on FROM reservations WHERE owner_id = ${owner}`).bind(name, viewer?.id ?? 0),
   ]);
@@ -101,13 +106,14 @@ export async function wishlistData(name: string, viewer: User | null) {
   const res = new Map((reservations.results as { item: string; gifted: number; user_id: number | null; give_on: string | null }[]).map((r) => [r.item, r]));
   const source = sourceOf(user);
   const keys = shelfKeys(shelf.results);
+  const starred = new Set((stars.results as { item: string }[]).map((r) => r.item));
   const list = source === 'discogs'
     ? (wants.results as { data: string }[]).map((r) => JSON.parse(r.data) as ShelfRecord).map((r) => fromWant(r, details.get(r.releaseId) ?? null, found.get(r.releaseId) ?? null))
     : (wishes.results as { id: number; data: string; created_at: number }[]).map((r) => fromWish(r.id, JSON.parse(r.data), r.created_at));
   const items = list
     .filter((i) => !res.get(i.key)?.gifted && !isOwned(i, keys))
     .sort((a, b) => b.added.localeCompare(a.added))
-    .map((i) => ({ ...i, state: reserveState(res.get(i.key)?.user_id ?? null, viewer?.id ?? null, user.id) as ReserveState, giveOn: res.get(i.key)?.give_on ?? null }));
+    .map((i) => ({ ...i, top: starred.has(i.key), state: reserveState(res.get(i.key)?.user_id ?? null, viewer?.id ?? null, user.id) as ReserveState, giveOn: res.get(i.key)?.give_on ?? null }));
   return { owner: user, source, items };
 }
 
@@ -147,9 +153,17 @@ export async function updateWish(user: User, id: number, wish: Wish) {
   await (await db()).prepare('UPDATE wishes SET data = ? WHERE id = ? AND user_id = ?').bind(JSON.stringify(wish), id, user.id).run();
 }
 
+/** The owner's "Most wanted" star on a record of either list, on or off. */
+export async function setStar(owner: User, item: string, on: boolean) {
+  const d = await db();
+  await (on ? d.prepare('INSERT OR IGNORE INTO wish_stars (owner_id, item) VALUES (?, ?)') : d.prepare('DELETE FROM wish_stars WHERE owner_id = ? AND item = ?'))
+    .bind(owner.id, item).run();
+}
+
 /** Removes an album from the owner's own list; whoever reserved it is told. */
 export async function removeWish(user: User, id: number) {
   const d = await db();
+  await d.prepare('DELETE FROM wish_stars WHERE owner_id = ? AND item = ?').bind(user.id, `c:${id}`).run();
   const row = await d.prepare('DELETE FROM wishes WHERE id = ? AND user_id = ? RETURNING data').bind(id, user.id).first<{ data: string }>();
   if (row) await closeReservations(user, [{ key: `c:${id}`, title: (JSON.parse(row.data) as Wish).title }], 'removed');
 }

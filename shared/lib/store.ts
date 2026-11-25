@@ -39,6 +39,8 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS reservations (owner_id INTEGER NOT NULL, item TEXT NOT NULL, user_id INTEGER NOT NULL, created_at INTEGER NOT NULL,
     give_on TEXT, reminded_at INTEGER, gifted_at INTEGER, PRIMARY KEY (owner_id, item))`,
   `CREATE INDEX IF NOT EXISTS reservations_by_user ON reservations (user_id)`,
+  // The owner's "Most wanted" star on wishlist records, either list (user 2026-11-25).
+  `CREATE TABLE IF NOT EXISTS wish_stars (owner_id INTEGER NOT NULL, item TEXT NOT NULL, PRIMARY KEY (owner_id, item))`,
 ];
 
 // Changes to existing tables after launch (new columns are also in the definitions above, for a fresh database). Each
@@ -267,6 +269,7 @@ export async function removeShelf(userId: number, revoke: boolean) {
     d.prepare('DELETE FROM wants WHERE user_id = ?').bind(userId),
     d.prepare('DELETE FROM wishes WHERE user_id = ?').bind(userId),
     d.prepare('DELETE FROM reservations WHERE owner_id = ?').bind(userId),
+    d.prepare('DELETE FROM wish_stars WHERE owner_id = ?').bind(userId),
     d.prepare(`UPDATE users SET discogs_username = NULL, discogs_token = NULL, synced_at = NULL, sync_error = NULL${revoke ? ', is_collector = 0' : ''} WHERE id = ?`).bind(userId),
     // Someone no longer a collector can't bring in others with links they made before.
     ...(revoke ? [d.prepare('UPDATE invite_links SET revoked_at = ? WHERE created_by = ? AND revoked_at IS NULL').bind(now(), userId)] : []),

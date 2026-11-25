@@ -2,7 +2,7 @@
 // One comment: author, date, text with clickable links, and Reply / Edit / Delete on one line. Edit swaps the text
 // for an editor in place; Reply opens a box under the comment. Both have Cancel (behaviour: src/scripts/comments.ts).
 import { COMMENT_MAX, type Comment, type User } from '../lib/store';
-import { linkify } from '../lib/lib';
+import LinkedText from './LinkedText.astro';
 import Avatar from './Avatar.astro';
 
 interface Props {
@@ -34,9 +34,7 @@ const hint = 'ml-auto hidden sm:inline text-xs text-zinc-400 dark:text-zinc-500'
     </div>
 
     <div data-view>
-      <p class="mt-1 text-zinc-700 dark:text-zinc-300 whitespace-pre-line break-words">{linkify(c.body).map((part) => 'url' in part
-        ? <a href={part.url} target="_blank" rel="nofollow ugc noopener noreferrer" class="text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/30 hover:decoration-kikyo-500 underline-offset-4 break-all">{part.url}</a>
-        : part.text)}</p>
+      <p class="mt-1 text-zinc-700 dark:text-zinc-300 whitespace-pre-line break-words"><LinkedText text={c.body} /></p>
       {user && (
         <div class="mt-1.5 flex items-center gap-4 text-sm">
           <button type="button" class={act} data-open="reply" aria-expanded="false" aria-controls={`reply-${c.id}`}>Reply</button>
