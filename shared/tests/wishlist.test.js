@@ -1,7 +1,7 @@
 // node --test shared/tests/ (the wishlist's rules: links, wishes, owned records, reservations, reminders)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseStreamingLink, toWish, isOwned, reserveState, reminderDue, safeGiveOn } from '../lib/wishlist.ts';
+import { parseStreamingLink, toWish, isOwned, reserveState, reminderDue, safeGiveOn, splitArtistAlbum } from '../lib/wishlist.ts';
 
 test('album links from the three services', () => {
   assert.deepEqual(parseStreamingLink('https://music.apple.com/ua/album/blackstar/1059043043'), { service: 'apple', id: '1059043043', country: 'ua' });
@@ -85,4 +85,14 @@ test('giving dates: today up to a year ahead', () => {
   assert.equal(safeGiveOn('2027-11-25', '2026-11-24'), null);
   assert.equal(safeGiveOn('2026-02-30', '2026-01-01'), null);
   assert.equal(safeGiveOn('', '2026-11-24'), null);
+});
+
+test('typed "artist – album" in the one-line box', () => {
+  assert.deepEqual(splitArtistAlbum('Radiohead – In Rainbows'), { artist: 'Radiohead', title: 'In Rainbows' });
+  assert.deepEqual(splitArtistAlbum('  Кино - Группа крови '), { artist: 'Кино', title: 'Группа крови' });
+  assert.deepEqual(splitArtistAlbum('Sly & the Family Stone — There’s a Riot Goin’ On'), { artist: 'Sly & the Family Stone', title: 'There’s a Riot Goin’ On' });
+  // Only the first dash splits; a hyphen inside a word doesn't.
+  assert.deepEqual(splitArtistAlbum('Jay-Z - The Blueprint - Deluxe'), { artist: 'Jay-Z', title: 'The Blueprint - Deluxe' });
+  assert.deepEqual(splitArtistAlbum('In Rainbows'), { artist: '', title: 'In Rainbows' });
+  assert.deepEqual(splitArtistAlbum(''), { artist: '', title: '' });
 });

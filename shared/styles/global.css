@@ -690,3 +690,24 @@ html.theme-vt *, html.theme-vt *::before, html.theme-vt *::after { transition: n
 @keyframes skip-spin { 0% { rotate: 0deg; } 68% { rotate: 245deg; } 70% { rotate: 228deg; } 100% { rotate: 360deg; } }
 @keyframes skip-arm { 0%, 67% { rotate: 0deg; } 69% { rotate: -5deg; } 73% { rotate: 1.5deg; } 78%, 100% { rotate: 0deg; } }
 @keyframes skip-text { 0% { translate: 0 -3px; } 20% { translate: 2px 1px; } 40% { translate: -1px -2px; } 60% { translate: 0 0; } }
+
+/* A one-line box that opens into a form (anon's writing box, the wishlist's "add an album"; moved here 2026-11-25): a
+   calm pill that lights its edge in the accent while in use; the rest of the form (`.open-only`) shows while anything in
+   it has focus (the form takes focus on clicks inside it: tabindex=-1), once the box holds text, or with `.open` (set by
+   a script once fields are filled, or by the page). Browsers without :has() show it all. */
+.compose {
+  border: 1px solid var(--color-zinc-200);
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.dark .compose { border-color: var(--color-zinc-800); background: var(--color-night-surface); }
+.compose:focus-within { border-color: var(--color-kikyo-500); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-kikyo-500) 18%, transparent); }
+.compose textarea { field-sizing: content; }
+.compose-form .compose { border-radius: 1.75rem; }
+.compose-form .open-only { display: none; }
+.compose-form:focus-within .open-only,
+.compose-form.open .open-only,
+.compose-form:has(.compose :is(input, textarea):not(:placeholder-shown)) .open-only { display: block; animation: arrive 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+@supports not selector(:has(*)) { .compose-form .open-only { display: block; } }
+@media (prefers-reduced-motion: reduce) { .compose-form .open-only { animation: none; } }
+@keyframes arrive { from { opacity: 0; transform: translateY(10px); } }

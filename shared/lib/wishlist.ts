@@ -84,6 +84,12 @@ export function toWish(input: any): Wish | { error: string } {
   };
 }
 
+/** What was typed in the one-line box: "Artist – Album" (any dash with spaces around it), else just the album. */
+export function splitArtistAlbum(text: string) {
+  const m = text.trim().match(/^(.+?)\s+[-–—]\s+(.+)$/);
+  return m ? { artist: m[1].trim(), title: m[2].trim() } : { artist: '', title: text.trim() };
+}
+
 /** How a typed wish is compared with the shelf's records when there are no Discogs ids to compare. */
 export const ownedKey = (artist: string, title: string) => `${artistKey(artist)}|${normalizeName(title)}`;
 

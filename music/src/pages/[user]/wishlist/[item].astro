@@ -8,7 +8,7 @@ import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import RecordHero from '../../../components/RecordHero.astro';
 import ReserveBox from '../../../components/ReserveBox.astro';
 import Disclosure from '@shared/components/Disclosure.astro';
-import Notice from '@shared/components/Notice.astro';
+import Toast from '@shared/components/Toast.astro';
 import Listen from '../../../components/Listen.astro';
 import SkippingRecord from '../../../components/SkippingRecord.astro';
 import LinkedText from '@shared/components/LinkedText.astro';
@@ -44,9 +44,9 @@ const songs = tracks.filter((t) => !t.heading);
       : [{ label: 'Shelves', href: '/' }, { label: 'Not found' }]} />
     {item ? (
       <>
-        {notice && <Notice class="mb-8">{notice}</Notice>}
+        {notice && <Toast>{notice}</Toast>}
         {Astro.url.searchParams.has('nomsg') && (
-          <Notice class="mb-8">Reserved. Telegram didn’t let the bot message you, so there won’t be reminders. <a href={loginHref(Astro.url)} class="underline underline-offset-4">Log in again</a> and allow messages to get them.</Notice>
+          <Toast>Reserved. Telegram didn’t let the bot message you, so there won’t be reminders. <a href={loginHref(Astro.url)} class="underline underline-offset-4">Log in again</a> and allow messages to get them.</Toast>
         )}
         <div class="!max-w-none">
           <RecordHero record={item} artist={item.artist} title={item.title} released={item.year ? String(item.year) : ''} genres={item.genres}

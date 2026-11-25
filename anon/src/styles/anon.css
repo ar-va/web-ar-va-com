@@ -2,15 +2,6 @@
 /* Jumps to #m-12 or #answer stop a little below the top. */
 html { scroll-padding-top: 1.5rem; }
 
-/* The hero's writing box: a calm surface that lights its edge in the accent while you write. */
-.compose {
-  border: 1px solid var(--color-zinc-200);
-  background: #fff;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.dark .compose { border-color: var(--color-zinc-800); background: var(--color-night-surface); }
-.compose:focus-within { border-color: var(--color-kikyo-500); box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-kikyo-500) 18%, transparent); }
-.compose textarea { field-sizing: content; }
 
 /* Choice cards (keep it between us / ask to publish): the picked one gets the "on" colours. */
 .choice { background: var(--well); transition: background-color 0.15s, box-shadow 0.15s; }
@@ -19,17 +10,8 @@ html { scroll-padding-top: 1.5rem; }
 .choice:has(input:checked) .choice-title { color: var(--on-text); }
 .choice:has(input:focus-visible) { outline: 2px solid var(--color-kikyo-500); outline-offset: 2px; }
 
-/* A new message on the private page eases in once. */
+/* A new message on the private page eases in once (keyframes `arrive` in the shared stylesheet). */
 .arrive { animation: arrive 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-@keyframes arrive { from { opacity: 0; transform: translateY(10px); } }
 @media (prefers-reduced-motion: reduce) { .arrive { animation: none; } }
 
-/* The front page's box: one line (a pill) that grows with the text, and the rest of the form (who sees it, the honest
-   limit, the helpline) shown as soon as someone starts: while anything in the form has focus (the form itself takes
-   focus on clicks inside it, tabindex=-1) or once there's text. No script needed; browsers without :has() show it all. */
-.compose-form .compose { border-radius: 1.75rem; }
-.compose-form .open-only { display: none; }
-.compose-form:focus-within .open-only,
-.compose-form:has(textarea:not(:placeholder-shown)) .open-only { display: block; animation: arrive 0.3s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-@supports not selector(:has(*)) { .compose-form .open-only { display: block; } }
-@media (prefers-reduced-motion: reduce) { .compose-form .open-only { animation: none; } }
+

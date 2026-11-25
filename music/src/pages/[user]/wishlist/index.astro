@@ -5,12 +5,12 @@
 export const prerender = false;
 import Layout from '@shared/layouts/Layout.astro';
 import Breadcrumbs from '../../../components/Breadcrumbs.astro';
-import Notice from '@shared/components/Notice.astro';
+import Toast from '@shared/components/Toast.astro';
 import SkippingRecord from '../../../components/SkippingRecord.astro';
 import RecordBrowser, { type BrowserItem } from '../../../components/RecordBrowser.astro';
 import WishForm from '../../../components/WishForm.astro';
 import { escapeHtml, loginHref } from '@shared/lib/lib';
-import { WISHES_MAX, parseStreamingLink, safeGiveOn, toWish } from '@shared/lib/wishlist';
+import { WISHES_MAX, parseStreamingLink, safeGiveOn, splitArtistAlbum, toWish } from '@shared/lib/wishlist';
 import { notify } from '@shared/lib/notify';
 import { currentUser, shelfSlug } from '@shared/lib/store';
 import {
@@ -46,9 +46,11 @@ if (owner && Astro.request.method === 'POST') {
   if (isOwner && (action === 'add' || action === 'edit')) {
     const values = { artist: get('artist'), title: get('title'), year: get('year'), cover: get('cover'), tracklist: get('tracklist'), note: get('note'),
       where: get('where'), top: form.get('top') === 'on', links: { spotify: get('spotify'), apple: get('apple'), youtube: get('youtube') } as Record<string, string> };
-    // Without script the pasted link isn't looked up: it's kept as that service's album link.
+    // The one-line box without script: a pasted link isn't looked up (it's kept as that service's album link), typed
+    // "Artist – Album" fills the empty fields.
     const pasted = parseStreamingLink(get('link'));
     if (pasted && !values.links[pasted.service]) values.links[pasted.service] = get('link').trim();
+    if (!pasted && !values.artist && !values.title) Object.assign(values, splitArtistAlbum(get('link')));
     const wish = toWish(values);
     if ('error' in wish) { error = wish.error; draft = values; Astro.response.status = 400; }
     else if (action === 'edit') {
@@ -130,13 +132,13 @@ const notice = wishNotice(q, first) ?? (q.has('added') ? (data.items.some((i) =>
             : `Records ${first} would like on vinyl. Reserve one you’ll give, so nobody else buys the same one. ${first} never sees what’s reserved, or by whom.`}
         </p>
 
-        {notice && <Notice class="mt-6">{notice}</Notice>}
+        {notice && <Toast>{notice}</Toast>}
         {q.has('nomsg') && (
-          <Notice class="mt-6">Reserved. Telegram didn’t let the bot message you, so there won’t be reminders. <a href={loginHref(Astro.url)} class="underline underline-offset-4">Log in again</a> and allow messages to get them.</Notice>
+          <Toast>Reserved. Telegram didn’t let the bot message you, so there won’t be reminders. <a href={loginHref(Astro.url)} class="underline underline-offset-4">Log in again</a> and allow messages to get them.</Toast>
         )}
 
         {isOwner && (
-          <div class="mt-8 space-y-4">
+          <div class="mt-6 space-y-3">
             <form method="post" class="flex flex-wrap items-center gap-3">
               <input type="hidden" name="action" value="source" />
               <span class="text-sm text-zinc-500">Show</span>
