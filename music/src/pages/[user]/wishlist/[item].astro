@@ -94,8 +94,8 @@ const songs = tracks.filter((t) => !t.heading);
             )}
             {item.where.length > 0 && (
               <div class="mt-5">
-                <p class="text-sm text-zinc-500">Where to get it</p>
-                <div class="mt-2 flex flex-wrap gap-2">
+                {/* No visible heading (user 2026-11-25): the shop icon on each button says it; screen readers get the group's name. */}
+                <div role="group" aria-label="Where to get it" class="flex flex-wrap gap-2">
                   {item.where.map(shopLink).map((shop) => shop.url ? (
                     <a href={shop.url} target="_blank" rel="nofollow ugc noopener noreferrer" class="ctl" title={shop.url}>
                       <WishIcon name="where" class="w-4 h-4" />{shop.label}
