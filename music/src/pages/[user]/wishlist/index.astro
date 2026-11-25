@@ -136,8 +136,8 @@ const notice = wishNotice(q, first) ?? (q.has('added') ? (data.items.some((i) =>
         <h1 class="text-3xl font-bold text-zinc-900 dark:text-white">{first}’s wishlist</h1>
         <p class="mt-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">
           {isOwner
-            ? 'Records you’d like on vinyl. Friends can reserve one to give you. You won’t see which, so gifts stay a surprise.'
-            : `Records ${first} would like on vinyl. Reserve one you’ll give, so nobody else buys the same one. ${first} never sees what’s reserved, or by whom.`}
+            ? 'Records you’d like on vinyl. Friends can reserve one to give you. Reservations are hidden while you’re logged in, so gifts stay a surprise.'
+            : `Records ${first} would like on vinyl. Reserve one you’ll give, so nobody else buys the same one. ${first} won’t see who reserved it.`}
         </p>
 
         {notice && <Toast>{notice}</Toast>}

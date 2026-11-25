@@ -1,5 +1,5 @@
 ---
-// What a visitor can do with a wishlist record, on its page: "Log in to reserve" (logged out: no reserved state at all),
+// What a visitor can do with a wishlist record, on its page: "Log in to reserve" (logged out, while it is free),
 // Reserve, someone's "Reserved", or their own reservation: when they're giving it, "I gave it", Cancel. The owner gets
 // nothing here (gifts stay a surprise). Each button is a form posted to the wishlist page, which comes back to `back`.
 import { displayDate } from '@shared/lib/lib';
@@ -33,7 +33,7 @@ const lastDay = new Date(Date.now() + 365 * 86400_000).toISOString().slice(0, 10
       <form method="post" action={action} class="flex flex-wrap items-center gap-3">
         <input type="hidden" name="action" value="reserve" /><input type="hidden" name="item" value={item} /><input type="hidden" name="back" value={back} />
         <button class="btn-primary">Reserve to give it</button>
-        <span class="text-sm text-zinc-500">{ownerFirst} won’t see it’s reserved, or by whom.</span>
+        <span class="text-sm text-zinc-500">{ownerFirst} won’t see who reserved it.</span>
       </form>
     )}
     {state === 'taken' && <p class="text-sm text-zinc-500">Someone has reserved this one to give {ownerFirst}.</p>}

@@ -80,9 +80,9 @@ const shelfKeysSql = (owner: string) =>
   `SELECT json_extract(data, '$.masterId') AS m, json_extract(data, '$.releaseId') AS r, json_extract(data, '$.artist') AS a, json_extract(data, '$.title') AS t FROM records WHERE user_id = ${owner}`;
 
 /**
- * Everything the wishlist page shows, in one round trip. Reservations come back only for a logged-in visitor who isn't
- * the owner: for the owner (and anyone logged out) the database doesn't even hand them over, except which items are
- * gifted (those leave the list for everyone).
+ * Everything the wishlist page shows, in one round trip. Reservations never come back for the logged-in owner (the
+ * database doesn't even hand them over), except which items are gifted (those leave the list for everyone); a
+ * logged-out visitor learns only that an item is reserved, a logged-in one also whether it's theirs.
  */
 export async function wishlistData(name: string, viewer: User | null) {
   const owner = `(SELECT id FROM users WHERE ${ownerWhere()})`;
@@ -96,7 +96,8 @@ export async function wishlistData(name: string, viewer: User | null) {
     q(`SELECT id, data FROM releases WHERE id IN (SELECT release_id FROM wants WHERE user_id = ${owner})`),
     q(`SELECT release_id, data FROM matches WHERE release_id IN (SELECT release_id FROM wants WHERE user_id = ${owner})`),
     q(`SELECT item FROM wish_stars WHERE owner_id = ${owner}`),
-    d.prepare(`SELECT item, gifted_at IS NOT NULL AS gifted, CASE WHEN ?2 != 0 AND ?2 != owner_id THEN user_id END AS user_id,
+    // Who reserved: never for the owner; "someone" (0) for a logged-out visitor; the id for a logged-in one (to tell theirs).
+    d.prepare(`SELECT item, gifted_at IS NOT NULL AS gifted, CASE WHEN ?2 = owner_id THEN NULL WHEN ?2 = 0 THEN 0 ELSE user_id END AS user_id,
       CASE WHEN ?2 != 0 AND ?2 = user_id THEN give_on END AS give_on FROM reservations WHERE owner_id = ${owner}`).bind(name, viewer?.id ?? 0),
   ]);
   const user = (users.results[0] as User | undefined) ?? null;

@@ -80,7 +80,7 @@ const songs = tracks.filter((t) => !t.heading);
             ) : (item.top || item.state === 'mine' || item.state === 'taken') && (
               <p slot="above" class="flex flex-wrap items-center gap-2 font-sans">
                 {item.top && <span class="inline-flex items-center gap-1 rounded-full bg-bengara-tint px-2.5 py-0.5 text-sm font-medium text-bengara dark:bg-bengara-tint-dark dark:text-bengara-light"><StarIcon />Most wanted</span>}
-                {/* Only logged-in visitors get a reservation state; the owner never does (wishlistData). */}
+                {/* Visitors see it is reserved (logged out too); only the reserver that it is theirs; the owner never (wishlistData). */}
                 {item.state === 'mine' && <span class="rounded-full bg-(--on-bg) px-2.5 py-0.5 text-sm font-medium text-(--on-text)">Reserved by you</span>}
                 {item.state === 'taken' && <span class="rounded-full bg-(--well) px-2.5 py-0.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">Reserved</span>}
               </p>

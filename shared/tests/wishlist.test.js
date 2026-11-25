@@ -58,7 +58,9 @@ test('owned: same master, else same release, else same names', () => {
 test('who sees what of a reservation', () => {
   assert.equal(reserveState(5, 1, 1), 'none'); // the owner, even though it's reserved
   assert.equal(reserveState(null, 1, 1), 'none');
-  assert.equal(reserveState(5, null, 1), 'login'); // logged out: no reserved state
+  assert.equal(reserveState(5, null, 1), 'taken'); // logged out: reserved shows (user 2026-11-25), not by whom
+  assert.equal(reserveState(0, null, 1), 'taken'); // "reserved, by someone not named" (what logged-out pages get)
+  assert.equal(reserveState(null, null, 1), 'login');
   assert.equal(reserveState(null, 2, 1), 'free');
   assert.equal(reserveState(2, 2, 1), 'mine');
   assert.equal(reserveState(5, 2, 1), 'taken');

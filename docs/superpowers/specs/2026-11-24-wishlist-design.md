@@ -86,8 +86,9 @@ reserve control. A row folds open (`Disclosure`) to show the tracklist. *(my cal
 reserve button needs room.)*
 
 Reserve control by viewer:
-- **Logged out:** "Log in to reserve" (`LoginButton`, returns to the row). **No reserved state is shown to logged-out
-  visitors** *(my call)*: otherwise the owner would see "Reserved" simply by visiting while logged out.
+- **Logged out:** "Log in to reserve" (`LoginButton`, returns to the row). ~~No reserved state is shown to logged-out
+  visitors~~ **Changed 2026-11-25 (user):** logged-out visitors see "Reserved" too (never by whom), accepting that the
+  owner sees it by visiting logged out.
 - **Logged in, not the owner:** "Reserve" (primary) → "Reserved by you · Cancel"; someone else's reservation →
   "Reserved" (disabled).
 - **The owner:** no reserve control and no reserved state, ever; instead Edit / Remove on custom items.

@@ -117,14 +117,14 @@ export function isOwned(item: { masterId?: number; releaseId?: number; artist: s
 }
 
 /**
- * What one viewer sees of a reservation. The owner never sees one (gifts stay a surprise), and neither does anyone
- * logged out: otherwise the owner would see "Reserved" just by visiting logged out.
+ * What one viewer sees of a reservation. The owner (logged in) never sees one: gifts stay a surprise. Everyone else sees
+ * that it's reserved (logged-out visitors too, user 2026-11-25, knowing the owner would see it logged out), but only
+ * the reserver sees it's theirs. `reservedBy` 0 = reserved by someone not named (what a logged-out page is given).
  */
 export type ReserveState = 'none' | 'login' | 'free' | 'mine' | 'taken';
 export function reserveState(reservedBy: number | null, viewerId: number | null, ownerId: number): ReserveState {
   if (viewerId === ownerId) return 'none';
-  if (viewerId === null) return 'login';
-  if (reservedBy === null) return 'free';
+  if (reservedBy === null) return viewerId === null ? 'login' : 'free';
   return reservedBy === viewerId ? 'mine' : 'taken';
 }
 
@@ -167,7 +167,7 @@ export function reservationCard(r: {
 }) {
   const e = escapeHtml;
   const head = [
-    `You reserved this for ${e(r.ownerFirst)}. Nobody else can reserve it now, and ${e(r.ownerFirst)} won’t see it’s reserved.`,
+    `You reserved this for ${e(r.ownerFirst)}. Nobody else can reserve it now, and ${e(r.ownerFirst)} won’t see who reserved it.`,
     '',
     `<b>${e(r.title)}</b>`,
     `${e(r.artist)}${r.year ? `, ${r.year}` : ''}`,
