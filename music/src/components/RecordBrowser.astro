@@ -146,15 +146,15 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
           {items.map((r) => (
             <li data-record={r.id} class="flex items-center justify-between group py-2.5 gap-4 border-b border-zinc-100 dark:border-zinc-800/40 last:border-none">
               <div class="flex items-center min-w-0 flex-grow pr-4">
-                <!-- A small cover when the list's covers are on (lazy: a hidden image isn't downloaded). -->
+                <div class="hidden sm:flex items-center shrink-0">
+                  <time class="mr-4 text-zinc-500 text-sm tabular-nums" datetime={r.added.slice(0, 10)}>{r.added.slice(0, 10)}</time>
+                </div>
+                <!-- After the date (user 2026-11-25), a small cover when the list's covers are on (lazy: a hidden image isn't downloaded). -->
                 <a href={r.href} tabindex="-1" aria-hidden="true" class="hidden group-[.covers]/list:block shrink-0 mr-4">
                   {r.record.cover
                     ? <img src={r.record.cover} alt="" width="40" height="40" loading="lazy" decoding="async" referrerpolicy="no-referrer" class="w-10 h-10 rounded-md object-cover bg-zinc-100 dark:bg-zinc-800" />
                     : <span class="block w-10 h-10 rounded-md bg-kikyo-100 dark:bg-kikyo-950"></span>}
                 </a>
-                <div class="hidden sm:flex items-center shrink-0">
-                  <time class="mr-4 text-zinc-500 text-sm tabular-nums" datetime={r.added.slice(0, 10)}>{r.added.slice(0, 10)}</time>
-                </div>
                 <a href={r.href} class="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white underline decoration-zinc-300 dark:decoration-zinc-700 hover:decoration-zinc-500 dark:hover:decoration-zinc-400 underline-offset-4 transition-colors text-base truncate block min-w-0">
                   {r.top && <StarIcon class="inline w-4 h-4 mr-1.5 align-[-2px] text-bengara dark:text-bengara-light" />}<span class="text-zinc-500 dark:text-zinc-400">{r.record.artist} –</span> {r.record.title}
                 </a>
