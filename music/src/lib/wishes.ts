@@ -2,8 +2,8 @@
 // wantlist (synced by the browser, discogs.ts) and albums added on the site; `users.wishlist_source` picks the one shown.
 // Logged-in visitors reserve items; the owner never sees a reservation (it's left out of the owner's data entirely),
 // until the giver says they gave it. Reservers get Telegram reminders (sendReminders, from the daily cron).
-import { escapeHtml, displayDate, textToTracklist, withMatchLinks, type Match, type ReleaseDetail, type ShelfRecord, type Track } from '@shared/lib/lib';
-import { RESERVATIONS_MAX, WISHES_MAX, isOwned, ownedKey, reminderDue, reserveState, type ReserveState, type Wish } from '@shared/lib/wishlist';
+import { escapeHtml, displayDate, textToTracklist, tracklistToText, withMatchLinks, type Match, type ReleaseDetail, type ShelfRecord, type Track } from '@shared/lib/lib';
+import { RESERVATIONS_MAX, WISHES_MAX, isOwned, ownedKey, reminderDue, reserveState, toWish, type ReserveState, type Wish } from '@shared/lib/wishlist';
 import { notify } from '@shared/lib/notify';
 import { byId, db, ownerWhere, shelfSlug, type User } from '@shared/lib/store';
 
@@ -151,6 +151,23 @@ export async function addWish(user: User, wish: Wish) {
 
 export async function updateWish(user: User, id: number, wish: Wish) {
   await (await db()).prepare('UPDATE wishes SET data = ? WHERE id = ? AND user_id = ?').bind(JSON.stringify(wish), id, user.id).run();
+}
+
+/**
+ * A Discogs wantlist record copied to the owner's own list (user 2026-11-25): album, cover, tracklist with its listening
+ * links, the star. The id of the copy, 'exists' when that artist and album are already on the own list, or 'full'.
+ */
+export async function copyToOwnList(owner: User, item: WishItem): Promise<number | 'exists' | 'full'> {
+  const d = await db();
+  const { results } = await d.prepare('SELECT data FROM wishes WHERE user_id = ?').bind(owner.id).all<{ data: string }>();
+  const key = ownedKey(item.artist, item.title);
+  if (results.some((r) => { const w = JSON.parse(r.data) as Wish; return ownedKey(w.artist, w.title) === key; })) return 'exists';
+  const wish = toWish({ artist: item.artist, title: item.title, year: item.year ?? '', cover: item.cover ?? '', tracklist: tracklistToText(item.tracks), links: item.links });
+  if ('error' in wish) return 'full';
+  const id = await addWish(owner, wish);
+  if (!id) return 'full';
+  if (item.top) await setStar(owner, `c:${id}`, true);
+  return id;
 }
 
 /** The owner's "Most wanted" star on a record of either list, on or off. */

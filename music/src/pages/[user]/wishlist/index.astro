@@ -14,7 +14,7 @@ import { WISHES_MAX, parseStreamingLink, safeGiveOn, toWish } from '@shared/lib/
 import { notify } from '@shared/lib/notify';
 import { currentUser, shelfSlug } from '@shared/lib/store';
 import {
-  addWish, markGifted, removeWish, reserve, setGiveOn, setStar, setWishlistSource, unreserve, updateWish, wishAnchor, wishKey, wishNotice, wishSlug, wishlistData,
+  addWish, copyToOwnList, markGifted, removeWish, reserve, setGiveOn, setStar, setWishlistSource, unreserve, updateWish, wishAnchor, wishKey, wishNotice, wishSlug, wishlistData,
 } from '../../../lib/wishes';
 
 const name = Astro.params.user!;
@@ -61,6 +61,12 @@ if (owner && Astro.request.method === 'POST') {
       if (id) return Astro.redirect(`${path}?added=${id}#${wishAnchor(`c:${id}`)}`, 303);
       error = `Your wishlist holds ${WISHES_MAX} albums at most. Remove one to add another.`; draft = values; Astro.response.status = 400;
     }
+  }
+  if (isOwner && action === 'copy') {
+    // From a Discogs record's page; back there with what happened (the copy shows once the own list is switched on).
+    const found = data.items.find((i) => i.key === item && item.startsWith('d:'));
+    const result = found ? await copyToOwnList(owner, found) : 'full';
+    return back(typeof result === 'number' ? '?copied' : `?copy-${result}`);
   }
   if (isOwner && action === 'star') {
     await setStar(owner, item, get('on') === '1');

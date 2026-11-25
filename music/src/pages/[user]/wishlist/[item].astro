@@ -28,7 +28,11 @@ const path = Astro.url.pathname;
 const list = owner ? `/${shelfSlug(owner)}/wishlist` : '/';
 const first = owner?.name.split(' ')[0] ?? '';
 const isOwner = !!owner && user?.id === owner.id;
-const notice = wishNotice(Astro.url.searchParams, first);
+const q = Astro.url.searchParams;
+const notice = isOwner && q.has('copied') ? 'Copied to your own list. It shows there when you switch the wishlist to “My own list”.'
+  : isOwner && q.has('copy-exists') ? 'That album is already on your own list.'
+  : isOwner && q.has('copy-full') ? 'Your own list is full (200 albums). Remove one to copy this.'
+  : wishNotice(q, first);
 const tracks = item ? withSideHeadings(item.tracks) : [];
 const songs = tracks.filter((t) => !t.heading);
 ---
@@ -56,6 +60,12 @@ const songs = tracks.filter((t) => !t.heading);
                   <input type="hidden" name="on" value={item.top ? '0' : '1'} /><input type="hidden" name="back" value={path} />
                   <button class="ctl" aria-pressed={String(item.top)}><StarIcon />{item.top ? 'Most wanted' : 'Mark as most wanted'}</button>
                 </form>
+                {item.key.startsWith('d:') && (
+                  <form method="post" action={list}>
+                    <input type="hidden" name="action" value="copy" /><input type="hidden" name="item" value={item.key} /><input type="hidden" name="back" value={path} />
+                    <button class="ctl" title="Add it to the list you make on this site, where you can edit it and say where to get it">Copy to my own list</button>
+                  </form>
+                )}
                 {item.wish && (
                   <>
                     <a href={`${list}?edit=${item.instanceId}#add`} class="ctl">Edit</a>

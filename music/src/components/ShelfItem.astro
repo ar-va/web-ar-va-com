@@ -12,7 +12,7 @@ interface Props {
   eager?: boolean;
   /** `on`: the viewer's own (the "on" colour), else the dark glass over the cover. */
   badge?: { text: string; on?: boolean } | null;
-  /** Starred ("Most wanted" on a wishlist): a star before the title on the tag. */
+  /** Starred ("Most wanted" on a wishlist): a star on the sleeve's top-right corner (user 2026-11-25; was on the tag). */
   top?: boolean;
 }
 const { record, href, eager = false, badge, top = false } = Astro.props;
@@ -22,6 +22,11 @@ const { record, href, eager = false, badge, top = false } = Astro.props;
   {badge && (
     <span class:list={['absolute left-2 top-2 z-10 rounded-full px-2.5 py-0.5 text-xs font-medium shadow-sm', badge.on ? 'bg-(--on-bg) text-(--on-text)' : 'glass glass-dark text-white']} aria-hidden="true">{badge.text}</span>
   )}
+  {top && (
+    <span class="glass glass-dark absolute right-2 top-2 z-10 grid w-7 h-7 place-items-center rounded-full shadow-sm" title="Most wanted" aria-hidden="true">
+      <StarIcon class="w-4 h-4 text-bengara-light" />
+    </span>
+  )}
   <span class="sr-only">{record.artist} – {record.title}{top && ', most wanted'}{badge && `, ${badge.text.toLowerCase()}`}</span>
-  <span class="shelf-label" aria-hidden="true"><span>{top && <StarIcon class="inline w-3.5 h-3.5 mr-1 align-[-2px] text-bengara dark:text-bengara-light" />}{record.title}</span><span>{record.artist}</span></span>
+  <span class="shelf-label" aria-hidden="true"><span>{record.title}</span><span>{record.artist}</span></span>
 </a>
