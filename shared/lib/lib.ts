@@ -134,7 +134,8 @@ const artistLine = (artists: any[] = []) =>
 /** One item of GET /users/{u}/collection/folders/0/releases → what the shelf shows. Only fields marked public in Discogs are kept. */
 export function toShelfRecord(item: any, fields: CollectionField[]): ShelfRecord {
   const b = item.basic_information;
-  const byId = new Map((item.notes ?? []).map((n: any) => [n.field_id, String(n.value ?? '').trim()]));
+  // Collection items carry their custom fields here; wantlist items a plain text note (not shown: Discogs keeps it private).
+  const byId = new Map((Array.isArray(item.notes) ? item.notes : []).map((n: any) => [n?.field_id, String(n?.value ?? '').trim()]));
   return {
     instanceId: item.instance_id,
     releaseId: item.id,

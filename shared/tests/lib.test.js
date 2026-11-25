@@ -92,6 +92,8 @@ test('collection item → shelf record keeps only public fields, in Discogs orde
   ]);
   assert.equal(toShelfRecord({ ...item, basic_information: { ...item.basic_information, cover_image: 'https://s.discogs.com/images/spacer.gif' } }, []).cover, null);
   assert.equal(toShelfRecord({ ...item, basic_information: { ...item.basic_information, cover_image: 'javascript:alert(1)' } }, []).cover, null);
+  // A wantlist item's notes are text, not the collection's list of fields (the first live wantlist sync failed on it).
+  assert.deepEqual(toShelfRecord({ ...item, notes: 'the red pressing' }, fields).fields, []);
   // Wrong types from a tampered upload are stored as text / lists of text, so no page that shows the record crashes.
   const odd = toShelfRecord({ ...item, date_added: 20260101, basic_information: { ...item.basic_information, title: { x: 1 }, genres: 'Rock', styles: [1, 'Jazz'] } }, []);
   assert.deepEqual([odd.title, odd.added, odd.genres, odd.styles], ['', '20260101', [], ['Jazz']]);
