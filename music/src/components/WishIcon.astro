@@ -1,7 +1,7 @@
 ---
 // The wishlist's field icons, one set everywhere (user 2026-11-25): in the add / edit form beside each field, and on a
 // record (its sleeve, its list row, its page) when the field is filled, so a note or a shop shows at a glance.
-export type WishIconName = 'artist' | 'album' | 'year' | 'where' | 'note' | 'tracklist' | 'link';
+export type WishIconName = 'artist' | 'album' | 'year' | 'where' | 'note' | 'tracklist' | 'link' | 'search';
 interface Props { name: WishIconName; class?: string; label?: string }
 const { name, class: className = 'w-4 h-4', label } = Astro.props;
 const paths: Record<WishIconName, string> = {
@@ -12,6 +12,7 @@ const paths: Record<WishIconName, string> = {
   where: 'M3.5 9.5 5 4h14l1.5 5.5M3.5 9.5h17M3.5 9.5a2.8 2.8 0 0 0 5.67 0 2.8 2.8 0 0 0 5.66 0 2.8 2.8 0 0 0 5.67 0M5 12.5v7.5h14v-7.5M10 20v-4.5h4V20',
   note: 'M7 3.5h7l4 4v13H7ZM14 3.5v4h4M9.5 12h6M9.5 15.5h4',
   tracklist: 'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01',
+  search: 'M21 21l-5.2-5.2M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z',
   link: 'M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1',
 };
 ---

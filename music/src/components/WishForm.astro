@@ -1,8 +1,8 @@
 ---
-// Adding an album to the owner's own wishlist (user 2026-11-25: one line, like anon's box): "Paste an album link, or
-// type the artist and album" with + inside. A pasted Apple Music / Spotify / YouTube Music link fills in the album
-// (music/src/scripts/wish-form.ts) and the box opens below to check it and add the extras; "Artist – Album" typed is
-// split the same way (on the server too, so it works without script). Editing an album shows it open. The server
+// Adding an album to the owner's own wishlist (user 2026-11-25: one line, like anon's box): "Search for an album, or
+// paste a link" with + inside. Typed words list Apple Music's albums to pick from; a pasted Apple Music / Spotify /
+// YouTube Music link fills in the album (music/src/scripts/wish-form.ts); the box opens below to check it and add the
+// extras. Without picking (or without script), a typed "Artist – Album" is split into the two fields (server too). Editing an album shows it open. The server
 // checks everything again (toWish).
 import Disclosure from '@shared/components/Disclosure.astro';
 import { NOTE_MAX } from '@shared/lib/lib';
@@ -29,20 +29,27 @@ const hint = 'font-normal text-zinc-500';
 <form id="add" method="post" data-wish-form tabindex="-1" class:list={['compose-form outline-none scroll-mt-6', open && 'open']}>
   <input type="hidden" name="action" value={editId ? 'edit' : 'add'} />
   {editId && <input type="hidden" name="id" value={editId} />}
-  <div data-toast-avoid class="compose flex items-center gap-2 pr-1.5">
-    {editId ? (
-      <span class="flex-1 min-w-0 truncate pl-5 py-3 font-medium text-zinc-900 dark:text-white">Editing {values.artist} – {values.title}</span>
-    ) : (
-      <WishIcon name="link" class="shrink-0 ml-4 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
-      <input name="link" data-wish-link autocomplete="off" aria-label="Album link, or artist and album"
-        placeholder="Paste an album link, or type the artist and album"
-        class="flex-1 min-w-0 bg-transparent pl-1 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none" />
-    )}
-    <button class="btn-primary shrink-0 w-10 px-0" aria-label={editId ? 'Save' : 'Add to the wishlist'} title={editId ? 'Save' : 'Add to the wishlist'}>
-      {editId
-        ? <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4.5 12.75 6 6 9-13.5" /></svg>
-        : <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>}
-    </button>
+  <!-- The box searches Apple Music as you type (user 2026-11-25: "nothing was the same by drake"); picking a suggestion
+       fills everything. -->
+  <div class="relative">
+    <div data-toast-avoid class="compose flex items-center gap-2 pr-1.5">
+      {editId ? (
+        <span class="flex-1 min-w-0 truncate pl-5 py-3 font-medium text-zinc-900 dark:text-white">Editing {values.artist} – {values.title}</span>
+      ) : (
+        <WishIcon name="search" class="shrink-0 ml-4 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
+        <input name="link" data-wish-link autocomplete="off" aria-label="Search for an album, or paste a link to one"
+          role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="wish-suggest"
+          placeholder="Search for an album, or paste a link"
+          class="flex-1 min-w-0 bg-transparent pl-1 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none" />
+      )}
+      <button class="btn-primary shrink-0 w-10 px-0" aria-label={editId ? 'Save' : 'Add to the wishlist'} title={editId ? 'Save' : 'Add to the wishlist'}>
+        {editId
+          ? <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m4.5 12.75 6 6 9-13.5" /></svg>
+          : <svg class="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>}
+      </button>
+    </div>
+    <ul id="wish-suggest" data-wish-suggest role="listbox" aria-label="Albums on Apple Music" hidden
+      class="glass absolute left-0 right-0 top-full mt-2 z-40 rounded-3xl p-1.5 max-h-[22rem] overflow-y-auto"></ul>
   </div>
   <p data-wish-status role="status" aria-live="polite" class="mt-2 px-5 text-sm text-zinc-500 empty:hidden">{error}</p>
 

@@ -130,6 +130,24 @@ const lookup = (a: NonNullable<Awaited<ReturnType<typeof appleAlbum>>>): AlbumLo
 
 /** A wishlist album from an Apple Music link (any country's store), in the browser like every Apple lookup. */
 export const appleLookup = async (id: string, country = 'us') => { const a = await appleAlbum(id, country); return a ? lookup(a) : null; };
+/**
+ * Albums for what someone types in the wishlist's box ("nothing was the same by drake"), best first: Apple Music's own
+ * search does the understanding. Not paced like the bulk lookups (one call per pause in typing); a refusal is just
+ * no suggestions.
+ */
+export async function appleAlbums(term: string, signal?: AbortSignal) {
+  const res = await fetch(`https://itunes.apple.com/search?entity=album&limit=6&term=${encodeURIComponent(term)}`, { signal });
+  if (!res.ok) return [];
+  const found = (await res.json()).results ?? [];
+  return found.filter((x: any) => x.wrapperType === 'collection' && x.collectionId).map((x: any) => ({
+    id: String(x.collectionId),
+    title: String(x.collectionName ?? ''),
+    artist: String(x.artistName ?? ''),
+    year: Number(String(x.releaseDate ?? '').slice(0, 4)) || null,
+    artwork: typeof x.artworkUrl100 === 'string' ? x.artworkUrl100 : null,
+  })) as { id: string; title: string; artist: string; year: number | null; artwork: string | null }[];
+}
+
 /** A wishlist album found on Apple Music by name (to fill in what a Spotify or YouTube page lacks), or null. */
 export const appleSearch = async (artist: string, title: string) => { const a = await appleMatch(artist, title); return a ? lookup(a) : null; };
 
