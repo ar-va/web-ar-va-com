@@ -3,7 +3,7 @@ import { serve } from '../../shared/worker';
 import { siteDomain } from '../../shared/lib/lib';
 import { dbRequest } from '../../shared/lib/store';
 import { connectWebhook } from '../../shared/lib/notify';
-import { sendReminders } from './lib/wishes';
+import { endExpiredReservations, sendReminders } from './lib/wishes';
 
 // The cron has no request to take the host from.
 const HOST = 'music.ar-va.com';
@@ -20,10 +20,13 @@ export default {
     }
     return serve(request, env, ctx);
   },
-  // Daily (wrangler.jsonc): reminders for reserved wishlist gifts, whose buttons tap back to /api/telegram.
+  // Daily (wrangler.jsonc): wishlist reservations past their time end; reminders for the rest, whose buttons tap back to
+  // /api/telegram.
   async scheduled(_controller, _env, ctx) {
     ctx.waitUntil(dbRequest.run({ bookmark: null }, async () => {
       await connectWebhook(HOST);
+      // Ended ones first, so nobody is reminded about a reservation that ends today.
+      console.log(`wishlist reservations ended: ${await endExpiredReservations(`https://${HOST}`)}`);
       console.log(`wishlist reminders sent: ${await sendReminders(`https://${HOST}`)}`);
     }));
   },

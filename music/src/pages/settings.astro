@@ -10,6 +10,7 @@ import Toast from '@shared/components/Toast.astro';
 import Avatar from '@shared/components/Avatar.astro';
 import { checkShelfName, displayDate, escapeHtml, loginHref, timeLeft } from '@shared/lib/lib';
 import { myReservations } from '../lib/wishes';
+import { reservationEnds } from '@shared/lib/wishlist';
 import { connectWebhook, notify } from '@shared/lib/notify';
 import { OPEN_INVITES_MAX, adminTelegramId, inviteOptions, requestShelf, canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, listInvites, removeShelf, revokeInvite, setShelfName, setWho, shelfSlug } from '@shared/lib/store';
 
@@ -346,7 +347,7 @@ const steps = [
                 {g.cover ? <img src={g.cover} alt="" width="48" height="48" loading="lazy" referrerpolicy="no-referrer" class="w-12 h-12 rounded-md object-cover" /> : <span class="w-12 h-12 rounded-md bg-kikyo-100 dark:bg-kikyo-950" aria-hidden="true"></span>}
                 <div class="min-w-0 flex-1">
                   <a href={g.href} class="font-medium text-zinc-900 dark:text-white hover:underline underline-offset-4">{g.title}</a>
-                  <p class="text-sm text-zinc-500">{g.artist}, for {g.owner_name}{g.give_on && `, giving on ${displayDate(g.give_on)}`}</p>
+                  <p class="text-sm text-zinc-500">{g.artist}, for {g.owner_name}{g.give_on && `, giving on ${displayDate(g.give_on)}`}. Held until {displayDate(reservationEnds(g))}.</p>
                 </div>
                 <form method="post" action={action} class="flex items-end gap-2">
                   <input type="hidden" name="back" value="/settings" /><input type="hidden" name="action" value="give-on" /><input type="hidden" name="item" value={g.item} />

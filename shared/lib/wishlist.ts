@@ -133,15 +133,25 @@ const dayOf = (seconds: number) => new Date(seconds * 1000).toISOString().slice(
 const shift = (day: string, days: number) => dayOf(Date.parse(`${day}T00:00:00Z`) / 1000 + days * DAY);
 
 /**
- * Which reminder is due today (a UTC day): 3 days before the giving date and the day after it; without a date, two
- * weeks after reserving, then every 30 days. Never two on one day.
+ * Which reminder is due today (a UTC day): 3 days before the reservation ends; 3 days before the giving date and the
+ * day after it; without a date, two weeks after reserving, then every 30 days. Never two on one day.
  */
-export function reminderDue(r: { created_at: number; give_on: string | null; reminded_at: number | null }, today: string): 'before' | 'after' | 'nudge' | null {
+export function reminderDue(r: { created_at: number; give_on: string | null; reminded_at: number | null }, today: string): 'before' | 'after' | 'nudge' | 'ending' | null {
   if (r.reminded_at && dayOf(r.reminded_at) === today) return null;
+  if (today === shift(reservationEnds(r), -3)) return 'ending';
   if (r.give_on) return today === shift(r.give_on, -3) ? 'before' : today === shift(r.give_on, 1) ? 'after' : null;
   const now = Date.parse(`${today}T23:59:59Z`) / 1000;
   if (now - r.created_at < 14 * DAY) return null;
   return !r.reminded_at || today >= shift(dayOf(r.reminded_at), 30) ? 'nudge' : null;
+}
+
+/** How long a reservation holds without "I gave it" (user 2026-11-25): RESERVATION_DAYS, or a week past a later giving date. */
+export const RESERVATION_DAYS = 60;
+/** The last day a reservation holds (YYYY-MM-DD, UTC); the day after, it ends and the record is free again. */
+export function reservationEnds(r: { created_at: number; give_on: string | null }) {
+  const days = shift(dayOf(r.created_at), RESERVATION_DAYS);
+  const date = r.give_on ? shift(r.give_on, 7) : '';
+  return date > days ? date : days;
 }
 
 /** "When are you giving it?": a real day from today up to a year ahead, or null. */
@@ -175,7 +185,7 @@ export function reservationCard(r: {
     ...(r.note ? ['', `${e(r.ownerFirst)}’s note: <i>${e(r.note)}</i>`] : []),
     ...(r.where.length ? ['', `Where to get it: ${r.where.map(e).join('; ')}`] : []),
   ].join('\n');
-  const tail = '\n\nI’ll remind you before you give it. Set the day on the record’s page.';
+  const tail = `\n\nIt’s held for you for ${RESERVATION_DAYS} days, or until a week after the day you’re giving it (set it on the record’s page). I’ll remind you before then.`;
   const songs = r.tracks.filter((t) => !t.heading);
   const line = (t: Track, i: number) => `${i + 1}. ${e(t.title)}${t.duration ? ` (${t.duration})` : ''}`;
   const visible = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&(lt|gt|amp|quot);/g, '_').length;

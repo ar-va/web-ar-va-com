@@ -3,7 +3,7 @@
 // Logged-in visitors reserve items; the owner never sees a reservation (it's left out of the owner's data entirely),
 // until the giver says they gave it. Reservers get Telegram reminders (sendReminders, from the daily cron).
 import { escapeHtml, displayDate, textToTracklist, tracklistToText, withMatchLinks, type Match, type ReleaseDetail, type ShelfRecord, type Track } from '@shared/lib/lib';
-import { RESERVATIONS_MAX, WISHES_MAX, isOwned, whereLines, ownedKey, reminderDue, reserveState, toWish, type ReserveState, type Wish } from '@shared/lib/wishlist';
+import { RESERVATIONS_MAX, WISHES_MAX, isOwned, reservationEnds, whereLines, ownedKey, reminderDue, reserveState, toWish, type ReserveState, type Wish } from '@shared/lib/wishlist';
 import { notify } from '@shared/lib/notify';
 import { byId, db, ownerWhere, shelfSlug, type User } from '@shared/lib/store';
 
@@ -98,13 +98,13 @@ export async function wishlistData(name: string, viewer: User | null) {
     q(`SELECT item FROM wish_stars WHERE owner_id = ${owner}`),
     // Who reserved: never for the owner; "someone" (0) for a logged-out visitor; the id for a logged-in one (to tell theirs).
     d.prepare(`SELECT item, gifted_at IS NOT NULL AS gifted, CASE WHEN ?2 = owner_id THEN NULL WHEN ?2 = 0 THEN 0 ELSE user_id END AS user_id,
-      CASE WHEN ?2 != 0 AND ?2 = user_id THEN give_on END AS give_on FROM reservations WHERE owner_id = ${owner}`).bind(name, viewer?.id ?? 0),
+      CASE WHEN ?2 != 0 AND ?2 = user_id THEN give_on END AS give_on, CASE WHEN ?2 != 0 AND ?2 = user_id THEN created_at END AS reserved_at FROM reservations WHERE owner_id = ${owner}`).bind(name, viewer?.id ?? 0),
   ]);
   const user = (users.results[0] as User | undefined) ?? null;
   if (!user) return { owner: null, source: 'custom' as WishSource, items: [] };
   const details = byId<ReleaseDetail>(releases.results, 'id');
   const found = byId<Match>(matches.results, 'release_id');
-  const res = new Map((reservations.results as { item: string; gifted: number; user_id: number | null; give_on: string | null }[]).map((r) => [r.item, r]));
+  const res = new Map((reservations.results as { item: string; gifted: number; user_id: number | null; give_on: string | null; reserved_at: number | null }[]).map((r) => [r.item, r]));
   const source = sourceOf(user);
   const keys = shelfKeys(shelf.results);
   const starred = new Set((stars.results as { item: string }[]).map((r) => r.item));
@@ -114,7 +114,9 @@ export async function wishlistData(name: string, viewer: User | null) {
   const items = list
     .filter((i) => !res.get(i.key)?.gifted && !isOwned(i, keys))
     .sort((a, b) => b.added.localeCompare(a.added))
-    .map((i) => ({ ...i, top: starred.has(i.key), state: reserveState(res.get(i.key)?.user_id ?? null, viewer?.id ?? null, user.id) as ReserveState, giveOn: res.get(i.key)?.give_on ?? null }));
+    .map((i) => ({ ...i, top: starred.has(i.key), state: reserveState(res.get(i.key)?.user_id ?? null, viewer?.id ?? null, user.id) as ReserveState, giveOn: res.get(i.key)?.give_on ?? null,
+      // The reserver's own: the last day it holds.
+      heldUntil: res.get(i.key)?.reserved_at ? reservationEnds({ created_at: res.get(i.key)!.reserved_at!, give_on: res.get(i.key)!.give_on }) : null }));
   return { owner: user, source, items };
 }
 
@@ -310,7 +312,8 @@ export async function sendReminders(origin: string, today = new Date().toISOStri
   if (!due.length) return 0;
   const sent = await notify(due.map(({ r, kind }) => {
     const who = escapeHtml(first(r.owner_name)), title = `<b>${escapeHtml(r.title)}</b>`;
-    const text = kind === 'before' ? `In 3 days you’re giving ${who} ${title} (${displayDate(r.give_on!)}).`
+    const text = kind === 'ending' ? `Your reservation of ${title} for ${who} ends on ${displayDate(reservationEnds(r))}. Mark it as given, or set a later giving date on the record’s page to keep it.`
+      : kind === 'before' ? `In 3 days you’re giving ${who} ${title} (${displayDate(r.give_on!)}).`
       : kind === 'after' ? `Did you give ${who} ${title}?`
       : `You reserved ${title} for ${who}. Still planning to give it?`;
     return {
@@ -325,6 +328,24 @@ export async function sendReminders(origin: string, today = new Date().toISOStri
   // Marked as reminded even when Telegram refused (never allowed messages): it would refuse again tomorrow too.
   await d.batch(due.map(({ r }) => d.prepare('UPDATE reservations SET reminded_at = ? WHERE owner_id = ? AND item = ?').bind(now(), r.owner_id, r.item)));
   return sent.filter(Boolean).length;
+}
+
+/**
+ * Reservations not given by the end of their time (`reservationEnds`) end: the record is free for others again, and the
+ * reserver is told, with a link to reserve it again. Gifted ones are history and stay. Returns how many ended.
+ */
+export async function endExpiredReservations(origin: string, today = new Date().toISOString().slice(0, 10)) {
+  const d = await db();
+  const { results } = await d.prepare(reservationsSql).all<ReservationRow>();
+  const ended = results.map(reservationView).filter((r) => reservationEnds(r) < today);
+  if (!ended.length) return 0;
+  await d.batch(ended.map((r) => d.prepare('DELETE FROM reservations WHERE owner_id = ? AND item = ? AND gifted_at IS NULL').bind(r.owner_id, r.item)));
+  await notify(ended.filter((r) => r.title).map((r) => ({
+    chatId: r.user_id,
+    text: `Your reservation of <b>${escapeHtml(r.title)}</b> for ${escapeHtml(first(r.owner_name))} has ended (it wasn’t marked as given in time), so others can reserve it now.`,
+    buttons: [[{ text: 'Reserve it again', url: `${origin}${r.href}` }]],
+  })));
+  return ended.length;
 }
 
 /** Who reserved an item (for a Telegram button tap): the open reservation's giver and the owner, or null. */

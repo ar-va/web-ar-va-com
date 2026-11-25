@@ -108,7 +108,7 @@ const songs = tracks.filter((t) => !t.heading);
                 </div>
               </div>
             )}
-            <ReserveBox class="mt-6" state={item.state} item={item.key} giveOn={item.giveOn} ownerFirst={first} action={list} back={path}
+            <ReserveBox class="mt-6" state={item.state} item={item.key} giveOn={item.giveOn} heldUntil={item.heldUntil} ownerFirst={first} action={list} back={path}
               loginHref={loginHref(Astro.url)} />
           </RecordHero>
         </div>

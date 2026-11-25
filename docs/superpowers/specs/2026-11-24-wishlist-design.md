@@ -177,6 +177,9 @@ pressing counts)*. Hidden, not deleted: the reservation rules below decide what 
 
 ### Reminders
 
+**Added 2026-11-25 (user):** a reservation not marked given ends after 60 days, or a week after a later giving date
+(`reservationEnds`); 3 days before, an "ending" reminder; at the end the reserver is told and the record is free again.
+
 - A daily cron on the music Worker (`triggers.crons: ["0 9 * * *"]`, 09:00 UTC; `scheduled` in `music/src/worker.ts`,
   inside `dbRequest`) sends due reminders through `notify()` *(my call for the timing)*:
   - with `give_on`: 3 days before it ("You're giving Artur *Blackstar* on Dec 25"), and the day after it ("Did you

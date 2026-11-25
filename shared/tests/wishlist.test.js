@@ -1,7 +1,7 @@
 // node --test shared/tests/ (the wishlist's rules: links, wishes, owned records, reservations, reminders)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseStreamingLink, toWish, isOwned, reserveState, reminderDue, safeGiveOn, splitArtistAlbum, shopLink } from '../lib/wishlist.ts';
+import { parseStreamingLink, toWish, isOwned, reserveState, reminderDue, safeGiveOn, splitArtistAlbum, shopLink, reservationEnds } from '../lib/wishlist.ts';
 
 test('album links from the three services', () => {
   assert.deepEqual(parseStreamingLink('https://music.apple.com/ua/album/blackstar/1059043043'), { service: 'apple', id: '1059043043', country: 'ua' });
@@ -137,4 +137,16 @@ test('a shop line as a button: its name and its link', () => {
   assert.deepEqual(shopLink('https://www.amazon.ca/dp/B08'), { label: 'amazon.ca', url: 'https://www.amazon.ca/dp/B08' });
   assert.deepEqual(shopLink('Any record shop'), { label: 'Any record shop', url: null });
   assert.deepEqual(shopLink('Sound Shop: https://sound.example/a, ask for Ben'), { label: 'Sound Shop, ask for Ben', url: 'https://sound.example/a' });
+});
+
+test('reservations end after 60 days, or a week after a later giving date', () => {
+  const at = (d) => Date.parse(`${d}T09:00:00Z`) / 1000;
+  assert.equal(reservationEnds({ created_at: at('2026-11-25'), give_on: null }), '2027-01-24');
+  assert.equal(reservationEnds({ created_at: at('2026-11-25'), give_on: '2026-12-25' }), '2027-01-24'); // earlier date: 60 days
+  assert.equal(reservationEnds({ created_at: at('2026-11-25'), give_on: '2027-03-01' }), '2027-03-08'); // a later date holds it
+  // Three days before the end: "ending"; it wins over a nudge the same day; never twice a day.
+  const r = { created_at: at('2026-11-25'), give_on: null, reminded_at: null };
+  assert.equal(reminderDue(r, '2027-01-21'), 'ending');
+  assert.equal(reminderDue({ ...r, reminded_at: at('2027-01-21') }, '2027-01-21'), null);
+  assert.equal(reminderDue({ ...r, give_on: '2027-03-01' }, '2027-03-05'), 'ending');
 });

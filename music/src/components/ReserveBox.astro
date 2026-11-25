@@ -9,6 +9,8 @@ interface Props {
   state: ReserveState;
   item: string;
   giveOn: string | null;
+  /** Their own reservation's last day (it ends after it unless given; a later giving date holds it longer). */
+  heldUntil?: string | null;
   ownerFirst: string;
   /** The wishlist page, which handles the forms. */
   action: string;
@@ -17,7 +19,7 @@ interface Props {
   loginHref: string;
   class?: string;
 }
-const { state, item, giveOn, ownerFirst, action, back, loginHref, class: className = '' } = Astro.props;
+const { state, item, giveOn, heldUntil, ownerFirst, action, back, loginHref, class: className = '' } = Astro.props;
 const today = new Date().toISOString().slice(0, 10);
 const lastDay = new Date(Date.now() + 365 * 86400_000).toISOString().slice(0, 10);
 ---
@@ -58,7 +60,7 @@ const lastDay = new Date(Date.now() + 365 * 86400_000).toISOString().slice(0, 10
             <button class="ctl">Cancel reservation</button>
           </form>
         </div>
-        <p class="mt-2 text-xs opacity-80">“I gave it” tells {ownerFirst} the gift was from you, so press it once it’s handed over.</p>
+        <p class="mt-2 text-xs opacity-80">“I gave it” tells {ownerFirst} the gift was from you, so press it once it’s handed over.{heldUntil && ` Held for you until ${displayDate(heldUntil)}; a later giving date holds it longer.`}</p>
       </div>
     )}
   </div>
