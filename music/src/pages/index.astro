@@ -5,6 +5,7 @@
 export const prerender = false;
 import Layout from '@shared/layouts/Layout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
+import WishlistLink from '../components/WishlistLink.astro';
 import Cover from '@shared/components/Cover.astro';
 import Avatar from '@shared/components/Avatar.astro';
 import { directory, shelfSlug } from '@shared/lib/store';
@@ -61,9 +62,11 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
                 )}
               </ul>
 
-              <span class="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-kikyo-600 dark:text-kikyo-400">
-                Browse the shelf
-              </span>
+              <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+                <span class="inline-flex items-center gap-1.5 text-sm font-medium text-kikyo-600 dark:text-kikyo-400">Browse the shelf</span>
+                <!-- Above the card's own link (relative z-10), so it opens the wishlist, not the shelf. -->
+                {s.wishes > 0 && <WishlistLink href={`${href}/wishlist`} class="relative z-10" />}
+              </div>
             </li>
           );
         })}

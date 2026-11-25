@@ -5,6 +5,7 @@ import Cover from '@shared/components/Cover.astro';
 import SortMenu from '@shared/components/SortMenu.astro';
 import RecordHero from './RecordHero.astro';
 import Note from './Note.astro';
+import WishlistLink from './WishlistLink.astro';
 import type { shelfView } from '@shared/lib/lib';
 
 interface Props {
@@ -46,16 +47,20 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
     <section class="mt-2">
       <RecordHero record={latest} artist={latest.artist} title={latest.title} released={latest.released} genres={latest.genres}
         trackCount={latest.trackCount} links={latest.links} runtime={latest.runtime ?? undefined} href={`${base}/${latest.instanceId}`}>
-        <h2 slot="above" class="font-sans"><span class="inline-block rounded-full bg-bengara-tint px-2.5 py-0.5 text-sm font-medium text-bengara dark:bg-bengara-tint-dark dark:text-bengara-light">Latest</span></h2>
+        <!-- The wishlist's button at the other end of the Latest row (user 2026-11-25); always for the owner. -->
+        <div slot="above" class="flex flex-1 items-center justify-between gap-4">
+          <h2 class="font-sans"><span class="inline-block rounded-full bg-bengara-tint px-2.5 py-0.5 text-sm font-medium text-bengara dark:bg-bengara-tint-dark dark:text-bengara-light">Latest</span></h2>
+          {(wishCount > 0 || canEdit) && <WishlistLink href={`${base}/wishlist`} count={wishCount} />}
+        </div>
       </RecordHero>
     </section>
   )}
+  {!latest && (wishCount > 0 || canEdit) && <div class="mt-2 flex justify-end"><WishlistLink href={`${base}/wishlist`} count={wishCount} /></div>}
 
   <!-- The shelf's card, between the Latest hero and the whole collection (user, 2026-10-29): the collector's photo, the
        shelf's name, its counts and Telegram (user 2026-11-21: merged into it from the top of the page), then their note. -->
   <Note class={latest ? 'mt-12' : 'mt-2'} note={owner.note} by={owner.name} photo={owner.photo} heading={`${owner.name}’s records`} level="h1" always
-    stats={{ records: records.length, recordsHref: '#all-records', recordsTitle: 'Records: jump to the list', comments: commentCount, telegram: owner.telegram,
-      wishes: wishCount || canEdit ? { count: wishCount, href: `${base}/wishlist` } : null }}
+    stats={{ records: records.length, recordsHref: '#all-records', recordsTitle: 'Records: jump to the list', comments: commentCount, telegram: owner.telegram }}
     about="the collection" base={base} canEdit={canEdit} editing={editingNote}
     addText="Add a short note about your collection: what you collect, how it started. Visitors see it here."
     placeholder="What you collect, how it started, what you’re hunting for…">

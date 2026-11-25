@@ -19,9 +19,7 @@ interface Props {
   heading: string;
   level?: 'h1' | 'h2';
   /** The counts line: records (and where that number leads), comments on this page, the owner's Telegram @username. */
-  stats: { records: number; recordsHref: string; recordsTitle: string; comments: number; telegram: string | null;
-    /** The wishlist (on a shelf): how many records it shows and where it is; null hides it. */
-    wishes?: { count: number; href: string } | null };
+  stats: { records: number; recordsHref: string; recordsTitle: string; comments: number; telegram: string | null };
   /** Show the card even without a note (a shelf: it carries the shelf's name and counts). */
   always?: boolean;
   /** "the collection" or "this record". */
@@ -64,12 +62,6 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 18.5V6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8z" /></svg>
             {stats.comments}
           </a>
-          {stats.wishes && (
-            <a href={stats.wishes.href} title="Wishlist: records to give" aria-label={`Wishlist, ${plural(stats.wishes.count, 'record')}`} class={statLink}>
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="8.5" width="17" height="4" rx="1" /><path d="M5 12.5v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7M12 8.5v12M12 8.5c-1.5-3-5-4-5.5-2s2.5 2 5.5 2c3 0 6-.2 5.5-2s-4-1-5.5 2" /></svg>
-              {stats.wishes.count || 'Wishlist'}
-            </a>
-          )}
           {stats.telegram && (
             <a href={`https://t.me/${stats.telegram}`} target="_blank" rel="noopener noreferrer" title={`${by} on Telegram`} class={statLink}>
               <svg class="w-4 h-4" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>

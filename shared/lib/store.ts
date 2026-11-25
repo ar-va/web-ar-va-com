@@ -411,7 +411,13 @@ export async function directory(perShelf = 5) {
   const [shelves, records, overrides] = await d.batch([
     d.prepare(`SELECT users.id, users.name, users.username, users.photo_url, users.discogs_username, users.shelf_name, users.shelf_note,
       COUNT(*) AS count, MAX(json_extract(records.data, '$.added')) AS latest,
-      (SELECT COUNT(*) FROM comments WHERE shelf_id = users.id AND instance_id = ${SHELF_THREAD}) AS comments
+      (SELECT COUNT(*) FROM comments WHERE shelf_id = users.id AND instance_id = ${SHELF_THREAD}) AS comments,
+      -- Records on the shown wishlist, gifted ones left out (for its button; shortcut: ones already on the shelf still
+      -- count here, so a list of only owned records shows a button to an empty page; fine until someone notices).
+      (SELECT COUNT(*) FROM wants w WHERE w.user_id = users.id AND users.wishlist_source = 'discogs' AND NOT EXISTS
+        (SELECT 1 FROM reservations r WHERE r.owner_id = users.id AND r.item = 'd:' || w.release_id AND r.gifted_at IS NOT NULL))
+      + (SELECT COUNT(*) FROM wishes c WHERE c.user_id = users.id AND users.wishlist_source IS NOT 'discogs' AND NOT EXISTS
+        (SELECT 1 FROM reservations r WHERE r.owner_id = users.id AND r.item = 'c:' || c.id AND r.gifted_at IS NOT NULL)) AS wishes
       FROM users JOIN records ON records.user_id = users.id
       WHERE discogs_username IS NOT NULL AND ${collectorSql('users.')} GROUP BY users.id ORDER BY latest DESC`),
     d.prepare(latest),
@@ -426,7 +432,7 @@ export async function directory(perShelf = 5) {
     byUser.set(row.user_id, list);
   }
   return (shelves.results as { id: number; name: string; username: string | null; photo_url: string | null; discogs_username: string;
-    shelf_name: string | null; shelf_note: string | null; count: number; comments: number }[])
+    shelf_name: string | null; shelf_note: string | null; count: number; comments: number; wishes: number }[])
     .map((s) => ({ ...s, records: (byUser.get(s.id) ?? []).sort((a, b) => b.added.localeCompare(a.added)) }));
 }
 

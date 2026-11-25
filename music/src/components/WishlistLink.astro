@@ -1,0 +1,11 @@
+---
+// The way to a collector's wishlist, the same wherever it shows (user 2026-11-25): on the shelf at the end of the
+// "Latest" row, and on each card of the shelves page. A gift icon, "Wishlist" and, where known, how many records.
+interface Props { href: string; count?: number; class?: string }
+const { href, count, class: className = '' } = Astro.props;
+---
+<a href={href} class={`ctl ${className}`} aria-label={count ? `Wishlist, ${count} record${count === 1 ? '' : 's'}` : 'Wishlist'}>
+  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="8.5" width="17" height="4" rx="1" /><path d="M5 12.5v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7M12 8.5v12M12 8.5c-1.5-3-5-4-5.5-2s2.5 2 5.5 2c3 0 6-.2 5.5-2s-4-1-5.5 2" /></svg>
+  Wishlist
+  {!!count && <span class="tabular-nums text-zinc-500 dark:text-zinc-400">{count}</span>}
+</a>
