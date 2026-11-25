@@ -9,9 +9,9 @@ import Toast from '@shared/components/Toast.astro';
 import SkippingRecord from '../../../components/SkippingRecord.astro';
 import RecordBrowser, { type BrowserItem } from '../../../components/RecordBrowser.astro';
 import WishForm from '../../../components/WishForm.astro';
-import { escapeHtml, loginHref } from '@shared/lib/lib';
-import { WISHES_MAX, parseStreamingLink, safeGiveOn, splitArtistAlbum, toWish } from '@shared/lib/wishlist';
-import { notify } from '@shared/lib/notify';
+import { loginHref } from '@shared/lib/lib';
+import { WISHES_MAX, parseStreamingLink, reservationCard, safeGiveOn, splitArtistAlbum, toWish } from '@shared/lib/wishlist';
+import { connectWebhook, notify } from '@shared/lib/notify';
 import { currentUser, shelfSlug } from '@shared/lib/store';
 import {
   addWish, copyToOwnList, markGifted, removeWish, reserve, setGiveOn, setStar, setWishlistSource, unreserve, updateWish, wishAnchor, wishKey, wishNotice, wishSlug, wishlistData,
@@ -83,8 +83,15 @@ if (owner && Astro.request.method === 'POST') {
     if (!found || found.state !== 'free') return back(found?.state === 'mine' ? '' : '?taken');
     const result = await reserve(owner.id, item, user, null);
     if (result !== 'ok') return back(`?${result}`);
-    const ownerFirst = owner.name.split(' ')[0];
-    const [sent] = await notify([{ chatId: user.id, text: `You reserved <b>${escapeHtml(found.title)}</b> for ${escapeHtml(ownerFirst)}. Nobody else can buy it now, and ${escapeHtml(ownerFirst)} won’t see it’s reserved.\n\nI’ll remind you now and then. Set the day you’re giving it on the wishlist, and I’ll remind you just before.` }]);
+    // Everything about the record in the message (user 2026-11-25): cover, album, artist, year, note, shop, tracklist,
+    // buttons to its page, the shop, the services, I gave it / Cancel (whose taps need the webhook set).
+    const card = reservationCard({
+      ownerFirst: owner.name.split(' ')[0], title: found.title, artist: found.artist, year: found.year, top: found.top, tracks: found.tracks,
+      note: found.note, where: found.where, giveOn: null, links: found.links, item, ownerId: owner.id,
+      pageUrl: `${Astro.url.origin}${path}/${wishSlug(item)}`,
+    });
+    Astro.locals.cfContext.waitUntil(connectWebhook(Astro.url.host));
+    const [sent] = await notify([{ chatId: user.id, text: card.caption, buttons: card.buttons, photo: found.cover }]);
     return back(sent ? '?reserved' : '?nomsg');
   }
   if (!isOwner && action === 'unreserve') {

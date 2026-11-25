@@ -96,3 +96,34 @@ test('typed "artist – album" in the one-line box', () => {
   assert.deepEqual(splitArtistAlbum('In Rainbows'), { artist: '', title: 'In Rainbows' });
   assert.deepEqual(splitArtistAlbum(''), { artist: '', title: '' });
 });
+
+test('the reservation message: details, escaped, under Telegram\'s caption limit, with buttons', async () => {
+  const { reservationCard } = await import('../lib/wishlist.ts');
+  const tracks = Array.from({ length: 60 }, (_, i) => ({ position: String(i + 1), title: `Song <${i + 1}> with a fairly long title`, duration: '4:52', heading: false }));
+  const card = reservationCard({
+    ownerFirst: 'Artur', title: 'Alfredo & <b>', artist: 'Freddie Gibbs', year: 2020, top: true, tracks,
+    note: 'The red pressing, please', where: 'Rough Trade https://www.roughtrade.com/x', giveOn: null,
+    links: { spotify: 'https://open.spotify.com/album/x', apple: '', youtube: 'https://music.youtube.com/browse/MPREb_x' },
+    pageUrl: 'https://music.ar-va.com/artur/wishlist/c-5', item: 'c:5', ownerId: 42,
+  });
+  const visible = card.caption.replace(/<[^>]+>/g, '').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"');
+  assert.ok(visible.length <= 1024, `caption is ${visible.length}`);
+  assert.match(card.caption, /<b>Alfredo &amp; &lt;b&gt;<\/b>/);
+  assert.match(card.caption, /Freddie Gibbs/);
+  assert.match(card.caption, /2020/);
+  assert.match(card.caption, /most wanted/);
+  assert.match(card.caption, /The red pressing, please/);
+  assert.match(card.caption, /<blockquote expandable>[\s\S]*1\. Song &lt;1&gt;/);
+  assert.match(card.caption, /more on the website/);
+  assert.ok(!/<b>.*<script/i.test(card.caption));
+  const buttons = card.buttons.flat();
+  assert.deepEqual(buttons[0], { text: 'Open on the website', url: 'https://music.ar-va.com/artur/wishlist/c-5' });
+  assert.ok(buttons.some((b) => b.url === 'https://www.roughtrade.com/x' && /roughtrade\.com/.test(b.text)));
+  assert.ok(buttons.some((b) => b.text === 'Spotify') && buttons.some((b) => b.text === 'YouTube Music') && !buttons.some((b) => b.text === 'Apple Music'));
+  assert.ok(buttons.some((b) => b.callback_data === 'gift:42:c:5') && buttons.some((b) => b.callback_data === 'unres:42:c:5'));
+  // A short album fits whole, with no "more" line; no shop link, no button for it.
+  const small = reservationCard({ ownerFirst: 'Artur', title: 'X', artist: 'Y', year: null, top: false, tracks: tracks.slice(0, 3), note: null,
+    where: 'Any record shop', giveOn: null, links: { spotify: '', apple: '', youtube: '' }, pageUrl: 'https://m/x', item: 'd:1', ownerId: 42 });
+  assert.ok(!/more on the website/.test(small.caption) && /Any record shop/.test(small.caption));
+  assert.ok(!small.buttons.flat().some((b) => /Buy at/.test(b.text)));
+});

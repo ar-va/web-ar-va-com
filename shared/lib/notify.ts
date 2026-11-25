@@ -17,12 +17,16 @@ export async function bot(method: string, body: object) {
 
 type Button = { text: string; url: string } | { text: string; callback_data: string };
 
-/** Sends each message (HTML, optional buttons under it); per message, whether Telegram delivered it. */
-export function notify(messages: { chatId: number; text: string; buttons?: Button[][] }[]) {
-  return Promise.all(messages.map(({ chatId, text, buttons }) => bot('sendMessage', {
-    chat_id: chatId, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true },
-    ...(buttons && { reply_markup: { inline_keyboard: buttons } }),
-  })));
+/**
+ * Sends each message (HTML, optional buttons under it; with `photo`, the text is the photo's caption, at most 1024
+ * characters); per message, whether Telegram delivered it. A photo Telegram can't fetch: the text alone.
+ */
+export function notify(messages: { chatId: number; text: string; buttons?: Button[][]; photo?: string | null }[]) {
+  return Promise.all(messages.map(async ({ chatId, text, buttons, photo }) => {
+    const markup = buttons && { reply_markup: { inline_keyboard: buttons } };
+    if (photo && await bot('sendPhoto', { chat_id: chatId, photo, caption: text, parse_mode: 'HTML', ...markup })) return true;
+    return bot('sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true }, ...markup });
+  }));
 }
 
 // Button taps come to music.ar-va.com/api/telegram. Telegram sends this secret along, so nobody else can fake a tap;

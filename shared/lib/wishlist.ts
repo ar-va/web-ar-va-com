@@ -1,6 +1,6 @@
 // The wishlist's rules, no Cloudflare imports (tested by shared/tests/wishlist.test.js): album links from the streaming
 // services, what a wish may hold, which wishes the owner already has, who sees a reservation, when to remind.
-import { artistKey, cleanNote, normalizeName, safeCoverUrl, safeDay, safeStreamingUrl, textToTracklist, tracklistToText } from './lib.ts';
+import { artistKey, cleanNote, escapeHtml, linkify, normalizeName, safeCoverUrl, safeDay, safeStreamingUrl, textToTracklist, tracklistToText, type Track } from './lib.ts';
 
 export const WISHES_MAX = 200;
 export const RESERVATIONS_MAX = 20;
@@ -133,4 +133,54 @@ export function reminderDue(r: { created_at: number; give_on: string | null; rem
 export function safeGiveOn(value: string | null | undefined, today: string) {
   const day = safeDay(value);
   return day && day >= today && day <= shift(today, 365) ? day : null;
+}
+
+// ---- The Telegram message a reserver gets (user 2026-11-25: everything about the record, convenient to use) ----
+
+type Button = { text: string; url: string } | { text: string; callback_data: string };
+const CAPTION_MAX = 1024; // Telegram's limit for a photo's caption, counted without the HTML tags
+
+/**
+ * The reservation's confirmation, sent as the cover photo with this caption (HTML): the album, artist, year, "most
+ * wanted", the owner's note, where to get it, then the tracklist folded (Telegram's expandable quote), cut to fit with
+ * "+N more on the website". Buttons: the record's page, the shop's link, the listening links, I gave it / Cancel.
+ */
+export function reservationCard(r: {
+  ownerFirst: string; title: string; artist: string; year: number | null; top: boolean; tracks: Track[];
+  note: string | null; where: string | null; giveOn: string | null;
+  links: Record<LinkService, string>; pageUrl: string; item: string; ownerId: number;
+}) {
+  const e = escapeHtml;
+  const head = [
+    `You reserved this for ${e(r.ownerFirst)}. Nobody else can reserve it now, and ${e(r.ownerFirst)} won’t see it’s reserved.`,
+    '',
+    `<b>${e(r.title)}</b>`,
+    `${e(r.artist)}${r.year ? `, ${r.year}` : ''}`,
+    ...(r.top ? [`★ One of ${e(r.ownerFirst)}’s most wanted`] : []),
+    ...(r.note ? ['', `${e(r.ownerFirst)}’s note: <i>${e(r.note)}</i>`] : []),
+    ...(r.where ? ['', `Where to get it: ${e(r.where)}`] : []),
+  ].join('\n');
+  const tail = '\n\nI’ll remind you before you give it. Set the day on the record’s page.';
+  const songs = r.tracks.filter((t) => !t.heading);
+  const line = (t: Track, i: number) => `${i + 1}. ${e(t.title)}${t.duration ? ` (${t.duration})` : ''}`;
+  const visible = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&(lt|gt|amp|quot);/g, '_').length;
+  // As many tracks as fit, then how many more.
+  let tracks = '';
+  for (let n = songs.length; n >= 0; n--) {
+    const more = songs.length - n;
+    const body = songs.slice(0, n).map(line).join('\n') + (more ? `\n+${more} more on the website` : '');
+    tracks = songs.length ? `\n\nTracklist\n<blockquote expandable>${body}</blockquote>` : '';
+    if (visible(head + tracks + tail) <= CAPTION_MAX) break;
+  }
+  const shop = r.where ? linkify(r.where).find((p): p is { url: string } => 'url' in p)?.url : undefined;
+  const host = shop ? new URL(shop).hostname.replace(/^www\./, '') : '';
+  const listen = (['spotify', 'apple', 'youtube'] as const).filter((s) => r.links[s])
+    .map((s) => ({ text: { spotify: 'Spotify', apple: 'Apple Music', youtube: 'YouTube Music' }[s], url: r.links[s] }));
+  const buttons: Button[][] = [
+    [{ text: 'Open on the website', url: r.pageUrl }],
+    ...(shop ? [[{ text: `Buy at ${host}`, url: shop }]] : []),
+    ...(listen.length ? [listen] : []),
+    [{ text: `I gave it to ${r.ownerFirst}`, callback_data: `gift:${r.ownerId}:${r.item}` }, { text: 'Cancel reservation', callback_data: `unres:${r.ownerId}:${r.item}` }],
+  ];
+  return { caption: head + tracks + tail, buttons };
 }
