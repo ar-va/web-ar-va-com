@@ -23,6 +23,8 @@ export interface WishItem {
   artist: string;
   title: string;
   year: number | null;
+  /** Discogs' genres (wantlist records); none for albums added on the site. */
+  genres: string[];
   cover: string | null;
   vinyl: null;
   tracks: Track[];
@@ -34,17 +36,29 @@ export interface WishItem {
   wish?: Wish;
 }
 
-/** The page anchor for an item: '#wish-d-123'. */
-export const wishAnchor = (key: string) => `wish-${key.replace(':', '-')}`;
+/** An item in addresses: 'd:123' → 'd-123' (its page: /<shelf>/wishlist/d-123), and back (null if it isn't one). */
+export const wishSlug = (key: string) => key.replace(':', '-');
+export const wishKey = (slug: string) => (/^[dc]-\d{1,12}$/.test(slug) ? slug.replace('-', ':') : null);
+/** The item's spot on the wishlist shelf: '#wish-d-123'. */
+export const wishAnchor = (key: string) => `wish-${wishSlug(key)}`;
+
+/** What happened, after a form on the wishlist or a record's page (?reserved, ?taken…), for a Notice. */
+export function wishNotice(q: URLSearchParams, ownerFirst: string) {
+  if (q.has('reserved')) return 'Reserved. You’ll find it in your settings too, and the bot will remind you on Telegram.';
+  if (q.has('taken')) return 'Someone reserved it a moment ago. Pick another?';
+  if (q.has('limit')) return `You have ${RESERVATIONS_MAX} reservations open. Give or cancel one first.`;
+  if (q.has('gifted')) return `Thank you! ${ownerFirst} has been told it’s from you.`;
+  return null;
+}
 
 const fromWant = (r: ShelfRecord, d: ReleaseDetail | null, m: Match | null): WishItem => ({
   key: `d:${r.releaseId}`, instanceId: r.releaseId, masterId: r.masterId, releaseId: r.releaseId, artist: r.artist, title: r.title,
-  year: d?.originalYear ?? r.year, cover: r.cover ?? m?.apple?.artwork ?? null, vinyl: null, tracks: withMatchLinks(d?.tracklist ?? [], m),
+  year: d?.originalYear ?? r.year, genres: r.genres, cover: r.cover ?? m?.apple?.artwork ?? null, vinyl: null, tracks: withMatchLinks(d?.tracklist ?? [], m),
   links: { spotify: m?.spotify?.url ?? '', apple: m?.apple?.url ?? '', youtube: m?.youtube?.url ?? '' }, note: null, added: r.added,
 });
 
 const fromWish = (id: number, w: Wish, createdAt: number): WishItem => ({
-  key: `c:${id}`, instanceId: id, masterId: 0, releaseId: 0, artist: w.artist, title: w.title, year: w.year, cover: w.cover, vinyl: null,
+  key: `c:${id}`, instanceId: id, masterId: 0, releaseId: 0, artist: w.artist, title: w.title, year: w.year, genres: [], cover: w.cover, vinyl: null,
   tracks: textToTracklist(w.tracklist), links: w.links, note: w.note, added: new Date(createdAt * 1000).toISOString(), wish: w,
 });
 
@@ -244,7 +258,7 @@ type ReservationRow = { owner_id: number; item: string; user_id: number; created
 const reservationView = (r: ReservationRow) => {
   const data = r.data ? JSON.parse(r.data) : {};
   return { ...r, artist: String(data.artist ?? ''), title: String(data.title ?? ''), cover: (data.cover as string | null) ?? null,
-    href: `/${shelfSlug(r)}/wishlist#${wishAnchor(r.item)}` };
+    list: `/${shelfSlug(r)}/wishlist`, href: `/${shelfSlug(r)}/wishlist/${wishSlug(r.item)}` };
 };
 
 /** The person's open reservations on every shelf (settings, "Gifts you’ve reserved"), soonest giving date first. */

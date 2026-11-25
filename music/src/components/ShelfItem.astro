@@ -1,0 +1,24 @@
+---
+// One record standing on a shelf: its sleeve, the shelf tag under it (title, artist; shown when the shelf is
+// `.labelled`), the whole thing a link to its page. The records shelf and the wishlist use the same one (user
+// 2026-11-25: the wishlist should look like the records). `badge`: a small tag on the sleeve (the wishlist's "Reserved").
+import Cover from '@shared/components/Cover.astro';
+import type { ShelfRecord } from '@shared/lib/lib';
+
+interface Props {
+  record: Pick<ShelfRecord, 'instanceId' | 'cover' | 'vinyl' | 'artist' | 'title'>;
+  href: string;
+  eager?: boolean;
+  /** `on`: the viewer's own (the "on" colour), else the dark glass over the cover. */
+  badge?: { text: string; on?: boolean } | null;
+}
+const { record, href, eager = false, badge } = Astro.props;
+---
+<a href={href} class="shelf-record block" title={`${record.artist} – ${record.title}`}>
+  <Cover record={record} eager={eager} />
+  {badge && (
+    <span class:list={['absolute left-2 top-2 z-10 rounded-full px-2.5 py-0.5 text-xs font-medium shadow-sm', badge.on ? 'bg-(--on-bg) text-(--on-text)' : 'glass glass-dark text-white']} aria-hidden="true">{badge.text}</span>
+  )}
+  <span class="sr-only">{record.artist} – {record.title}{badge && `, ${badge.text.toLowerCase()}`}</span>
+  <span class="shelf-label" aria-hidden="true"><span>{record.title}</span><span>{record.artist}</span></span>
+</a>

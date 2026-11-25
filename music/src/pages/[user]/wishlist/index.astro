@@ -4,18 +4,18 @@
 // owner never sees what's reserved, until the giver presses "I gave it". Forms post here and come back with a redirect.
 export const prerender = false;
 import Layout from '@shared/layouts/Layout.astro';
-import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
 import Notice from '@shared/components/Notice.astro';
-import SkippingRecord from '../../components/SkippingRecord.astro';
-import WishRow from '../../components/WishRow.astro';
-import WishForm from '../../components/WishForm.astro';
+import SkippingRecord from '../../../components/SkippingRecord.astro';
+import ShelfItem from '../../../components/ShelfItem.astro';
+import WishForm from '../../../components/WishForm.astro';
 import { escapeHtml, loginHref } from '@shared/lib/lib';
-import { RESERVATIONS_MAX, WISHES_MAX, parseStreamingLink, safeGiveOn, toWish } from '@shared/lib/wishlist';
+import { WISHES_MAX, parseStreamingLink, safeGiveOn, toWish } from '@shared/lib/wishlist';
 import { notify } from '@shared/lib/notify';
 import { currentUser, shelfSlug } from '@shared/lib/store';
 import {
-  addWish, markGifted, removeWish, reserve, setGiveOn, setWishlistSource, unreserve, updateWish, wishAnchor, wishlistData,
-} from '../../lib/wishes';
+  addWish, markGifted, removeWish, reserve, setGiveOn, setWishlistSource, unreserve, updateWish, wishAnchor, wishKey, wishNotice, wishSlug, wishlistData,
+} from '../../../lib/wishes';
 
 const name = Astro.params.user!;
 const user = await currentUser(Astro.cookies);
@@ -23,7 +23,6 @@ const data = await wishlistData(name, user);
 const { owner } = data;
 const path = Astro.url.pathname;
 const today = new Date().toISOString().slice(0, 10);
-const lastDay = new Date(Date.now() + 365 * 86400_000).toISOString().slice(0, 10);
 
 let error: string | null = null;
 let draft: Record<string, any> | null = null;
@@ -33,8 +32,11 @@ if (owner && Astro.request.method === 'POST') {
   const get = (k: string) => String(form.get(k) ?? '');
   const action = get('action');
   const item = get('item');
-  // Settings' "Gifts you've reserved" posts here too and goes back there.
-  const back = (query = '', anchor = wishAnchor(item)) => Astro.redirect(get('back').startsWith('/settings') ? `${get('back').split('#')[0]}${query}#gifts` : `${path}${query}#${anchor}`, 303);
+  // A record's page (here/<item>) and settings' "Gifts you've reserved" post here too, and go back there; nowhere else.
+  const to = get('back');
+  const fromSettings = to.startsWith('/settings');
+  const fromRecord = to.startsWith(`${path}/`) && !!wishKey(to.slice(path.length + 1));
+  const back = (query = '') => Astro.redirect(fromSettings ? `/settings${query}#gifts` : fromRecord ? `${to}${query}` : `${path}${query}#${wishAnchor(item)}`, 303);
   const isOwner = user.id === owner.id;
 
   if (isOwner && action === 'source') {
@@ -51,7 +53,7 @@ if (owner && Astro.request.method === 'POST') {
     if ('error' in wish) { error = wish.error; draft = values; Astro.response.status = 400; }
     else if (action === 'edit') {
       await updateWish(owner, Number(get('id')), wish);
-      return Astro.redirect(`${path}#${wishAnchor(`c:${Number(get('id'))}`)}`, 303);
+      return Astro.redirect(`${path}/${wishSlug(`c:${Number(get('id'))}`)}`, 303);
     } else {
       const id = await addWish(owner, wish);
       if (id) return Astro.redirect(`${path}?added=${id}#${wishAnchor(`c:${id}`)}`, 303);
@@ -80,8 +82,9 @@ if (owner && Astro.request.method === 'POST') {
     return back();
   }
   if (!isOwner && action === 'gifted') {
+    // The record leaves the list, so its page is gone: back to the list (or settings).
     const done = await markGifted(owner.id, item, user);
-    return back(done ? '?gifted' : '', 'list');
+    return Astro.redirect(fromSettings ? `/settings${done ? '?gifted' : ''}#gifts` : `${path}${done ? '?gifted' : ''}#list`, 303);
   }
   if (!error) return Astro.redirect(path, 303);
 }
@@ -92,14 +95,8 @@ const first = owner?.name.split(' ')[0] ?? '';
 const q = Astro.url.searchParams;
 const editId = isOwner ? Number(q.get('edit')) || 0 : 0;
 const editing = editId ? data.items.find((i) => i.key === `c:${editId}`)?.wish : undefined;
-const notice = q.has('reserved') ? `Reserved. You’ll find it in your settings too, and the bot will remind you on Telegram.`
-  : q.has('nomsg') ? null
-  : q.has('taken') ? 'Someone reserved it a moment ago. Pick another?'
-  : q.has('limit') ? `You have ${RESERVATIONS_MAX} reservations open. Give or cancel one first.`
-  : q.has('gifted') ? `Thank you! ${first} has been told it’s from you.`
-  : q.has('added') ? (data.items.some((i) => i.key === `c:${Number(q.get('added'))}`) ? 'Added to your wishlist.' : 'Added, but it doesn’t show: that album is already on your shelf.')
-  : null;
-const login = (key: string) => loginHref(Astro.url, `${Astro.url.origin}${path}#${wishAnchor(key)}`);
+const notice = wishNotice(q, first) ?? (q.has('added') ? (data.items.some((i) => i.key === `c:${Number(q.get('added'))}`) ? 'Added to your wishlist.' : 'Added, but it doesn’t show: that album is already on your shelf.')
+  : null);
 ---
 <Layout title={owner ? `${owner.name}’s wishlist - ARVA` : 'Not found - ARVA'} description={owner ? `Records ${first} would like on vinyl.` : undefined}>
   <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
@@ -134,10 +131,17 @@ const login = (key: string) => loginHref(Astro.url, `${Astro.url.origin}${path}#
           </div>
         )}
 
-        <section id="list" class="mt-10" aria-label="Records on the wishlist">
+        <!-- The records on a shelf, like the collection (user 2026-11-25); each opens its page. Visitors see which are
+             reserved (a tag on the sleeve); the owner never does. -->
+        <section id="list" class="mt-10 !max-w-none scroll-mt-6" aria-label="Records on the wishlist">
           {data.items.length ? (
-            <ul role="list">
-              {data.items.map((item) => <WishRow item={item} ownerFirst={first} isOwner={isOwner} loginHref={login(item.key)} today={today} lastDay={lastDay} />)}
+            <ul class="shelf labelled" role="list">
+              {data.items.map((item, i) => (
+                <li id={wishAnchor(item.key)} class="shelf-slot scroll-mt-24">
+                  <ShelfItem record={item} href={`${path}/${wishSlug(item.key)}`} eager={i < 12}
+                    badge={item.state === 'mine' ? { text: 'Reserved by you', on: true } : item.state === 'taken' ? { text: 'Reserved' } : null} />
+                </li>
+              ))}
             </ul>
           ) : (
             <p class="text-zinc-500">
@@ -153,3 +157,9 @@ const login = (key: string) => loginHref(Astro.url, `${Astro.url.origin}${path}#
     )}
   </div>
 </Layout>
+
+<script>
+  // The same as the records shelf: notes drift out of a record while it's hovered.
+  import { notesOnHover } from '../../../scripts/notes';
+  notesOnHover('#list .shelf-record');
+</script>

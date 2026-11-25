@@ -1,11 +1,11 @@
 ---
 // A collector's shelf: a featured latest record, filters (added, released, genres) and search like Writing.astro,
 // sorting, and two views of the records: on shelves, or listed like blog articles.
-import Cover from '@shared/components/Cover.astro';
 import SortMenu from '@shared/components/SortMenu.astro';
 import RecordHero from './RecordHero.astro';
 import Note from './Note.astro';
 import WishlistLink from './WishlistLink.astro';
+import ShelfItem from './ShelfItem.astro';
 import type { shelfView } from '@shared/lib/lib';
 
 interface Props {
@@ -165,11 +165,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
               data-released={r.releasedYear ?? ''}
               data-genres={r.genres.map((g) => g.toLowerCase()).join('|')}
               data-search={[r.artist, r.title, r.labels, r.year, r.releasedYear, ...r.genres, ...(r.styles ?? []), ...r.fields.map((f) => f.value)].join(' ').toLowerCase()}>
-              <a href={`${base}/${r.instanceId}`} class="shelf-record block" title={`${r.artist} – ${r.title}`}>
-                <Cover record={r} eager={i < 12} />
-                <span class="sr-only">{r.artist} – {r.title}</span>
-                <span class="shelf-label" aria-hidden="true"><span>{r.title}</span><span>{r.artist}</span></span>
-              </a>
+              <ShelfItem record={r} href={`${base}/${r.instanceId}`} eager={i < 12} />
             </li>
           ))}
         </ul>

@@ -1,0 +1,85 @@
+---
+// One record on a collector's wishlist (music.ar-va.com/<shelf>/wishlist/d-123 or c-5): the album page's hero (the vinyl
+// rolls out), the giver's note, what this visitor can do (ReserveBox), the tracklist. Forms post to the wishlist page and
+// come back here. The owner sees no reservation; for albums added on the site, Edit and Remove.
+export const prerender = false;
+import Layout from '@shared/layouts/Layout.astro';
+import Breadcrumbs from '../../../components/Breadcrumbs.astro';
+import RecordHero from '../../../components/RecordHero.astro';
+import ReserveBox from '../../../components/ReserveBox.astro';
+import Disclosure from '@shared/components/Disclosure.astro';
+import Notice from '@shared/components/Notice.astro';
+import Listen from '../../../components/Listen.astro';
+import SkippingRecord from '../../../components/SkippingRecord.astro';
+import { loginHref, runtime, withSideHeadings } from '@shared/lib/lib';
+import { currentUser, shelfSlug } from '@shared/lib/store';
+import { wishKey, wishNotice, wishlistData } from '../../../lib/wishes';
+
+const key = wishKey(Astro.params.item!);
+const user = await currentUser(Astro.cookies);
+const { owner, items } = await wishlistData(Astro.params.user!, user);
+// Gone, gifted, already on the shelf, or on the list the owner doesn't show: not found.
+const item = key ? items.find((i) => i.key === key) : undefined;
+if (!owner || !item) Astro.response.status = 404;
+
+const path = Astro.url.pathname;
+const list = owner ? `/${shelfSlug(owner)}/wishlist` : '/';
+const first = owner?.name.split(' ')[0] ?? '';
+const isOwner = !!owner && user?.id === owner.id;
+const notice = wishNotice(Astro.url.searchParams, first);
+const tracks = item ? withSideHeadings(item.tracks) : [];
+const songs = tracks.filter((t) => !t.heading);
+---
+<Layout title={item ? `${item.artist} – ${item.title} on ${owner!.name}’s wishlist - ARVA` : 'Not found - ARVA'}
+  description={item ? `${owner!.name} would like ${item.title} by ${item.artist} on vinyl.` : undefined}>
+  <article class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
+    <Breadcrumbs class="mb-8" share={!!item} items={owner
+      ? [{ label: 'Shelves', href: '/' }, { label: owner.name, href: `/${shelfSlug(owner)}` }, { label: 'Wishlist', href: list }, { label: item?.title ?? 'Not found' }]
+      : [{ label: 'Shelves', href: '/' }, { label: 'Not found' }]} />
+    {item ? (
+      <>
+        {notice && <Notice class="mb-8">{notice}</Notice>}
+        {Astro.url.searchParams.has('nomsg') && (
+          <Notice class="mb-8">Reserved. Telegram didn’t let the bot message you, so there won’t be reminders. <a href={loginHref(Astro.url)} class="underline underline-offset-4">Log in again</a> and allow messages to get them.</Notice>
+        )}
+        <div class="!max-w-none">
+          <RecordHero record={item} artist={item.artist} title={item.title} released={item.year ? String(item.year) : ''} genres={item.genres}
+            trackCount={songs.length} runtime={runtime(item.tracks) ?? undefined} links={item.links} addedPrefix="On the wishlist since">
+            {isOwner && item.wish && (
+              <div slot="above" class="flex items-center gap-2">
+                <a href={`${list}?edit=${item.instanceId}#add`} class="ctl">Edit</a>
+                <form method="post" action={list}>
+                  <input type="hidden" name="action" value="remove" /><input type="hidden" name="id" value={item.instanceId} />
+                  <button class="ctl">Remove from the wishlist</button>
+                </form>
+              </div>
+            )}
+            {item.note && <p class="mt-5 text-zinc-600 dark:text-zinc-400 whitespace-pre-line">“{item.note}”</p>}
+            <ReserveBox class="mt-6" state={item.state} item={item.key} giveOn={item.giveOn} ownerFirst={first} action={list} back={path}
+              loginHref={loginHref(Astro.url)} />
+          </RecordHero>
+        </div>
+
+        {songs.length > 0 && (
+          <Disclosure id="tracklist" title="Tracklist" heading open class="mt-14 scroll-mt-6">
+            <ol class="mt-4 -mx-3">
+              {tracks.map((t) => t.heading ? (
+                <li class="px-3 pt-6 pb-2 first:pt-1 text-sm font-semibold text-zinc-900 dark:text-white">{t.title}</li>
+              ) : (
+                <li class="track-row group flex items-center gap-4 px-3 py-2.5 rounded-xl hover:bg-zinc-100 dark:hover:bg-white/[0.04] focus-within:bg-zinc-100 dark:focus-within:bg-white/[0.04] transition-colors">
+                  <span class="w-7 shrink-0 font-mono text-sm text-zinc-500 tabular-nums">{t.position}</span>
+                  <span class="flex-grow min-w-0 text-zinc-800 dark:text-zinc-200">{t.title}</span>
+                  {t.duration && <span class="font-mono text-sm text-zinc-500 tabular-nums">{t.duration}</span>}
+                  <Listen query={`${item.artist} ${t.title}`} label={t.title} links={t.links} kind="track" />
+                </li>
+              ))}
+            </ol>
+          </Disclosure>
+        )}
+        <a href={list} class="mt-12 inline-block text-sm font-medium text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">All of {first}’s wishlist</a>
+      </>
+    ) : (
+      <SkippingRecord heading="Not on the wishlist">This record isn’t on the wishlist any more. <a href={list} class="text-kikyo-600 dark:text-kikyo-400 underline underline-offset-4">See the wishlist</a></SkippingRecord>
+    )}
+  </article>
+</Layout>

@@ -8,7 +8,10 @@ import Listen from './Listen.astro';
 import { displayDate, formatReleased, type ShelfRecord } from '@shared/lib/lib';
 
 interface Props {
-  record: ShelfRecord;
+  /** A shelf record, or a wishlist record (the same hero on its page, user 2026-11-25). */
+  record: Pick<ShelfRecord, 'instanceId' | 'cover' | 'vinyl' | 'artist' | 'title' | 'added'>;
+  /** The words before the date it was added: "Added to the shelf" (default), "On the wishlist since". */
+  addedPrefix?: string;
   artist: string;
   title: string;
   released: string;
@@ -25,10 +28,10 @@ interface Props {
    *  with the player bar the album page renders at its end (PlayerBar.astro). */
   play?: { id: string; title: string; duration: string }[];
 }
-const { record, artist, title, released, genres, trackCount, links, href, runtime, askAdded, play } = Astro.props;
+const { record, artist, title, released, genres, trackCount, links, href, runtime, askAdded, play, addedPrefix = 'Added to the shelf' } = Astro.props;
 // Discogs' added date is in the collector's local time: show that day, not the UTC one.
 const day = record.added.slice(0, 10);
-const added = day ? `Added to the shelf ${formatReleased(day)}` : 'Added date unknown';
+const added = day ? `${addedPrefix} ${formatReleased(day)}` : 'Added date unknown';
 // Genres: the main one (Discogs lists it first) as a tag, "+3" for the rest; a click shows them all (user 2026-11-21:
 // four genres wrapped the facts line).
 const GENRES = 'genres';
