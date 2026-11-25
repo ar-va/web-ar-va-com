@@ -34,8 +34,10 @@ interface Props {
   /** The wishlist's owner: a star button on each sleeve (shown on hover) that posts `action=star` here, sent in the
    *  background (user 2026-11-25: star without opening the record). */
   starAction?: string;
+  /** The order `items` come in, checked in the Sort menu: 'new' (shelves) or 'az' (wishlists, user 2026-11-25). */
+  sort?: string;
 }
-const { items, noun = 'records', starAction } = Astro.props;
+const { items, noun = 'records', starAction, sort = 'new' } = Astro.props;
 
 const count = <T extends string>(values: T[]) => {
   const m = new Map<T, number>();
@@ -69,7 +71,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
               </button>
             </div>
             <!-- Added, then released (user 2026-11-25), then by name. -->
-            <SortMenu id="records-sort" options={[['new', 'Newest added'], ['old', 'Oldest added'], ['rel-new', 'Newest release'], ['rel-old', 'Oldest release'], ['az', 'A–Z'], ['za', 'Z–A']]} />
+            <SortMenu id="records-sort" options={[['new', 'Newest added'], ['old', 'Oldest added'], ['rel-new', 'Newest release'], ['rel-old', 'Oldest release'], ['az', 'A–Z'], ['za', 'Z–A']]} current={sort} />
             <div class="view-switch relative inline-flex h-8 w-14 items-center justify-between px-1 rounded-full bg-(--well)" role="group" aria-label="View" data-view-current="shelf">
               <span aria-hidden="true" class="view-knob absolute left-1 h-6 w-6 rounded-full bg-(--on-bg) shadow-[0_1px_3px_rgb(0_0_0/0.15)] transition-transform duration-300"></span>
               <button type="button" data-view="shelf" aria-pressed="true" title="Shelf" class={`view-btn ${viewBtn}`}>

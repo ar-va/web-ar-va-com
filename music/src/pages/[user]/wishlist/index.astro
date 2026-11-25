@@ -108,8 +108,9 @@ const q = Astro.url.searchParams;
 const editId = isOwner ? Number(q.get('edit')) || 0 : 0;
 const edited = editId ? data.items.find((i) => i.key === `c:${editId}`) : undefined;
 const editing = edited?.wish ? { ...edited.wish, top: edited.top } : undefined;
-// Starred ("Most wanted") first, then newest.
-const items: BrowserItem[] = [...data.items].sort((a, b) => Number(b.top) - Number(a.top)).map((i) => ({
+// Starred ("Most wanted") first, then A–Z by artist and album (user 2026-11-25), as the Sort menu's A–Z does.
+const alpha = (i: { artist: string; title: string }) => `${i.artist} ${i.title}`.toLowerCase();
+const items: BrowserItem[] = [...data.items].sort((a, b) => Number(b.top) - Number(a.top) || alpha(a).localeCompare(alpha(b))).map((i) => ({
   id: i.key, href: `${path}/${wishSlug(i.key)}`, record: i, added: i.added, releasedYear: i.year, genres: i.genres, top: i.top,
   search: [i.year, ...i.genres, i.note, i.where].filter(Boolean).join(' '),
   badge: i.state === 'mine' ? { text: 'Reserved by you', on: true } : i.state === 'taken' ? { text: 'Reserved' } : null,
@@ -154,7 +155,7 @@ const notice = wishNotice(q, first) ?? (q.has('added') ? (data.items.some((i) =>
              page. Starred ones ("Most wanted") come first in every order. Visitors see which are reserved (a tag on the
              sleeve); the owner never does. -->
         <section id="list" class="mt-10 !max-w-none scroll-mt-6" aria-label="Records on the wishlist">
-          {data.items.length ? <RecordBrowser items={items} starAction={isOwner ? path : undefined} /> : (
+          {data.items.length ? <RecordBrowser items={items} starAction={isOwner ? path : undefined} sort="az" /> : (
             <p class="text-zinc-500">
               {isOwner
                 ? (data.source === 'discogs' ? 'Your Discogs wantlist is empty, or every record on it is already on your shelf.' : 'Nothing here yet. Paste a link above to add an album.')
