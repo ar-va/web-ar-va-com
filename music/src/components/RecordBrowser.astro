@@ -197,6 +197,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
 <script>
   import { notesOnHover } from '../scripts/notes';
   import { filtersCount, filtersPanel } from '@shared/scripts/filters-panel';
+  import { DURATION, spring } from '@shared/scripts/grow';
   notesOnHover('#records-shelf .shelf-record');
 
   // Records rise onto their shelf the first time they scroll into view (left to right along a row); whatever is
@@ -295,10 +296,31 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
   };
   // Starred records ("Most wanted", the wishlist) stay first in every order.
   const top = (a: HTMLElement, b: HTMLElement) => Number(!!b.dataset.top) - Number(!!a.dataset.top);
-  document.getElementById('records-sort')?.addEventListener('sort', (e) => {
-    const order = [...slots].sort((a, b) => top(a, b) || compare[(e as CustomEvent<string>).detail](a, b));
-    order.forEach((slot) => { grid?.appendChild(slot); const row = rows.get(slot.dataset.record!); if (row) list?.appendChild(row); });
-  });
+  const sortMenu = document.getElementById('records-sort');
+  const sortBy = (key: string) => [...slots].sort((a, b) => top(a, b) || compare[key](a, b))
+    .forEach((slot) => { grid?.appendChild(slot); const row = rows.get(slot.dataset.record!); if (row) list?.appendChild(row); });
+  sortMenu?.addEventListener('sort', (e) => sortBy((e as CustomEvent<string>).detail));
+
+  // A starred (or unstarred) record glides to its new place (user 2026-11-25), on the menus' spring: the records move,
+  // the shelf's wall and ledges stay (each slot draws its own piece, so only its contents are moved, unclipped meanwhile).
+  function moveTo(key: string) {
+    const listShown = !!list && !list.hidden;
+    const items = listShown ? [...rows.values()] : slots;
+    const before = new Map(items.map((el) => [el, el.getBoundingClientRect()]));
+    sortBy(key);
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    for (const el of items) {
+      if (el.hidden) continue;
+      const a = before.get(el)!, b = el.getBoundingClientRect();
+      const dx = a.left - b.left, dy = a.top - b.top;
+      if (!dx && !dy) continue;
+      const parts = listShown ? [el] : [...el.children] as HTMLElement[];
+      if (!listShown) { el.style.clipPath = 'none'; el.style.zIndex = '1'; }
+      const runs = parts.map((p) => p.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: DURATION, easing: spring }));
+      Promise.all(runs.map((r) => r.finished)).catch(() => {}).finally(() => { el.style.clipPath = ''; el.style.zIndex = ''; });
+    }
+  }
+  const currentSort = () => sortMenu?.querySelector<HTMLElement>('[aria-checked="true"]')?.dataset.sort ?? 'new';
 
   filtersPanel();
 
@@ -377,7 +399,8 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
     };
     const top = on.value === '1';
     set(top);
+    moveTo(currentSort());
     const ok = await fetch(form.getAttribute('action')!, { method: 'POST', body }).then((r) => r.ok, () => false);
-    if (!ok) set(!top);
+    if (!ok) { set(!top); moveTo(currentSort()); }
   }));
 </script>
