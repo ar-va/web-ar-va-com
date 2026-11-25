@@ -4,6 +4,7 @@
 // 2026-11-25: the wishlist should look like the records). `badge`: a small tag on the sleeve (the wishlist's "Reserved").
 import Cover from '@shared/components/Cover.astro';
 import type { ShelfRecord } from '@shared/lib/lib';
+import StarIcon from './StarIcon.astro';
 
 interface Props {
   record: Pick<ShelfRecord, 'instanceId' | 'cover' | 'vinyl' | 'artist' | 'title'>;
@@ -11,14 +12,16 @@ interface Props {
   eager?: boolean;
   /** `on`: the viewer's own (the "on" colour), else the dark glass over the cover. */
   badge?: { text: string; on?: boolean } | null;
+  /** Starred ("Most wanted" on a wishlist): a star before the title on the tag. */
+  top?: boolean;
 }
-const { record, href, eager = false, badge } = Astro.props;
+const { record, href, eager = false, badge, top = false } = Astro.props;
 ---
 <a href={href} class="shelf-record block" title={`${record.artist} – ${record.title}`}>
   <Cover record={record} eager={eager} />
   {badge && (
     <span class:list={['absolute left-2 top-2 z-10 rounded-full px-2.5 py-0.5 text-xs font-medium shadow-sm', badge.on ? 'bg-(--on-bg) text-(--on-text)' : 'glass glass-dark text-white']} aria-hidden="true">{badge.text}</span>
   )}
-  <span class="sr-only">{record.artist} – {record.title}{badge && `, ${badge.text.toLowerCase()}`}</span>
-  <span class="shelf-label" aria-hidden="true"><span>{record.title}</span><span>{record.artist}</span></span>
+  <span class="sr-only">{record.artist} – {record.title}{top && ', most wanted'}{badge && `, ${badge.text.toLowerCase()}`}</span>
+  <span class="shelf-label" aria-hidden="true"><span>{top && <StarIcon class="inline w-3.5 h-3.5 mr-1 align-[-2px] text-bengara dark:text-bengara-light" />}{record.title}</span><span>{record.artist}</span></span>
 </a>
