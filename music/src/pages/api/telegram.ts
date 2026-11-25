@@ -1,15 +1,33 @@
-// The bot's button taps (Telegram's webhook, set by connectWebhook in notify.ts). One button so far: "Send an invite
-// link" under a shelf request (settings.astro), which makes a one-use, 7-day link and has the bot send it to the person.
+// The bot's button taps (Telegram's webhook, set by connectWebhook in notify.ts): "Send an invite link" under a shelf
+// request (settings.astro), which makes a one-use, 7-day link and has the bot send it to the person; and under a
+// wishlist reminder (wishes.ts) "I gave it" / "Cancel reservation", which only the person who reserved can use.
 import type { APIRoute } from 'astro';
 import { escapeHtml } from '@shared/lib/lib';
 import { bot, notify, webhookSecret } from '@shared/lib/notify';
 import { adminTelegramId, canCollect, createInvite, userById } from '@shared/lib/store';
+import { markGifted, openReservation, unreserve } from '../../lib/wishes';
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, url }) => {
   if (request.headers.get('x-telegram-bot-api-secret-token') !== (await webhookSecret())) return new Response('Forbidden', { status: 403 });
   const tap = (await request.json().catch(() => null))?.callback_query;
+  const gift = String(tap?.data ?? '').match(/^(gift|unres):(\d+):([dc]:\d+)$/);
+  if (gift) {
+    const [, verb, owner, item] = gift;
+    const open = await openReservation(Number(owner), item);
+    let done = '';
+    if (open && tap.from?.id === open.user_id) {
+      if (verb === 'gift' && await markGifted(Number(owner), item, { id: open.user_id, name: (await userById(open.user_id))?.name ?? 'Someone' })) done = '✓ Marked as gifted';
+      if (verb === 'unres' && await unreserve(Number(owner), item, open.user_id)) done = 'Reservation cancelled';
+    }
+    if (done) {
+      await bot('editMessageReplyMarkup', { chat_id: tap.message?.chat?.id, message_id: tap.message?.message_id,
+        reply_markup: { inline_keyboard: [[{ text: done, url: `https://${url.host}/settings#gifts` }]] } });
+      await bot('answerCallbackQuery', { callback_query_id: tap.id, text: verb === 'gift' ? `Thank you! ${open!.owner_name.split(' ')[0]} has been told.` : 'Cancelled.' });
+    } else await bot('answerCallbackQuery', { callback_query_id: tap.id, text: 'This reservation isn’t yours, or it’s already closed.' });
+    return new Response('ok');
+  }
   const id = Number(String(tap?.data ?? '').match(/^invite:(\d+)$/)?.[1]);
   // Telegram retries anything but a 200, so everything else is acknowledged and dropped.
   if (!id) return new Response('ok');
