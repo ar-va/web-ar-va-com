@@ -154,7 +154,7 @@ const notice = wishNotice(q, first) ?? (q.has('added') ? (data.items.some((i) =>
              page. Starred ones ("Most wanted") come first in every order. Visitors see which are reserved (a tag on the
              sleeve); the owner never does. -->
         <section id="list" class="mt-10 !max-w-none scroll-mt-6" aria-label="Records on the wishlist">
-          {data.items.length ? <RecordBrowser items={items} /> : (
+          {data.items.length ? <RecordBrowser items={items} starAction={isOwner ? path : undefined} /> : (
             <p class="text-zinc-500">
               {isOwner
                 ? (data.source === 'discogs' ? 'Your Discogs wantlist is empty, or every record on it is already on your shelf.' : 'Nothing here yet. Paste a link above to add an album.')

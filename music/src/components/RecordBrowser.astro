@@ -27,8 +27,15 @@ export interface BrowserItem {
   top?: boolean;
 }
 
-interface Props { items: BrowserItem[]; /** What "No matching …" says. */ noun?: string }
-const { items, noun = 'records' } = Astro.props;
+interface Props {
+  items: BrowserItem[];
+  /** What "No matching …" says. */
+  noun?: string;
+  /** The wishlist's owner: a star button on each sleeve (shown on hover) that posts `action=star` here, sent in the
+   *  background (user 2026-11-25: star without opening the record). */
+  starAction?: string;
+}
+const { items, noun = 'records', starAction } = Astro.props;
 
 const count = <T extends string>(values: T[]) => {
   const m = new Map<T, number>();
@@ -132,7 +139,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
 
         <ul id="records-shelf" class="shelf labelled" role="list">
           {items.map((r, i) => (
-            <li class="shelf-slot" data-record={r.id} data-top={r.top ? '1' : undefined}
+            <li class="shelf-slot group/slot" data-record={r.id} data-top={r.top ? '1' : undefined}
               data-added={r.added}
               data-alpha={`${r.record.artist} ${r.record.title}`.toLowerCase()}
               data-year={r.added.slice(0, 4)}
@@ -140,7 +147,18 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
               data-released-on={r.releasedOn ?? r.releasedYear ?? ''}
               data-genres={r.genres.map((g) => g.toLowerCase()).join('|')}
               data-search={`${r.record.artist} ${r.record.title} ${r.search}`.toLowerCase()}>
-              <ShelfItem record={r.record} href={r.href} eager={i < 12} badge={r.badge} top={r.top} />
+              <ShelfItem record={r.record} href={r.href} eager={i < 12} badge={r.badge} top={r.top && !starAction} />
+              {starAction && (
+                <form method="post" action={starAction} data-star-form class="absolute right-2 top-2 z-20">
+                  <input type="hidden" name="action" value="star" /><input type="hidden" name="item" value={r.id} />
+                  <input type="hidden" name="on" value={r.top ? '0' : '1'} />
+                  <button aria-pressed={String(!!r.top)} aria-label={`Most wanted: ${r.record.title}`} title={r.top ? 'Most wanted: click to unstar' : 'Mark as most wanted'}
+                    class="group/star glass glass-dark grid w-7 h-7 place-items-center rounded-full text-white/85 shadow-sm cursor-pointer opacity-0 group-hover/slot:opacity-100 focus-visible:opacity-100 aria-pressed:opacity-100 [@media(hover:none)]:opacity-100 focus-visible:outline-2 focus-visible:outline-kikyo-500 transition-opacity">
+                    <StarIcon class="w-4 h-4 hidden group-aria-pressed/star:block text-bengara-light" />
+                    <svg class="w-4 h-4 group-aria-pressed/star:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 2.7 5.6 6.1.8-4.5 4.2 1.1 6.1L12 16.8l-5.4 2.9 1.1-6.1-4.5-4.2 6.1-.8z" /></svg>
+                  </button>
+                </form>
+              )}
             </li>
           ))}
         </ul>
@@ -160,7 +178,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
                     : <span class="block w-10 h-10 rounded-md bg-kikyo-100 dark:bg-kikyo-950"></span>}
                 </a>
                 <a href={r.href} class="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white underline decoration-zinc-300 dark:decoration-zinc-700 hover:decoration-zinc-500 dark:hover:decoration-zinc-400 underline-offset-4 transition-colors text-base truncate block min-w-0">
-                  {r.top && <StarIcon class="inline w-4 h-4 mr-1.5 align-[-2px] text-bengara dark:text-bengara-light" />}<span class="text-zinc-500 dark:text-zinc-400">{r.record.artist} –</span> {r.record.title}
+                  <StarIcon class={`${r.top ? 'inline' : 'hidden'} w-4 h-4 mr-1.5 align-[-2px] text-bengara dark:text-bengara-light`} data-star /><span class="text-zinc-500 dark:text-zinc-400">{r.record.artist} –</span> {r.record.title}
                 </a>
                 {r.badge && <span class="ml-2 shrink-0 text-sm text-zinc-500">{r.badge.text}</span>}
               </div>
@@ -339,4 +357,25 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
     apply();
   };
   document.querySelectorAll('#clear-filters, [data-filters-reset]').forEach((b) => b.addEventListener('click', reset));
+
+  // The owner's star on a sleeve: flips at once, saved in the background, undone if saving fails. It keeps its place
+  // until the next visit (starred records come first then, and in any re-sort now).
+  document.querySelectorAll<HTMLFormElement>('[data-star-form]').forEach((form) => form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const button = form.querySelector('button')!;
+    const on = form.querySelector<HTMLInputElement>('input[name="on"]')!;
+    const body = new FormData(form);
+    const set = (top: boolean) => {
+      button.setAttribute('aria-pressed', String(top));
+      button.title = top ? 'Most wanted: click to unstar' : 'Mark as most wanted';
+      on.value = top ? '0' : '1';
+      const slot = form.closest<HTMLElement>('li')!;
+      if (top) slot.dataset.top = '1'; else delete slot.dataset.top;
+      rows.get(slot.dataset.record!)?.querySelector('[data-star]')?.classList.replace(top ? 'hidden' : 'inline', top ? 'inline' : 'hidden');
+    };
+    const top = on.value === '1';
+    set(top);
+    const ok = await fetch(form.getAttribute('action')!, { method: 'POST', body }).then((r) => r.ok, () => false);
+    if (!ok) set(!top);
+  }));
 </script>
