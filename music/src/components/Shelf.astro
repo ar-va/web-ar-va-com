@@ -21,7 +21,9 @@ const { owner, records, commentCount, wishCount, canEdit, editingNote } = Astro.
 const base = `/${encodeURIComponent(owner.slug)}`;
 const latest = records[0];
 const items: BrowserItem[] = records.map((r) => ({
-  id: String(r.instanceId), href: `${base}/${r.instanceId}`, record: r, added: r.added, releasedYear: r.releasedYear, genres: r.genres,
+  id: String(r.instanceId), href: `${base}/${r.instanceId}`, record: r, added: r.added, releasedYear: r.releasedYear,
+  // The first release date when it's a date ("1959-08-17"; an owner may have typed something else).
+  releasedOn: r.released.match(/^\d{4}(-\d{2}){0,2}/)?.[0] ?? null, genres: r.genres,
   search: [r.labels, r.year, r.releasedYear, ...r.genres, ...(r.styles ?? []), ...r.fields.map((f) => f.value)].join(' '),
 }));
 ---

@@ -16,6 +16,8 @@ export interface BrowserItem {
   /** ISO date it was added (order, the Added filter). */
   added: string;
   releasedYear: number | null;
+  /** The release date as far as known ("1959-08-17", "1959-08", "1959"), for sorting by release. */
+  releasedOn?: string | null;
   genres: string[];
   /** More words search finds it by, beyond artist and title. */
   search: string;
@@ -59,7 +61,8 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
                 <svg class="w-3.5 h-3.5 transition-transform group-aria-expanded:rotate-180 max-sm:hidden" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>
               </button>
             </div>
-            <SortMenu id="records-sort" />
+            <!-- Added, then released (user 2026-11-25), then by name. -->
+            <SortMenu id="records-sort" options={[['new', 'Newest added'], ['old', 'Oldest added'], ['rel-new', 'Newest release'], ['rel-old', 'Oldest release'], ['az', 'A–Z'], ['za', 'Z–A']]} />
             <div class="view-switch relative inline-flex h-8 w-14 items-center justify-between px-1 rounded-full bg-(--well)" role="group" aria-label="View" data-view-current="shelf">
               <span aria-hidden="true" class="view-knob absolute left-1 h-6 w-6 rounded-full bg-(--on-bg) shadow-[0_1px_3px_rgb(0_0_0/0.15)] transition-transform duration-300"></span>
               <button type="button" data-view="shelf" aria-pressed="true" title="Shelf" class={`view-btn ${viewBtn}`}>
@@ -134,6 +137,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
               data-alpha={`${r.record.artist} ${r.record.title}`.toLowerCase()}
               data-year={r.added.slice(0, 4)}
               data-released={r.releasedYear ?? ''}
+              data-released-on={r.releasedOn ?? r.releasedYear ?? ''}
               data-genres={r.genres.map((g) => g.toLowerCase()).join('|')}
               data-search={`${r.record.artist} ${r.record.title} ${r.search}`.toLowerCase()}>
               <ShelfItem record={r.record} href={r.href} eager={i < 12} badge={r.badge} top={r.top} />
@@ -265,6 +269,9 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
     old: (a, b) => a.dataset.added!.localeCompare(b.dataset.added!),
     az: (a, b) => a.dataset.alpha!.localeCompare(b.dataset.alpha!),
     za: (a, b) => b.dataset.alpha!.localeCompare(a.dataset.alpha!),
+    // By release; records without a release date last either way.
+    'rel-new': (a, b) => Number(!a.dataset.releasedOn) - Number(!b.dataset.releasedOn) || b.dataset.releasedOn!.localeCompare(a.dataset.releasedOn!),
+    'rel-old': (a, b) => Number(!a.dataset.releasedOn) - Number(!b.dataset.releasedOn) || a.dataset.releasedOn!.localeCompare(b.dataset.releasedOn!),
   };
   // Starred records ("Most wanted", the wishlist) stay first in every order.
   const top = (a: HTMLElement, b: HTMLElement) => Number(!!b.dataset.top) - Number(!!a.dataset.top);

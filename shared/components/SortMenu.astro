@@ -1,9 +1,8 @@
 ---
-// "⇅ Sort" button with a small menu. Choosing an option fires a `sort` event (detail: new | old | az | za) on the
-// element with the given id; the page reorders its own list.
-interface Props { id: string }
-const { id } = Astro.props;
-const options = [['new', 'Newest first'], ['old', 'Oldest first'], ['az', 'A–Z'], ['za', 'Z–A']];
+// "⇅ Sort" button with a small menu. Choosing an option fires a `sort` event (detail: the option's key, e.g. new | old |
+// az | za) on the element with the given id; the page reorders its own list. The first option is the starting order.
+interface Props { id: string; options?: [string, string][] }
+const { id, options = [['new', 'Newest first'], ['old', 'Oldest first'], ['az', 'A–Z'], ['za', 'Z–A']] } = Astro.props;
 ---
 <div id={id} class="relative" data-sort-menu>
   <button type="button" aria-haspopup="true" aria-expanded="false"
@@ -17,7 +16,7 @@ const options = [['new', 'Newest first'], ['old', 'Oldest first'], ['az', 'A–Z
   <ul hidden role="menu" class="glass absolute left-0 top-full mt-3.5 z-30 min-w-44 rounded-2xl p-1.5">
     {options.map(([key, label]) => (
       <li role="none">
-        <button type="button" role="menuitemradio" aria-checked={key === 'new' ? 'true' : 'false'} data-sort={key}
+        <button type="button" role="menuitemradio" aria-checked={key === options[0][0] ? 'true' : 'false'} data-sort={key}
           class="group w-full flex items-center justify-between gap-4 text-left text-sm px-3 py-2 rounded-xl text-zinc-700 dark:text-zinc-300 hover:bg-zinc-900/5 dark:hover:bg-white/10 aria-checked:text-kikyo-600 dark:aria-checked:text-kikyo-400">
           {label}
           <svg class="w-4 h-4 invisible group-aria-checked:visible" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
