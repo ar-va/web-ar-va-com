@@ -91,6 +91,7 @@ const hint = 'font-normal text-zinc-500';
       </label>
       <div class="flex items-center gap-2">
         {editId && <a href="?#list" class="ctl">Cancel</a>}
+        <button type="reset" class="ctl" title={editId ? 'Put back what’s saved' : 'Empty every field'}>{editId ? 'Reset' : 'Clear'}</button>
         <button class="btn-primary btn-sm">{editId ? 'Save' : 'Add to the wishlist'}</button>
       </div>
     </div>

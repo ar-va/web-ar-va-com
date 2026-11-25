@@ -45,7 +45,7 @@ async function music(endpoint: 'search' | 'browse', body: object) {
 
 /** Every list row in a YouTube Music response: its browse / video id and the text of its columns. */
 function rows(data: unknown) {
-  const out: { browseId?: string; videoId?: string; cols: string[]; fixed: string[] }[] = [];
+  const out: { browseId?: string; videoId?: string; cols: string[]; fixed: string[]; thumb?: string }[] = [];
   const walk = (o: any): void => {
     if (!o || typeof o !== 'object') return;
     const r = o.musicResponsiveListItemRenderer;
@@ -56,6 +56,7 @@ function rows(data: unknown) {
         cols: (r.flexColumns ?? []).map((c: any) => (c.musicResponsiveListItemFlexColumnRenderer?.text?.runs ?? []).map((x: any) => x.text).join('')),
         // Album pages put each track's length here.
         fixed: (r.fixedColumns ?? []).map((c: any) => (c.musicResponsiveListItemFixedColumnRenderer?.text?.runs ?? []).map((x: any) => x.text).join('')),
+        thumb: r.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.at(-1)?.url,
       });
     }
     for (const k in o) walk(o[k]);
@@ -79,6 +80,22 @@ async function albumTracks(browseId: string) {
   return rows(await music('browse', { browseId }))
     .filter((r) => r.videoId && r.cols[0])
     .map((r) => ({ title: r.cols[0], url: `https://music.youtube.com/watch?v=${r.videoId}`, views: playCount(r.cols.find((c) => /plays?\b/i.test(c)) ?? '') }));
+}
+
+/** Albums for words typed in the wishlist's box: YouTube Music's own "Albums" search, best first. */
+export async function youtubeAlbums(term: string) {
+  return rows(await music('search', { query: term, params: 'EgWKAQIYAWoMEA4QChADEAQQCRAF' }))
+    .filter((r) => r.browseId?.startsWith('MPREb_'))
+    .map((r) => {
+      // "Album • Drake • 2013" (or "EP • …").
+      const [kind, ...rest] = (r.cols[1] ?? '').split(' • ');
+      const year = Number(rest.at(-1)) || null;
+      return { kind, url: `https://music.youtube.com/browse/${r.browseId}`, title: r.cols[0] ?? '', artist: (year ? rest.slice(0, -1) : rest).join(', '), year,
+        artwork: r.thumb ? r.thumb.replace(/=w\d+-h\d+/, '=w120-h120') : null };
+    })
+    .filter((a) => (a.kind === 'Album' || a.kind === 'EP') && a.title)
+    .slice(0, 6)
+    .map(({ kind: _, ...a }) => a);
 }
 
 /**

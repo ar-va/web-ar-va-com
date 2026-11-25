@@ -38,6 +38,20 @@ export async function spotifyMatch(artist: string, title: string): Promise<Match
   return { url: best.url, tracks: (tracks.items ?? []).map((t: any) => ({ title: t.name, url: t.external_urls?.spotify })).filter((t: { url?: string }) => t.url) };
 }
 
+/** Albums for words typed in the wishlist's box; only with the app's keys (Spotify has no keyless search). */
+export async function spotifyAlbums(term: string) {
+  const bearer = await accessToken();
+  if (!bearer) return [];
+  const data = await api(`/search?type=album&limit=6&q=${encodeURIComponent(term)}`, bearer);
+  return (data.albums?.items ?? []).filter((a: any) => a?.id && a.name).map((a: any) => ({
+    url: `https://open.spotify.com/album/${a.id}`,
+    title: String(a.name),
+    artist: (a.artists ?? []).map((x: any) => x.name).join(', '),
+    year: Number(String(a.release_date ?? '').slice(0, 4)) || null,
+    artwork: a.images?.at(-1)?.url ?? null,
+  })) as { url: string; title: string; artist: string; year: number | null; artwork: string | null }[];
+}
+
 /**
  * An album pasted into a wishlist, without the API (no keys needed): Spotify's embed player page carries the album, its
  * artist and every track with its length; the album page adds the release date and the cover (checked 2026-11-24).

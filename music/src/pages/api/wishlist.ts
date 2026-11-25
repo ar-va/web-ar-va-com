@@ -1,10 +1,11 @@
-// An album for the owner's wishlist from a Spotify or YouTube Music link (music/src/scripts/wish-form.ts asks; Apple Music
-// links are looked up in the browser, like every Apple lookup). Returns form values; saving checks them again (toWish).
+// For the wishlist's box (music/src/scripts/wish-form.ts): album suggestions for typed words (`action: search`), and an
+// album from a Spotify or YouTube Music link. Apple Music is asked from the browser, like every Apple lookup. Returns
+// form values; saving checks them again (toWish).
 import type { APIRoute } from 'astro';
 import { canCollect, currentUser } from '@shared/lib/store';
 import { lookupToWish, parseStreamingLink } from '@shared/lib/wishlist';
-import { spotifyAlbum } from '../../lib/spotify';
-import { youtubeAlbum } from '../../lib/youtube';
+import { spotifyAlbum, spotifyAlbums } from '../../lib/spotify';
+import { youtubeAlbum, youtubeAlbums } from '../../lib/youtube';
 
 export const prerender = false;
 
@@ -16,6 +17,17 @@ export const POST: APIRoute = async ({ request, cookies, url }) => {
   const user = await currentUser(cookies);
   if (!user || !canCollect(user)) return json({ error: 'Only collectors have a wishlist.' }, 403);
   const body = await request.json().catch(() => ({}));
+  // Typed words: YouTube Music's and (with keys) Spotify's albums for them; Apple's come from the browser. A service
+  // that fails just adds nothing.
+  if (body?.action === 'search') {
+    const term = String(body.term ?? '').trim().slice(0, 200);
+    if (term.length < 3) return json({ youtube: [], spotify: [] });
+    const [youtube, spotify] = await Promise.all([
+      youtubeAlbums(term).catch((e) => { console.log(`youtube search failed: ${e instanceof Error ? e.message : e}`); return []; }),
+      spotifyAlbums(term).catch((e) => { console.log(`spotify search failed: ${e instanceof Error ? e.message : e}`); return []; }),
+    ]);
+    return json({ youtube, spotify });
+  }
   const link = parseStreamingLink(String(body?.url ?? ''));
   if (!link || link.service === 'apple') return json({ error: 'That link isn’t an album on Spotify or YouTube Music.' }, 400);
   try {
