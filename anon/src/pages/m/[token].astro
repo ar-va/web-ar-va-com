@@ -3,7 +3,7 @@
 // has the link is the sender: they read the answers, change who can see it, or delete it.
 import Layout from '../../layouts/Layout.astro';
 import Post from '../../components/Post.astro';
-import Notice from '@shared/components/Notice.astro';
+import Toast from '@shared/components/Toast.astro';
 import { isToken } from '../../lib/core';
 import { HELPLINES_URL } from '../../site';
 import { deleteByToken, messageByToken, setWantsPublic } from '../../lib/store';
@@ -81,7 +81,7 @@ const quiet = 'ctl';
       <p class="text-xs text-zinc-500 leading-relaxed">Anyone with this link can read and delete your message, so keep it to yourself. Bookmarking this page works too.</p>
     </div>
 
-    {notice && <Notice>{notice}</Notice>}
+    {notice && <Toast>{notice}</Toast>}
 
     <div class:list={{ arrive: sent }}>
       <Post message={message} mode="owner" answerer={answerer} />

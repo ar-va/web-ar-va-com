@@ -12,6 +12,8 @@ import type { ShelfRecord } from '@shared/lib/lib';
 export interface BrowserItem {
   /** Unique on the page (pairs the shelf slot with its list row). */
   id: string;
+  /** The slot's element id, for links to it (#wish-c-5 after adding one). */
+  anchor?: string;
   href: string;
   record: Pick<ShelfRecord, 'instanceId' | 'cover' | 'vinyl' | 'artist' | 'title'>;
   /** ISO date it was added (order, the Added filter). */
@@ -62,7 +64,7 @@ const btnLabel = 'group-hover/btn:underline group-hover/btn:underline-offset-4 g
 const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center rounded-full text-zinc-400 dark:text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 aria-pressed:!text-(--on-text) transition-colors duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-kikyo-500';
 ---
         <!-- A frosted pill (filters, Sort, views, search) that sticks to the top while scrolling through the records; lets go where the section ends. -->
-        <div class="sticky top-3 z-40 flex items-center justify-between gap-2">
+        <div data-toast-avoid class="sticky top-3 z-40 flex items-center justify-between gap-2">
           <div class="list-toolbar glass-under relative rounded-full flex flex-wrap items-center justify-center gap-2 p-1.5">
             <div class="shrink-0">
               <button type="button" id="filters-toggle" aria-expanded="false" aria-controls="filters-panel" title="Filter by added, released and genre"
@@ -144,7 +146,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
 
         <ul id="records-shelf" class="shelf labelled" role="list">
           {items.map((r, i) => (
-            <li class="shelf-slot group/slot" data-record={r.id} data-top={r.top ? '1' : undefined}
+            <li id={r.anchor} class="shelf-slot group/slot scroll-mt-24" data-record={r.id} data-top={r.top ? '1' : undefined}
               data-added={r.added}
               data-alpha={`${r.record.artist} ${r.record.title}`.toLowerCase()}
               data-year={r.added.slice(0, 4)}

@@ -1,12 +1,16 @@
 ---
-// A short message after something happened ("Added to your wishlist", "Reserved"), floating near the bottom of the
-// screen so the page doesn't move (user 2026-11-25: the in-page notice pushed everything down). Announced to screen
-// readers; fades out after a few seconds, except one holding a link, which stays until closed. The address loses its
-// ?query so a reload doesn't show it again. The caller's `class` adds to the box.
-interface Props { class?: string }
-const { class: className = '' } = Astro.props;
+// A short message after something happened ("Added to your wishlist", "Saved"), floating so the page doesn't move (user
+// 2026-11-25: in-page notices pushed everything down). Announced to screen readers. It fades out after a few seconds,
+// except a refusal or one holding a link (`persist`, or any <a> inside), which stays until closed. The address loses its
+// ?query so a reload doesn't show it again.
+// It keeps clear of the next thing to click (user 2026-11-25): bottom of the screen unless that would cover the spot the
+// page jumped to (#…), the focused field, or anything marked `data-toast-avoid` (sticky save bars, the player,
+// toolbars); then the top. Re-placed while scrolling.
+interface Props { persist?: boolean; class?: string }
+const { persist = false, class: className = '' } = Astro.props;
 ---
-<div data-toast role="status" class={`glass glass-dark fixed left-1/2 bottom-6 z-50 -translate-x-1/2 w-max max-w-[calc(100vw-2rem)] flex items-center gap-3 rounded-full pl-5 pr-2 py-2 text-sm text-white shadow-lg motion-safe:animate-[arrive_0.3s_cubic-bezier(0.2,0.7,0.2,1)_both] ${className}`}>
+<div data-toast data-persist={persist ? '' : undefined} role="status"
+  class={`glass glass-dark fixed left-1/2 bottom-6 z-50 -translate-x-1/2 w-max max-w-[calc(100vw-2rem)] flex items-center gap-3 rounded-3xl pl-5 pr-2 py-2 text-sm text-white shadow-lg motion-safe:animate-[arrive_0.3s_cubic-bezier(0.2,0.7,0.2,1)_both] ${className}`}>
   <span class="py-1 [&_a]:underline [&_a]:underline-offset-4"><slot /></span>
   <button type="button" data-toast-close aria-label="Close" class="grid w-7 h-7 shrink-0 place-items-center rounded-full hover:bg-white/10 cursor-pointer">
     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
@@ -14,13 +18,40 @@ const { class: className = '' } = Astro.props;
 </div>
 
 <script>
+  const GAP = 24;
+  const overlaps = (a: DOMRect, b: DOMRect) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+  // What the person will most likely use next: where the page jumped to, the focused field, marked sticky controls.
+  const keepClear = () => {
+    const hash = location.hash.length > 1 ? document.getElementById(decodeURIComponent(location.hash.slice(1))) : null;
+    const focused = document.activeElement && document.activeElement !== document.body ? document.activeElement : null;
+    return [hash, focused, ...document.querySelectorAll('[data-toast-avoid]')]
+      .filter((el): el is Element => !!el && !el.closest('[data-toast]'))
+      .map((el) => el.getBoundingClientRect())
+      .filter((r) => r.width && r.height && r.bottom > 0 && r.top < innerHeight);
+  };
+  const place = (toast: HTMLElement) => {
+    const h = toast.offsetHeight, w = toast.offsetWidth, left = (innerWidth - w) / 2;
+    const atBottom = new DOMRect(left, innerHeight - GAP - h, w, h), atTop = new DOMRect(left, GAP, w, h);
+    const clear = keepClear();
+    const top = clear.some((r) => overlaps(r, atBottom)) && !clear.some((r) => overlaps(r, atTop));
+    toast.style.top = top ? `${GAP}px` : '';
+    toast.style.bottom = top ? 'auto' : '';
+  };
+
   for (const toast of document.querySelectorAll<HTMLElement>('[data-toast]')) {
+    let frame = 0;
+    const replace = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(() => place(toast)); };
     const close = () => {
+      removeEventListener('scroll', replace); removeEventListener('resize', replace);
       if (matchMedia('(prefers-reduced-motion: reduce)').matches) { toast.remove(); return; }
       toast.animate([{ opacity: 1 }, { opacity: 0, translate: '-50% 8px' }], { duration: 200, easing: 'ease-in', fill: 'forwards' }).finished.then(() => toast.remove());
     };
+    // After the browser's own jump to #…, which happens once the page has laid out.
+    requestAnimationFrame(() => requestAnimationFrame(() => place(toast)));
+    addEventListener('scroll', replace, { passive: true });
+    addEventListener('resize', replace);
     toast.querySelector('[data-toast-close]')?.addEventListener('click', close);
-    if (!toast.querySelector('a')) setTimeout(close, 4500);
+    if (!toast.querySelector('a') && !toast.hasAttribute('data-persist')) setTimeout(close, 4500);
   }
   // The query only carried the message: drop it, keep the #anchor.
   if (document.querySelector('[data-toast]') && location.search) history.replaceState(history.state, '', location.pathname + location.hash);

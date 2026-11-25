@@ -113,7 +113,7 @@ const editing = edited?.wish ? { ...edited.wish, top: edited.top } : undefined;
 // Starred ("Most wanted") first, then A–Z by artist and album (user 2026-11-25), as the Sort menu's A–Z does.
 const alpha = (i: { artist: string; title: string }) => `${i.artist} ${i.title}`.toLowerCase();
 const items: BrowserItem[] = [...data.items].sort((a, b) => Number(b.top) - Number(a.top) || alpha(a).localeCompare(alpha(b))).map((i) => ({
-  id: i.key, href: `${path}/${wishSlug(i.key)}`, record: i, added: i.added, releasedYear: i.year, genres: i.genres, top: i.top,
+  id: i.key, anchor: wishAnchor(i.key), href: `${path}/${wishSlug(i.key)}`, record: i, added: i.added, releasedYear: i.year, genres: i.genres, top: i.top,
   search: [i.year, ...i.genres, i.note, i.where].filter(Boolean).join(' '),
   marks: [i.where && 'where', i.note && 'note'].filter((m): m is 'where' | 'note' => !!m),
   badge: i.state === 'mine' ? { text: 'Reserved by you', on: true } : i.state === 'taken' ? { text: 'Reserved' } : null,

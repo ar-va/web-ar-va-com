@@ -6,7 +6,7 @@ export const prerender = false;
 import Layout from '@shared/layouts/Layout.astro';
 import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Disclosure from '@shared/components/Disclosure.astro';
-import Notice from '@shared/components/Notice.astro';
+import Toast from '@shared/components/Toast.astro';
 import Avatar from '@shared/components/Avatar.astro';
 import { checkShelfName, displayDate, escapeHtml, loginHref, timeLeft } from '@shared/lib/lib';
 import { myReservations } from '../lib/wishes';
@@ -17,7 +17,9 @@ const user = await currentUser(Astro.cookies);
 if (!user) return Astro.redirect(loginHref(Astro.url));
 
 let notice: string | null = null;
-if (Astro.url.searchParams.has('welcome')) notice = 'Welcome, you’re in! One step left: connect Discogs below and your shelf fills itself.';
+// Refusals and the welcome (it says what to do next) stay until closed; the rest fade.
+let persist = false;
+if (Astro.url.searchParams.has('welcome')) { notice = 'Welcome, you’re in! One step left: connect Discogs below and your shelf fills itself.'; persist = true; }
 if (Astro.url.searchParams.has('named')) notice = 'Your shelf address is saved.';
 if (Astro.url.searchParams.has('gifted')) notice = 'Thank you! They’ve been told the gift was from you.';
 if (Astro.url.searchParams.has('invited')) notice = 'New invite link ready: copy it below and send it to a friend.';
@@ -63,6 +65,7 @@ if (Astro.request.method === 'POST') {
     // Shown right here, not passed through the address (a link could otherwise put any text on this page).
     if (!problem) return Astro.redirect('/settings?named', 303);
     notice = problem;
+    persist = true;
     Astro.response.status = 400;
   }
   if (action === 'disconnect' && user.discogs_username) {
@@ -74,6 +77,7 @@ if (Astro.request.method === 'POST') {
     const code = await createInvite(user, Number(form.get('expires') ?? NaN), Number(form.get('uses') ?? NaN));
     if (code) return Astro.redirect('/settings?invited#invites', 303);
     notice = `You have ${OPEN_INVITES_MAX} invite links that still work. Revoke one below, or wait until one runs out, to make another.`;
+    persist = true;
   }
   if (canCollect(user) && action === 'revoke-invite') {
     await revokeInvite(user, String(form.get('id') ?? ''));
@@ -140,7 +144,7 @@ const steps = [
       </div>
     </header>
 
-    {notice && <Notice>{notice}</Notice>}
+    {notice && <Toast persist={persist}>{notice}</Toast>}
 
     <!-- First visit as a collector: three steps, the middle one is the button. -->
     {canCollect(user) && !connected && (

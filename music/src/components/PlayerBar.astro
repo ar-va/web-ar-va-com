@@ -22,7 +22,7 @@ const side = `w-9 h-9 sm:w-10 sm:h-10 ${base} bg-[var(--well)] hover:bg-[var(--w
 <!-- Sticky: at the bottom of the screen until the page reaches the end of the tracklist, where it rests (and scrolls away
      with the page into the comments). Its height in the page is the closed card's (the script keeps it so) and the card
      sits at its bottom, so the queue grows it upward. -->
-<div data-player-bar class="sticky bottom-0 z-40 mt-8 h-[4.75rem] pointer-events-none">
+<div data-player-bar data-toast-avoid class="sticky bottom-0 z-40 mt-8 h-[4.75rem] pointer-events-none">
   <!-- The cover, blurred, right behind the card and its shape: the glass rim (see .glass) takes the album's colours even
        over the plain page (user 2026-11-21: the player's rim should glow like the toolbar's over covers); the card's
        0.85 inside only shows a hint of it. Kept the card's height by the script below. -->

@@ -29,7 +29,7 @@ const hint = 'font-normal text-zinc-500';
 <form id="add" method="post" data-wish-form tabindex="-1" class:list={['compose-form outline-none scroll-mt-6', open && 'open']}>
   <input type="hidden" name="action" value={editId ? 'edit' : 'add'} />
   {editId && <input type="hidden" name="id" value={editId} />}
-  <div class="compose flex items-center gap-2 pr-1.5">
+  <div data-toast-avoid class="compose flex items-center gap-2 pr-1.5">
     {editId ? (
       <span class="flex-1 min-w-0 truncate pl-5 py-3 font-medium text-zinc-900 dark:text-white">Editing {values.artist} – {values.title}</span>
     ) : (
