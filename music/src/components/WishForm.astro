@@ -7,17 +7,20 @@
 import Disclosure from '@shared/components/Disclosure.astro';
 import { NOTE_MAX } from '@shared/lib/lib';
 import WishIcon from './WishIcon.astro';
+import ShopField from './ShopField.astro';
+import { WHERE_MAX, whereLines } from '@shared/lib/wishlist';
 
 interface Props {
   /** The values shown: an album being edited, or what was typed before an error. */
   values?: { artist?: string; title?: string; year?: string | number | null; cover?: string | null; tracklist?: string; note?: string | null;
-    links?: Record<string, string>; where?: string | null; top?: boolean };
+    links?: Record<string, string>; where?: string[] | string | null; top?: boolean };
   /** The album being edited (absent when adding). */
   editId?: number;
   error?: string | null;
 }
 const { values = {}, editId, error } = Astro.props;
 const links = values.links ?? {};
+const shops = whereLines(values.where);
 const open = !!editId || !!error;
 const input = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500 transition-colors';
 const label = 'flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300';
@@ -64,10 +67,17 @@ const hint = 'font-normal text-zinc-500';
         <label class={label}>Year <span class="relative"><WishIcon name="year" class={iconAt} /><input name="year" inputmode="numeric" pattern="\d{4}" maxlength="4" value={values.year ?? ''} class={withIcon} /></span></label>
       </div>
     </div>
-    <div class="grid sm:grid-cols-2 gap-3">
-      <label class={label}><span>Where to get it <span class={hint}>(optional)</span></span>
-        <span class="relative"><WishIcon name="where" class={iconAt} /><input name="where" maxlength="300" value={values.where ?? ''} placeholder="Rough Trade, or https://…" class={withIcon} /></span>
-      </label>
+    <div class="grid gap-4">
+      <!-- Shops: a line each, + adds one (up to WHERE_MAX), − removes one (wish-form.ts; without script, an emptied line is dropped). -->
+      <div class={label}>
+        <span>Where to get it <span class={hint}>(optional)</span></span>
+        <div data-shops data-max={WHERE_MAX} class="space-y-2">{(shops.length ? shops : ['']).map((w) => <ShopField value={w} />)}</div>
+        <template data-shop-template><ShopField /></template>
+        <button type="button" data-shop-add class="ctl self-start">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+          Add a shop
+        </button>
+      </div>
       <label class={label}><span>A note for whoever gives it <span class={hint}>(optional)</span></span>
         <span class="relative"><WishIcon name="note" class={iconAt} /><input name="note" maxlength={NOTE_MAX} value={values.note ?? ''} placeholder="The red pressing, please" class={withIcon} /></span>
       </label>

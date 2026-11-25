@@ -1,7 +1,7 @@
 // node --test shared/tests/ (the wishlist's rules: links, wishes, owned records, reservations, reminders)
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseStreamingLink, toWish, isOwned, reserveState, reminderDue, safeGiveOn, splitArtistAlbum } from '../lib/wishlist.ts';
+import { parseStreamingLink, toWish, isOwned, reserveState, reminderDue, safeGiveOn, splitArtistAlbum, shopLink } from '../lib/wishlist.ts';
 
 test('album links from the three services', () => {
   assert.deepEqual(parseStreamingLink('https://music.apple.com/ua/album/blackstar/1059043043'), { service: 'apple', id: '1059043043', country: 'ua' });
@@ -36,11 +36,12 @@ test('wishes: text stays text, foreign hosts dropped, limits kept', () => {
   assert.equal(toWish({ artist: 'x', title: 'y', year: '1700' }).year, null);
   assert.equal(toWish({ artist: 'x', title: 'y'.repeat(400) }).title.length, 300);
   assert.deepEqual(toWish({ artist: '', title: 'y' }), { error: 'Add the artist and the album.' });
-  // Where to get it: a shop's name and / or link, as text (links are made clickable when shown), one line, capped.
-  assert.equal(toWish({ artist: 'x', title: 'y', where: '  Rough Trade https://www.roughtrade.com/x \n\n second line ' }).where, 'Rough Trade https://www.roughtrade.com/x second line');
-  assert.equal(toWish({ artist: 'x', title: 'y', where: 'z'.repeat(400) }).where.length, 300);
-  assert.equal(toWish({ artist: 'x', title: 'y', where: '   ' }).where, null);
-  assert.equal(toWish({ artist: 'x', title: 'y' }).where, null);
+  // Where to get it: shops, one per line (a name and / or link each), at most 5, each one line, capped.
+  assert.deepEqual(toWish({ artist: 'x', title: 'y', where: ['  Rough Trade https://www.roughtrade.com/x \n\n second line ', '', '  '] }).where, ['Rough Trade https://www.roughtrade.com/x second line']);
+  assert.deepEqual(toWish({ artist: 'x', title: 'y', where: 'Any record shop' }).where, ['Any record shop']); // one line, as before
+  assert.equal(toWish({ artist: 'x', title: 'y', where: Array(8).fill('shop') }).where.length, 5);
+  assert.equal(toWish({ artist: 'x', title: 'y', where: ['z'.repeat(400)] }).where[0].length, 300);
+  assert.deepEqual(toWish({ artist: 'x', title: 'y' }).where, []);
   assert.deepEqual(toWish(null), { error: 'Add the artist and the album.' });
 });
 
@@ -102,7 +103,7 @@ test('the reservation message: details, escaped, under Telegram\'s caption limit
   const tracks = Array.from({ length: 60 }, (_, i) => ({ position: String(i + 1), title: `Song <${i + 1}> with a fairly long title`, duration: '4:52', heading: false }));
   const card = reservationCard({
     ownerFirst: 'Artur', title: 'Alfredo & <b>', artist: 'Freddie Gibbs', year: 2020, top: true, tracks,
-    note: 'The red pressing, please', where: 'Rough Trade https://www.roughtrade.com/x', giveOn: null,
+    note: 'The red pressing, please', where: ['Rough Trade https://www.roughtrade.com/x', 'https://www.amazon.ca/dp/1', 'Any record shop'], giveOn: null,
     links: { spotify: 'https://open.spotify.com/album/x', apple: '', youtube: 'https://music.youtube.com/browse/MPREb_x' },
     pageUrl: 'https://music.ar-va.com/artur/wishlist/c-5', item: 'c:5', ownerId: 42,
   });
@@ -118,12 +119,20 @@ test('the reservation message: details, escaped, under Telegram\'s caption limit
   assert.ok(!/<b>.*<script/i.test(card.caption));
   const buttons = card.buttons.flat();
   assert.deepEqual(buttons[0], { text: 'Open on the website', url: 'https://music.ar-va.com/artur/wishlist/c-5' });
-  assert.ok(buttons.some((b) => b.url === 'https://www.roughtrade.com/x' && /roughtrade\.com/.test(b.text)));
+  assert.ok(buttons.some((b) => b.url === 'https://www.roughtrade.com/x' && b.text === 'Buy at Rough Trade'));
+  assert.ok(buttons.some((b) => b.url === 'https://www.amazon.ca/dp/1' && b.text === 'Buy at amazon.ca'));
   assert.ok(buttons.some((b) => b.text === 'Spotify') && buttons.some((b) => b.text === 'YouTube Music') && !buttons.some((b) => b.text === 'Apple Music'));
   assert.ok(buttons.some((b) => b.callback_data === 'gift:42:c:5') && buttons.some((b) => b.callback_data === 'unres:42:c:5'));
   // A short album fits whole, with no "more" line; no shop link, no button for it.
   const small = reservationCard({ ownerFirst: 'Artur', title: 'X', artist: 'Y', year: null, top: false, tracks: tracks.slice(0, 3), note: null,
-    where: 'Any record shop', giveOn: null, links: { spotify: '', apple: '', youtube: '' }, pageUrl: 'https://m/x', item: 'd:1', ownerId: 42 });
+    where: ['Any record shop'], giveOn: null, links: { spotify: '', apple: '', youtube: '' }, pageUrl: 'https://m/x', item: 'd:1', ownerId: 42 });
   assert.ok(!/more on the website/.test(small.caption) && /Any record shop/.test(small.caption));
   assert.ok(!small.buttons.flat().some((b) => /Buy at/.test(b.text)));
+});
+
+test('a shop line as a button: its name and its link', () => {
+  assert.deepEqual(shopLink('Rough Trade https://www.roughtrade.com/x'), { label: 'Rough Trade', url: 'https://www.roughtrade.com/x' });
+  assert.deepEqual(shopLink('https://www.amazon.ca/dp/B08'), { label: 'amazon.ca', url: 'https://www.amazon.ca/dp/B08' });
+  assert.deepEqual(shopLink('Any record shop'), { label: 'Any record shop', url: null });
+  assert.deepEqual(shopLink('Sound Shop: https://sound.example/a, ask for Ben'), { label: 'Sound Shop, ask for Ben', url: 'https://sound.example/a' });
 });

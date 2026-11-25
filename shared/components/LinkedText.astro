@@ -1,13 +1,11 @@
 ---
-// Text someone wrote, with its links clickable (comments; a wishlist record's "where to get it"). Every link opens in a
-// new tab without passing on the page (nofollow ugc: written by people, not vouched for). `short`: a link shows only its
-// site's name ("roughtrade.com"), for one-line places.
+// Text someone wrote, with its links clickable (comments). Every link opens in a new tab without passing on the page
+// (nofollow ugc: written by people, not vouched for).
 import { linkify } from '../lib/lib';
 
-interface Props { text: string; short?: boolean }
-const { text, short = false } = Astro.props;
-const label = (url: string) => { try { return short ? new URL(url).hostname.replace(/^www\./, '') : url; } catch { return url; } };
+interface Props { text: string }
+const { text } = Astro.props;
 ---
 {linkify(text).map((part) => 'url' in part
-  ? <a href={part.url} target="_blank" rel="nofollow ugc noopener noreferrer" class="text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/30 hover:decoration-kikyo-500 underline-offset-4 break-all">{label(part.url)}</a>
+  ? <a href={part.url} target="_blank" rel="nofollow ugc noopener noreferrer" class="text-kikyo-600 dark:text-kikyo-400 underline decoration-kikyo-500/30 hover:decoration-kikyo-500 underline-offset-4 break-all">{part.url}</a>
   : part.text)}

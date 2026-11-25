@@ -180,6 +180,25 @@ for (const form of document.querySelectorAll<HTMLFormElement>('[data-wish-form]'
   link?.addEventListener('blur', close);
   // Clear (adding) / Reset (editing): the browser puts every field back; the cover preview, message, list and the
   // open state follow (an edit stays open).
+  // Shops: + adds a line (up to the form's limit), − removes one (the last one left is just emptied).
+  const shops = form.querySelector<HTMLElement>('[data-shops]');
+  const shopTemplate = form.querySelector<HTMLTemplateElement>('[data-shop-template]');
+  const addShop = form.querySelector<HTMLButtonElement>('[data-shop-add]');
+  const shopCount = () => shops?.querySelectorAll('[data-shop]').length ?? 0;
+  const syncShops = () => { if (addShop) addShop.hidden = shopCount() >= Number(shops?.dataset.max ?? 5); };
+  addShop?.addEventListener('click', () => {
+    if (!shops || !shopTemplate || shopCount() >= Number(shops.dataset.max ?? 5)) return;
+    shops.append(shopTemplate.content.cloneNode(true));
+    shops.querySelector<HTMLInputElement>('[data-shop]:last-child input')?.focus();
+    syncShops();
+  });
+  shops?.addEventListener('click', (e) => {
+    const line = (e.target as Element).closest('[data-shop-remove]')?.closest<HTMLElement>('[data-shop]');
+    if (!line) return;
+    if (shopCount() > 1) { line.remove(); addShop?.focus(); } else { line.querySelector('input')!.value = ''; line.querySelector('input')!.focus(); }
+    syncShops();
+  });
+  syncShops();
   // A hidden field's value is its default (a reset can't put it back): the cover is restored by hand.
   const startCover = field('cover').value;
   form.addEventListener('reset', () => setTimeout(() => {

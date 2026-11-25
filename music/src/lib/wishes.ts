@@ -3,7 +3,7 @@
 // Logged-in visitors reserve items; the owner never sees a reservation (it's left out of the owner's data entirely),
 // until the giver says they gave it. Reservers get Telegram reminders (sendReminders, from the daily cron).
 import { escapeHtml, displayDate, textToTracklist, tracklistToText, withMatchLinks, type Match, type ReleaseDetail, type ShelfRecord, type Track } from '@shared/lib/lib';
-import { RESERVATIONS_MAX, WISHES_MAX, isOwned, ownedKey, reminderDue, reserveState, toWish, type ReserveState, type Wish } from '@shared/lib/wishlist';
+import { RESERVATIONS_MAX, WISHES_MAX, isOwned, whereLines, ownedKey, reminderDue, reserveState, toWish, type ReserveState, type Wish } from '@shared/lib/wishlist';
 import { notify } from '@shared/lib/notify';
 import { byId, db, ownerWhere, shelfSlug, type User } from '@shared/lib/store';
 
@@ -30,8 +30,8 @@ export interface WishItem {
   tracks: Track[];
   links: { spotify: string; apple: string; youtube: string };
   note: string | null;
-  /** Where to get it (albums added on the site): a shop's name and / or link. */
-  where: string | null;
+  /** Where to get it (albums added on the site): shops, a name and / or link each. */
+  where: string[];
   /** The owner's "Most wanted" star. */
   top: boolean;
   /** ISO date it was added, for the order (newest first). */
@@ -58,12 +58,12 @@ export function wishNotice(q: URLSearchParams, ownerFirst: string) {
 const fromWant = (r: ShelfRecord, d: ReleaseDetail | null, m: Match | null): WishItem => ({
   key: `d:${r.releaseId}`, instanceId: r.releaseId, masterId: r.masterId, releaseId: r.releaseId, artist: r.artist, title: r.title,
   year: d?.originalYear ?? r.year, genres: r.genres, cover: r.cover ?? m?.apple?.artwork ?? null, vinyl: null, tracks: withMatchLinks(d?.tracklist ?? [], m),
-  links: { spotify: m?.spotify?.url ?? '', apple: m?.apple?.url ?? '', youtube: m?.youtube?.url ?? '' }, note: null, where: null, top: false, added: r.added,
+  links: { spotify: m?.spotify?.url ?? '', apple: m?.apple?.url ?? '', youtube: m?.youtube?.url ?? '' }, note: null, where: [], top: false, added: r.added,
 });
 
 const fromWish = (id: number, w: Wish, createdAt: number): WishItem => ({
   key: `c:${id}`, instanceId: id, masterId: 0, releaseId: 0, artist: w.artist, title: w.title, year: w.year, genres: [], cover: w.cover, vinyl: null,
-  tracks: textToTracklist(w.tracklist), links: w.links, note: w.note, where: w.where ?? null, top: false, added: new Date(createdAt * 1000).toISOString(), wish: w,
+  tracks: textToTracklist(w.tracklist), links: w.links, note: w.note, where: whereLines(w.where), top: false, added: new Date(createdAt * 1000).toISOString(), wish: w,
 });
 
 type ShelfKeys = { masters: Set<number>; releases: Set<number>; names: Set<string> };

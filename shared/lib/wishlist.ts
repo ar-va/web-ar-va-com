@@ -3,6 +3,20 @@
 import { artistKey, cleanNote, escapeHtml, linkify, normalizeName, safeCoverUrl, safeDay, safeStreamingUrl, textToTracklist, tracklistToText, type Track } from './lib.ts';
 
 export const WISHES_MAX = 200;
+export const WHERE_MAX = 5;
+
+/** A wish's shops as lines, whatever was stored or posted (one string before 2026-11-25, a list since). */
+export const whereLines = (v: unknown): string[] => (Array.isArray(v) ? v : typeof v === 'string' ? [v] : []).filter((x): x is string => typeof x === 'string');
+
+/** One shop line as a button: its name (the words around the link) or the link's site, and the link (null: no link). */
+export function shopLink(line: string) {
+  const url = linkify(line).find((p): p is { url: string } => 'url' in p)?.url ?? null;
+  // The words left once the link is out, tidied: "Sound Shop: <link>, ask for Ben" → "Sound Shop, ask for Ben".
+  const name = (url ? line.replace(url, '') : line)
+    .replace(/[:–—-]\s*(?=[,;])/g, '').replace(/\s+([,;:])/g, '$1').replace(/\s+/g, ' ')
+    .trim().replace(/^[\s,;:–—-]+|[\s,;:–—-]+$/g, '');
+  return { label: name || (url ? new URL(url).hostname.replace(/^www\./, '') : line), url };
+}
 export const RESERVATIONS_MAX = 20;
 
 export type LinkService = 'apple' | 'spotify' | 'youtube';
@@ -56,8 +70,9 @@ export interface Wish {
   tracklist: string;
   links: Record<LinkService, string>;
   note: string | null;
-  /** Where to get it: a shop's name and / or link (user 2026-11-25), one line; links become clickable when shown. */
-  where: string | null;
+  /** Where to get it: shops, one per line (a name and / or link each; user 2026-11-25), at most WHERE_MAX; shown as
+   *  buttons (`shopLink`). Saved before 2026-11-25 as one string: read through `whereLines`. */
+  where: string[];
 }
 
 const text = (v: unknown, max = 300) => (typeof v === 'string' || typeof v === 'number' ? String(v).trim().slice(0, max) : '');
@@ -80,7 +95,7 @@ export function toWish(input: any): Wish | { error: string } {
       youtube: safeStreamingUrl(text(links.youtube, 1000), 'youtube') ?? '',
     },
     note: cleanNote(text(input.note, 2000)),
-    where: text(input.where, 2000).replace(/\s+/g, ' ').slice(0, 300) || null,
+    where: whereLines(input.where).map((w) => text(w, 2000).replace(/\s+/g, ' ').slice(0, 300)).filter(Boolean).slice(0, WHERE_MAX),
   };
 }
 
@@ -147,7 +162,7 @@ const CAPTION_MAX = 1024; // Telegram's limit for a photo's caption, counted wit
  */
 export function reservationCard(r: {
   ownerFirst: string; title: string; artist: string; year: number | null; top: boolean; tracks: Track[];
-  note: string | null; where: string | null; giveOn: string | null;
+  note: string | null; where: string[]; giveOn: string | null;
   links: Record<LinkService, string>; pageUrl: string; item: string; ownerId: number;
 }) {
   const e = escapeHtml;
@@ -158,7 +173,7 @@ export function reservationCard(r: {
     `${e(r.artist)}${r.year ? `, ${r.year}` : ''}`,
     ...(r.top ? [`★ One of ${e(r.ownerFirst)}’s most wanted`] : []),
     ...(r.note ? ['', `${e(r.ownerFirst)}’s note: <i>${e(r.note)}</i>`] : []),
-    ...(r.where ? ['', `Where to get it: ${e(r.where)}`] : []),
+    ...(r.where.length ? ['', `Where to get it: ${r.where.map(e).join('; ')}`] : []),
   ].join('\n');
   const tail = '\n\nI’ll remind you before you give it. Set the day on the record’s page.';
   const songs = r.tracks.filter((t) => !t.heading);
@@ -172,13 +187,12 @@ export function reservationCard(r: {
     tracks = songs.length ? `\n\nTracklist\n<blockquote expandable>${body}</blockquote>` : '';
     if (visible(head + tracks + tail) <= CAPTION_MAX) break;
   }
-  const shop = r.where ? linkify(r.where).find((p): p is { url: string } => 'url' in p)?.url : undefined;
-  const host = shop ? new URL(shop).hostname.replace(/^www\./, '') : '';
+  const shops = r.where.map(shopLink).filter((x): x is { label: string; url: string } => !!x.url).slice(0, 3);
   const listen = (['spotify', 'apple', 'youtube'] as const).filter((s) => r.links[s])
     .map((s) => ({ text: { spotify: 'Spotify', apple: 'Apple Music', youtube: 'YouTube Music' }[s], url: r.links[s] }));
   const buttons: Button[][] = [
     [{ text: 'Open on the website', url: r.pageUrl }],
-    ...(shop ? [[{ text: `Buy at ${host}`, url: shop }]] : []),
+    ...shops.map((x) => [{ text: `Buy at ${x.label}`, url: x.url }]),
     ...(listen.length ? [listen] : []),
     [{ text: `I gave it to ${r.ownerFirst}`, callback_data: `gift:${r.ownerId}:${r.item}` }, { text: 'Cancel reservation', callback_data: `unres:${r.ownerId}:${r.item}` }],
   ];
