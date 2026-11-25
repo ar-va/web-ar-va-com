@@ -81,7 +81,7 @@ export async function wishlistData(name: string, viewer: User | null) {
       CASE WHEN ?2 != 0 AND ?2 = user_id THEN give_on END AS give_on FROM reservations WHERE owner_id = ${owner}`).bind(name, viewer?.id ?? 0),
   ]);
   const user = (users.results[0] as User | undefined) ?? null;
-  if (!user) return { owner: null, source: 'custom' as WishSource, items: [], wantsCount: 0, customCount: 0 };
+  if (!user) return { owner: null, source: 'custom' as WishSource, items: [] };
   const details = byId<ReleaseDetail>(releases.results, 'id');
   const found = byId<Match>(matches.results, 'release_id');
   const res = new Map((reservations.results as { item: string; gifted: number; user_id: number | null; give_on: string | null }[]).map((r) => [r.item, r]));
@@ -94,7 +94,7 @@ export async function wishlistData(name: string, viewer: User | null) {
     .filter((i) => !res.get(i.key)?.gifted && !isOwned(i, keys))
     .sort((a, b) => b.added.localeCompare(a.added))
     .map((i) => ({ ...i, state: reserveState(res.get(i.key)?.user_id ?? null, viewer?.id ?? null, user.id) as ReserveState, giveOn: res.get(i.key)?.give_on ?? null }));
-  return { owner: user, source, items, wantsCount: wants.results.length, customCount: wishes.results.length };
+  return { owner: user, source, items };
 }
 
 /** How many items the shelf's wishlist shows (for its link on the shelf), without reservations. */

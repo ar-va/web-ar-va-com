@@ -54,7 +54,7 @@ if (owner && Astro.request.method === 'POST') {
       return Astro.redirect(`${path}#${wishAnchor(`c:${Number(get('id'))}`)}`, 303);
     } else {
       const id = await addWish(owner, wish);
-      if (id) return Astro.redirect(`${path}?added#${wishAnchor(`c:${id}`)}`, 303);
+      if (id) return Astro.redirect(`${path}?added=${id}#${wishAnchor(`c:${id}`)}`, 303);
       error = `Your wishlist holds ${WISHES_MAX} albums at most. Remove one to add another.`; draft = values; Astro.response.status = 400;
     }
   }
@@ -97,7 +97,7 @@ const notice = q.has('reserved') ? `Reserved. You’ll find it in your settings 
   : q.has('taken') ? 'Someone reserved it a moment ago. Pick another?'
   : q.has('limit') ? `You have ${RESERVATIONS_MAX} reservations open. Give or cancel one first.`
   : q.has('gifted') ? `Thank you! ${first} has been told it’s from you.`
-  : q.has('added') ? 'Added to your wishlist.'
+  : q.has('added') ? (data.items.some((i) => i.key === `c:${Number(q.get('added'))}`) ? 'Added to your wishlist.' : 'Added, but it doesn’t show: that album is already on your shelf.')
   : null;
 const login = (key: string) => loginHref(Astro.url, `${Astro.url.origin}${path}#${wishAnchor(key)}`);
 ---
@@ -124,8 +124,8 @@ const login = (key: string) => loginHref(Astro.url, `${Astro.url.origin}${path}#
               <input type="hidden" name="action" value="source" />
               <span class="text-sm text-zinc-500">Show</span>
               <span class="inline-flex gap-1 rounded-full bg-(--well) p-1">
-                <button name="source" value="custom" aria-pressed={data.source === 'custom' ? 'true' : 'false'} class="ctl !bg-transparent aria-pressed:!bg-(--on-bg)">My own list ({data.customCount})</button>
-                <button name="source" value="discogs" aria-pressed={data.source === 'discogs' ? 'true' : 'false'} class="ctl !bg-transparent aria-pressed:!bg-(--on-bg)">Discogs wantlist ({data.wantsCount})</button>
+                <button name="source" value="custom" aria-pressed={data.source === 'custom' ? 'true' : 'false'} class="ctl !bg-transparent aria-pressed:!bg-(--on-bg)">My own list</button>
+                <button name="source" value="discogs" aria-pressed={data.source === 'discogs' ? 'true' : 'false'} class="ctl !bg-transparent aria-pressed:!bg-(--on-bg)">Discogs wantlist</button>
               </span>
             </form>
             {data.source === 'discogs'
