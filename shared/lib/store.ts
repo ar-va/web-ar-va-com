@@ -265,11 +265,11 @@ export async function removeShelf(userId: number, revoke: boolean) {
   const d = await db();
   await d.batch([
     d.prepare('DELETE FROM records WHERE user_id = ?').bind(userId),
-    // The wishlist goes with the shelf (nobody is told: the shelf itself is gone).
+    // The Discogs copies go (a reconnect brings them back, and edits, reservations and stars on them reattach by id).
     d.prepare('DELETE FROM wants WHERE user_id = ?').bind(userId),
-    d.prepare('DELETE FROM wishes WHERE user_id = ?').bind(userId),
-    d.prepare('DELETE FROM reservations WHERE owner_id = ?').bind(userId),
-    d.prepare('DELETE FROM wish_stars WHERE owner_id = ?').bind(userId),
+    // The albums added on the site, reservations and stars only when the admin removes the collector: disconnecting
+    // Discogs to reconnect must not lose them (nobody is told: the shelf itself is gone).
+    ...(revoke ? ['wishes WHERE user_id', 'reservations WHERE owner_id', 'wish_stars WHERE owner_id'].map((t) => d.prepare(`DELETE FROM ${t} = ?`).bind(userId)) : []),
     d.prepare(`UPDATE users SET discogs_username = NULL, discogs_token = NULL, synced_at = NULL, sync_error = NULL${revoke ? ', is_collector = 0' : ''} WHERE id = ?`).bind(userId),
     // Someone no longer a collector can't bring in others with links they made before.
     ...(revoke ? [d.prepare('UPDATE invite_links SET revoked_at = ? WHERE created_by = ? AND revoked_at IS NULL').bind(now(), userId)] : []),
