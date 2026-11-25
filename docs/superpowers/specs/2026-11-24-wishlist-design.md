@@ -18,6 +18,9 @@ gifts stay a surprise.
     album, cover, tracklist) or by typing.
 - **Two separate lists; a switch picks which one is shown.** Both are kept, each with its own reservations; switching
   back restores the other exactly as it was. The same album on both lists is two separate entries.
+- **Telegram reminders** for people who reserved, with buttons to mark it gifted or cancel.
+- **"Gifted" means handed over** (option 2): the record leaves the wishlist at once and the owner is told who gave it
+  ("Maya gave you *Blackstar*"), so they can say thanks. Until then nothing about the reservation reaches the owner.
 
 ## Goals
 
@@ -150,27 +153,64 @@ pressing counts)*. Hidden, not deleted: the reservation rules below decide what 
 
 ### Reservations
 
-- Table `reservations(owner_id, item TEXT, user_id, created_at, PRIMARY KEY (owner_id, item))`; `item` = `d:<release id>`
+- Table `reservations(owner_id, item TEXT, user_id, created_at, give_on TEXT, reminded_at INTEGER, gifted_at INTEGER,
+  PRIMARY KEY (owner_id, item))`; `item` = `d:<release id>`
   (Discogs) or `c:<wish id>` (custom). One reservation per item; `INSERT … ON CONFLICT DO NOTHING` decides races.
 - `POST /<shelf>/wishlist` form actions `reserve` / `unreserve` (logged in; not the owner; the item must be on the
-  currently shown list and not owned), 303 back to `#wish-<item>`. Cap: 20 active reservations per person *(my call)*.
+  currently shown list and not owned), 303 back to `#wish-<item>`. Cap: 20 active (not gifted) reservations per
+  person *(my call)*. Reserving offers an optional "When are you giving it?" date (`give_on`, today or later, within a
+  year; changeable afterwards) *(my call)*.
 - **When an item goes away** (removed by the owner, dropped from the Discogs wantlist on sync, or now on the shelf):
   the reservation is deleted and the reserver gets a Telegram message through `notify()` *(my call)*:
   - now on the shelf: "Artur now has *Blackstar* on the shelf, so your reservation is gone." (it may be their gift)
   - removed: "Artur took *Blackstar* off the wishlist, so your reservation is gone. If you already bought it, …"
   These messages go only to the reserver; the owner is never told anything about reservations.
   Detection for Discogs: in `saveWants` / `saveCollection`, before replacing rows, find reservations whose item is gone.
+- These "gone" messages and cleanups skip gifted reservations (they're history, see Gifted).
 - Switching lists doesn't touch reservations; the hidden list's reservations just aren't shown.
 - When a shelf is removed (`removeShelf`), its wants, wishes and reservations go too (no notifications). When the
   owner connects a different Discogs account (`setUsername` already clears `records` then), `wants` is cleared too.
 - **Settings, "Gifts you’ve reserved"** *(my call)*: the logged-in person's reservations across shelves (cover, album,
-  whose list, Cancel), so a promise isn't forgotten. Shown only when there are any.
+  whose list, the date, Change date, Mark as gifted, Cancel), so a promise isn't forgotten. Shown only when there are
+  any active ones.
+
+### Reminders
+
+- A daily cron on the music Worker (`triggers.crons: ["0 9 * * *"]`, 09:00 UTC; `scheduled` in `music/src/worker.ts`,
+  inside `dbRequest`) sends due reminders through `notify()` *(my call for the timing)*:
+  - with `give_on`: 3 days before it ("You're giving Artur *Blackstar* on Dec 25"), and the day after it ("Did you
+    give Artur *Blackstar*?");
+  - without: 14 days after reserving, then every 30 days ("You reserved *Blackstar* from Artur's wishlist").
+  `reminded_at` records the last one so a rerun the same day sends nothing twice. A pure `reminderDue(reservation,
+  today)` decides (tested). Gifted, cancelled or gone reservations get none.
+- Each reminder has inline buttons **I gave it to Artur** (`callback_data gift:<owner>:<item>`) and **Cancel
+  reservation** (`unres:<owner>:<item>`), plus a link to the wishlist row. Taps arrive at the existing webhook
+  (`music/src/pages/api/telegram.ts`); it acts only when the tapping Telegram user is the reserver and the reservation
+  is still active, then edits the message ("✓ Marked as gifted" / "Reservation cancelled"). The cron calls
+  `connectWebhook()` first, as shelf requests do. A 403 from Telegram (never allowed messages) is ignored.
+- Reserving sends a confirmation right away ("You reserved *Blackstar* for Artur. I'll remind you."), awaited before
+  the 303. If Telegram refuses (people who logged in before 2026-10-28 never allowed messages), the page shows a
+  `Notice`: "Telegram didn't let the bot message you. Log in again and allow messages to get reminders." The
+  reservation stands either way.
+
+### Gifted
+
+- From the wishlist row ("Reserved by you · I gave it · Cancel"), settings, or the Telegram button. The button text
+  says what happens: "I gave it to Artur (Artur will be told it's from you)". *(my call: one step, no extra confirmation;
+  the wording carries it; copy uses the owner's name, never a pronoun.)*
+- Sets `gifted_at`; the item is hidden from the wishlist for everyone, owner included, even while it's still on the
+  Discogs wantlist or the custom list.
+- The owner gets a Telegram message: "Maya gave you *Blackstar* 🎁" and, for a Discogs item, "Add it to your
+  collection on Discogs, and remove it from your wantlist." Custom items need nothing more (already hidden).
+- Gifted rows stay as history; nothing else shows them for now *(a "Gifts received" list is a possible later step)*.
 
 ### Data
 
 - `wishes(id INTEGER PRIMARY KEY AUTOINCREMENT, user_id, data TEXT, created_at)`: `data` = `{artist, title, year,
   cover, tracklist (the edit page's "A1 | Title | 4:52 | urls" text), links: {spotify, apple, youtube}, note}`.
 - `wants` and `reservations` as above; `users.wishlist_source`.
+- The shelf card's count leaves out gifted and owned items only; reserved items still count, so the number never
+  hints at reservations.
 - `wishlistData(name, viewer)` in store.ts: one batch (owner, shown list, shelf masters/titles for "owned", details,
   matches, reservations **only when viewer is logged in and isn't the owner**).
 
@@ -179,10 +219,13 @@ pressing counts)*. Hidden, not deleted: the reservation rules below decide what 
 - `parseStreamingLink`: each service's album link forms, track / artist / playlist links refused, foreign hosts refused.
 - `toWish`: caps, bad hosts dropped, script in text stays text.
 - Owned-matching rule (master, release, normalized names).
+- `reminderDue`: date-based and interval reminders, no repeat the same day, none when gifted.
 - The visibility rule as a pure function `reserveState(item, reservation, viewer, ownerId)` → `none | login | free |
   mine | taken`; the owner always gets `none`.
 - On preview: owner page HTML contains no "Reserved"; reserve / cancel / race (second reserve refused); removal sends a
-  notification attempt (401 with the fake local token); switch keeps both lists; Discogs wants via the browser harness.
+  notification attempt (401 with the fake local token); gifted hides the item for everyone and notifies the owner;
+  the webhook refuses a tap from someone other than the reserver; cron run via `/cdn-cgi/handler/scheduled` sends
+  each due reminder once; switch keeps both lists; Discogs wants via the browser harness.
 
 ## Left to the builder
 
