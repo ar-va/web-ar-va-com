@@ -1,0 +1,288 @@
+// Wishlists (design: docs/superpowers/specs/2026-11-24-wishlist-design.md). Each collector has two lists, the Discogs
+// wantlist (synced by the browser, discogs.ts) and albums added on the site; `users.wishlist_source` picks the one shown.
+// Logged-in visitors reserve items; the owner never sees a reservation (it's left out of the owner's data entirely),
+// until the giver says they gave it. Reservers get Telegram reminders (sendReminders, from the daily cron).
+import { escapeHtml, displayDate, textToTracklist, withMatchLinks, type Match, type ReleaseDetail, type ShelfRecord, type Track } from '@shared/lib/lib';
+import { RESERVATIONS_MAX, WISHES_MAX, isOwned, ownedKey, reminderDue, reserveState, type ReserveState, type Wish } from '@shared/lib/wishlist';
+import { notify } from '@shared/lib/notify';
+import { byId, db, ownerWhere, shelfSlug, type User } from '@shared/lib/store';
+
+const now = () => Math.floor(Date.now() / 1000);
+const first = (name: string) => name.split(' ')[0];
+
+export type WishSource = 'discogs' | 'custom';
+export const sourceOf = (u: User): WishSource => (u.wishlist_source === 'discogs' && u.discogs_username ? 'discogs' : 'custom');
+
+export interface WishItem {
+  /** 'd:<release id>' (Discogs) or 'c:<wish id>' (added on the site): the reservation's item. */
+  key: string;
+  /** For Cover's per-record wear and the page anchor. */
+  instanceId: number;
+  masterId: number;
+  releaseId: number;
+  artist: string;
+  title: string;
+  year: number | null;
+  cover: string | null;
+  vinyl: null;
+  tracks: Track[];
+  links: { spotify: string; apple: string; youtube: string };
+  note: string | null;
+  /** ISO date it was added, for the order (newest first). */
+  added: string;
+  /** The stored wish (custom items), for the edit form. */
+  wish?: Wish;
+}
+
+/** The page anchor for an item: '#wish-d-123'. */
+export const wishAnchor = (key: string) => `wish-${key.replace(':', '-')}`;
+
+const fromWant = (r: ShelfRecord, d: ReleaseDetail | null, m: Match | null): WishItem => ({
+  key: `d:${r.releaseId}`, instanceId: r.releaseId, masterId: r.masterId, releaseId: r.releaseId, artist: r.artist, title: r.title,
+  year: d?.originalYear ?? r.year, cover: r.cover ?? m?.apple?.artwork ?? null, vinyl: null, tracks: withMatchLinks(d?.tracklist ?? [], m),
+  links: { spotify: m?.spotify?.url ?? '', apple: m?.apple?.url ?? '', youtube: m?.youtube?.url ?? '' }, note: null, added: r.added,
+});
+
+const fromWish = (id: number, w: Wish, createdAt: number): WishItem => ({
+  key: `c:${id}`, instanceId: id, masterId: 0, releaseId: 0, artist: w.artist, title: w.title, year: w.year, cover: w.cover, vinyl: null,
+  tracks: textToTracklist(w.tracklist), links: w.links, note: w.note, added: new Date(createdAt * 1000).toISOString(), wish: w,
+});
+
+type ShelfKeys = { masters: Set<number>; releases: Set<number>; names: Set<string> };
+const shelfKeys = (rows: unknown[]): ShelfKeys => {
+  const keys: ShelfKeys = { masters: new Set(), releases: new Set(), names: new Set() };
+  for (const r of rows as { m: number; r: number; a: string; t: string }[]) {
+    if (r.m) keys.masters.add(r.m);
+    keys.releases.add(r.r);
+    keys.names.add(ownedKey(r.a ?? '', r.t ?? ''));
+  }
+  return keys;
+};
+const shelfKeysSql = (owner: string) =>
+  `SELECT json_extract(data, '$.masterId') AS m, json_extract(data, '$.releaseId') AS r, json_extract(data, '$.artist') AS a, json_extract(data, '$.title') AS t FROM records WHERE user_id = ${owner}`;
+
+/**
+ * Everything the wishlist page shows, in one round trip. Reservations come back only for a logged-in visitor who isn't
+ * the owner: for the owner (and anyone logged out) the database doesn't even hand them over, except which items are
+ * gifted (those leave the list for everyone).
+ */
+export async function wishlistData(name: string, viewer: User | null) {
+  const owner = `(SELECT id FROM users WHERE ${ownerWhere()})`;
+  const d = await db();
+  const q = (sql: string) => d.prepare(sql).bind(name, viewer?.id ?? 0);
+  const [users, wants, wishes, shelf, releases, matches, reservations] = await d.batch([
+    q(`SELECT * FROM users WHERE id = ${owner}`),
+    q(`SELECT data FROM wants WHERE user_id = ${owner}`),
+    q(`SELECT id, data, created_at FROM wishes WHERE user_id = ${owner}`),
+    q(shelfKeysSql(owner)),
+    q(`SELECT id, data FROM releases WHERE id IN (SELECT release_id FROM wants WHERE user_id = ${owner})`),
+    q(`SELECT release_id, data FROM matches WHERE release_id IN (SELECT release_id FROM wants WHERE user_id = ${owner})`),
+    q(`SELECT item, gifted_at IS NOT NULL AS gifted, CASE WHEN ?2 != 0 AND ?2 != owner_id THEN user_id END AS user_id,
+      CASE WHEN ?2 != 0 AND ?2 = user_id THEN give_on END AS give_on FROM reservations WHERE owner_id = ${owner}`),
+  ]);
+  const user = (users.results[0] as User | undefined) ?? null;
+  if (!user) return { owner: null, source: 'custom' as WishSource, items: [], wantsCount: 0, customCount: 0 };
+  const details = byId<ReleaseDetail>(releases.results, 'id');
+  const found = byId<Match>(matches.results, 'release_id');
+  const res = new Map((reservations.results as { item: string; gifted: number; user_id: number | null; give_on: string | null }[]).map((r) => [r.item, r]));
+  const source = sourceOf(user);
+  const keys = shelfKeys(shelf.results);
+  const list = source === 'discogs'
+    ? (wants.results as { data: string }[]).map((r) => JSON.parse(r.data) as ShelfRecord).map((r) => fromWant(r, details.get(r.releaseId) ?? null, found.get(r.releaseId) ?? null))
+    : (wishes.results as { id: number; data: string; created_at: number }[]).map((r) => fromWish(r.id, JSON.parse(r.data), r.created_at));
+  const items = list
+    .filter((i) => !res.get(i.key)?.gifted && !isOwned(i, keys))
+    .sort((a, b) => b.added.localeCompare(a.added))
+    .map((i) => ({ ...i, state: reserveState(res.get(i.key)?.user_id ?? null, viewer?.id ?? null, user.id) as ReserveState, giveOn: res.get(i.key)?.give_on ?? null }));
+  return { owner: user, source, items, wantsCount: wants.results.length, customCount: wishes.results.length };
+}
+
+/** How many items the shelf's wishlist shows (for its link on the shelf), without reservations. */
+export async function wishCount(name: string) {
+  const owner = `(SELECT id FROM users WHERE ${ownerWhere()})`;
+  const discogs = `(SELECT wishlist_source = 'discogs' FROM users WHERE id = ${owner})`;
+  const d = await db();
+  const q = (sql: string) => d.prepare(sql).bind(name);
+  const [items, shelf, gifted] = await d.batch([
+    q(`SELECT 'd:' || release_id AS key, json_extract(data, '$.masterId') AS masterId, release_id AS releaseId, json_extract(data, '$.artist') AS artist,
+      json_extract(data, '$.title') AS title FROM wants WHERE user_id = ${owner} AND ${discogs} IS 1
+      UNION ALL SELECT 'c:' || id, 0, 0, json_extract(data, '$.artist'), json_extract(data, '$.title') FROM wishes WHERE user_id = ${owner} AND ${discogs} IS NOT 1`),
+    q(shelfKeysSql(owner)),
+    q(`SELECT item FROM reservations WHERE owner_id = ${owner} AND gifted_at IS NOT NULL`),
+  ]);
+  const skip = new Set((gifted.results as { item: string }[]).map((r) => r.item));
+  const keys = shelfKeys(shelf.results);
+  return (items.results as { key: string; masterId: number; releaseId: number; artist: string; title: string }[])
+    .filter((i) => !skip.has(i.key) && !isOwned(i, keys)).length;
+}
+
+// ---- The owner's list ----
+
+export async function setWishlistSource(user: User, source: WishSource) {
+  await (await db()).prepare('UPDATE users SET wishlist_source = ? WHERE id = ?').bind(source, user.id).run();
+}
+
+/** Adds an album to the owner's own list; false when it already holds WISHES_MAX. */
+export async function addWish(user: User, wish: Wish) {
+  const row = await (await db()).prepare(`INSERT INTO wishes (user_id, data, created_at) SELECT ?1, ?2, ?3
+    WHERE (SELECT count(*) FROM wishes WHERE user_id = ?1) < ?4 RETURNING id`).bind(user.id, JSON.stringify(wish), now(), WISHES_MAX).first<{ id: number }>();
+  return row?.id ?? null;
+}
+
+export async function updateWish(user: User, id: number, wish: Wish) {
+  await (await db()).prepare('UPDATE wishes SET data = ? WHERE id = ? AND user_id = ?').bind(JSON.stringify(wish), id, user.id).run();
+}
+
+/** Removes an album from the owner's own list; whoever reserved it is told. */
+export async function removeWish(user: User, id: number) {
+  const d = await db();
+  const row = await d.prepare('DELETE FROM wishes WHERE id = ? AND user_id = ? RETURNING data').bind(id, user.id).first<{ data: string }>();
+  if (row) await closeReservations(user, [{ key: `c:${id}`, title: (JSON.parse(row.data) as Wish).title }], 'removed');
+}
+
+/**
+ * Items that left the list (taken off it, or now on the shelf): their open reservations are deleted and each reserver
+ * gets a Telegram message, so nobody buys a gift that's no longer wanted. Gifted reservations stay (they're history).
+ */
+export async function closeReservations(owner: { id: number; name: string }, items: { key: string; title: string }[], why: 'removed' | 'owned') {
+  if (!items.length) return;
+  const d = await db();
+  const titles = new Map(items.map((i) => [i.key, i.title]));
+  const closed: { item: string; user_id: number }[] = [];
+  // One statement per 90 items (D1 allows 100 bound parameters).
+  const keys = [...titles.keys()];
+  for (let i = 0; i < keys.length; i += 90) {
+    const chunk = keys.slice(i, i + 90);
+    const { results } = await d.prepare(`DELETE FROM reservations WHERE owner_id = ? AND gifted_at IS NULL AND item IN (${chunk.map(() => '?').join(', ')}) RETURNING item, user_id`)
+      .bind(owner.id, ...chunk).all<{ item: string; user_id: number }>();
+    closed.push(...results);
+  }
+  const who = escapeHtml(first(owner.name));
+  await notify(closed.map((r) => {
+    const title = `<b>${escapeHtml(titles.get(r.item) ?? '')}</b>`;
+    return {
+      chatId: r.user_id,
+      text: why === 'owned'
+        ? `${who} now has ${title} on the shelf, so your reservation is closed. Thank you!`
+        : `${who} took ${title} off the wishlist, so your reservation is gone. If you already bought it, you could still give it.`,
+    };
+  }));
+}
+
+/** After a collection sync: open reservations of items now on the owner's shelf are closed (any pressing counts). */
+export async function closeOwnedReservations(owner: User) {
+  const d = await db();
+  const id = '?1';
+  const [open, wants, wishes, shelf] = await d.batch([
+    d.prepare(`SELECT item FROM reservations WHERE owner_id = ${id} AND gifted_at IS NULL`).bind(owner.id),
+    d.prepare(`SELECT data FROM wants WHERE user_id = ${id}`).bind(owner.id),
+    d.prepare(`SELECT id, data FROM wishes WHERE user_id = ${id}`).bind(owner.id),
+    d.prepare(shelfKeysSql(id)).bind(owner.id),
+  ]);
+  const reserved = new Set((open.results as { item: string }[]).map((r) => r.item));
+  if (!reserved.size) return;
+  const keys = shelfKeys(shelf.results);
+  const items = [
+    ...(wants.results as { data: string }[]).map((r) => JSON.parse(r.data) as ShelfRecord).map((r) => ({ key: `d:${r.releaseId}`, ...r })),
+    ...(wishes.results as { id: number; data: string }[]).map((r) => ({ key: `c:${r.id}`, ...(JSON.parse(r.data) as Wish) })),
+  ];
+  await closeReservations(owner, items.filter((i) => reserved.has(i.key) && isOwned(i, keys)), 'owned');
+}
+
+// ---- Reservations (the page checks the item is on the shown list and free before calling these) ----
+
+/** 'ok', 'taken' (someone was quicker) or 'limit' (RESERVATIONS_MAX open ones already). */
+export async function reserve(ownerId: number, item: string, user: User, giveOn: string | null): Promise<'ok' | 'taken' | 'limit'> {
+  const d = await db();
+  const open = await d.prepare('SELECT count(*) AS n FROM reservations WHERE user_id = ? AND gifted_at IS NULL').bind(user.id).first<{ n: number }>();
+  if ((open?.n ?? 0) >= RESERVATIONS_MAX) return 'limit';
+  const row = await d.prepare(`INSERT INTO reservations (owner_id, item, user_id, created_at, give_on) VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT (owner_id, item) DO NOTHING RETURNING item`).bind(ownerId, item, user.id, now(), giveOn).first();
+  return row ? 'ok' : 'taken';
+}
+
+/** The reserver's own open reservation: cancelled (true when there was one). */
+export async function unreserve(ownerId: number, item: string, userId: number) {
+  const row = await (await db()).prepare('DELETE FROM reservations WHERE owner_id = ? AND item = ? AND user_id = ? AND gifted_at IS NULL RETURNING item')
+    .bind(ownerId, item, userId).first();
+  return !!row;
+}
+
+export async function setGiveOn(ownerId: number, item: string, userId: number, giveOn: string | null) {
+  await (await db()).prepare('UPDATE reservations SET give_on = ?, reminded_at = NULL WHERE owner_id = ? AND item = ? AND user_id = ? AND gifted_at IS NULL')
+    .bind(giveOn, ownerId, item, userId).run();
+}
+
+/** The giver handed it over: the item leaves the list and the owner is told who it's from. False if it isn't theirs to mark. */
+export async function markGifted(ownerId: number, item: string, giver: { id: number; name: string }) {
+  const d = await db();
+  const row = await d.prepare('UPDATE reservations SET gifted_at = ? WHERE owner_id = ? AND item = ? AND user_id = ? AND gifted_at IS NULL RETURNING item')
+    .bind(now(), ownerId, item, giver.id).first();
+  if (!row) return false;
+  const title = await itemTitle(ownerId, item);
+  await notify([{
+    chatId: ownerId,
+    text: `<b>${escapeHtml(giver.name)}</b> gave you <b>${escapeHtml(title)}</b> 🎁${item.startsWith('d:') ? '\n\nAdd it to your collection on Discogs, and take it off your wantlist.' : ''}`,
+  }]);
+  return true;
+}
+
+async function itemTitle(ownerId: number, item: string) {
+  const [kind, id] = item.split(':');
+  const row = await (await db()).prepare(kind === 'd' ? 'SELECT data FROM wants WHERE user_id = ? AND release_id = ?' : 'SELECT data FROM wishes WHERE user_id = ? AND id = ?')
+    .bind(ownerId, Number(id)).first<{ data: string }>();
+  return row ? String(JSON.parse(row.data).title ?? '') : 'a record';
+}
+
+const reservationsSql = `SELECT r.owner_id, r.item, r.user_id, r.created_at, r.give_on, r.reminded_at, o.name AS owner_name, o.shelf_name, o.discogs_username,
+  coalesce(w.data, c.data) AS data FROM reservations r JOIN users o ON o.id = r.owner_id
+  LEFT JOIN wants w ON r.item = 'd:' || w.release_id AND w.user_id = r.owner_id
+  LEFT JOIN wishes c ON r.item = 'c:' || c.id AND c.user_id = r.owner_id
+  WHERE r.gifted_at IS NULL`;
+type ReservationRow = { owner_id: number; item: string; user_id: number; created_at: number; give_on: string | null; reminded_at: number | null;
+  owner_name: string; shelf_name: string | null; discogs_username: string | null; data: string | null };
+const reservationView = (r: ReservationRow) => {
+  const data = r.data ? JSON.parse(r.data) : {};
+  return { ...r, artist: String(data.artist ?? ''), title: String(data.title ?? ''), cover: (data.cover as string | null) ?? null,
+    href: `/${shelfSlug(r)}/wishlist#${wishAnchor(r.item)}` };
+};
+
+/** The person's open reservations on every shelf (settings, "Gifts you’ve reserved"), soonest giving date first. */
+export async function myReservations(user: User) {
+  const { results } = await (await db()).prepare(`${reservationsSql} AND r.user_id = ? AND (w.data IS NOT NULL OR c.data IS NOT NULL)
+    ORDER BY r.give_on IS NULL, r.give_on, r.created_at DESC`).bind(user.id).all<ReservationRow>();
+  return results.map(reservationView);
+}
+
+// ---- Reminders (the daily cron, music/src/worker.ts) ----
+
+/** Sends today's reminders on Telegram, each with "I gave it" / "Cancel reservation" buttons (api/telegram.ts). */
+export async function sendReminders(origin: string, today = new Date().toISOString().slice(0, 10)) {
+  const d = await db();
+  const { results } = await d.prepare(`${reservationsSql} AND (w.data IS NOT NULL OR c.data IS NOT NULL)`).all<ReservationRow>();
+  const due = results.map((r) => ({ r: reservationView(r), kind: reminderDue(r, today) })).filter((x) => x.kind);
+  if (!due.length) return 0;
+  const sent = await notify(due.map(({ r, kind }) => {
+    const who = escapeHtml(first(r.owner_name)), title = `<b>${escapeHtml(r.title)}</b>`;
+    const text = kind === 'before' ? `In 3 days you’re giving ${who} ${title} (${displayDate(r.give_on!)}).`
+      : kind === 'after' ? `Did you give ${who} ${title}?`
+      : `You reserved ${title} for ${who}. Still planning to give it?`;
+    return {
+      chatId: r.user_id,
+      text,
+      buttons: [
+        [{ text: `I gave it to ${first(r.owner_name)}`, callback_data: `gift:${r.owner_id}:${r.item}` }, { text: 'Cancel reservation', callback_data: `unres:${r.owner_id}:${r.item}` }],
+        [{ text: 'Open the wishlist', url: `${origin}${r.href}` }],
+      ],
+    };
+  }));
+  // Marked as reminded even when Telegram refused (never allowed messages): it would refuse again tomorrow too.
+  await d.batch(due.map(({ r }) => d.prepare('UPDATE reservations SET reminded_at = ? WHERE owner_id = ? AND item = ?').bind(now(), r.owner_id, r.item)));
+  return sent.filter(Boolean).length;
+}
+
+/** Who reserved an item (for a Telegram button tap): the open reservation's giver and the owner, or null. */
+export async function openReservation(ownerId: number, item: string) {
+  return (await db()).prepare(`SELECT r.user_id, o.name AS owner_name FROM reservations r JOIN users o ON o.id = r.owner_id
+    WHERE r.owner_id = ? AND r.item = ? AND r.gifted_at IS NULL`).bind(ownerId, item).first<{ user_id: number; owner_name: string }>();
+}

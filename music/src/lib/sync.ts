@@ -189,6 +189,14 @@ export async function syncShelf(progress: (message: string) => void = () => {}) 
     releases.push(...data.releases);
   }
   const { count } = await site({ action: 'collection', fields, releases });
+  // The wantlist too (the wishlist, when the collector picks Discogs for it).
+  const wants: unknown[] = [];
+  for (let page = 1, pages = 1; page <= pages; page++) {
+    const data = await signedGet(`/users/${u}/wants?per_page=100&page=${page}`, waiting);
+    pages = data.pagination.pages;
+    wants.push(...data.wants);
+  }
+  await site({ action: 'wants', wants });
   const { missing, unmatched } = await site({ action: 'missing' });
   await syncBoth(missing, unmatched, progress, `${count} records on the shelf. `);
   progress(`${count} records on the shelf. Everything is up to date.`);

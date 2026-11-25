@@ -6,6 +6,7 @@ import { oauthHeader, safeCoverUrl, safeStreamingUrl, seal, signablePath, toRele
 import { spotifyMatch } from './spotify';
 import { youtubeMatch } from './youtube';
 import { db, type User } from '@shared/lib/store';
+import { closeOwnedReservations, closeReservations } from './wishes';
 
 type Token = { key: string; secret: string };
 const API = 'https://api.discogs.com';
@@ -52,7 +53,7 @@ export async function setUsername(user: User, username: string) {
   if (taken) return `“${username}” is already another collector’s shelf address, so the two shelves would clash. Please message the site’s admin.`;
   const switched = user.discogs_username && user.discogs_username.toLowerCase() !== username.toLowerCase();
   await d.batch([
-    ...(switched ? [d.prepare('DELETE FROM records WHERE user_id = ?').bind(user.id)] : []),
+    ...(switched ? [d.prepare('DELETE FROM records WHERE user_id = ?').bind(user.id), d.prepare('DELETE FROM wants WHERE user_id = ?').bind(user.id)] : []),
     d.prepare('UPDATE users SET discogs_username = ?, sync_error = NULL WHERE id = ?').bind(username, user.id),
   ]);
   return null;
@@ -94,14 +95,49 @@ export async function saveCollection(user: User, fields: CollectionField[], item
     ...inserts,
     d.prepare('UPDATE users SET synced_at = ?, sync_error = NULL WHERE id = ?').bind(now(), user.id),
   ]);
+  // A wished-for record that's now on the shelf: whoever reserved it is told, and the reservation closes.
+  await closeOwnedReservations(user);
   return { count: records.length, missing: await missingReleases(user) };
 }
 
-/** Releases on the user's shelf without fresh details (or cached before the first-release date was added). */
+/**
+ * Replaces the user's Discogs wantlist (their wishlist when they pick Discogs). Like the collection, nothing is written
+ * when nothing changed; wants that left the list close their reservations (the reserver is told).
+ */
+export async function saveWants(user: User, items: any[]) {
+  if (!Array.isArray(items) || items.length > 10_000) throw new Error('Unexpected wantlist data');
+  // A want is a release (no collection instance): its release id stands in for the instance id.
+  const wants = items.map((i) => toShelfRecord({ ...i, instance_id: i?.id }, []));
+  if (wants.some((w) => !Number.isSafeInteger(w.releaseId))) throw new Error('Unexpected wantlist data');
+  const d = await db();
+  const rows = new Map(wants.map((w) => [w.releaseId, JSON.stringify(w)]));
+  const { results } = await d.prepare('SELECT release_id, data FROM wants WHERE user_id = ?').bind(user.id).all<{ release_id: number; data: string }>();
+  if (results.length === rows.size && results.every((r) => rows.get(r.release_id) === r.data)) return { count: rows.size };
+  const inserts = [];
+  const list = [...rows];
+  for (let i = 0; i < list.length; i += 33) {
+    const chunk = list.slice(i, i + 33);
+    inserts.push(d.prepare(`INSERT INTO wants (user_id, release_id, data) VALUES ${chunk.map(() => '(?, ?, ?)').join(', ')}`)
+      .bind(...chunk.flatMap(([id, data]) => [user.id, id, data])));
+  }
+  await d.batch([d.prepare('DELETE FROM wants WHERE user_id = ?').bind(user.id), ...inserts]);
+  const gone = results.filter((r) => !rows.has(r.release_id)).map((r) => ({ key: `d:${r.release_id}`, title: String(JSON.parse(r.data).title ?? '') }));
+  await closeReservations(user, gone, 'removed');
+  return { count: rows.size };
+}
+
+// Releases a user has or wants: details and streaming matches are fetched for both (the wishlist shows them too).
+const HAS_OR_WANTS = '(SELECT user_id, data FROM records UNION ALL SELECT user_id, data FROM wants)';
+const hasOrWants = (d: D1Database | D1DatabaseSession, userId: number, releaseId: number) => d.prepare(
+  `SELECT json_extract(data, '$.artist') AS artist, json_extract(data, '$.title') AS title FROM records WHERE user_id = ?1 AND json_extract(data, '$.releaseId') = ?2
+   UNION ALL SELECT json_extract(data, '$.artist'), json_extract(data, '$.title') FROM wants WHERE user_id = ?1 AND release_id = ?2 LIMIT 1`,
+).bind(userId, releaseId).first<{ artist: string; title: string }>();
+
+/** Releases on the user's shelf or wantlist without fresh details (or cached before the first-release date was added). */
 export async function missingReleases(user: User) {
   const d = await db();
   const { results } = await d.prepare(
-    `SELECT DISTINCT json_extract(r.data, '$.releaseId') AS releaseId, json_extract(r.data, '$.masterId') AS masterId FROM records r
+    `SELECT DISTINCT json_extract(r.data, '$.releaseId') AS releaseId, json_extract(r.data, '$.masterId') AS masterId FROM ${HAS_OR_WANTS} r
      LEFT JOIN releases rel ON rel.id = json_extract(r.data, '$.releaseId') AND rel.fetched_at > ?
        AND json_type(rel.data, '$.firstReleased') IS NOT NULL AND json_type(rel.data, '$.images') IS NOT NULL
      WHERE r.user_id = ? AND rel.id IS NULL`,
@@ -117,7 +153,7 @@ export async function missingReleases(user: User) {
 export async function saveRelease(user: User, release: any, masterYear: unknown, firstReleased: unknown) {
   const id = Number(release?.id);
   const d = await db();
-  const owned = Number.isSafeInteger(id) && await d.prepare(`SELECT 1 FROM records WHERE user_id = ? AND json_extract(data, '$.releaseId') = ? LIMIT 1`).bind(user.id, id).first();
+  const owned = Number.isSafeInteger(id) && await hasOrWants(d, user.id, id);
   if (!owned) return false;
   const detail = toReleaseDetail(release, Number.isSafeInteger(masterYear) ? (masterYear as number) : null, typeof firstReleased === 'string' ? firstReleased : null);
   await d.prepare(`INSERT INTO releases (id, data, fetched_at) VALUES (?1, ?2, ?3) ON CONFLICT (id) DO UPDATE SET data = excluded.data, fetched_at = excluded.fetched_at
@@ -134,7 +170,7 @@ const MATCH_MAX_AGE = 60 * 86400;
 export async function unmatchedReleases(user: User) {
   const { results } = await (await db()).prepare(
     `SELECT DISTINCT json_extract(r.data, '$.releaseId') AS releaseId, json_extract(r.data, '$.artist') AS artist, json_extract(r.data, '$.title') AS title
-     FROM records r LEFT JOIN matches m ON m.release_id = json_extract(r.data, '$.releaseId') AND m.matched_at > ?
+     FROM ${HAS_OR_WANTS} r LEFT JOIN matches m ON m.release_id = json_extract(r.data, '$.releaseId') AND m.matched_at > ?
      WHERE r.user_id = ? AND m.release_id IS NULL`,
   ).bind(now() - MATCH_MAX_AGE, user.id).all<{ releaseId: number; artist: string; title: string }>();
   return results;
@@ -164,9 +200,7 @@ export async function backfillYoutube(user: User, limit = 10) {
 /** Stores what the browser found on Apple Music (checked) plus a Spotify lookup; only for releases on the user's shelf. */
 export async function saveMatch(user: User, releaseId: number, apple: any, artist?: unknown, title?: unknown) {
   const d = await db();
-  const record = Number.isSafeInteger(releaseId) && await d.prepare(
-    `SELECT json_extract(data, '$.artist') AS artist, json_extract(data, '$.title') AS title FROM records WHERE user_id = ? AND json_extract(data, '$.releaseId') = ? LIMIT 1`,
-  ).bind(user.id, releaseId).first<{ artist: string; title: string }>();
+  const record = Number.isSafeInteger(releaseId) && await hasOrWants(d, user.id, releaseId);
   if (!record) return false;
   const match: Match = {};
   const albumUrl = typeof apple?.url === 'string' ? safeStreamingUrl(apple.url, 'apple') : null;

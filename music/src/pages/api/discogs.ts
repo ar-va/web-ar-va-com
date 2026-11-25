@@ -2,7 +2,7 @@
 import type { APIRoute } from 'astro';
 import { canCollect, currentUser } from '@shared/lib/store';
 import {
-  accessTokenRequest, backfillYoutube, missingReleases, requestTokenRequest, saveCollection, saveMatch, savePending, saveRelease, saveToken, setUsername, signFor, unmatchedReleases,
+  accessTokenRequest, backfillYoutube, missingReleases, requestTokenRequest, saveCollection, saveWants, saveMatch, savePending, saveRelease, saveToken, setUsername, signFor, unmatchedReleases,
 } from '../../lib/discogs';
 
 export const prerender = false;
@@ -51,6 +51,8 @@ export const POST: APIRoute = async ({ request, cookies, url, locals }) => {
       }
       case 'collection':
         return json(await saveCollection(user, body.fields, body.releases));
+      case 'wants':
+        return json(await saveWants(user, body.wants));
       case 'release':
         return (await saveRelease(user, body.release, body.masterYear, body.firstReleased)) ? json({ ok: true }) : json({ error: 'Not on your shelf.' }, 400);
     }

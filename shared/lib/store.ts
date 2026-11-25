@@ -9,7 +9,8 @@ import { notify } from './notify';
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, username TEXT, photo_url TEXT,
     is_collector INTEGER NOT NULL DEFAULT 0, discogs_username TEXT UNIQUE COLLATE NOCASE, discogs_token TEXT,
-    synced_at INTEGER, sync_error TEXT, created_at INTEGER NOT NULL, shelf_name TEXT, shelf_note TEXT, invited_by INTEGER, shelf_request_at INTEGER)`,
+    synced_at INTEGER, sync_error TEXT, created_at INTEGER NOT NULL, shelf_name TEXT, shelf_note TEXT, invited_by INTEGER, shelf_request_at INTEGER,
+    wishlist_source TEXT)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS users_shelf_name ON users (shelf_name)`,
   `CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires_at INTEGER NOT NULL)`,
   // Invite links since 2026-10-30, like Discord's: expiry and number of uses chosen by the creator; the code is kept
@@ -30,13 +31,22 @@ const SCHEMA = [
   `CREATE INDEX IF NOT EXISTS post_comments_by_slug ON post_comments (slug)`,
   `CREATE TABLE IF NOT EXISTS matches (release_id INTEGER PRIMARY KEY, data TEXT NOT NULL, matched_at INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS overrides (user_id INTEGER NOT NULL, instance_id INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY (user_id, instance_id))`,
+  // Wishlists (2026-11-24, music/src/lib/wishes.ts): the Discogs wantlist as synced, the albums added on the site, and
+  // reservations of either (item = 'd:<release id>' or 'c:<wish id>'), which the owner never sees.
+  `CREATE TABLE IF NOT EXISTS wants (user_id INTEGER NOT NULL, release_id INTEGER NOT NULL, data TEXT NOT NULL, PRIMARY KEY (user_id, release_id))`,
+  `CREATE TABLE IF NOT EXISTS wishes (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, data TEXT NOT NULL, created_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS wishes_by_user ON wishes (user_id)`,
+  `CREATE TABLE IF NOT EXISTS reservations (owner_id INTEGER NOT NULL, item TEXT NOT NULL, user_id INTEGER NOT NULL, created_at INTEGER NOT NULL,
+    give_on TEXT, reminded_at INTEGER, gifted_at INTEGER, PRIMARY KEY (owner_id, item))`,
+  `CREATE INDEX IF NOT EXISTS reservations_by_user ON reservations (user_id)`,
 ];
 
 // Changes to existing tables after launch (new columns are also in the definitions above, for a fresh database). Each
 // runs once per Worker instance alongside the schema; "duplicate column" errors are ignored. (shelf_name, parent_id,
 // edited_at got a one-off manual ALTER in October 2026.) The one-use `invites` table was replaced by invite_links on
 // 2026-10-30 and is dropped (user: fine to delete the old links).
-const COLUMNS = ['ALTER TABLE users ADD COLUMN shelf_note TEXT', 'ALTER TABLE users ADD COLUMN invited_by INTEGER', 'ALTER TABLE users ADD COLUMN shelf_request_at INTEGER', 'DROP TABLE IF EXISTS invites'];
+const COLUMNS = ['ALTER TABLE users ADD COLUMN shelf_note TEXT', 'ALTER TABLE users ADD COLUMN invited_by INTEGER', 'ALTER TABLE users ADD COLUMN shelf_request_at INTEGER', 'DROP TABLE IF EXISTS invites',
+  'ALTER TABLE users ADD COLUMN wishlist_source TEXT'];
 
 let ready: Promise<unknown> | null = null;
 
@@ -61,7 +71,7 @@ export const dbRequest = new AsyncLocalStorage<{ bookmark: string | null; sessio
 
 const now = () => Math.floor(Date.now() / 1000);
 // Rows with a JSON `data` column, as a map by one of their columns.
-const byId = <T>(rows: unknown[], key: string) => new Map((rows as Record<string, any>[]).map((r) => [r[key] as number, JSON.parse(r.data) as T]));
+export const byId = <T>(rows: unknown[], key: string) => new Map((rows as Record<string, any>[]).map((r) => [r[key] as number, JSON.parse(r.data) as T]));
 
 export interface User {
   id: number;
@@ -82,6 +92,8 @@ export interface User {
   invited_by: number | null;
   /** When they last asked for a shelf ("Request a shelf"), unix seconds. */
   shelf_request_at: number | null;
+  /** Which wishlist their shelf shows: 'discogs' (the wantlist) or the one made on the site (null / 'custom'). */
+  wishlist_source: string | null;
 }
 
 /** The address a shelf is linked under: the chosen name, else the Discogs username. */
@@ -251,6 +263,10 @@ export async function removeShelf(userId: number, revoke: boolean) {
   const d = await db();
   await d.batch([
     d.prepare('DELETE FROM records WHERE user_id = ?').bind(userId),
+    // The wishlist goes with the shelf (nobody is told: the shelf itself is gone).
+    d.prepare('DELETE FROM wants WHERE user_id = ?').bind(userId),
+    d.prepare('DELETE FROM wishes WHERE user_id = ?').bind(userId),
+    d.prepare('DELETE FROM reservations WHERE owner_id = ?').bind(userId),
     d.prepare(`UPDATE users SET discogs_username = NULL, discogs_token = NULL, synced_at = NULL, sync_error = NULL${revoke ? ', is_collector = 0' : ''} WHERE id = ?`).bind(userId),
     // Someone no longer a collector can't bring in others with links they made before.
     ...(revoke ? [d.prepare('UPDATE invite_links SET revoked_at = ? WHERE created_by = ? AND revoked_at IS NULL').bind(now(), userId)] : []),
@@ -261,7 +277,7 @@ export async function removeShelf(userId: number, revoke: boolean) {
 
 const collectorSql = (table = '') => `(${table}is_collector = 1 OR ${table}id = ${Number(env.ADMIN_TELEGRAM_ID) || 0})`;
 // The shelf at music.ar-va.com/<?1>: by its chosen name or its Discogs username.
-const ownerWhere = () => `(shelf_name = lower(?1) OR discogs_username = ?1) AND discogs_username IS NOT NULL AND ${collectorSql()}`;
+export const ownerWhere = () => `(shelf_name = lower(?1) OR discogs_username = ?1) AND discogs_username IS NOT NULL AND ${collectorSql()}`;
 
 export async function shelfOwner(name: string) {
   return (await db()).prepare(`SELECT * FROM users WHERE ${ownerWhere()}`).bind(name).first<User>();
