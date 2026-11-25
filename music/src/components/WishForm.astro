@@ -6,6 +6,7 @@
 // checks everything again (toWish).
 import Disclosure from '@shared/components/Disclosure.astro';
 import { NOTE_MAX } from '@shared/lib/lib';
+import WishIcon from './WishIcon.astro';
 
 interface Props {
   /** The values shown: an album being edited, or what was typed before an error. */
@@ -20,6 +21,9 @@ const links = values.links ?? {};
 const open = !!editId || !!error;
 const input = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500 transition-colors';
 const label = 'flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300';
+// Each field with its icon inside, on the left (the same icons mark a filled field on the record).
+const withIcon = `${input} pl-10`;
+const iconAt = 'pointer-events-none absolute left-3.5 top-3 w-4.5 h-4.5 text-zinc-400 dark:text-zinc-500';
 const hint = 'font-normal text-zinc-500';
 ---
 <form id="add" method="post" data-wish-form tabindex="-1" class:list={['compose-form outline-none scroll-mt-6', open && 'open']}>
@@ -29,9 +33,10 @@ const hint = 'font-normal text-zinc-500';
     {editId ? (
       <span class="flex-1 min-w-0 truncate pl-5 py-3 font-medium text-zinc-900 dark:text-white">Editing {values.artist} – {values.title}</span>
     ) : (
+      <WishIcon name="link" class="shrink-0 ml-4 w-5 h-5 text-zinc-400 dark:text-zinc-500" />
       <input name="link" data-wish-link autocomplete="off" aria-label="Album link, or artist and album"
         placeholder="Paste an album link, or type the artist and album"
-        class="flex-1 min-w-0 bg-transparent pl-5 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none" />
+        class="flex-1 min-w-0 bg-transparent pl-1 py-3 text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none" />
     )}
     <button class="btn-primary shrink-0 w-10 px-0" aria-label={editId ? 'Save' : 'Add to the wishlist'} title={editId ? 'Save' : 'Add to the wishlist'}>
       {editId
@@ -47,28 +52,28 @@ const hint = 'font-normal text-zinc-500';
       <img data-wish-cover-preview src={values.cover || undefined} alt="" hidden={!values.cover} width="80" height="80" referrerpolicy="no-referrer" class="w-20 h-20 rounded-lg object-cover shrink-0" />
       <input type="hidden" name="cover" value={values.cover ?? ''} />
       <div class="grid sm:grid-cols-[1fr_1fr_5.5rem] gap-3 flex-1 min-w-0">
-        <label class={label}>Artist <input name="artist" maxlength="300" value={values.artist ?? ''} class={input} /></label>
-        <label class={label}>Album <input name="title" maxlength="300" value={values.title ?? ''} class={input} /></label>
-        <label class={label}>Year <input name="year" inputmode="numeric" pattern="\d{4}" maxlength="4" value={values.year ?? ''} class={input} /></label>
+        <label class={label}>Artist <span class="relative"><WishIcon name="artist" class={iconAt} /><input name="artist" maxlength="300" value={values.artist ?? ''} class={withIcon} /></span></label>
+        <label class={label}>Album <span class="relative"><WishIcon name="album" class={iconAt} /><input name="title" maxlength="300" value={values.title ?? ''} class={withIcon} /></span></label>
+        <label class={label}>Year <span class="relative"><WishIcon name="year" class={iconAt} /><input name="year" inputmode="numeric" pattern="\d{4}" maxlength="4" value={values.year ?? ''} class={withIcon} /></span></label>
       </div>
     </div>
     <div class="grid sm:grid-cols-2 gap-3">
       <label class={label}><span>Where to get it <span class={hint}>(optional)</span></span>
-        <input name="where" maxlength="300" value={values.where ?? ''} placeholder="Rough Trade, or https://…" class={input} />
+        <span class="relative"><WishIcon name="where" class={iconAt} /><input name="where" maxlength="300" value={values.where ?? ''} placeholder="Rough Trade, or https://…" class={withIcon} /></span>
       </label>
       <label class={label}><span>A note for whoever gives it <span class={hint}>(optional)</span></span>
-        <input name="note" maxlength={NOTE_MAX} value={values.note ?? ''} placeholder="The red pressing, please" class={input} />
+        <span class="relative"><WishIcon name="note" class={iconAt} /><input name="note" maxlength={NOTE_MAX} value={values.note ?? ''} placeholder="The red pressing, please" class={withIcon} /></span>
       </label>
     </div>
     <Disclosure title="Tracklist and links">
       <div class="space-y-3 pt-1">
         <label class={label}><span>Tracklist <span class={hint}>One track per line: “1 | Title | 4:52”.</span></span>
-          <textarea name="tracklist" rows="6" class={`${input} font-mono text-sm`}>{values.tracklist ?? ''}</textarea>
+          <span class="relative"><WishIcon name="tracklist" class={iconAt} /><textarea name="tracklist" rows="6" class={`${withIcon} font-mono text-sm`}>{values.tracklist ?? ''}</textarea></span>
         </label>
         <div class="grid sm:grid-cols-3 gap-3">
-          <label class={label}>Spotify <input name="spotify" type="url" value={links.spotify ?? ''} class={input} /></label>
-          <label class={label}>Apple Music <input name="apple" type="url" value={links.apple ?? ''} class={input} /></label>
-          <label class={label}>YouTube Music <input name="youtube" type="url" value={links.youtube ?? ''} class={input} /></label>
+          <label class={label}>Spotify <span class="relative"><WishIcon name="link" class={iconAt} /><input name="spotify" type="url" value={links.spotify ?? ''} class={withIcon} /></span></label>
+          <label class={label}>Apple Music <span class="relative"><WishIcon name="link" class={iconAt} /><input name="apple" type="url" value={links.apple ?? ''} class={withIcon} /></span></label>
+          <label class={label}>YouTube Music <span class="relative"><WishIcon name="link" class={iconAt} /><input name="youtube" type="url" value={links.youtube ?? ''} class={withIcon} /></span></label>
         </div>
       </div>
     </Disclosure>

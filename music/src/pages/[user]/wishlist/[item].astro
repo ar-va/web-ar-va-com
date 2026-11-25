@@ -13,6 +13,7 @@ import Listen from '../../../components/Listen.astro';
 import SkippingRecord from '../../../components/SkippingRecord.astro';
 import LinkedText from '@shared/components/LinkedText.astro';
 import StarIcon from '../../../components/StarIcon.astro';
+import WishIcon from '../../../components/WishIcon.astro';
 import { loginHref, runtime, withSideHeadings } from '@shared/lib/lib';
 import { currentUser, shelfSlug } from '@shared/lib/store';
 import { wishKey, wishNotice, wishlistData } from '../../../lib/wishes';
@@ -79,8 +80,8 @@ const songs = tracks.filter((t) => !t.heading);
             ) : item.top && (
               <p slot="above" class="font-sans"><span class="inline-flex items-center gap-1 rounded-full bg-bengara-tint px-2.5 py-0.5 text-sm font-medium text-bengara dark:bg-bengara-tint-dark dark:text-bengara-light"><StarIcon />Most wanted</span></p>
             )}
-            {item.note && <p class="mt-5 text-zinc-600 dark:text-zinc-400 whitespace-pre-line">“{item.note}”</p>}
-            {item.where && <p class="mt-3 text-sm text-zinc-600 dark:text-zinc-400"><span class="text-zinc-500">Where to get it:</span> <LinkedText text={item.where} short /></p>}
+            {item.note && <p class="mt-5 flex gap-2.5 text-zinc-600 dark:text-zinc-400"><WishIcon name="note" class="w-5 h-5 shrink-0 mt-0.5 text-zinc-500" label="Note" /><span class="whitespace-pre-line">“{item.note}”</span></p>}
+            {item.where && <p class="mt-3 flex gap-2.5 text-sm text-zinc-600 dark:text-zinc-400"><WishIcon name="where" class="w-5 h-5 shrink-0 text-zinc-500" label="Where to get it" /><span><span class="text-zinc-500">Where to get it:</span> <LinkedText text={item.where} short /></span></p>}
             <ReserveBox class="mt-6" state={item.state} item={item.key} giveOn={item.giveOn} ownerFirst={first} action={list} back={path}
               loginHref={loginHref(Astro.url)} />
           </RecordHero>

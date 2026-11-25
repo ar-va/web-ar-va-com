@@ -5,6 +5,7 @@
 import Cover from '@shared/components/Cover.astro';
 import type { ShelfRecord } from '@shared/lib/lib';
 import StarIcon from './StarIcon.astro';
+import WishIcon, { type WishIconName } from './WishIcon.astro';
 
 interface Props {
   record: Pick<ShelfRecord, 'instanceId' | 'cover' | 'vinyl' | 'artist' | 'title'>;
@@ -14,8 +15,11 @@ interface Props {
   badge?: { text: string; on?: boolean } | null;
   /** Starred ("Most wanted" on a wishlist): a star on the sleeve's top-right corner (user 2026-11-25; was on the tag). */
   top?: boolean;
+  /** Filled fields worth seeing at a glance (a wishlist record's shop, note): their icons at the sleeve's bottom-right. */
+  marks?: WishIconName[];
 }
-const { record, href, eager = false, badge, top = false } = Astro.props;
+const { record, href, eager = false, badge, top = false, marks = [] } = Astro.props;
+const markText: Partial<Record<WishIconName, string>> = { where: 'where to get it', note: 'a note' };
 ---
 <a href={href} class="shelf-record block" title={`${record.artist} – ${record.title}`}>
   <Cover record={record} eager={eager} />
@@ -27,6 +31,11 @@ const { record, href, eager = false, badge, top = false } = Astro.props;
       <StarIcon class="w-4 h-4 text-bengara-light" />
     </span>
   )}
-  <span class="sr-only">{record.artist} – {record.title}{top && ', most wanted'}{badge && `, ${badge.text.toLowerCase()}`}</span>
+  {marks.length > 0 && (
+    <span class="glass glass-dark absolute right-2 bottom-2 z-10 inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-white/90 shadow-sm" aria-hidden="true">
+      {marks.map((m) => <WishIcon name={m} class="w-3.5 h-3.5" />)}
+    </span>
+  )}
+  <span class="sr-only">{record.artist} – {record.title}{top && ', most wanted'}{badge && `, ${badge.text.toLowerCase()}`}{marks.length > 0 && `, with ${marks.map((m) => markText[m]).join(' and ')}`}</span>
   <span class="shelf-label" aria-hidden="true"><span>{record.title}</span><span>{record.artist}</span></span>
 </a>

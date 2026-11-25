@@ -6,6 +6,7 @@
 import SortMenu from '@shared/components/SortMenu.astro';
 import ShelfItem from './ShelfItem.astro';
 import StarIcon from './StarIcon.astro';
+import WishIcon, { type WishIconName } from './WishIcon.astro';
 import type { ShelfRecord } from '@shared/lib/lib';
 
 export interface BrowserItem {
@@ -25,6 +26,8 @@ export interface BrowserItem {
   badge?: { text: string; on?: boolean } | null;
   /** Starred ("Most wanted"): marked, and first in every order. */
   top?: boolean;
+  /** Filled fields shown as icons on the sleeve and after the title (a wishlist record's shop, note). */
+  marks?: WishIconName[];
 }
 
 interface Props {
@@ -149,7 +152,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
               data-released-on={r.releasedOn ?? r.releasedYear ?? ''}
               data-genres={r.genres.map((g) => g.toLowerCase()).join('|')}
               data-search={`${r.record.artist} ${r.record.title} ${r.search}`.toLowerCase()}>
-              <ShelfItem record={r.record} href={r.href} eager={i < 12} badge={r.badge} top={r.top && !starAction} />
+              <ShelfItem record={r.record} href={r.href} eager={i < 12} badge={r.badge} top={r.top && !starAction} marks={r.marks} />
               {starAction && (
                 <form method="post" action={starAction} data-star-form class="absolute right-2 top-2 z-20">
                   <input type="hidden" name="action" value="star" /><input type="hidden" name="item" value={r.id} />
@@ -182,6 +185,7 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
                 <a href={r.href} class="text-zinc-700 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white underline decoration-zinc-300 dark:decoration-zinc-700 hover:decoration-zinc-500 dark:hover:decoration-zinc-400 underline-offset-4 transition-colors text-base truncate block min-w-0">
                   <StarIcon class={`${r.top ? 'inline' : 'hidden'} w-4 h-4 mr-1.5 align-[-2px] text-bengara dark:text-bengara-light`} data-star /><span class="text-zinc-500 dark:text-zinc-400">{r.record.artist} –</span> {r.record.title}
                 </a>
+                {r.marks?.map((m) => <WishIcon name={m} class="ml-2 w-4 h-4 shrink-0 text-zinc-500" label={m === 'where' ? 'Where to get it' : 'A note'} />)}
                 {r.badge && <span class="ml-2 shrink-0 text-sm text-zinc-500">{r.badge.text}</span>}
               </div>
               <span class="hidden sm:block text-sm text-zinc-500 shrink-0 truncate max-w-[40%] text-right">{r.genres.map((g) => g.toLowerCase()).join(', ')}</span>
