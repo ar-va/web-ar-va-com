@@ -3,9 +3,9 @@
 // Logged-in visitors reserve items; the owner never sees a reservation (it's left out of the owner's data entirely),
 // until the giver says they gave it. Reservers get Telegram reminders (sendReminders, from the daily cron).
 import { escapeHtml, displayDate, textToTracklist, tracklistToText, withMatchLinks, type Match, type ReleaseDetail, type ShelfRecord, type Track } from '@shared/lib/lib';
-import { RESERVATIONS_MAX, WISHES_MAX, isOwned, reservationEnds, whereLines, ownedKey, reminderDue, reserveState, toWish, type ReserveState, type Wish } from '@shared/lib/wishlist';
+import { RESERVATIONS_MAX, WISHES_MAX, giveOnButton, isOwned, reservationCard, reservationEnds, whereLines, ownedKey, reminderDue, reserveState, toWish, type ReserveState, type Wish } from '@shared/lib/wishlist';
 import { notify } from '@shared/lib/notify';
-import { byId, db, ownerWhere, shelfSlug, type User } from '@shared/lib/store';
+import { byId, db, ownerWhere, shelfSlug, userById, type User } from '@shared/lib/store';
 
 const now = () => Math.floor(Date.now() / 1000);
 const first = (name: string) => name.split(' ')[0];
@@ -321,6 +321,7 @@ export async function sendReminders(origin: string, today = new Date().toISOStri
       text,
       buttons: [
         [{ text: `I gave it to ${first(r.owner_name)}`, callback_data: `gift:${r.owner_id}:${r.item}` }, { text: 'Cancel reservation', callback_data: `unres:${r.owner_id}:${r.item}` }],
+        [giveOnButton(r.owner_id, r.item, r.give_on)],
         [{ text: 'Open the wishlist', url: `${origin}${r.href}` }],
       ],
     };
@@ -346,6 +347,29 @@ export async function endExpiredReservations(origin: string, today = new Date().
     buttons: [[{ text: 'Reserve it again', url: `${origin}${r.href}` }]],
   })));
   return ended.length;
+}
+
+/**
+ * A reservation's message buttons, as `reservationCard` makes them, for the bot to put back after the calendar (the
+ * date row then shows the date just set). Null when it isn't this person's open reservation any more.
+ */
+export async function reservationButtons(ownerId: number, item: string, reserver: User, origin: string) {
+  const owner = await userById(ownerId);
+  if (!owner) return null;
+  const { items } = await wishlistData(shelfSlug(owner), reserver);
+  const found = items.find((i) => i.key === item && i.state === 'mine');
+  if (!found) return null;
+  return reservationCard({
+    ownerFirst: first(owner.name), title: found.title, artist: found.artist, year: found.year, top: found.top, tracks: found.tracks,
+    note: found.note, where: found.where, giveOn: found.giveOn, links: found.links, item, ownerId,
+    pageUrl: `${origin}/${shelfSlug(owner)}/wishlist/${wishSlug(item)}`,
+  }).buttons;
+}
+
+/** The giving date of an open reservation (null: none set, or no such reservation). */
+export async function currentGiveOn(ownerId: number, item: string) {
+  const row = await (await db()).prepare('SELECT give_on FROM reservations WHERE owner_id = ? AND item = ? AND gifted_at IS NULL').bind(ownerId, item).first<{ give_on: string | null }>();
+  return row?.give_on ?? null;
 }
 
 /** Who reserved an item (for a Telegram button tap): the open reservation's giver and the owner, or null. */

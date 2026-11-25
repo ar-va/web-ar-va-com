@@ -1,18 +1,49 @@
 // The bot's button taps (Telegram's webhook, set by connectWebhook in notify.ts): "Send an invite link" under a shelf
 // request (settings.astro), which makes a one-use, 7-day link and has the bot send it to the person; and under a
-// wishlist reminder (wishes.ts) "I gave it" / "Cancel reservation", which only the person who reserved can use.
+// wishlist reminder or reservation message (wishes.ts) "I gave it" / "Cancel reservation" and the giving-date calendar,
+// which only the person who reserved can use (the date saved here is the one the website shows).
 import type { APIRoute } from 'astro';
-import { escapeHtml } from '@shared/lib/lib';
+import { displayDate, escapeHtml } from '@shared/lib/lib';
 import { bot, notify, webhookSecret } from '@shared/lib/notify';
 import { adminTelegramId, canCollect, createInvite, userById } from '@shared/lib/store';
-import { markGifted, openReservation, unreserve } from '../../lib/wishes';
+import { currentGiveOn, markGifted, openReservation, reservationButtons, setGiveOn, unreserve } from '../../lib/wishes';
+import { calendarKeyboard, safeGiveOn } from '@shared/lib/wishlist';
 
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, url }) => {
   if (request.headers.get('x-telegram-bot-api-secret-token') !== (await webhookSecret())) return new Response('Forbidden', { status: 403 });
   const tap = (await request.json().catch(() => null))?.callback_query;
-  const gift = String(tap?.data ?? '').match(/^(gift|unres):(\d+):([dc]:\d+)$/);
+  const data = String(tap?.data ?? '');
+  // Parts of the calendar that aren't buttons (weekday names, blanks): just acknowledged.
+  if (data === 'noop') { await bot('answerCallbackQuery', { callback_query_id: tap.id }); return new Response('ok'); }
+  // The giving-date calendar (shared/lib/wishlist.ts calendarKeyboard): show a month, save a day (or none), go back.
+  const cal = data.match(/^(cal|day|back):(\d+):([dc]:\d+)(?::(\d{4}-\d{2}(?:-\d{2})?|none))?$/);
+  if (cal) {
+    const [, verb, ownerText, item, arg] = cal;
+    const ownerId = Number(ownerText);
+    const open = await openReservation(ownerId, item);
+    const reserver = open && tap.from?.id === open.user_id ? await userById(open.user_id) : null;
+    const answer = (text?: string) => bot('answerCallbackQuery', { callback_query_id: tap.id, ...(text && { text }) });
+    const setButtons = (inline_keyboard: unknown) => bot('editMessageReplyMarkup', { chat_id: tap.message?.chat?.id, message_id: tap.message?.message_id, reply_markup: { inline_keyboard } });
+    if (!reserver) { await answer('This reservation isn’t yours, or it’s already closed.'); return new Response('ok'); }
+    const today = new Date().toISOString().slice(0, 10);
+    if (verb === 'cal') {
+      // A month from ‹ ›, else the month of the date set, else this month.
+      const selected = await currentGiveOn(ownerId, item);
+      const month = arg?.length === 7 && arg >= today.slice(0, 7) ? arg : (selected ?? today).slice(0, 7);
+      await setButtons(calendarKeyboard({ ownerId, item, month, today, selected }));
+      await answer();
+    } else {
+      if (verb === 'day') await setGiveOn(ownerId, item, reserver.id, arg === 'none' ? null : safeGiveOn(arg, today));
+      const buttons = await reservationButtons(ownerId, item, reserver, `https://${url.host}`);
+      if (buttons) await setButtons(buttons);
+      const set = verb === 'day' ? await currentGiveOn(ownerId, item) : null;
+      await answer(verb === 'back' ? undefined : set ? `Saved: giving on ${displayDate(set)}. I’ll remind you 3 days before.` : 'The giving date is cleared.');
+    }
+    return new Response('ok');
+  }
+  const gift = data.match(/^(gift|unres):(\d+):([dc]:\d+)$/);
   if (gift) {
     const [, verb, owner, item] = gift;
     const open = await openReservation(Number(owner), item);

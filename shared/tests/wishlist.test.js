@@ -125,6 +125,8 @@ test('the reservation message: details, escaped, under Telegram\'s caption limit
   assert.ok(buttons.some((b) => b.url === 'https://www.amazon.ca/dp/1' && b.text === 'Buy at amazon.ca'));
   assert.ok(buttons.some((b) => b.text === 'Spotify') && buttons.some((b) => b.text === 'YouTube Music') && !buttons.some((b) => b.text === 'Apple Music'));
   assert.ok(buttons.some((b) => b.callback_data === 'gift:42:c:5') && buttons.some((b) => b.callback_data === 'unres:42:c:5'));
+  // The date row: no date yet opens this month's calendar (no trailing ":"; the bot's pattern wouldn't match it).
+  assert.ok(buttons.some((b) => b.text === '📅 Set the giving date' && b.callback_data === 'cal:42:c:5'));
   // A short album fits whole, with no "more" line; no shop link, no button for it.
   const small = reservationCard({ ownerFirst: 'Artur', title: 'X', artist: 'Y', year: null, top: false, tracks: tracks.slice(0, 3), note: null,
     where: ['Any record shop'], giveOn: null, links: { spotify: '', apple: '', youtube: '' }, pageUrl: 'https://m/x', item: 'd:1', ownerId: 42 });
@@ -149,4 +151,29 @@ test('reservations end after 60 days, or a week after a later giving date', () =
   assert.equal(reminderDue(r, '2027-01-21'), 'ending');
   assert.equal(reminderDue({ ...r, reminded_at: at('2027-01-21') }, '2027-01-21'), null);
   assert.equal(reminderDue({ ...r, give_on: '2027-03-01' }, '2027-03-05'), 'ending');
+});
+
+test('the giving-date calendar in Telegram', async () => {
+  const { calendarKeyboard } = await import('../lib/wishlist.ts');
+  const rows = calendarKeyboard({ ownerId: 42, item: 'c:5', month: '2026-11', today: '2026-11-25', selected: '2026-11-28' });
+  const flat = rows.flat();
+  // Title and navigation: no going back before this month.
+  assert.equal(rows[0][1].text, 'November 2026');
+  assert.equal(rows[0][0].callback_data, 'noop');
+  assert.equal(rows[0][2].callback_data, 'cal:42:c:5:2026-12');
+  assert.deepEqual(rows[1].map((b) => b.text), ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']);
+  // Nov 1 2026 is a Sunday: six blanks first; past days aren't buttons, today and later are; the picked one is marked.
+  assert.deepEqual(rows[2].slice(0, 6).map((b) => b.callback_data), Array(6).fill('noop'));
+  assert.equal(flat.find((b) => b.text === '24')?.callback_data, 'noop');
+  assert.equal(flat.find((b) => b.text === '25')?.callback_data, 'day:42:c:5:2026-11-25');
+  assert.ok(flat.some((b) => b.text === '•28•' && b.callback_data === 'day:42:c:5:2026-11-28'));
+  assert.ok(flat.every((b) => ('callback_data' in b ? b.callback_data.length <= 64 : true)));
+  assert.ok(flat.some((b) => b.text === 'Clear the date' && b.callback_data === 'day:42:c:5:none'));
+  assert.ok(flat.some((b) => b.text === 'Back' && b.callback_data === 'back:42:c:5'));
+  // A year ahead is the last month: no › there; ‹ goes back.
+  const last = calendarKeyboard({ ownerId: 42, item: 'c:5', month: '2027-11', today: '2026-11-25', selected: null });
+  assert.equal(last[0][2].callback_data, 'noop');
+  assert.equal(last[0][0].callback_data, 'cal:42:c:5:2027-10');
+  assert.equal(last.flat().find((b) => b.text === '26')?.callback_data, 'noop'); // past today + 365
+  assert.ok(!last.flat().some((b) => b.text === 'Clear the date'));
 });

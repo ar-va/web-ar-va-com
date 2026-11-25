@@ -1,6 +1,6 @@
 // The wishlist's rules, no Cloudflare imports (tested by shared/tests/wishlist.test.js): album links from the streaming
 // services, what a wish may hold, which wishes the owner already has, who sees a reservation, when to remind.
-import { artistKey, cleanNote, escapeHtml, linkify, normalizeName, safeCoverUrl, safeDay, safeStreamingUrl, textToTracklist, tracklistToText, type Track } from './lib.ts';
+import { artistKey, cleanNote, displayDate, escapeHtml, linkify, normalizeName, safeCoverUrl, safeDay, safeStreamingUrl, textToTracklist, tracklistToText, type Track } from './lib.ts';
 
 export const WISHES_MAX = 200;
 export const WHERE_MAX = 5;
@@ -185,7 +185,7 @@ export function reservationCard(r: {
     ...(r.note ? ['', `${e(r.ownerFirst)}’s note: <i>${e(r.note)}</i>`] : []),
     ...(r.where.length ? ['', `Where to get it: ${r.where.map(e).join('; ')}`] : []),
   ].join('\n');
-  const tail = `\n\nIt’s held for you for ${RESERVATION_DAYS} days, or until a week after the day you’re giving it (set it on the record’s page). I’ll remind you before then.`;
+  const tail = `\n\nIt’s held for you for ${RESERVATION_DAYS} days, or until a week after the day you’re giving it (set it with the button below, or on the record’s page). I’ll remind you before then.`;
   const songs = r.tracks.filter((t) => !t.heading);
   const line = (t: Track, i: number) => `${i + 1}. ${e(t.title)}${t.duration ? ` (${t.duration})` : ''}`;
   const visible = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&(lt|gt|amp|quot);/g, '_').length;
@@ -204,7 +204,44 @@ export function reservationCard(r: {
     [{ text: 'Open on the website', url: r.pageUrl }],
     ...shops.map((x) => [{ text: `Buy at ${x.label}`, url: x.url }]),
     ...(listen.length ? [listen] : []),
+    [giveOnButton(r.ownerId, r.item, r.giveOn)],
     [{ text: `I gave it to ${r.ownerFirst}`, callback_data: `gift:${r.ownerId}:${r.item}` }, { text: 'Cancel reservation', callback_data: `unres:${r.ownerId}:${r.item}` }],
   ];
   return { caption: head + tracks + tail, buttons };
 }
+
+/**
+ * The giving-date picker inside a Telegram message (user 2026-11-25: set the date from the bot too): a month of day
+ * buttons from today up to a year ahead (`safeGiveOn`'s range), ‹ › between months, the picked day marked, then
+ * "Clear the date" (when one is set) and "Back". Taps arrive at api/telegram.ts: `cal:` shows a month, `day:` saves
+ * (`none` clears), `back:` restores the message's buttons; `noop` for the parts that aren't buttons.
+ */
+export function calendarKeyboard(c: { ownerId: number; item: string; month: string; today: string; selected: string | null }): Button[][] {
+  const last = shift(c.today, 365);
+  const [y, m] = c.month.split('-').map(Number);
+  const monthOf = (d: Date) => d.toISOString().slice(0, 7);
+  const prev = monthOf(new Date(Date.UTC(y, m - 2, 1))), next = monthOf(new Date(Date.UTC(y, m, 1)));
+  const at = `${c.ownerId}:${c.item}`;
+  const noop = (text: string) => ({ text, callback_data: 'noop' });
+  const title = new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const rows: Button[][] = [
+    [prev >= c.today.slice(0, 7) ? { text: '‹', callback_data: `cal:${at}:${prev}` } : noop(' '), noop(title),
+      next <= last.slice(0, 7) ? { text: '›', callback_data: `cal:${at}:${next}` } : noop(' ')],
+    ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(noop),
+  ];
+  const days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const lead = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7; // Monday first
+  const cells: Button[] = Array.from({ length: lead }, () => noop(' '));
+  for (let d = 1; d <= days; d++) {
+    const day = `${c.month}-${String(d).padStart(2, '0')}`;
+    cells.push(day < c.today || day > last ? noop(String(d)) : { text: day === c.selected ? `•${d}•` : String(d), callback_data: `day:${at}:${day}` });
+  }
+  while (cells.length % 7) cells.push(noop(' '));
+  for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
+  rows.push([...(c.selected ? [{ text: 'Clear the date', callback_data: `day:${at}:none` }] : []), { text: 'Back', callback_data: `back:${at}` }]);
+  return rows;
+}
+
+/** The date row under a reservation's message: set the giving date, or the date set (tapping opens the calendar). */
+export const giveOnButton = (ownerId: number, item: string, giveOn: string | null): Button =>
+  ({ text: giveOn ? `📅 Giving on ${displayDate(giveOn)} · change` : '📅 Set the giving date', callback_data: `cal:${ownerId}:${item}${giveOn ? `:${giveOn.slice(0, 7)}` : ''}` });
