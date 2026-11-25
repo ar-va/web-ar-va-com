@@ -6,6 +6,7 @@
 // for a later try.
 import { env } from 'cloudflare:workers';
 import { artistKey, firstArtist, normalizeName, pickAlbum, playCount, type Match } from '@shared/lib/lib';
+import type { AlbumLookup } from '@shared/lib/wishlist';
 
 const key = () => (env as Record<string, string | undefined>).YOUTUBE_API_KEY;
 
@@ -44,7 +45,7 @@ async function music(endpoint: 'search' | 'browse', body: object) {
 
 /** Every list row in a YouTube Music response: its browse / video id and the text of its columns. */
 function rows(data: unknown) {
-  const out: { browseId?: string; videoId?: string; cols: string[] }[] = [];
+  const out: { browseId?: string; videoId?: string; cols: string[]; fixed: string[] }[] = [];
   const walk = (o: any): void => {
     if (!o || typeof o !== 'object') return;
     const r = o.musicResponsiveListItemRenderer;
@@ -53,6 +54,8 @@ function rows(data: unknown) {
         browseId: r.navigationEndpoint?.browseEndpoint?.browseId,
         videoId: r.playlistItemData?.videoId,
         cols: (r.flexColumns ?? []).map((c: any) => (c.musicResponsiveListItemFlexColumnRenderer?.text?.runs ?? []).map((x: any) => x.text).join('')),
+        // Album pages put each track's length here.
+        fixed: (r.fixedColumns ?? []).map((c: any) => (c.musicResponsiveListItemFixedColumnRenderer?.text?.runs ?? []).map((x: any) => x.text).join('')),
       });
     }
     for (const k in o) walk(o[k]);
@@ -76,6 +79,35 @@ async function albumTracks(browseId: string) {
   return rows(await music('browse', { browseId }))
     .filter((r) => r.videoId && r.cols[0])
     .map((r) => ({ title: r.cols[0], url: `https://music.youtube.com/watch?v=${r.videoId}`, views: playCount(r.cols.find((c) => /plays?\b/i.test(c)) ?? '') }));
+}
+
+/**
+ * An album pasted into a wishlist: its YouTube Music page (MPREb_…), or an album playlist (VLOLAK5uy_…, whose page
+ * names the album page). Header: title, "Album • 2016", the artist, the cover; rows: tracks with their lengths.
+ */
+export async function youtubeAlbum(id: string): Promise<AlbumLookup | null> {
+  const browseId = id.startsWith('VL') ? JSON.stringify(await music('browse', { browseId: id })).match(/MPREb_[\w-]+/)?.[0] : id;
+  if (!browseId) return null;
+  const data = await music('browse', { browseId });
+  let header: any = null;
+  const find = (o: any): void => {
+    if (header || !o || typeof o !== 'object') return;
+    if (o.musicResponsiveHeaderRenderer) header = o.musicResponsiveHeaderRenderer;
+    else for (const k in o) find(o[k]);
+  };
+  find(data);
+  if (!header) return null;
+  const runs = (t: any) => (t?.runs ?? []).map((r: any) => r.text).join('');
+  const thumbs = header.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails ?? [];
+  return {
+    artist: runs(header.straplineTextOne),
+    title: runs(header.title),
+    year: Number(runs(header.subtitle).match(/\b(19|20)\d{2}\b/)?.[0]) || null,
+    // The thumbnail is served at any size by its name.
+    cover: typeof thumbs.at(-1)?.url === 'string' ? thumbs.at(-1).url.replace(/=w\d+-h\d+/, '=w600-h600') : null,
+    link: `https://music.youtube.com/browse/${browseId}`,
+    tracks: rows(data).filter((r) => r.videoId && r.cols[0]).map((r) => ({ title: r.cols[0], duration: r.fixed[0] ?? '', url: `https://music.youtube.com/watch?v=${r.videoId}` })),
+  };
 }
 
 /**

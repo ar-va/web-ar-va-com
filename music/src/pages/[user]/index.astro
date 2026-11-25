@@ -5,8 +5,9 @@ export const prerender = false;
 import ShelfPage from '../../components/ShelfPage.astro';
 import { cleanNote, loginHref } from '@shared/lib/lib';
 import { SHELF_THREAD, commentForm, currentUser, setShelfNote, shelfData } from '@shared/lib/store';
+import { wishCount } from '../../lib/wishes';
 
-const [user, data] = await Promise.all([currentUser(Astro.cookies), shelfData(Astro.params.user!)]);
+const [user, data, wishes] = await Promise.all([currentUser(Astro.cookies), shelfData(Astro.params.user!), wishCount(Astro.params.user!)]);
 const { owner } = data;
 const path = Astro.url.pathname;
 const thread = { shelfId: owner?.id ?? 0, instanceId: SHELF_THREAD };
@@ -28,4 +29,4 @@ if (owner && Astro.request.method === 'POST') {
 }
 if (!owner) Astro.response.status = 404;
 ---
-<ShelfPage {...data} user={user} error={error} draft={draft} editingNote={!!owner && user?.id === owner.id && Astro.url.searchParams.has('note')} />
+<ShelfPage {...data} wishCount={wishes} user={user} error={error} draft={draft} editingNote={!!owner && user?.id === owner.id && Astro.url.searchParams.has('note')} />

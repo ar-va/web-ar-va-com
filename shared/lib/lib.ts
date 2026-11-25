@@ -672,7 +672,7 @@ export function safeCoverUrl(value: string | null | undefined) {
   try {
     const u = new URL(value);
     // Discogs, Apple Music; Spotify and YouTube Music covers come with wishlist albums added from their links.
-    const hosts = ['i.discogs.com', 'i.scdn.co', 'lh3.googleusercontent.com', 'i.ytimg.com'];
+    const hosts = ['i.discogs.com', 'i.scdn.co', 'lh3.googleusercontent.com', 'yt3.googleusercontent.com', 'i.ytimg.com'];
     return u.protocol === 'https:' && (hosts.includes(u.hostname) || /^is\d+-ssl\.mzstatic\.com$/.test(u.hostname)) ? u.href : null;
   } catch {
     return null;

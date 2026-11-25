@@ -2,6 +2,7 @@
 // Discogs, see discogs.ts), each one signed by /api/discogs; results are handed back to the site.
 
 import { firstArtist, normalizeName, pickAlbum } from '@shared/lib/lib';
+import type { AlbumLookup } from '@shared/lib/wishlist';
 
 type Signed = { method: 'GET' | 'POST'; url: string; authorization: string };
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -111,13 +112,26 @@ async function appleAlbum(id: string | number, country = 'us') {
   const found = (await itunes(`/lookup?entity=song&country=${country}&id=${id}`)).results ?? [];
   const album = found.find((x: any) => x.wrapperType === 'collection');
   if (!album) return null;
+  const length = (ms: unknown) => { const s = typeof ms === 'number' ? Math.round(ms / 1000) : 0; return s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : ''; };
   return {
     url: appleUrl(album.collectionViewUrl),
     // Apple serves the same artwork at any size by name; 600 px matches Discogs' images and keeps the shelf light.
     artwork: typeof album.artworkUrl100 === 'string' ? album.artworkUrl100.replace(/\d+x\d+bb/, '600x600bb') : null,
-    tracks: found.filter((x: any) => x.wrapperType === 'track').map((x: any) => ({ title: x.trackName, url: appleUrl(x.trackViewUrl) })),
+    tracks: found.filter((x: any) => x.wrapperType === 'track').map((x: any) => ({ title: x.trackName, url: appleUrl(x.trackViewUrl), duration: length(x.trackTimeMillis) })),
+    // For wishlist albums (artist and title come from the link there).
+    artist: String(album.artistName ?? ''),
+    title: String(album.collectionName ?? ''),
+    year: Number(String(album.releaseDate ?? '').slice(0, 4)) || null,
   };
 }
+
+const lookup = (a: NonNullable<Awaited<ReturnType<typeof appleAlbum>>>): AlbumLookup =>
+  ({ artist: a.artist, title: a.title, year: a.year, cover: a.artwork, link: a.url, tracks: a.tracks });
+
+/** A wishlist album from an Apple Music link (any country's store), in the browser like every Apple lookup. */
+export const appleLookup = async (id: string, country = 'us') => { const a = await appleAlbum(id, country); return a ? lookup(a) : null; };
+/** A wishlist album found on Apple Music by name (to fill in what a Spotify or YouTube page lacks), or null. */
+export const appleSearch = async (artist: string, title: string) => { const a = await appleMatch(artist, title); return a ? lookup(a) : null; };
 
 async function appleMatch(artist: string, title: string) {
   const albums = (found: any) => (found.results ?? []).filter((x: any) => x.wrapperType === 'collection')

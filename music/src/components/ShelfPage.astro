@@ -9,8 +9,8 @@ import { loginHref } from '@shared/lib/lib';
 import { SHELF_THREAD, canDeleteComment, shelfSlug, type User, type shelfData } from '@shared/lib/store';
 import SkippingRecord from './SkippingRecord.astro';
 
-type Props = Awaited<ReturnType<typeof shelfData>> & { user: User | null; error: string | null; draft: string; editingNote: boolean };
-const { owner, records, comments, user, error, draft, editingNote } = Astro.props;
+type Props = Awaited<ReturnType<typeof shelfData>> & { user: User | null; error: string | null; draft: string; editingNote: boolean; wishCount: number };
+const { owner, records, comments, user, error, draft, editingNote, wishCount } = Astro.props;
 const path = Astro.url.pathname;
 const thread = { shelfId: owner?.id ?? 0, instanceId: SHELF_THREAD };
 ---
@@ -20,7 +20,7 @@ const thread = { shelfId: owner?.id ?? 0, instanceId: SHELF_THREAD };
     {owner ? (
       <>
         <Shelf owner={{ name: owner.name, slug: shelfSlug(owner), discogs_username: owner.discogs_username!, telegram: owner.username, note: owner.shelf_note, photo: owner.photo_url }}
-          records={records} commentCount={comments.length} canEdit={user?.id === owner.id} editingNote={editingNote} />
+          records={records} commentCount={comments.length} wishCount={wishCount} canEdit={user?.id === owner.id} editingNote={editingNote} />
         <section id="comments" class="mt-16 max-w-3xl">
           <CommentThread comments={comments} user={user} canDelete={(id) => canDeleteComment(thread, id, user)} error={error} draft={draft}>
             <LoginButton slot="login" href={loginHref(Astro.url, `${Astro.url.origin}${path}#comments`)} />

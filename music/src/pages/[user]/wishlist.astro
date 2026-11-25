@@ -1,0 +1,155 @@
+---
+// A collector's wishlist (music.ar-va.com/<shelf>/wishlist): records they'd like on vinyl, from their Discogs wantlist or
+// added here (the owner switches between the two; both are kept). Logged-in visitors reserve one they'll give; the
+// owner never sees what's reserved, until the giver presses "I gave it". Forms post here and come back with a redirect.
+export const prerender = false;
+import Layout from '@shared/layouts/Layout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import Notice from '@shared/components/Notice.astro';
+import SkippingRecord from '../../components/SkippingRecord.astro';
+import WishRow from '../../components/WishRow.astro';
+import WishForm from '../../components/WishForm.astro';
+import { escapeHtml, loginHref } from '@shared/lib/lib';
+import { RESERVATIONS_MAX, WISHES_MAX, parseStreamingLink, safeGiveOn, toWish } from '@shared/lib/wishlist';
+import { notify } from '@shared/lib/notify';
+import { currentUser, shelfSlug } from '@shared/lib/store';
+import {
+  addWish, markGifted, removeWish, reserve, setGiveOn, setWishlistSource, unreserve, updateWish, wishAnchor, wishlistData,
+} from '../../lib/wishes';
+
+const name = Astro.params.user!;
+const user = await currentUser(Astro.cookies);
+const data = await wishlistData(name, user);
+const { owner } = data;
+const path = Astro.url.pathname;
+const today = new Date().toISOString().slice(0, 10);
+const lastDay = new Date(Date.now() + 365 * 86400_000).toISOString().slice(0, 10);
+
+let error: string | null = null;
+let draft: Record<string, any> | null = null;
+if (owner && Astro.request.method === 'POST') {
+  if (!user) return Astro.redirect(loginHref(Astro.url), 303);
+  const form = await Astro.request.formData();
+  const get = (k: string) => String(form.get(k) ?? '');
+  const action = get('action');
+  const item = get('item');
+  // Settings' "Gifts you've reserved" posts here too and goes back there.
+  const back = (query = '', anchor = wishAnchor(item)) => Astro.redirect(get('back').startsWith('/settings') ? `${get('back').split('#')[0]}${query}#gifts` : `${path}${query}#${anchor}`, 303);
+  const isOwner = user.id === owner.id;
+
+  if (isOwner && action === 'source') {
+    await setWishlistSource(owner, get('source') === 'discogs' ? 'discogs' : 'custom');
+    return Astro.redirect(path, 303);
+  }
+  if (isOwner && (action === 'add' || action === 'edit')) {
+    const values = { artist: get('artist'), title: get('title'), year: get('year'), cover: get('cover'), tracklist: get('tracklist'), note: get('note'),
+      links: { spotify: get('spotify'), apple: get('apple'), youtube: get('youtube') } as Record<string, string> };
+    // Without script the pasted link isn't looked up: it's kept as that service's album link.
+    const pasted = parseStreamingLink(get('link'));
+    if (pasted && !values.links[pasted.service]) values.links[pasted.service] = get('link').trim();
+    const wish = toWish(values);
+    if ('error' in wish) { error = wish.error; draft = values; Astro.response.status = 400; }
+    else if (action === 'edit') {
+      await updateWish(owner, Number(get('id')), wish);
+      return Astro.redirect(`${path}#${wishAnchor(`c:${Number(get('id'))}`)}`, 303);
+    } else {
+      const id = await addWish(owner, wish);
+      if (id) return Astro.redirect(`${path}?added#${wishAnchor(`c:${id}`)}`, 303);
+      error = `Your wishlist holds ${WISHES_MAX} albums at most. Remove one to add another.`; draft = values; Astro.response.status = 400;
+    }
+  }
+  if (isOwner && action === 'remove') {
+    await removeWish(owner, Number(get('id')));
+    return Astro.redirect(path, 303);
+  }
+  if (!isOwner && action === 'reserve') {
+    const found = data.items.find((i) => i.key === item);
+    if (!found || found.state !== 'free') return back(found?.state === 'mine' ? '' : '?taken');
+    const result = await reserve(owner.id, item, user, null);
+    if (result !== 'ok') return back(`?${result}`);
+    const ownerFirst = owner.name.split(' ')[0];
+    const [sent] = await notify([{ chatId: user.id, text: `You reserved <b>${escapeHtml(found.title)}</b> for ${escapeHtml(ownerFirst)}. Nobody else can buy it now, and ${escapeHtml(ownerFirst)} won’t see it’s reserved.\n\nI’ll remind you now and then. Set the day you’re giving it on the wishlist, and I’ll remind you just before.` }]);
+    return back(sent ? '?reserved' : '?nomsg');
+  }
+  if (!isOwner && action === 'unreserve') {
+    await unreserve(owner.id, item, user.id);
+    return back();
+  }
+  if (!isOwner && action === 'give-on') {
+    await setGiveOn(owner.id, item, user.id, safeGiveOn(get('give_on'), today));
+    return back();
+  }
+  if (!isOwner && action === 'gifted') {
+    const done = await markGifted(owner.id, item, user);
+    return back(done ? '?gifted' : '', 'list');
+  }
+  if (!error) return Astro.redirect(path, 303);
+}
+if (!owner) Astro.response.status = 404;
+
+const isOwner = !!owner && user?.id === owner.id;
+const first = owner?.name.split(' ')[0] ?? '';
+const q = Astro.url.searchParams;
+const editId = isOwner ? Number(q.get('edit')) || 0 : 0;
+const editing = editId ? data.items.find((i) => i.key === `c:${editId}`)?.wish : undefined;
+const notice = q.has('reserved') ? `Reserved. You’ll find it in your settings too, and the bot will remind you on Telegram.`
+  : q.has('nomsg') ? null
+  : q.has('taken') ? 'Someone reserved it a moment ago. Pick another?'
+  : q.has('limit') ? `You have ${RESERVATIONS_MAX} reservations open. Give or cancel one first.`
+  : q.has('gifted') ? `Thank you! ${first} has been told it’s from you.`
+  : q.has('added') ? 'Added to your wishlist.'
+  : null;
+const login = (key: string) => loginHref(Astro.url, `${Astro.url.origin}${path}#${wishAnchor(key)}`);
+---
+<Layout title={owner ? `${owner.name}’s wishlist - ARVA` : 'Not found - ARVA'} description={owner ? `Records ${first} would like on vinyl.` : undefined}>
+  <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-3xl">
+    <Breadcrumbs class="mb-8" share={!!owner} items={[{ label: 'Shelves', href: '/' }, ...(owner ? [{ label: owner.name, href: `/${shelfSlug(owner)}` }, { label: 'Wishlist' }] : [{ label: 'Not found' }])]} />
+    {owner ? (
+      <>
+        <h1 class="text-3xl font-bold text-zinc-900 dark:text-white">{first}’s wishlist</h1>
+        <p class="mt-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">
+          {isOwner
+            ? 'Records you’d like on vinyl. Friends can reserve one to give you. You won’t see which, so gifts stay a surprise.'
+            : `Records ${first} would like on vinyl. Reserve one you’ll give, so nobody else buys the same one. ${first} never sees what’s reserved, or by whom.`}
+        </p>
+
+        {notice && <Notice class="mt-6">{notice}</Notice>}
+        {q.has('nomsg') && (
+          <Notice class="mt-6">Reserved. Telegram didn’t let the bot message you, so there won’t be reminders. <a href={loginHref(Astro.url)} class="underline underline-offset-4">Log in again</a> and allow messages to get them.</Notice>
+        )}
+
+        {isOwner && (
+          <div class="mt-8 space-y-4">
+            <form method="post" class="flex flex-wrap items-center gap-3">
+              <input type="hidden" name="action" value="source" />
+              <span class="text-sm text-zinc-500">Show</span>
+              <span class="inline-flex gap-1 rounded-full bg-(--well) p-1">
+                <button name="source" value="custom" aria-pressed={data.source === 'custom' ? 'true' : 'false'} class="ctl !bg-transparent aria-pressed:!bg-(--on-bg)">My own list ({data.customCount})</button>
+                <button name="source" value="discogs" aria-pressed={data.source === 'discogs' ? 'true' : 'false'} class="ctl !bg-transparent aria-pressed:!bg-(--on-bg)">Discogs wantlist ({data.wantsCount})</button>
+              </span>
+            </form>
+            {data.source === 'discogs'
+              ? <p class="text-sm text-zinc-500 leading-relaxed">From your Discogs wantlist. Add records there (“Add to Wantlist” in the Discogs app) and they show here after the next <a href="/settings?update#shelf" class="text-kikyo-600 dark:text-kikyo-400 underline underline-offset-4">update from Discogs</a>. Your own list is kept while this one shows.</p>
+              : <WishForm values={draft ?? editing} editId={editing ? editId : undefined} error={error} />}
+          </div>
+        )}
+
+        <section id="list" class="mt-10" aria-label="Records on the wishlist">
+          {data.items.length ? (
+            <ul role="list">
+              {data.items.map((item) => <WishRow item={item} ownerFirst={first} isOwner={isOwner} loginHref={login(item.key)} today={today} lastDay={lastDay} />)}
+            </ul>
+          ) : (
+            <p class="text-zinc-500">
+              {isOwner
+                ? (data.source === 'discogs' ? 'Your Discogs wantlist is empty, or every record on it is already on your shelf.' : 'Nothing here yet. Paste a link above to add an album.')
+                : `Nothing on ${first}’s wishlist yet.`}
+            </p>
+          )}
+        </section>
+      </>
+    ) : (
+      <SkippingRecord heading="Shelf not found">There’s no shelf here. <a href="/" class="text-kikyo-600 dark:text-kikyo-400 underline underline-offset-4">See all shelves</a></SkippingRecord>
+    )}
+  </div>
+</Layout>

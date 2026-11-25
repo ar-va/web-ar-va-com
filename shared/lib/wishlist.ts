@@ -30,6 +30,23 @@ export function parseStreamingLink(value: string): { service: LinkService; id: s
   return null;
 }
 
+/** What a streaming service's album page gives (music/src/lib: Apple in the browser, Spotify and YouTube on the server). */
+export interface AlbumLookup {
+  artist: string;
+  title: string;
+  year: number | null;
+  cover: string | null;
+  link: string;
+  tracks: { title: string; duration: string; url: string }[];
+}
+
+/** A looked-up album as form values (a Wish before `toWish`), each track linked on the service it came from. */
+export const lookupToWish = (l: AlbumLookup, service: LinkService) => ({
+  artist: l.artist, title: l.title, year: l.year ? String(l.year) : '', cover: l.cover ?? '',
+  tracklist: tracklistToText(l.tracks.map((t, i) => ({ position: String(i + 1), title: t.title, duration: t.duration, heading: false, ...(t.url && { links: { [service]: t.url } }) }))),
+  links: { spotify: '', apple: '', youtube: '', [service]: l.link },
+});
+
 export interface Wish {
   artist: string;
   title: string;

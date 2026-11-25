@@ -11,11 +11,13 @@ interface Props {
   owner: { name: string; slug: string; discogs_username: string; telegram: string | null; note: string | null; photo?: string | null };
   records: ReturnType<typeof shelfView>[];
   commentCount: number;
+  /** Records on the shelf's wishlist (shown to visitors when there are any, always to the owner). */
+  wishCount: number;
   /** The visitor owns this shelf: they can write its note (`?note` opens the editor). */
   canEdit: boolean;
   editingNote: boolean;
 }
-const { owner, records, commentCount, canEdit, editingNote } = Astro.props;
+const { owner, records, commentCount, wishCount, canEdit, editingNote } = Astro.props;
 const base = `/${encodeURIComponent(owner.slug)}`;
 const latest = records[0];
 
@@ -52,7 +54,8 @@ const viewBtn = 'relative z-10 h-6 w-6 inline-flex items-center justify-center r
   <!-- The shelf's card, between the Latest hero and the whole collection (user, 2026-10-29): the collector's photo, the
        shelf's name, its counts and Telegram (user 2026-11-21: merged into it from the top of the page), then their note. -->
   <Note class={latest ? 'mt-12' : 'mt-2'} note={owner.note} by={owner.name} photo={owner.photo} heading={`${owner.name}’s records`} level="h1" always
-    stats={{ records: records.length, recordsHref: '#all-records', recordsTitle: 'Records: jump to the list', comments: commentCount, telegram: owner.telegram }}
+    stats={{ records: records.length, recordsHref: '#all-records', recordsTitle: 'Records: jump to the list', comments: commentCount, telegram: owner.telegram,
+      wishes: wishCount || canEdit ? { count: wishCount, href: `${base}/wishlist` } : null }}
     about="the collection" base={base} canEdit={canEdit} editing={editingNote}
     addText="Add a short note about your collection: what you collect, how it started. Visitors see it here."
     placeholder="What you collect, how it started, what you’re hunting for…">

@@ -2,7 +2,8 @@
 // A sleeve with the record inside (styles in global.css, "Music shelf"). The parent sets the width.
 import { vinylWear, type ShelfRecord } from '../lib/lib';
 
-interface Props { record: ShelfRecord; eager?: boolean; class?: string }
+// Only what a sleeve shows (wishlist albums aren't shelf records but have these too).
+interface Props { record: Pick<ShelfRecord, 'instanceId' | 'cover' | 'vinyl' | 'artist' | 'title'>; eager?: boolean; class?: string }
 const { record, eager = false, class: className = '' } = Astro.props;
 ---
 <div class={`sleeve relative aspect-square ${className}`} style={`${record.vinyl ? `--vinyl: ${record.vinyl}; ` : ''}${vinylWear(record.instanceId)}`}>

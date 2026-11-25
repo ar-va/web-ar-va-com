@@ -1,0 +1,62 @@
+---
+// Adding (or editing) an album on the owner's own wishlist. Pasting a link from Apple Music, Spotify or YouTube Music
+// fills in the fields (music/src/scripts/wish-form.ts); without script, or for an album on none of them, they're typed.
+// The server checks everything again (toWish).
+import Disclosure from '@shared/components/Disclosure.astro';
+import { NOTE_MAX } from '@shared/lib/lib';
+
+interface Props {
+  /** The values shown: an album being edited, or what was typed before an error. */
+  values?: { artist?: string; title?: string; year?: string | number | null; cover?: string | null; tracklist?: string; note?: string | null; links?: Record<string, string> };
+  /** The album being edited (absent when adding). */
+  editId?: number;
+  error?: string | null;
+}
+const { values = {}, editId, error } = Astro.props;
+const links = values.links ?? {};
+const input = 'w-full rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2.5 text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500 transition-colors';
+const label = 'flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300';
+---
+<form id="add" method="post" data-wish-form class="rounded-3xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-5 sm:p-6 space-y-4 scroll-mt-6">
+  <input type="hidden" name="action" value={editId ? 'edit' : 'add'} />
+  {editId && <input type="hidden" name="id" value={editId} />}
+  <h2 class="text-lg font-bold text-zinc-900 dark:text-white">{editId ? 'Edit album' : 'Add an album'}</h2>
+  {!editId && (
+    <label class={label}>Paste a link from Apple Music, Spotify or YouTube Music
+      <input type="url" name="link" data-wish-link inputmode="url" autocomplete="off" placeholder="https://open.spotify.com/album/…" class={input} />
+    </label>
+  )}
+  <p data-wish-status role="status" aria-live="polite" class="text-sm text-zinc-500 empty:hidden">{error}</p>
+  <div class="flex gap-4 items-start">
+    <img data-wish-cover-preview src={values.cover || undefined} alt="" hidden={!values.cover} width="96" height="96" referrerpolicy="no-referrer" class="w-24 h-24 rounded-lg object-cover shrink-0" />
+    <input type="hidden" name="cover" value={values.cover ?? ''} />
+    <div class="grid sm:grid-cols-[1fr_1fr_6rem] gap-3 flex-1 min-w-0">
+      <label class={label}>Artist <input name="artist" required maxlength="300" value={values.artist ?? ''} class={input} /></label>
+      <label class={label}>Album <input name="title" required maxlength="300" value={values.title ?? ''} class={input} /></label>
+      <label class={label}>Year <input name="year" inputmode="numeric" pattern="\d{4}" maxlength="4" value={values.year ?? ''} class={input} /></label>
+    </div>
+  </div>
+  <label class={label}>A note for whoever gives it <span class="font-normal text-zinc-500">(optional: “the red pressing, please”)</span>
+    <textarea name="note" rows="2" maxlength={NOTE_MAX} class={input}>{values.note ?? ''}</textarea>
+  </label>
+  <Disclosure title="Tracklist and links">
+    <div class="space-y-3 pt-1">
+      <label class={label}>Tracklist <span class="font-normal text-zinc-500">One track per line: “1 | Title | 4:52”.</span>
+        <textarea name="tracklist" rows="6" class={`${input} font-mono text-sm`}>{values.tracklist ?? ''}</textarea>
+      </label>
+      <div class="grid sm:grid-cols-3 gap-3">
+        <label class={label}>Spotify <input name="spotify" type="url" value={links.spotify ?? ''} class={input} /></label>
+        <label class={label}>Apple Music <input name="apple" type="url" value={links.apple ?? ''} class={input} /></label>
+        <label class={label}>YouTube Music <input name="youtube" type="url" value={links.youtube ?? ''} class={input} /></label>
+      </div>
+    </div>
+  </Disclosure>
+  <div class="flex items-center gap-2">
+    <button class="btn-primary">{editId ? 'Save' : 'Add to the wishlist'}</button>
+    {editId && <a href="?#add" class="ctl">Cancel</a>}
+  </div>
+</form>
+
+<script>
+  import '../scripts/wish-form';
+</script>

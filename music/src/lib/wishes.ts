@@ -69,7 +69,7 @@ const shelfKeysSql = (owner: string) =>
 export async function wishlistData(name: string, viewer: User | null) {
   const owner = `(SELECT id FROM users WHERE ${ownerWhere()})`;
   const d = await db();
-  const q = (sql: string) => d.prepare(sql).bind(name, viewer?.id ?? 0);
+  const q = (sql: string) => d.prepare(sql).bind(name);
   const [users, wants, wishes, shelf, releases, matches, reservations] = await d.batch([
     q(`SELECT * FROM users WHERE id = ${owner}`),
     q(`SELECT data FROM wants WHERE user_id = ${owner}`),
@@ -77,8 +77,8 @@ export async function wishlistData(name: string, viewer: User | null) {
     q(shelfKeysSql(owner)),
     q(`SELECT id, data FROM releases WHERE id IN (SELECT release_id FROM wants WHERE user_id = ${owner})`),
     q(`SELECT release_id, data FROM matches WHERE release_id IN (SELECT release_id FROM wants WHERE user_id = ${owner})`),
-    q(`SELECT item, gifted_at IS NOT NULL AS gifted, CASE WHEN ?2 != 0 AND ?2 != owner_id THEN user_id END AS user_id,
-      CASE WHEN ?2 != 0 AND ?2 = user_id THEN give_on END AS give_on FROM reservations WHERE owner_id = ${owner}`),
+    d.prepare(`SELECT item, gifted_at IS NOT NULL AS gifted, CASE WHEN ?2 != 0 AND ?2 != owner_id THEN user_id END AS user_id,
+      CASE WHEN ?2 != 0 AND ?2 = user_id THEN give_on END AS give_on FROM reservations WHERE owner_id = ${owner}`).bind(name, viewer?.id ?? 0),
   ]);
   const user = (users.results[0] as User | undefined) ?? null;
   if (!user) return { owner: null, source: 'custom' as WishSource, items: [], wantsCount: 0, customCount: 0 };
