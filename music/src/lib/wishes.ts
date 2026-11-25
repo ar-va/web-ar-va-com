@@ -372,8 +372,10 @@ export async function currentGiveOn(ownerId: number, item: string) {
   return row?.give_on ?? null;
 }
 
-/** Who reserved an item (for a Telegram button tap): the open reservation's giver and the owner, or null. */
+/** Who reserved an item (for a Telegram button tap): the open reservation's giver, the owner's name and wishlist path. */
 export async function openReservation(ownerId: number, item: string) {
-  return (await db()).prepare(`SELECT r.user_id, o.name AS owner_name FROM reservations r JOIN users o ON o.id = r.owner_id
-    WHERE r.owner_id = ? AND r.item = ? AND r.gifted_at IS NULL`).bind(ownerId, item).first<{ user_id: number; owner_name: string }>();
+  const row = await (await db()).prepare(`SELECT r.user_id, o.name AS owner_name, o.shelf_name, o.discogs_username FROM reservations r
+    JOIN users o ON o.id = r.owner_id WHERE r.owner_id = ? AND r.item = ? AND r.gifted_at IS NULL`).bind(ownerId, item)
+    .first<{ user_id: number; owner_name: string; shelf_name: string | null; discogs_username: string | null }>();
+  return row && { user_id: row.user_id, owner_name: row.owner_name, wishlist: `/${shelfSlug(row)}/wishlist` };
 }

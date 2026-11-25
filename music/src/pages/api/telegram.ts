@@ -53,8 +53,12 @@ export const POST: APIRoute = async ({ request, url }) => {
       if (verb === 'unres' && await unreserve(Number(owner), item, open.user_id)) done = 'Reservation cancelled';
     }
     if (done) {
-      await bot('editMessageReplyMarkup', { chat_id: tap.message?.chat?.id, message_id: tap.message?.message_id,
-        reply_markup: { inline_keyboard: [[{ text: done, url: `https://${url.host}/settings#gifts` }]] } });
+      // Given: a note that it's done (→ their reserved gifts). Cancelled: also the way back to the wishlist, to pick
+      // another (user 2026-11-25).
+      const keyboard = verb === 'gift'
+        ? [[{ text: done, url: `https://${url.host}/settings#gifts` }]]
+        : [[{ text: done, callback_data: 'noop' }], [{ text: `Back to ${open!.owner_name.split(' ')[0]}’s wishlist`, url: `https://${url.host}${open!.wishlist}` }]];
+      await bot('editMessageReplyMarkup', { chat_id: tap.message?.chat?.id, message_id: tap.message?.message_id, reply_markup: { inline_keyboard: keyboard } });
       await bot('answerCallbackQuery', { callback_query_id: tap.id, text: verb === 'gift' ? `Thank you! ${open!.owner_name.split(' ')[0]} has been told.` : 'Cancelled.' });
     } else await bot('answerCallbackQuery', { callback_query_id: tap.id, text: 'This reservation isn’t yours, or it’s already closed.' });
     return new Response('ok');
