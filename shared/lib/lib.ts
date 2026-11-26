@@ -546,11 +546,26 @@ export const escapeHtml = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&a
  */
 export function commentNotices(c: { authorId: number; authorName: string; ownerId: number | null; parentAuthorId: number | null; title: string; body: string; url: string }) {
   const excerpt = c.body.length > 300 ? `${c.body.slice(0, 300)}…` : c.body;
-  const text = (verb: string) => `<b>${escapeHtml(c.authorName)}</b> ${verb} <b>${escapeHtml(c.title)}</b>:\n\n${escapeHtml(excerpt)}\n\n<a href="${escapeHtml(c.url)}">Open the comment</a>`;
-  const out: { chatId: number; text: string }[] = [];
-  if (c.parentAuthorId && c.parentAuthorId !== c.authorId) out.push({ chatId: c.parentAuthorId, text: text('replied to your comment on') });
-  if (c.ownerId && c.ownerId !== c.authorId && c.ownerId !== c.parentAuthorId) out.push({ chatId: c.ownerId, text: text(c.parentAuthorId ? 'replied to a comment on' : 'commented on') });
+  const notice = (chatId: number, kind: NoticeKind) => ({ chatId, kind,
+    text: `<b>${escapeHtml(c.authorName)}</b> ${NOTICE_VERBS[kind]} <b>${escapeHtml(c.title)}</b>:\n\n${escapeHtml(excerpt)}\n\n<a href="${escapeHtml(c.url)}">Open the comment</a>` });
+  const out: { chatId: number; text: string; kind: NoticeKind }[] = [];
+  if (c.parentAuthorId && c.parentAuthorId !== c.authorId) out.push(notice(c.parentAuthorId, 'reply'));
+  if (c.ownerId && c.ownerId !== c.authorId && c.ownerId !== c.parentAuthorId) out.push(notice(c.ownerId, c.parentAuthorId ? 'place-reply' : 'comment'));
   return out;
+}
+
+/** The same notices are saved for the header's bell (shared/scripts/bell.ts), worded the same. */
+export type NoticeKind = 'reply' | 'place-reply' | 'comment';
+export const NOTICE_VERBS: Record<NoticeKind, string> = { reply: 'replied to your comment on', 'place-reply': 'replied to a comment on', comment: 'commented on' };
+
+/** "just now", "5 min ago", "2 h ago", "1 day ago", "3 days ago". */
+export function timeAgo(at: number, nowSec = Date.now() / 1000) {
+  const min = Math.round((nowSec - at) / 60);
+  if (min < 1) return 'just now';
+  if (min < 60) return `${min} min ago`;
+  if (min < 1440) return `${Math.round(min / 60)} h ago`;
+  const days = Math.round(min / 1440);
+  return `${days} ${days === 1 ? 'day' : 'days'} ago`;
 }
 
 // ---- Automatic matches on streaming services, and covers ----

@@ -228,6 +228,8 @@ test('comment links and notifications', async () => {
   assert.deepEqual(commentNotices({ ...base, authorId: 9 }), []); // own shelf: nobody
   const reply = commentNotices({ ...base, parentAuthorId: 4 });
   assert.deepEqual(reply.map((n) => [n.chatId, n.text.includes('replied to your comment')]), [[4, true], [9, false]]);
+  assert.deepEqual(reply.map((n) => n.kind), ['reply', 'place-reply']); // saved for the bell
+  assert.equal(owner[0].kind, 'comment');
   assert.deepEqual(commentNotices({ ...base, parentAuthorId: 9 }).map((n) => n.chatId), [9]); // owner replied to: one message
   assert.deepEqual(commentNotices({ ...base, ownerId: null }), []);
 });
@@ -288,6 +290,16 @@ test('runtime and renumber', async () => {
   assert.deepEqual(renumber(['A2', 'A1', 'B1', 'A3', 'B2']), ['A1', 'A2', 'B1', 'A3', 'B2']);
   assert.deepEqual(renumber(['3', '1', '2']), ['1', '2', '3']);
   assert.deepEqual(renumber(['CD1-2', '', 'A5']), ['CD1-2', '', 'A1']);
+});
+
+test('timeAgo: just now, minutes, hours, one day, days', async () => {
+  const { timeAgo } = await import('../lib/lib.ts');
+  const now = 1_800_000_000;
+  assert.equal(timeAgo(now - 20, now), 'just now');
+  assert.equal(timeAgo(now - 300, now), '5 min ago');
+  assert.equal(timeAgo(now - 7200, now), '2 h ago');
+  assert.equal(timeAgo(now - 86400, now), '1 day ago');
+  assert.equal(timeAgo(now - 3 * 86400, now), '3 days ago');
 });
 
 test('timeLeft rounds up to days, hours or minutes', () => {

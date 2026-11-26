@@ -8,7 +8,7 @@ import Breadcrumbs from '../components/Breadcrumbs.astro';
 import Disclosure from '@shared/components/Disclosure.astro';
 import Toast from '@shared/components/Toast.astro';
 import Avatar from '@shared/components/Avatar.astro';
-import { checkShelfName, displayDate, escapeHtml, loginHref, timeLeft } from '@shared/lib/lib';
+import { checkShelfName, displayDate, escapeHtml, loginHref, timeAgo, timeLeft } from '@shared/lib/lib';
 import { myReservations } from '../lib/wishes';
 import { reservationEnds } from '@shared/lib/wishlist';
 import { connectWebhook, notify } from '@shared/lib/notify';
@@ -102,11 +102,7 @@ const usesText = (i: { max_uses: number | null; uses: number }) => (i.max_uses ?
 const connected = !!(user.discogs_username && user.discogs_token);
 // Updated within the hour: the time shows in Moss (the user's pick, 2026-10-30; an exception in the brand rules).
 const fresh = !!user.synced_at && Date.now() / 1000 - user.synced_at < 3600;
-const ago = (s: number | null) => {
-  if (!s) return 'not yet';
-  const min = Math.round((Date.now() / 1000 - s) / 60);
-  return min < 1 ? 'just now' : min < 60 ? `${min} min ago` : min < 1440 ? `${Math.round(min / 60)} h ago` : `${Math.round(min / 1440)} days ago`;
-};
+const ago = (s: number | null) => (s ? timeAgo(s) : 'not yet');
 setWho(Astro.cookies, user, Astro.url.hostname);
 const first = user.name.split(' ')[0];
 // Wishlist records this person reserved as gifts (any shelf), so a promise isn't forgotten.
