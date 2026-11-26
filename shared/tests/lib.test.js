@@ -474,3 +474,33 @@ test('alerts: own only, live text, deleted comments gone', async () => {
   assert.equal(rows[0].name, 'Ann');
   assert.equal(rows[0].kind, 'comment');
 });
+
+test('All comments (admin): newest 50 read by id without a sort, links only where the shelf has an address', async () => {
+  const { SITE_COMMENTS_SQL, POST_COMMENTS_SQL, toSiteComment } = await import('../lib/lib.ts');
+  const db = new DatabaseSync(':memory:');
+  db.exec(`CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, photo_url TEXT, shelf_name TEXT, discogs_username TEXT);
+    CREATE TABLE comments (id INTEGER PRIMARY KEY AUTOINCREMENT, shelf_id INTEGER, instance_id INTEGER, author_id INTEGER, body TEXT, created_at INTEGER, parent_id INTEGER);
+    CREATE TABLE post_comments (id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT, author_id INTEGER, body TEXT, created_at INTEGER, parent_id INTEGER);
+    CREATE TABLE records (user_id INTEGER, instance_id INTEGER, data TEXT, PRIMARY KEY (user_id, instance_id));
+    CREATE TABLE overrides (user_id INTEGER, instance_id INTEGER, data TEXT, PRIMARY KEY (user_id, instance_id));
+    INSERT INTO users VALUES (1, 'Ann', NULL, 'ann', NULL), (2, 'Bo', NULL, NULL, NULL);
+    INSERT INTO records VALUES (1, 7, '{"title":"Blackstar"}');
+    INSERT INTO overrides VALUES (1, 7, '{"title":"★"}');`);
+  const add = db.prepare('INSERT INTO comments (shelf_id, instance_id, author_id, body, created_at) VALUES (1, 7, 2, ?, ?)');
+  for (let i = 1; i <= 60; i++) add.run(`c${i}`, 1000 + i);
+  for (const sql of [SITE_COMMENTS_SQL, POST_COMMENTS_SQL]) {
+    const plan = db.prepare(`EXPLAIN QUERY PLAN ${sql}`).all().map((r) => r.detail).join(' | ');
+    assert.doesNotMatch(plan, /TEMP B-TREE/, plan); // walks the newest ids and stops at 50
+  }
+  const rows = db.prepare(SITE_COMMENTS_SQL).all();
+  assert.equal(rows.length, 50);
+  assert.equal(rows[0].body, 'c60');
+
+  const c = { id: 5, body: 'Hi', created_at: 100, parent_id: null, name: 'Bo', photo_url: null };
+  const view = (x) => { const s = toSiteComment(x); return [s.place, s.href, s.reply]; };
+  assert.deepEqual(view({ ...c, ...rows[0], id: 5 }).slice(0, 2), ['★, Ann’s shelf', '/ann/7#comment-5']);
+  assert.deepEqual(view({ ...c, instance_id: 0, owner: 'Ann', shelf: 'ann' }), ['Ann’s records', '/ann#comment-5', false]);
+  assert.deepEqual(view({ ...c, instance_id: 7, owner: 'Bo', shelf: '', record: 'Ночь', parent_id: 3 }), ['Ночь, Bo’s shelf', null, true]); // no address: no link
+  assert.deepEqual(view({ ...c, instance_id: 7, owner: null, shelf: '', record: null }), ['a removed record, a removed shelf', null, false]);
+  assert.deepEqual(view({ ...c, post: 'my post' }), ['the blog post my post', 'https://ar-va.com/blog/my%20post#comment-5', false]);
+});

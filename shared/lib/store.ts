@@ -2,7 +2,7 @@
 import { env } from 'cloudflare:workers';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { AstroCookies } from 'astro';
-import { activeLink, commentNotices, nameKey, NOTICE_VERBS, NOTIFICATIONS_SQL, seenUpTo, type NoticeKind, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
+import { activeLink, commentNotices, nameKey, NOTICE_VERBS, NOTIFICATIONS_SQL, POST_COMMENTS_SQL, SHELF_THREAD, SITE_COMMENTS_SQL, seenUpTo, toSiteComment, type NoticeKind, type SiteComment, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
 import { notify } from './notify';
 
 // Tables are created lazily (no migration step in the deploy).
@@ -305,8 +305,7 @@ export async function setShelfName(user: User, name: string | null) {
   return null;
 }
 
-/** Shelf comments live in the comments table under instance_id 0 (Discogs collection instance ids start at 1). */
-export const SHELF_THREAD = 0;
+export { SHELF_THREAD };
 const commentsSql = `SELECT c.id, body, c.created_at, c.edited_at, c.parent_id, author_id, users.name, users.username, users.photo_url
   FROM comments c JOIN users ON users.id = c.author_id`;
 
@@ -588,41 +587,22 @@ export async function markAlertsSeen(user: User, upTo: unknown) {
   await (await db()).prepare('UPDATE users SET notifications_seen_at = ? WHERE id = ?').bind(seenUpTo(user.notifications_seen_at, upTo, now()), user.id).run();
 }
 
-/** A comment anywhere on the site, for the admin's settings ("All comments"). */
-export interface SiteComment { id: number; body: string; created_at: number; reply: boolean; name: string; photo_url: string | null; place: string; href: string }
-
-/** The newest 50 comments on shelves, records and blog posts, in one round trip. */
+/** The admin's "All comments": the newest 50 on shelves, records and blog posts, in one round trip. */
 export async function allComments(): Promise<SiteComment[]> {
   const d = await db();
-  const [onShelves, onBlog] = await d.batch([
-    d.prepare(`SELECT c.id, c.body, c.created_at, c.parent_id, c.instance_id, a.name, a.photo_url,
-        o.name AS owner, o.shelf_name, o.discogs_username, COALESCE(json_extract(ov.data, '$.title'), json_extract(r.data, '$.title')) AS record
-      FROM comments c JOIN users a ON a.id = c.author_id LEFT JOIN users o ON o.id = c.shelf_id
-      LEFT JOIN records r ON r.user_id = c.shelf_id AND r.instance_id = c.instance_id
-      LEFT JOIN overrides ov ON ov.user_id = c.shelf_id AND ov.instance_id = c.instance_id
-      ORDER BY c.created_at DESC, c.id DESC LIMIT 50`),
-    d.prepare(`SELECT c.id, c.body, c.created_at, c.parent_id, c.slug, a.name, a.photo_url
-      FROM post_comments c JOIN users a ON a.id = c.author_id ORDER BY c.created_at DESC, c.id DESC LIMIT 50`),
-  ]);
-  const shelf = (onShelves.results as any[]).map((c): SiteComment => {
-    const slug = encodeURIComponent(shelfSlug(c));
-    const owner = c.owner ?? 'a removed shelf';
-    return {
-      id: c.id, body: c.body, created_at: c.created_at, reply: !!c.parent_id, name: c.name, photo_url: c.photo_url,
-      place: c.instance_id === SHELF_THREAD ? `${owner}’s records` : `${c.record ?? 'a removed record'}, ${owner}’s shelf`,
-      href: c.instance_id === SHELF_THREAD ? `/${slug}#comment-${c.id}` : `/${slug}/${c.instance_id}#comment-${c.id}`,
-    };
-  });
-  const blog = (onBlog.results as any[]).map((c): SiteComment => ({
-    id: c.id, body: c.body, created_at: c.created_at, reply: !!c.parent_id, name: c.name, photo_url: c.photo_url,
-    place: `the blog post ${c.slug}`, href: `https://ar-va.com/blog/${encodeURIComponent(c.slug)}#comment-${c.id}`,
-  }));
-  return [...shelf, ...blog].sort((a, b) => b.created_at - a.created_at).slice(0, 50);
+  const [onShelves, onBlog] = await d.batch([d.prepare(SITE_COMMENTS_SQL), d.prepare(POST_COMMENTS_SQL)]);
+  return [...onShelves.results, ...onBlog.results].map((c) => toSiteComment(c as Parameters<typeof toSiteComment>[0]))
+    .sort((a, b) => b.created_at - a.created_at).slice(0, 50);
 }
 
-/** Deleting a comment also deletes its replies. */
+/** Deleting a comment also deletes its replies, and the bell's alerts about them. */
 export async function deleteComment(t: Thread, commentId: number, user: User) {
   const { table, where, args } = threadSql(t);
-  const comment = await (await db()).prepare(`SELECT author_id FROM ${table} WHERE id = ? AND ${where}`).bind(commentId, ...args).first<{ author_id: number }>();
-  if (comment && canDeleteComment(t, comment.author_id, user)) await (await db()).prepare(`DELETE FROM ${table} WHERE id = ?1 OR parent_id = ?1`).bind(commentId).run();
+  const d = await db();
+  const comment = await d.prepare(`SELECT author_id FROM ${table} WHERE id = ? AND ${where}`).bind(commentId, ...args).first<{ author_id: number }>();
+  if (!comment || !canDeleteComment(t, comment.author_id, user)) return;
+  await d.batch([
+    d.prepare(`DELETE FROM notifications WHERE source = ?2 AND comment_id IN (SELECT id FROM ${table} WHERE id = ?1 OR parent_id = ?1)`).bind(commentId, table),
+    d.prepare(`DELETE FROM ${table} WHERE id = ?1 OR parent_id = ?1`).bind(commentId),
+  ]);
 }

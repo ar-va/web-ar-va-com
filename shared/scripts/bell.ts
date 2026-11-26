@@ -2,8 +2,8 @@
 // /api/notifications, in a menu that opens like the account menu. Opening it marks them seen (up to the newest shown);
 // their dots stay until the next page. Everything from the server goes in as text (textContent), never as HTML.
 import { timeAgo } from '../lib/lib';
-
-interface Alert { verb: string; title: string; url: string; created_at: number; body: string; name: string; photo_url: string | null; unread: boolean }
+import type { Alert } from '../lib/store';
+import { growFrom, shrinkTo } from './grow';
 
 const bell = document.getElementById('bell') as HTMLButtonElement | null;
 const menu = document.getElementById('bell-menu');
@@ -39,6 +39,15 @@ if (bell && menu && !bell.hidden) {
     return li;
   }
 
+  // The login cookie ended while the header's `who` cookie remains: say so rather than "no comments".
+  function loggedOut() {
+    const login = el('a', 'font-medium text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4', 'Log in again');
+    login.href = `${location.protocol}//${location.host.replace(/^music\./, '')}/login?return=${encodeURIComponent(location.href)}`;
+    const li = el('li', 'px-3 py-3 text-zinc-500');
+    li.append(login, ' to see your comments.');
+    list.replaceChildren(li);
+  }
+
   function render(items: Alert[]) {
     unread = items.filter((a) => a.unread).length;
     newest = items[0]?.created_at ?? 0;
@@ -59,8 +68,9 @@ if (bell && menu && !bell.hidden) {
     fetch('/api/notifications', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ upTo: newest }) }).catch(() => {});
   }
 
-  // A failed request (offline, an expired login) leaves an empty bell rather than an error.
-  fetch('/api/notifications').then((r) => (r.ok ? r.json() : { items: [] })).catch(() => ({ items: [] })).then((d) => render(d.items ?? []));
+  // A failed request (offline) leaves an empty bell rather than an error.
+  fetch('/api/notifications').then(async (r) => (r.status === 401 ? loggedOut() : render(r.ok ? (await r.json()).items ?? [] : [])))
+    .catch(() => render([]));
 
   // Opening and closing as the account menu does (Header.astro): springs out of the bell, shrinks back into it.
   const isOpen = () => bell.getAttribute('aria-expanded') === 'true';
@@ -69,10 +79,9 @@ if (bell && menu && !bell.hidden) {
     bell.setAttribute('aria-expanded', String(open));
     if (open) {
       menu.hidden = false;
-      window.growFrom?.(menu, bell);
+      growFrom(menu, bell);
       markSeen();
-    } else if (window.shrinkTo) window.shrinkTo(menu, bell, () => { menu.hidden = true; });
-    else menu.hidden = true;
+    } else shrinkTo(menu, bell, () => { menu.hidden = true; });
   };
   bell.addEventListener('click', () => toggle(!isOpen()));
   list.addEventListener('click', (e) => { if ((e.target as Element).closest('a')) toggle(false); });

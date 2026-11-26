@@ -569,6 +569,36 @@ export const NOTIFICATIONS_SQL = `SELECT n.id, n.kind, n.title, n.url, n.created
   JOIN users u ON u.id = COALESCE(c.author_id, p.author_id)
   WHERE n.user_id = ? ORDER BY n.id DESC LIMIT 20`;
 
+/** Shelf comments live in the comments table under instance_id 0 (Discogs collection instance ids start at 1). */
+export const SHELF_THREAD = 0;
+
+/**
+ * The admin's "All comments" (settings): the newest 50 of each table, read newest id first so the database stops at 50
+ * (ids only grow, like the time they were posted). `shelf` is the shelf's address as shelfSlug gives it ('' = none).
+ */
+export const SITE_COMMENTS_SQL = `SELECT c.id, c.body, c.created_at, c.parent_id, c.instance_id, a.name, a.photo_url, o.name AS owner,
+    COALESCE(NULLIF(o.shelf_name, ''), NULLIF(o.discogs_username, ''), '') AS shelf,
+    COALESCE(json_extract(ov.data, '$.title'), json_extract(r.data, '$.title')) AS record
+  FROM comments c JOIN users a ON a.id = c.author_id LEFT JOIN users o ON o.id = c.shelf_id
+  LEFT JOIN records r ON r.user_id = c.shelf_id AND r.instance_id = c.instance_id
+  LEFT JOIN overrides ov ON ov.user_id = c.shelf_id AND ov.instance_id = c.instance_id
+  ORDER BY c.id DESC LIMIT 50`;
+export const POST_COMMENTS_SQL = `SELECT c.id, c.body, c.created_at, c.parent_id, c.slug AS post, a.name, a.photo_url
+  FROM post_comments c JOIN users a ON a.id = c.author_id ORDER BY c.id DESC LIMIT 50`;
+
+/** A comment anywhere on the site, for the admin. `href` is null when its shelf has no address any more. */
+export interface SiteComment { id: number; body: string; created_at: number; reply: boolean; name: string; photo_url: string | null; place: string; href: string | null }
+
+export function toSiteComment(c: { id: number; body: string; created_at: number; parent_id: number | null; name: string; photo_url: string | null;
+  instance_id?: number; owner?: string | null; shelf?: string; record?: string | null; post?: string }): SiteComment {
+  const base = { id: c.id, body: c.body, created_at: c.created_at, reply: !!c.parent_id, name: c.name, photo_url: c.photo_url };
+  if (c.post !== undefined) return { ...base, place: `the blog post ${c.post}`, href: `https://ar-va.com/blog/${encodeURIComponent(c.post)}#comment-${c.id}` };
+  const whose = (what: string) => (c.owner ? `${c.owner}’s ${what}` : 'a removed shelf');
+  const onShelf = c.instance_id === SHELF_THREAD;
+  const path = c.shelf ? `/${encodeURIComponent(c.shelf)}${onShelf ? '' : `/${c.instance_id}`}#comment-${c.id}` : null;
+  return { ...base, place: onShelf ? whose('records') : `${c.record ?? 'a removed record'}, ${whose('shelf')}`, href: path };
+}
+
 /**
  * When the bell was last seen, after opening it: up to the newest alert it showed (`upTo`, from the browser), so one
  * arriving after the page loaded stays new; never earlier than before, never later than now.
