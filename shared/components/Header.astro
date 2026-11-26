@@ -18,11 +18,15 @@ const current = (on: boolean) => (on ? 'page' : undefined);
 // While home and blog are hidden (src/site.ts) the logo leads to the shelf and the menu is empty (Music alone would
 // repeat the logo).
 const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https://music.ar-va.com/');
+const menu = MAIN_SITE_PUBLIC && !minimal;
 ---
 
 <!-- A plain header across the page width: logo left, menu centred on the page (phones too), account + theme right.
      The theme switch is the only pill. Not pinned: it scrolls away with the page (user, 2026-10-29). -->
-<nav id="site-header" class="relative z-50 mt-3 max-w-5xl mx-auto px-6 w-full grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
+<!-- With a menu: three columns, equal sides, so the menu sits in the middle of the page. Without one (hidden site, anon):
+     logo and the rest, so the account side gets all the room (2026-11-26: with the bell, half the row squeezed the avatar
+     on phones). -->
+<nav id="site-header" class:list={['relative z-50 mt-3 max-w-5xl mx-auto px-6 w-full grid items-center gap-3', menu ? 'grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]' : 'grid-cols-[auto_minmax(0,1fr)]']}>
   <a href={home} class="shrink-0 justify-self-start h-11 flex items-center gap-3" aria-label={label ? `${label}.ar-va.com home` : 'ARVA home'}>
     <!-- Brand logo files (two-tone: Kashiwa leaf, wordmark in the text colour), ink on light and washi on dark: the full
          horizontal logo, 30 px tall, 26 px on phones (was 24 / 22; user 2026-11-20: too small); below 360 px only the leaf (the brand's small mark), so the
@@ -33,19 +37,21 @@ const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https
     <img src="/brand/arva-mark-small-washi-kashiwa.svg" alt="ARVA" width="24" height="24" class="h-6 w-6 hidden dark:max-[359px]:block" />
     {label && <span class="text-lg font-medium text-kashiwa dark:text-kashiwa-light">{label}</span>}
   </a>
-  <div class="h-11 flex items-center">
-    {MAIN_SITE_PUBLIC && !minimal && <div class="flex items-center gap-4 min-[360px]:gap-5 sm:gap-7 text-sm font-medium">
+  {menu && <div class="h-11 flex items-center">
+    <div class="flex items-center gap-4 min-[360px]:gap-5 sm:gap-7 text-sm font-medium">
       <a href={`${main}/`} class={`${link} hidden sm:inline`} aria-current={current(!onMusic && path === '/')}>Home</a>
       <a href={`${main}/blog`} class={link} aria-current={current(!onMusic && path.startsWith('/blog'))}>Blog</a>
       <a href={onMusic ? '/' : 'https://music.ar-va.com/'} class={link} aria-current={current(onMusic)}>Music</a>
-    </div>}
-  </div>
-  <div class="justify-self-end h-11 flex items-center gap-2 min-[360px]:gap-3 sm:gap-4 text-sm font-medium">
+    </div>
+  </div>}
+  <!-- Short of room, only the first name gives (cut with …): the bell, avatar and chevron keep their size. A loaded photo
+       would otherwise be squeezed (images may shrink to their box: 16.5 x 24 px at 412 px, 2026-11-26). -->
+  <div class="justify-self-end min-w-0 max-w-full h-11 flex items-center gap-2 min-[360px]:gap-3 sm:gap-4 text-sm font-medium">
     <!-- Phones show the words too while the menu is hidden (src/site.ts): there's room for them then. -->
     {!minimal && <>
     <!-- Comment alerts (shared/scripts/bell.ts), music.ar-va.com only: shown by the script below when logged in. -->
     <button id="bell" type="button" hidden title="Comments" aria-label="Comments" aria-haspopup="true" aria-expanded="false" aria-controls="bell-menu"
-      class="relative grid place-items-center w-8 h-8 rounded-full text-zinc-600 dark:text-zinc-300 hover:text-kikyo-600 dark:hover:text-kikyo-400 aria-expanded:text-kikyo-600 dark:aria-expanded:text-kikyo-400 transition-colors">
+      class="relative shrink-0 grid place-items-center w-8 h-8 rounded-full text-zinc-600 dark:text-zinc-300 hover:text-kikyo-600 dark:hover:text-kikyo-400 aria-expanded:text-kikyo-600 dark:aria-expanded:text-kikyo-400 transition-colors">
       <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" /></svg>
       <span id="bell-count" hidden class="absolute -top-0.5 -right-1 min-w-4 h-4 px-1 rounded-full bg-kikyo-600 text-white dark:bg-kikyo-400 dark:text-zinc-950 ring-2 ring-paper dark:ring-zinc-950 text-[10px] font-semibold leading-4 text-center"></span>
     </button>
@@ -112,16 +118,16 @@ const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https
     a.setAttribute('aria-haspopup', 'true');
     a.setAttribute('aria-expanded', 'false');
     a.setAttribute('aria-controls', 'account-menu');
-    a.className = 'flex items-center gap-2 h-8 text-zinc-600 dark:text-zinc-300 hover:text-kikyo-500 dark:hover:text-kikyo-400 transition-colors';
+    a.className = 'min-w-0 flex items-center gap-2 h-8 text-zinc-600 dark:text-zinc-300 hover:text-kikyo-500 dark:hover:text-kikyo-400 transition-colors';
     const pic = typeof who.p === 'string' && who.p.startsWith('https://') ? Object.assign(document.createElement('img'), { src: who.p, alt: '', width: 24, height: 24, referrerPolicy: 'no-referrer', className: 'w-6 h-6 rounded-full object-cover' })
       : Object.assign(document.createElement('span'), { textContent: who.n.charAt(0), className: 'w-6 h-6 rounded-full bg-(--on-bg) text-(--on-text) text-xs grid place-items-center' });
-    const name = Object.assign(document.createElement('span'), { textContent: who.n, className: 'compact' in a.dataset ? 'sr-only sm:not-sr-only' : 'whitespace-nowrap' });
+    const name = Object.assign(document.createElement('span'), { textContent: who.n, className: 'compact' in a.dataset ? 'sr-only sm:not-sr-only' : 'truncate' });
     // A dot on the avatar while Discogs still needs connecting: the menu says what to do.
-    const face = Object.assign(document.createElement('span'), { className: 'relative' });
+    const face = Object.assign(document.createElement('span'), { className: 'relative shrink-0' });
     face.append(pic);
     if (who.d) face.insertAdjacentHTML('beforeend', '<span class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-kikyo-500 ring-2 ring-paper dark:ring-zinc-950"></span>');
     a.replaceChildren(face, name);
-    a.insertAdjacentHTML('beforeend', '<svg class="w-3.5 h-3.5 opacity-60" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>');
+    a.insertAdjacentHTML('beforeend', '<svg class="w-3.5 h-3.5 shrink-0 opacity-60" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" /></svg>');
 
     const menu = document.getElementById('account-menu');
     const item = (k) => menu.querySelector(`[data-menu="${k}"]`);
