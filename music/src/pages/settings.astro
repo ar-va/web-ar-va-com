@@ -12,7 +12,7 @@ import { checkShelfName, displayDate, escapeHtml, loginHref, timeAgo, timeLeft }
 import { myReservations } from '../lib/wishes';
 import { reservationEnds } from '@shared/lib/wishlist';
 import { connectWebhook, notify } from '@shared/lib/notify';
-import { OPEN_INVITES_MAX, adminTelegramId, inviteOptions, requestShelf, canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, listInvites, removeShelf, revokeInvite, setShelfName, setWho, shelfSlug } from '@shared/lib/store';
+import { OPEN_INVITES_MAX, adminTelegramId, allComments, inviteOptions, requestShelf, canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, listInvites, removeShelf, revokeInvite, setShelfName, setWho, shelfSlug } from '@shared/lib/store';
 
 const user = await currentUser(Astro.cookies);
 if (!user) return Astro.redirect(loginHref(Astro.url));
@@ -91,7 +91,7 @@ if (Astro.request.method === 'POST') {
   }
 }
 
-const [collectors, invites] = await Promise.all([isAdmin(user) ? listCollectors() : [], canCollect(user) ? listInvites(user) : []]);
+const [collectors, invites, comments] = await Promise.all([isAdmin(user) ? listCollectors() : [], canCollect(user) ? listInvites(user) : [], isAdmin(user) ? allComments() : []]);
 // Invites like Discord: the newest of your working links ready to copy, its terms, "Edit invite link" for new terms,
 // then every working link with uses, time left and Revoke (everyone's for the admin).
 const inviteLink = (code: string) => `https://${Astro.url.host}/invite/${code}`;
@@ -414,6 +414,29 @@ const steps = [
             </li>
           ))}
         </ul>
+      </section>
+    )}
+
+    {isAdmin(user) && (
+      <section id="comments" class={`${card} scroll-mt-6`} aria-labelledby="comments-heading">
+        <h2 id="comments-heading" class={cardTitle}>All comments</h2>
+        <p class={lead}>The newest 50 on every shelf, record and blog post. Only you see this.</p>
+        {comments.length ? (
+          <ul class="mt-4 flex flex-col">
+            {comments.map((c) => (
+              <li class="flex gap-3 py-3 border-b border-zinc-100 dark:border-zinc-800/40 last:border-none">
+                <Avatar photo={c.photo_url} name={c.name} px={32} class="w-8 h-8" lazy />
+                <div class="min-w-0 flex flex-col gap-0.5">
+                  <p class="text-zinc-600 dark:text-zinc-400">
+                    <span class="font-medium text-zinc-900 dark:text-white">{c.name}</span> {c.reply ? 'replied on' : 'on'} <a href={c.href} class="font-medium text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">{c.place}</a>
+                  </p>
+                  <p class="text-zinc-700 dark:text-zinc-300 line-clamp-2 break-words">{c.body}</p>
+                  <p class="text-xs text-zinc-500">{timeAgo(c.created_at)}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : <p class="mt-4 text-zinc-500">No comments yet.</p>}
       </section>
     )}
   </div>
