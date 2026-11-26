@@ -442,3 +442,26 @@ test('vinylWear: the same record always looks the same; records differ, a quarte
     assert.match(s, /^--smudges: [\w(),-]+; --sx: \d+%; --sy: \d+%; --sheen: \d+deg/);
   }
 });
+
+test('alerts: own only, live text, deleted comments gone', async () => {
+  const { NOTIFICATIONS_SQL } = await import('../lib/lib.ts');
+  const db = new DatabaseSync(':memory:');
+  db.exec(`CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, photo_url TEXT);
+    CREATE TABLE comments (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT);
+    CREATE TABLE post_comments (id INTEGER PRIMARY KEY, author_id INTEGER, body TEXT);
+    CREATE TABLE notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, source TEXT, comment_id INTEGER, kind TEXT, title TEXT, url TEXT, created_at INTEGER);
+    INSERT INTO users VALUES (1, 'Ann', NULL), (2, 'Bo', NULL);
+    INSERT INTO comments VALUES (10, 1, 'first'), (11, 1, 'second');
+    INSERT INTO post_comments VALUES (10, 2, 'a blog comment with the same id');
+    INSERT INTO notifications (user_id, source, comment_id, kind, title, url, created_at) VALUES
+      (2, 'comments', 10, 'comment', 'Blackstar', '/a/1#comment-10', 100),
+      (2, 'comments', 11, 'comment', 'Blackstar', '/a/1#comment-11', 101),
+      (1, 'comments', 10, 'reply', 'Blackstar', '/a/1#comment-10', 102);
+    UPDATE comments SET body = 'edited' WHERE id = 10;
+    DELETE FROM comments WHERE id = 11;`);
+  const rows = db.prepare(NOTIFICATIONS_SQL).all(2).map((r) => ({ ...r }));
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].body, 'edited');
+  assert.equal(rows[0].name, 'Ann');
+  assert.equal(rows[0].kind, 'comment');
+});

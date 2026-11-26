@@ -2,7 +2,7 @@
 import { env } from 'cloudflare:workers';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { AstroCookies } from 'astro';
-import { activeLink, commentNotices, nameKey, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
+import { activeLink, commentNotices, nameKey, NOTICE_VERBS, NOTIFICATIONS_SQL, type NoticeKind, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
 import { notify } from './notify';
 
 // Tables are created lazily (no migration step in the deploy).
@@ -10,7 +10,7 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, username TEXT, photo_url TEXT,
     is_collector INTEGER NOT NULL DEFAULT 0, discogs_username TEXT UNIQUE COLLATE NOCASE, discogs_token TEXT,
     synced_at INTEGER, sync_error TEXT, created_at INTEGER NOT NULL, shelf_name TEXT, shelf_note TEXT, invited_by INTEGER, shelf_request_at INTEGER,
-    wishlist_source TEXT)`,
+    wishlist_source TEXT, notifications_seen_at INTEGER)`,
   `CREATE UNIQUE INDEX IF NOT EXISTS users_shelf_name ON users (shelf_name)`,
   `CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, user_id INTEGER NOT NULL, expires_at INTEGER NOT NULL)`,
   // Invite links since 2026-10-30, like Discord's: expiry and number of uses chosen by the creator; the code is kept
@@ -41,6 +41,11 @@ const SCHEMA = [
   `CREATE INDEX IF NOT EXISTS reservations_by_user ON reservations (user_id)`,
   // The owner's "Most wanted" star on wishlist records, either list (user 2026-11-25).
   `CREATE TABLE IF NOT EXISTS wish_stars (owner_id INTEGER NOT NULL, item TEXT NOT NULL, PRIMARY KEY (owner_id, item))`,
+  // The header bell's alerts (2026-11-26): one row per person told about a new comment (commentNotices), pointing at
+  // the comment in `source` (comments / post_comments), so its current text is shown and a deleted one drops out.
+  `CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, source TEXT NOT NULL,
+    comment_id INTEGER NOT NULL, kind TEXT NOT NULL, title TEXT NOT NULL, url TEXT NOT NULL, created_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS notifications_by_user ON notifications (user_id, id)`,
 ];
 
 // Changes to existing tables after launch (new columns are also in the definitions above, for a fresh database). Each
@@ -48,7 +53,7 @@ const SCHEMA = [
 // edited_at got a one-off manual ALTER in October 2026.) The one-use `invites` table was replaced by invite_links on
 // 2026-10-30 and is dropped (user: fine to delete the old links).
 const COLUMNS = ['ALTER TABLE users ADD COLUMN shelf_note TEXT', 'ALTER TABLE users ADD COLUMN invited_by INTEGER', 'ALTER TABLE users ADD COLUMN shelf_request_at INTEGER', 'DROP TABLE IF EXISTS invites',
-  'ALTER TABLE users ADD COLUMN wishlist_source TEXT'];
+  'ALTER TABLE users ADD COLUMN wishlist_source TEXT', 'ALTER TABLE users ADD COLUMN notifications_seen_at INTEGER'];
 
 let ready: Promise<unknown> | null = null;
 
@@ -96,6 +101,8 @@ export interface User {
   shelf_request_at: number | null;
   /** Which wishlist their shelf shows: 'discogs' (the wantlist) or the one made on the site (null / 'custom'). */
   wishlist_source: string | null;
+  /** When they last opened the header's bell, unix seconds (alerts after it are new). */
+  notifications_seen_at: number | null;
 }
 
 /** The address a shelf is linked under: the chosen name, else the Discogs username. */
@@ -550,11 +557,65 @@ export async function commentForm(t: Thread, form: FormData, user: User, about: 
   }
   const saved = await addComment(t, user, body, Number(form.get('parent_id')) || null);
   if ('error' in saved) return { error: saved.error, draft: body };
-  waitUntil(notify(commentNotices({
-    authorId: user.id, authorName: user.name, ownerId: about.ownerId, parentAuthorId: saved.parentAuthorId,
-    title: about.title, body: body.trim(), url: `${about.url}#comment-${saved.id}`,
-  })));
+  const url = `${about.url}#comment-${saved.id}`;
+  const notices = commentNotices({
+    authorId: user.id, authorName: user.name, ownerId: about.ownerId, parentAuthorId: saved.parentAuthorId, title: about.title, body: body.trim(), url,
+  });
+  // The same people find it in the header's bell (also those Telegram can't message).
+  if (notices.length) {
+    const d = await db();
+    const add = d.prepare('INSERT INTO notifications (user_id, source, comment_id, kind, title, url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
+    await d.batch(notices.map((n) => add.bind(n.chatId, threadSql(t).table, saved.id, n.kind, about.title, url, now())));
+  }
+  waitUntil(notify(notices));
   return { anchor: `comment-${saved.id}` };
+}
+
+/** An alert in the header's bell (music.ar-va.com/api/notifications). */
+export interface Alert { id: number; verb: string; title: string; url: string; created_at: number; body: string; name: string; photo_url: string | null; unread: boolean }
+
+export async function listAlerts(user: User): Promise<Alert[]> {
+  const { results } = await (await db()).prepare(NOTIFICATIONS_SQL).bind(user.id)
+    .all<{ id: number; kind: NoticeKind; title: string; url: string; created_at: number; body: string; name: string; photo_url: string | null }>();
+  return results.map(({ kind, body, ...r }) => ({
+    ...r, verb: NOTICE_VERBS[kind] ?? NOTICE_VERBS.comment, body: body.length > 200 ? `${body.slice(0, 200)}…` : body, unread: r.created_at > (user.notifications_seen_at ?? 0),
+  }));
+}
+
+export async function markAlertsSeen(user: User) {
+  await (await db()).prepare('UPDATE users SET notifications_seen_at = ? WHERE id = ?').bind(now(), user.id).run();
+}
+
+/** A comment anywhere on the site, for the admin's settings ("All comments"). */
+export interface SiteComment { id: number; body: string; created_at: number; reply: boolean; name: string; photo_url: string | null; place: string; href: string }
+
+/** The newest 50 comments on shelves, records and blog posts, in one round trip. */
+export async function allComments(): Promise<SiteComment[]> {
+  const d = await db();
+  const [onShelves, onBlog] = await d.batch([
+    d.prepare(`SELECT c.id, c.body, c.created_at, c.parent_id, c.instance_id, a.name, a.photo_url,
+        o.name AS owner, o.shelf_name, o.discogs_username, COALESCE(json_extract(ov.data, '$.title'), json_extract(r.data, '$.title')) AS record
+      FROM comments c JOIN users a ON a.id = c.author_id LEFT JOIN users o ON o.id = c.shelf_id
+      LEFT JOIN records r ON r.user_id = c.shelf_id AND r.instance_id = c.instance_id
+      LEFT JOIN overrides ov ON ov.user_id = c.shelf_id AND ov.instance_id = c.instance_id
+      ORDER BY c.created_at DESC, c.id DESC LIMIT 50`),
+    d.prepare(`SELECT c.id, c.body, c.created_at, c.parent_id, c.slug, a.name, a.photo_url
+      FROM post_comments c JOIN users a ON a.id = c.author_id ORDER BY c.created_at DESC, c.id DESC LIMIT 50`),
+  ]);
+  const shelf = (onShelves.results as any[]).map((c): SiteComment => {
+    const slug = encodeURIComponent(shelfSlug(c));
+    const owner = c.owner ?? 'a removed shelf';
+    return {
+      id: c.id, body: c.body, created_at: c.created_at, reply: !!c.parent_id, name: c.name, photo_url: c.photo_url,
+      place: c.instance_id === SHELF_THREAD ? `${owner}’s records` : `${c.record ?? 'a removed record'}, ${owner}’s shelf`,
+      href: c.instance_id === SHELF_THREAD ? `/${slug}#comment-${c.id}` : `/${slug}/${c.instance_id}#comment-${c.id}`,
+    };
+  });
+  const blog = (onBlog.results as any[]).map((c): SiteComment => ({
+    id: c.id, body: c.body, created_at: c.created_at, reply: !!c.parent_id, name: c.name, photo_url: c.photo_url,
+    place: `the blog post ${c.slug}`, href: `https://ar-va.com/blog/${encodeURIComponent(c.slug)}#comment-${c.id}`,
+  }));
+  return [...shelf, ...blog].sort((a, b) => b.created_at - a.created_at).slice(0, 50);
 }
 
 /** Deleting a comment also deletes its replies. */

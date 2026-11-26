@@ -558,6 +558,17 @@ export function commentNotices(c: { authorId: number; authorName: string; ownerI
 export type NoticeKind = 'reply' | 'place-reply' | 'comment';
 export const NOTICE_VERBS: Record<NoticeKind, string> = { reply: 'replied to your comment on', 'place-reply': 'replied to a comment on', comment: 'commented on' };
 
+/**
+ * One person's newest saved alerts (bound: their user id), read through to the comment itself: its current text and
+ * author, and a deleted comment (or a reply deleted with it) drops out.
+ */
+export const NOTIFICATIONS_SQL = `SELECT n.id, n.kind, n.title, n.url, n.created_at, COALESCE(c.body, p.body) AS body, u.name, u.photo_url
+  FROM notifications n
+  LEFT JOIN comments c ON n.source = 'comments' AND c.id = n.comment_id
+  LEFT JOIN post_comments p ON n.source = 'post_comments' AND p.id = n.comment_id
+  JOIN users u ON u.id = COALESCE(c.author_id, p.author_id)
+  WHERE n.user_id = ? ORDER BY n.id DESC LIMIT 20`;
+
 /** "just now", "5 min ago", "2 h ago", "1 day ago", "3 days ago". */
 export function timeAgo(at: number, nowSec = Date.now() / 1000) {
   const min = Math.round((nowSec - at) / 60);
