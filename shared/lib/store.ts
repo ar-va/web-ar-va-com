@@ -2,7 +2,7 @@
 import { env } from 'cloudflare:workers';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { AstroCookies } from 'astro';
-import { activeLink, commentNotices, nameKey, NOTICE_VERBS, NOTIFICATIONS_SQL, type NoticeKind, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
+import { activeLink, commentNotices, nameKey, NOTICE_VERBS, NOTIFICATIONS_SQL, seenUpTo, type NoticeKind, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
 import { notify } from './notify';
 
 // Tables are created lazily (no migration step in the deploy).
@@ -561,11 +561,13 @@ export async function commentForm(t: Thread, form: FormData, user: User, about: 
   const notices = commentNotices({
     authorId: user.id, authorName: user.name, ownerId: about.ownerId, parentAuthorId: saved.parentAuthorId, title: about.title, body: body.trim(), url,
   });
-  // The same people find it in the header's bell (also those Telegram can't message).
+  // The same people find it in the header's bell (also those Telegram can't message). After the page answers: the
+  // comment is saved, and a failure here mustn't show an error (a retry would post it twice).
   if (notices.length) {
     const d = await db();
     const add = d.prepare('INSERT INTO notifications (user_id, source, comment_id, kind, title, url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)');
-    await d.batch(notices.map((n) => add.bind(n.chatId, threadSql(t).table, saved.id, n.kind, about.title, url, now())));
+    waitUntil(d.batch(notices.map((n) => add.bind(n.chatId, threadSql(t).table, saved.id, n.kind, about.title, url, now())))
+      .catch((e) => console.error('Saving comment alerts failed', e)));
   }
   waitUntil(notify(notices));
   return { anchor: `comment-${saved.id}` };
@@ -582,8 +584,8 @@ export async function listAlerts(user: User): Promise<Alert[]> {
   }));
 }
 
-export async function markAlertsSeen(user: User) {
-  await (await db()).prepare('UPDATE users SET notifications_seen_at = ? WHERE id = ?').bind(now(), user.id).run();
+export async function markAlertsSeen(user: User, upTo: unknown) {
+  await (await db()).prepare('UPDATE users SET notifications_seen_at = ? WHERE id = ?').bind(seenUpTo(user.notifications_seen_at, upTo, now()), user.id).run();
 }
 
 /** A comment anywhere on the site, for the admin's settings ("All comments"). */

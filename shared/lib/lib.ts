@@ -569,6 +569,13 @@ export const NOTIFICATIONS_SQL = `SELECT n.id, n.kind, n.title, n.url, n.created
   JOIN users u ON u.id = COALESCE(c.author_id, p.author_id)
   WHERE n.user_id = ? ORDER BY n.id DESC LIMIT 20`;
 
+/**
+ * When the bell was last seen, after opening it: up to the newest alert it showed (`upTo`, from the browser), so one
+ * arriving after the page loaded stays new; never earlier than before, never later than now.
+ */
+export const seenUpTo = (previous: number | null, upTo: unknown, nowSec: number) =>
+  Math.max(previous ?? 0, Math.min(Number(upTo) || nowSec, nowSec));
+
 /** "just now", "5 min ago", "2 h ago", "1 day ago", "3 days ago". */
 export function timeAgo(at: number, nowSec = Date.now() / 1000) {
   const min = Math.round((nowSec - at) / 60);

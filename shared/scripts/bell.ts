@@ -1,6 +1,6 @@
 // The header's bell on music.ar-va.com (Header.astro shows it when logged in): the person's comment alerts from
-// /api/notifications, in a menu that opens like the account menu. Opening it marks them seen; their dots stay until
-// the next page. Everything from the server goes in as text (textContent), never as HTML.
+// /api/notifications, in a menu that opens like the account menu. Opening it marks them seen (up to the newest shown);
+// their dots stay until the next page. Everything from the server goes in as text (textContent), never as HTML.
 import { timeAgo } from '../lib/lib';
 
 interface Alert { verb: string; title: string; url: string; created_at: number; body: string; name: string; photo_url: string | null; unread: boolean }
@@ -11,6 +11,7 @@ if (bell && menu && !bell.hidden) {
   const count = document.getElementById('bell-count')!;
   const list = document.getElementById('bell-list')!;
   let unread = 0;
+  let newest = 0; // the newest alert shown: opening marks alerts seen up to it
 
   const el = <K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text?: string) => {
     const e = document.createElement(tag);
@@ -32,7 +33,7 @@ if (bell && menu && !bell.hidden) {
     line.append(el('span', 'font-medium text-zinc-900 dark:text-white', a.name), ` ${a.verb} `, el('span', 'font-medium text-zinc-900 dark:text-white', a.title));
     text.append(line, el('span', 'text-zinc-500 line-clamp-2 break-words', a.body), el('span', 'text-xs text-zinc-500', timeAgo(a.created_at)));
     link.append(face(a), text);
-    if (a.unread) link.append(Object.assign(el('span', 'absolute top-3.5 right-3 w-2 h-2 rounded-full bg-kikyo-500'), { title: 'New' }));
+    if (a.unread) link.append(Object.assign(el('span', 'absolute top-3.5 right-3 w-2 h-2 rounded-full bg-kikyo-500'), { title: 'New' }), el('span', 'sr-only', ' (new)'));
     const li = el('li', '');
     li.append(link);
     return li;
@@ -40,11 +41,22 @@ if (bell && menu && !bell.hidden) {
 
   function render(items: Alert[]) {
     unread = items.filter((a) => a.unread).length;
+    newest = items[0]?.created_at ?? 0;
     count.textContent = unread > 9 ? '9+' : String(unread);
     count.hidden = unread === 0;
     bell!.setAttribute('aria-label', unread ? `Comments, ${unread} new` : 'Comments');
     list.replaceChildren(...(items.length ? items.map(row)
       : [el('li', 'px-3 py-3 text-zinc-500', 'No comments yet. Comments on your shelf and replies to you show up here.')]));
+    if (isOpen()) markSeen(); // opened before the alerts arrived
+  }
+
+  // keepalive: clicking an alert right after opening leaves the page, which would cancel a plain request.
+  function markSeen() {
+    if (!unread) return;
+    unread = 0;
+    count.hidden = true;
+    bell!.setAttribute('aria-label', 'Comments');
+    fetch('/api/notifications', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ upTo: newest }) }).catch(() => {});
   }
 
   // A failed request (offline, an expired login) leaves an empty bell rather than an error.
@@ -58,12 +70,7 @@ if (bell && menu && !bell.hidden) {
     if (open) {
       menu.hidden = false;
       window.growFrom?.(menu, bell);
-      if (unread) {
-        unread = 0;
-        count.hidden = true;
-        bell.setAttribute('aria-label', 'Comments');
-        fetch('/api/notifications', { method: 'POST' }).catch(() => {});
-      }
+      markSeen();
     } else if (window.shrinkTo) window.shrinkTo(menu, bell, () => { menu.hidden = true; });
     else menu.hidden = true;
   };

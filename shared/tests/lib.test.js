@@ -302,6 +302,15 @@ test('timeAgo: just now, minutes, hours, one day, days', async () => {
   assert.equal(timeAgo(now - 3 * 86400, now), '3 days ago');
 });
 
+test('seenUpTo: the bell is seen up to the newest alert shown, never back, never past now', async () => {
+  const { seenUpTo } = await import('../lib/lib.ts');
+  assert.equal(seenUpTo(null, 100, 200), 100); // an alert arriving after the page was shown stays new
+  assert.equal(seenUpTo(150, 100, 200), 150);
+  assert.equal(seenUpTo(null, 999, 200), 200);
+  assert.equal(seenUpTo(null, undefined, 200), 200);
+  assert.equal(seenUpTo(null, 'x', 200), 200);
+});
+
 test('timeLeft rounds up to days, hours or minutes', () => {
   assert.equal(timeLeft(1000 + 7 * 86400, 1000), '7 days');
   assert.equal(timeLeft(1000 + 86400, 1000), '1 day');
