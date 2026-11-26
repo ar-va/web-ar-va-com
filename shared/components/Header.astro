@@ -43,6 +43,16 @@ const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https
   <div class="justify-self-end h-11 flex items-center gap-2 min-[360px]:gap-3 sm:gap-4 text-sm font-medium">
     <!-- Phones show the words too while the menu is hidden (src/site.ts): there's room for them then. -->
     {!minimal && <>
+    <!-- Comment alerts (shared/scripts/bell.ts), music.ar-va.com only: shown by the script below when logged in. -->
+    <button id="bell" type="button" hidden title="Comments" aria-label="Comments" aria-haspopup="true" aria-expanded="false" aria-controls="bell-menu"
+      class="relative grid place-items-center w-8 h-8 rounded-full text-zinc-600 dark:text-zinc-300 hover:text-kikyo-600 dark:hover:text-kikyo-400 aria-expanded:text-kikyo-600 dark:aria-expanded:text-kikyo-400 transition-colors">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.6" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" /></svg>
+      <span id="bell-count" hidden class="absolute -top-0.5 -right-1 min-w-4 h-4 px-1 rounded-full bg-kikyo-600 text-white dark:bg-kikyo-400 dark:text-zinc-950 ring-2 ring-paper dark:ring-zinc-950 text-[10px] font-semibold leading-4 text-center"></span>
+    </button>
+    <div id="bell-menu" hidden class="glass absolute right-6 top-full mt-1 w-80 max-w-[calc(100vw-3rem)] rounded-2xl p-2 z-50 text-sm">
+      <p class="px-3 pt-2 pb-1.5 font-medium text-zinc-900 dark:text-white">Comments</p>
+      <ul id="bell-list" class="max-h-[min(28rem,70vh)] overflow-y-auto"><li class="px-3 py-3 text-zinc-500">Loading…</li></ul>
+    </div>
     <a id="account" href="https://ar-va.com/login" title="Log in with Telegram" aria-label="Log in with Telegram" data-compact={MAIN_SITE_PUBLIC ? '' : undefined}
       class="flex items-center gap-1.5 h-8 text-zinc-600 dark:text-zinc-300 hover:text-kikyo-600 dark:hover:text-kikyo-400 transition-colors">
       <svg class="w-4 h-4 shrink-0" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
@@ -95,6 +105,7 @@ const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https
       return;
     }
     const music = `${location.protocol}//music.${base}`;
+    if (location.host === `music.${base}`) document.getElementById('bell').hidden = false;
     a.href = `${music}/settings`;
     a.title = 'Your account';
     a.setAttribute('aria-label', `Your account (${who.n})`);
@@ -138,3 +149,4 @@ const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) { toggle(false); a.focus(); } });
   })();
 </script>
+<script>import '../scripts/bell';</script>
