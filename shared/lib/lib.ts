@@ -573,15 +573,17 @@ export function newLoginCode() {
 export const LOGIN_CODES_PER_WINDOW = 3;
 export const LOGIN_CODE_WINDOW = 900;
 /**
- * Stores a new login code for an address (bound: email, code hash, expires at, now) and returns how many codes it got
+ * Stores a new login code and login link for an address (bound: email, code hash, expires at, now, link hash) and
+ * returns how many codes it got
  * in the current 15-minute window. Past 3, the stored code stays as it was and the caller sends nothing. One
  * statement on the primary: parallel requests, or a read from a replica that hasn't seen the last one, can't slip past.
  */
 const FRESH = `window_at <= ?4 - ${LOGIN_CODE_WINDOW}`;
 const SENDS = `(${FRESH} OR sends < ${LOGIN_CODES_PER_WINDOW})`;
-export const LOGIN_CODE_SQL = `INSERT INTO email_codes (email, code_hash, expires_at, tries, window_at, sends) VALUES (?1, ?2, ?3, 0, ?4, 1)
+export const LOGIN_CODE_SQL = `INSERT INTO email_codes (email, code_hash, expires_at, tries, window_at, sends, link_hash) VALUES (?1, ?2, ?3, 0, ?4, 1, ?5)
   ON CONFLICT (email) DO UPDATE SET
     code_hash = CASE WHEN ${SENDS} THEN ?2 ELSE code_hash END,
+    link_hash = CASE WHEN ${SENDS} THEN ?5 ELSE link_hash END,
     expires_at = CASE WHEN ${SENDS} THEN ?3 ELSE expires_at END,
     tries = CASE WHEN ${SENDS} THEN 0 ELSE tries END,
     sends = CASE WHEN ${FRESH} THEN 1 ELSE sends + 1 END,
@@ -635,14 +637,23 @@ export function toEmail(m: { text: string; buttons?: ({ text: string; url: strin
   return { subject, html: emailFrame(body, footer), text };
 }
 
-/** The login code email: the code alone on a Mist box in Plex Mono, left-aligned with the text (the brand's rule). */
-export function loginCodeEmail(code: string) {
-  const after = 'It works for 10 minutes. If you didn’t ask for it, ignore this email: nobody can log in without it.';
-  const body = '<p style="margin:0">Your code for ar-va.com:</p>'
-    + `<p style="margin:16px 0;padding:16px 20px;background:${MAIL.mist};border-radius:16px;font-family:'IBM Plex Mono',Menlo,monospace;font-size:32px;letter-spacing:0.25em;color:${MAIL.text}">${code}</p>`
+/**
+ * The login email: a Log in button (the link opens a page that asks for one press, so mail scanners opening links
+ * can't use it up), then the code alone on a Mist box in Plex Mono for typing on another device, left-aligned with the
+ * text (the brand's rule).
+ */
+export function loginCodeEmail(code: string, link: string) {
+  const after = 'Both work for 10 minutes. If you didn’t ask for this, ignore this email: nobody can log in without it.';
+  const body = '<p style="margin:0">Log in to ar-va.com with one tap:</p>'
+    + `<p style="margin:16px 0 24px"><a href="${escapeHtml(link)}" style="display:inline-block;padding:12px 28px;border-radius:999px;background:${MAIL.kikyo};color:#FFFFFF;text-decoration:none;font-size:16px;font-weight:600">Log in</a></p>`
+    + '<p style="margin:0">Or type this code:</p>'
+    + `<p style="margin:12px 0 16px;padding:16px 20px;background:${MAIL.mist};border-radius:16px;font-family:'IBM Plex Mono',Menlo,monospace;font-size:32px;letter-spacing:0.25em;color:${MAIL.text}">${code}</p>`
     + `<p style="margin:0">${after}</p>`;
-  return { subject: `${code} is your ar-va.com code`, html: emailFrame(body, null), text: `Your code for ar-va.com: ${code}\n\n${after}` };
+  return { subject: `${code} is your ar-va.com code`, html: emailFrame(body, null), text: `Log in: ${link}\n\nOr type this code: ${code}\n\n${after}` };
 }
+
+/** An address shown on the login link's page: enough to recognise it, not to read it over a shoulder. */
+export const maskEmail = (email: string) => `${email.charAt(0)}•••${email.slice(email.indexOf('@'))}`;
 
 /** The same notices are saved for the header's bell (shared/scripts/bell.ts), worded the same. */
 export type NoticeKind = 'reply' | 'place-reply' | 'comment';

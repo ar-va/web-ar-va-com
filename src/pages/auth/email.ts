@@ -1,10 +1,11 @@
 // Logging in with a code sent by email (the login page's "Or use your email"). step=send: Turnstile, then a 6-digit
-// code is emailed and the address waits in a short cookie (kept out of the address bar and logs); step=verify: the
-// right code starts the same session as Telegram (auth/telegram.ts), a new account first chooses its name.
+// code and a login link are emailed (the link: auth/link.astro) and the address waits in a short cookie (kept out of
+// the address bar and logs); step=verify: the right code starts the same session as Telegram (auth/telegram.ts), a
+// new account first chooses its name.
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { normalizeEmail, safeReturnPath } from '@shared/lib/lib';
-import { acceptPendingInvite, checkLoginCode, emailAccount, requestLoginCode, startSession } from '@shared/lib/store';
+import { checkLoginCode, finishEmailLogin, requestLoginCode } from '@shared/lib/store';
 
 export const prerender = false;
 
@@ -31,7 +32,7 @@ export const POST: APIRoute = async ({ request, cookies, url, redirect }) => {
     const email = normalizeEmail(form.get('email'));
     if (!email) return back('bad=email');
     if (!await isPerson(String(form.get('cf-turnstile-response') ?? ''), request.headers.get('CF-Connecting-IP'))) return back('bad=check');
-    const sent = await requestLoginCode(email);
+    const sent = await requestLoginCode(email, (key) => `${url.origin}/auth/link?t=${key}&return=${encodeURIComponent(returnTo)}`);
     if (sent === 'failed') return back('bad=send');
     cookies.set(PENDING, email, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 900 });
     return back(sent === 'wait' ? 'code&wait' : 'code');
@@ -42,10 +43,5 @@ export const POST: APIRoute = async ({ request, cookies, url, redirect }) => {
   const checked = await checkLoginCode(email, String(form.get('code') ?? ''));
   if (checked !== 'ok') return back(`code&${checked}`);
   cookies.delete(PENDING, { path: '/' });
-  const { user, isNew } = await emailAccount(email);
-  // As after a Telegram login: an invite opened before logging in is accepted, then settings welcomes them.
-  const invited = await acceptPendingInvite(cookies, user, url.hostname);
-  await startSession(cookies, { id: user.id, name: user.name, photoUrl: null }, url.hostname);
-  const next = invited ? `${url.protocol}//music.${url.host}/settings?welcome` : returnTo;
-  return redirect(isNew ? `/auth/name?return=${encodeURIComponent(next)}` : next, 303);
+  return redirect(await finishEmailLogin(cookies, url, email, returnTo), 303);
 };

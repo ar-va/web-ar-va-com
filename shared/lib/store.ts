@@ -50,7 +50,7 @@ const SCHEMA = [
   // positive); the address, and whether they want messages by email. Codes waiting to be typed, stored as hashes.
   `CREATE TABLE IF NOT EXISTS email_accounts (email TEXT PRIMARY KEY, user_id INTEGER NOT NULL UNIQUE, messages INTEGER NOT NULL DEFAULT 1)`,
   `CREATE TABLE IF NOT EXISTS email_codes (email TEXT PRIMARY KEY, code_hash TEXT NOT NULL, expires_at INTEGER NOT NULL,
-    tries INTEGER NOT NULL DEFAULT 0, window_at INTEGER NOT NULL, sends INTEGER NOT NULL)`,
+    tries INTEGER NOT NULL DEFAULT 0, window_at INTEGER NOT NULL, sends INTEGER NOT NULL, link_hash TEXT)`,
 ];
 
 // Changes to existing tables after launch (new columns are also in the definitions above, for a fresh database). Each
@@ -58,7 +58,8 @@ const SCHEMA = [
 // edited_at got a one-off manual ALTER in October 2026.) The one-use `invites` table was replaced by invite_links on
 // 2026-10-30 and is dropped (user: fine to delete the old links).
 const COLUMNS = ['ALTER TABLE users ADD COLUMN shelf_note TEXT', 'ALTER TABLE users ADD COLUMN invited_by INTEGER', 'ALTER TABLE users ADD COLUMN shelf_request_at INTEGER', 'DROP TABLE IF EXISTS invites',
-  'ALTER TABLE users ADD COLUMN wishlist_source TEXT', 'ALTER TABLE users ADD COLUMN notifications_seen_at INTEGER'];
+  'ALTER TABLE users ADD COLUMN wishlist_source TEXT', 'ALTER TABLE users ADD COLUMN notifications_seen_at INTEGER',
+  'ALTER TABLE email_codes ADD COLUMN link_hash TEXT'];
 
 let ready: Promise<unknown> | null = null;
 
@@ -166,13 +167,44 @@ const CODE_TRIES = 5;
 // The key login codes are hashed with (loginCodeHash): codes are made and checked only by ar-va.com's Worker.
 const codeKey = () => env.TELEGRAM_BOT_TOKEN ?? '';
 
-/** Emails a new login code, unless this address already had 3 in the last 15 minutes ('failed': the email didn't go). */
-export async function requestLoginCode(email: string): Promise<'sent' | 'wait' | 'failed'> {
+/**
+ * Emails a new login code and login link (`link` turns the link's random key into its address), unless this address
+ * already had 3 in the last 15 minutes ('failed': the email didn't go). The link's key is stored hashed like the code.
+ */
+export async function requestLoginCode(email: string, link: (key: string) => string): Promise<'sent' | 'wait' | 'failed'> {
   const code = newLoginCode();
-  const row = await (await db()).prepare(LOGIN_CODE_SQL).bind(email, await loginCodeHash(code, email, codeKey()), now() + CODE_SECONDS, now())
-    .first<{ sends: number }>();
+  const key = randomToken();
+  const row = await (await db()).prepare(LOGIN_CODE_SQL)
+    .bind(email, await loginCodeHash(code, email, codeKey()), now() + CODE_SECONDS, now(), await linkHash(key)).first<{ sends: number }>();
   if (!row || row.sends > LOGIN_CODES_PER_WINDOW) return 'wait';
-  return (await sendEmail(email, loginCodeEmail(code))) ? 'sent' : 'failed';
+  return (await sendEmail(email, loginCodeEmail(code, link(key)))) ? 'sent' : 'failed';
+}
+
+// A login link's key (128 random bits: no tries to count) is looked up by its hash alone.
+const linkHash = (key: string) => loginCodeHash(key, 'link', codeKey());
+
+/** The address a login link (still valid) is for: its page shows it before the person presses Log in. */
+export async function loginLinkEmail(key: string) {
+  return (await (await db()).prepare('SELECT email FROM email_codes WHERE link_hash = ? AND expires_at > ?')
+    .bind(await linkHash(key), now()).first<{ email: string }>())?.email ?? null;
+}
+
+/** Uses a login link: once, and the code sent with it goes too. */
+export async function useLoginLink(key: string) {
+  return (await (await db()).prepare('DELETE FROM email_codes WHERE link_hash = ? AND expires_at > ? RETURNING email')
+    .bind(await linkHash(key), now()).first<{ email: string }>())?.email ?? null;
+}
+
+/**
+ * After a right code or a used login link: the account (made on first use), an invite opened before logging in, the
+ * same session as a Telegram login; returns where to go next (a new account first chooses its name).
+ */
+export async function finishEmailLogin(cookies: AstroCookies, url: URL, email: string, returnTo: string) {
+  const { user, isNew } = await emailAccount(email);
+  const invited = await acceptPendingInvite(cookies, user, url.hostname);
+  await startSession(cookies, { id: user.id, name: user.name, photoUrl: null }, url.hostname);
+  const next = invited ? `${url.protocol}//music.${url.host}/settings?welcome` : returnTo;
+  return isNew ? `/auth/name?return=${encodeURIComponent(next)}` : next;
 }
 
 /**

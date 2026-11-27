@@ -543,12 +543,12 @@ test('toEmail: a Telegram message as an email, escaped, link buttons only, foote
 test('login codes: at most 3 per address per 15 minutes, decided in the one statement that stores them', async () => {
   const { LOGIN_CODE_SQL } = await import('../lib/lib.ts');
   const db = new DatabaseSync(':memory:');
-  db.exec('CREATE TABLE email_codes (email TEXT PRIMARY KEY, code_hash TEXT NOT NULL, expires_at INTEGER NOT NULL, tries INTEGER NOT NULL DEFAULT 0, window_at INTEGER NOT NULL, sends INTEGER NOT NULL)');
-  const ask = (hash, now) => db.prepare(LOGIN_CODE_SQL).get('a@x.com', hash, now + 600, now).sends;
+  db.exec('CREATE TABLE email_codes (email TEXT PRIMARY KEY, code_hash TEXT NOT NULL, expires_at INTEGER NOT NULL, tries INTEGER NOT NULL DEFAULT 0, window_at INTEGER NOT NULL, sends INTEGER NOT NULL, link_hash TEXT)');
+  const ask = (hash, now) => db.prepare(LOGIN_CODE_SQL).get('a@x.com', hash, now + 600, now, `link-${hash}`).sends;
   assert.deepEqual([ask('h1', 1000), ask('h2', 1001), ask('h3', 1002), ask('h4', 1003), ask('h5', 1004)], [1, 2, 3, 4, 5]);
   db.prepare('UPDATE email_codes SET tries = 2').run();
-  const kept = db.prepare('SELECT code_hash, tries, expires_at FROM email_codes').get();
-  assert.deepEqual({ ...kept }, { code_hash: 'h3', tries: 2, expires_at: 1602 }); // refused ones change nothing about the code
+  const kept = db.prepare('SELECT code_hash, tries, expires_at, link_hash FROM email_codes').get();
+  assert.deepEqual({ ...kept }, { code_hash: 'h3', tries: 2, expires_at: 1602, link_hash: 'link-h3' }); // refused ones change nothing about the code or link
   assert.equal(ask('h6', 1000 + 900), 1); // a new window
   assert.deepEqual({ ...db.prepare('SELECT code_hash, tries, window_at FROM email_codes').get() }, { code_hash: 'h6', tries: 0, window_at: 1900 });
 });
@@ -574,11 +574,23 @@ test('emails follow the brand: logo, paper and card, Plex Sans, Kikyō links, Sl
   assert.match(e.html, /color:#565F89[^>]*>You’re getting this/);
   assert.doesNotMatch(e.html, /#6b7280|#d4d4d8/);
 
-  const c = loginCodeEmail('482913');
+  const c = loginCodeEmail('482913', 'https://ar-va.com/auth/link?t=x');
   assert.equal(c.subject, '482913 is your ar-va.com code');
   assert.match(c.html, /font-family:'IBM Plex Mono'[^>]*>482913</);
   assert.match(c.html, /arva-horizontal-ink-kashiwa\.png/);
   assert.match(c.text, /482913/);
   assert.match(c.text, /10 minutes/);
   assert.doesNotMatch(c.html, /Turn these emails off/); // codes always come, there's nothing to turn off
+});
+
+test('login link: the email has a Log in button to it, the code stays for typing elsewhere; addresses shown partly hidden', async () => {
+  const { loginCodeEmail, maskEmail } = await import('../lib/lib.ts');
+  const link = 'https://ar-va.com/auth/link?t=abc123&return=%2F';
+  const e = loginCodeEmail('482913', link);
+  assert.match(e.html, /<a href="https:\/\/ar-va\.com\/auth\/link\?t=abc123&amp;return=%2F"[^>]*>Log in<\/a>/);
+  assert.match(e.html, /482913/);
+  assert.match(e.text, /Log in: https:\/\/ar-va\.com\/auth\/link\?t=abc123&return=%2F/);
+  assert.match(e.text, /482913/);
+  assert.equal(maskEmail('david@example.com'), 'd•••@example.com');
+  assert.equal(maskEmail('a@x.org'), 'a•••@x.org');
 });

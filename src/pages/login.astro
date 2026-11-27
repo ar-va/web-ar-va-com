@@ -117,7 +117,7 @@ const perks = [
             <form method="post" action="/auth/email" class="flex flex-col gap-3">
               <input type="hidden" name="step" value="verify" />
               <input type="hidden" name="return" value={returnTo} />
-              <p class="text-sm text-zinc-600 dark:text-zinc-400">We sent a code to <span class="font-medium text-zinc-900 dark:text-white break-all">{pendingEmail}</span>. It works for 10 minutes. Not there? Check your spam folder.</p>
+              <p class="text-sm text-zinc-600 dark:text-zinc-400">We sent a login link and a code to <span class="font-medium text-zinc-900 dark:text-white break-all">{pendingEmail}</span>. Press the link in the email, or type the code here. Both work for 10 minutes. Not there? Check your spam folder.</p>
               <label for="email-code" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Code from the email</label>
               <input id="email-code" name="code" required inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" autofocus
                 class={`${field} font-mono text-lg tracking-[0.35em]`} />

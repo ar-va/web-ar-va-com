@@ -1,0 +1,36 @@
+---
+// Opened from the login email's "Log in" button: says whose account (partly hidden) and logs in on one press, on any
+// device. Opening the page changes nothing: mail scanners open every link in an email, and a link that logged in by
+// itself would be used up before the person saw it (or log someone into an account they didn't ask for).
+import Layout from '@shared/layouts/Layout.astro';
+import { maskEmail, safeReturnPath } from '@shared/lib/lib';
+import { finishEmailLogin, loginLinkEmail, useLoginLink } from '@shared/lib/store';
+export const prerender = false;
+
+const key = Astro.url.searchParams.get('t') ?? '';
+const returnTo = safeReturnPath(Astro.url.searchParams.get('return'), Astro.url.hostname);
+if (Astro.request.method === 'POST' && key) {
+  const email = await useLoginLink(key);
+  if (email) return Astro.redirect(await finishEmailLogin(Astro.cookies, Astro.url, email, returnTo), 303);
+}
+const email = key ? await loginLinkEmail(key) : null;
+---
+<Layout title="Log in - ARVA" noindex>
+  <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-md">
+    {email ? (
+      <>
+        <h1 class="text-3xl font-bold text-zinc-900 dark:text-white">Log in to ar-va.com</h1>
+        <p class="mt-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">As <span class="font-medium text-zinc-900 dark:text-white">{maskEmail(email)}</span>, the address the login email went to.</p>
+        <form method="post" class="mt-8">
+          <button class="btn-primary w-full">Log in</button>
+        </form>
+      </>
+    ) : (
+      <>
+        <h1 class="text-3xl font-bold text-zinc-900 dark:text-white">This link has run out</h1>
+        <p class="mt-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">Login links work once, for 10 minutes, and a newer login email replaces them.</p>
+        <a href={`/login?return=${encodeURIComponent(returnTo)}#email`} class="btn-primary mt-8">Get a new one</a>
+      </>
+    )}
+  </div>
+</Layout>
