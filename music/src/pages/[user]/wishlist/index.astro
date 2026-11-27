@@ -142,7 +142,7 @@ const notice = wishNotice(q, first) ?? (q.has('added') ? (data.items.some((i) =>
 
         {notice && <Toast>{notice}</Toast>}
         {q.has('nomsg') && (user && user.id < 0
-          ? <Toast>Reserved, but we couldn’t email you, so there won’t be reminders. Check that messages are on in <a href="/settings#account" class="underline underline-offset-4">settings</a>.</Toast>
+          ? <Toast>Reserved, but we couldn’t email you, so there won’t be reminders. Check that messages are on in <a href="/settings#your-account" class="underline underline-offset-4">settings</a>.</Toast>
           : <Toast>Reserved. Telegram didn’t let the bot message you, so there won’t be reminders. <a href={loginHref(Astro.url)} class="underline underline-offset-4">Log in again</a> and allow messages to get them.</Toast>
         )}
 

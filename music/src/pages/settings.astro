@@ -63,14 +63,14 @@ if (Astro.request.method === 'POST') {
   }
   if (action === 'name' && inbox) {
     const problem = await setName(user, form.get('name'));
-    if (!problem) return Astro.redirect('/settings?renamed#account', 303);
+    if (!problem) return Astro.redirect('/settings?renamed#your-account', 303);
     notice = problem;
     persist = true;
     Astro.response.status = 400;
   }
   if (action === 'email-messages' && inbox) {
     await setEmailMessages(user, form.get('on') === '1');
-    return Astro.redirect('/settings?messages#account', 303);
+    return Astro.redirect('/settings?messages#your-account', 303);
   }
   if (action === 'request-shelf') {
     const result = await askForShelf();
@@ -387,14 +387,14 @@ const steps = [
       </section>
     )}
 
-    <section id="account" class={`${card} scroll-mt-6`} aria-labelledby="account-heading">
+    <section id="your-account" class={`${card} scroll-mt-6`} aria-labelledby="account-heading">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div class="min-w-0">
           <h2 id="account-heading" class={cardTitle}>Your account</h2>
           {inbox ? (
             <p class="mt-1 flex items-center gap-1.5 text-sm text-zinc-500">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5v10.5H3.75zM3.75 7.5l8.25 6 8.25-6" /></svg>
-              <span class="break-all">{inbox.email}</span>, joined {since}
+              <span><span class="break-all">{inbox.email}</span>, joined {since}</span>
             </p>
           ) : (
           <p class="mt-1 flex items-center gap-1.5 text-sm text-zinc-500">

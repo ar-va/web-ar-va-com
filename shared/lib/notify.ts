@@ -5,7 +5,7 @@ import { env } from 'cloudflare:workers';
 import { sha256, toEmail } from './lib';
 
 const MAIL_FROM = 'ARVA Music <music@ar-va.com>';
-const SETTINGS = 'https://music.ar-va.com/settings#account';
+const SETTINGS = 'https://music.ar-va.com/settings#your-account';
 
 /**
  * One email through Resend's HTTP API; true if Resend took it. Without RESEND_API_KEY (local runs) it's only logged.
