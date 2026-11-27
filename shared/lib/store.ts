@@ -2,7 +2,7 @@
 import { env } from 'cloudflare:workers';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { AstroCookies } from 'astro';
-import { activeLink, commentNotices, nameKey, newLoginCode, toEmail, NOTICE_VERBS, NOTIFICATIONS_SQL, POST_COMMENTS_SQL, SHELF_THREAD, SITE_COMMENTS_SQL, seenUpTo, toSiteComment, type NoticeKind, type SiteComment, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
+import { activeLink, commentNotices, loginCodeHash, LOGIN_CODE_SQL, LOGIN_CODES_PER_WINDOW, nameKey, newLoginCode, toEmail, NOTICE_VERBS, NOTIFICATIONS_SQL, POST_COMMENTS_SQL, SHELF_THREAD, SITE_COMMENTS_SQL, seenUpTo, toSiteComment, type NoticeKind, type SiteComment, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
 import { notify, sendEmail } from './notify';
 
 // Tables are created lazily (no migration step in the deploy).
@@ -162,23 +162,18 @@ export async function startSession(cookies: AstroCookies, user: { id: number; na
 // ---- Email accounts ----
 
 const CODE_SECONDS = 600;
-const CODES_PER_WINDOW = 3;
-const CODE_WINDOW = 900;
 const CODE_TRIES = 5;
+// The key login codes are hashed with (loginCodeHash): codes are made and checked only by ar-va.com's Worker.
+const codeKey = () => env.TELEGRAM_BOT_TOKEN ?? '';
 
-/** Emails a new login code, unless this address already had 3 in the last 15 minutes. */
-export async function requestLoginCode(email: string): Promise<'sent' | 'wait'> {
-  const d = await db();
-  const row = await d.prepare('SELECT window_at, sends FROM email_codes WHERE email = ?').bind(email).first<{ window_at: number; sends: number }>();
-  const fresh = !row || row.window_at <= now() - CODE_WINDOW;
-  if (!fresh && row.sends >= CODES_PER_WINDOW) return 'wait';
+/** Emails a new login code, unless this address already had 3 in the last 15 minutes ('failed': the email didn't go). */
+export async function requestLoginCode(email: string): Promise<'sent' | 'wait' | 'failed'> {
   const code = newLoginCode();
-  await d.prepare(`INSERT INTO email_codes (email, code_hash, expires_at, tries, window_at, sends) VALUES (?1, ?2, ?3, 0, ?4, ?5)
-    ON CONFLICT (email) DO UPDATE SET code_hash = ?2, expires_at = ?3, tries = 0, window_at = ?4, sends = ?5`)
-    .bind(email, await sha256(code), now() + CODE_SECONDS, fresh ? now() : row.window_at, fresh ? 1 : row.sends + 1).run();
+  const row = await (await db()).prepare(LOGIN_CODE_SQL).bind(email, await loginCodeHash(code, email, codeKey()), now() + CODE_SECONDS, now())
+    .first<{ sends: number }>();
+  if (!row || row.sends > LOGIN_CODES_PER_WINDOW) return 'wait';
   const mail = toEmail({ text: `Your code for ar-va.com is <b>${code}</b>\n\nIt works for 10 minutes. If you didn’t ask for it, ignore this email: nobody can log in without it.` });
-  await sendEmail(email, { ...mail, subject: `${code} is your ar-va.com code` });
-  return 'sent';
+  return (await sendEmail(email, { ...mail, subject: `${code} is your ar-va.com code` })) ? 'sent' : 'failed';
 }
 
 /**
@@ -190,7 +185,7 @@ export async function checkLoginCode(email: string, code: string): Promise<'ok' 
   const row = await d.prepare('UPDATE email_codes SET tries = tries + 1 WHERE email = ? AND expires_at > ? AND tries < ? RETURNING code_hash, tries')
     .bind(email, now(), CODE_TRIES).first<{ code_hash: string; tries: number }>();
   if (!row) return 'expired';
-  if (/^\d{6}$/.test(code.trim()) && row.code_hash === await sha256(code.trim())) {
+  if (/^\d{6}$/.test(code.trim()) && row.code_hash === await loginCodeHash(code.trim(), email, codeKey())) {
     await d.prepare('DELETE FROM email_codes WHERE email = ?').bind(email).run();
     return 'ok';
   }
@@ -200,8 +195,9 @@ export async function checkLoginCode(email: string, code: string): Promise<'ok' 
 const NAME_MAX = 64;
 const cleanName = (s: unknown) => (typeof s === 'string' ? s.replace(/\s+/g, ' ').trim() : '');
 
-/** The account for a checked address, made on first use (next negative id; the name until they choose one: the
- *  part of the address before @). */
+/** The account for a checked address, made on first use (next negative id). Until they choose a name (auth/name), a
+ *  neutral one: nothing of the address is ever shown. */
+const NEW_NAME = 'Newcomer';
 export async function emailAccount(email: string): Promise<{ user: User; isNew: boolean }> {
   const d = await db();
   const find = () => d.prepare('SELECT users.* FROM email_accounts JOIN users ON users.id = email_accounts.user_id WHERE email = ?').bind(email).first<User>();
@@ -212,7 +208,7 @@ export async function emailAccount(email: string): Promise<{ user: User; isNew: 
     try {
       // One transaction: an address claimed meanwhile (or the id taken) rolls both back, and the loop looks again.
       await d.batch([
-        d.prepare('INSERT INTO users (id, name, created_at) VALUES (?, ?, ?)').bind(id, email.split('@')[0].slice(0, NAME_MAX), now()),
+        d.prepare('INSERT INTO users (id, name, created_at) VALUES (?, ?, ?)').bind(id, NEW_NAME, now()),
         d.prepare('INSERT INTO email_accounts (email, user_id) VALUES (?, ?)').bind(email, id),
       ]);
       return { user: (await find())!, isNew: true };

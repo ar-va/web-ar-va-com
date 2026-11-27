@@ -5,7 +5,7 @@ what they have in common lives in `shared/`.
 
 | Folder | Site | Cloudflare Worker |
 | --- | --- | --- |
-| `/` (`src/`) | **ar-va.com**: home, blog (written in Obsidian), and the Telegram login all sites use | `web-ar-va-com` |
+| `/` (`src/`) | **ar-va.com**: home, blog (written in Obsidian), and the login all sites use (Telegram or a code by email) | `web-ar-va-com` |
 | `music/` | **music.ar-va.com**: record shelves from Discogs, comments, invites | `web-music-ar-va-com` |
 | `anon/` | **anon.ar-va.com**: anonymous messages, with its own database (see `anon/README.md`) | `web-anon-ar-va-com` |
 | `brand/` | **brand.ar-va.com**: the design language (brand rules, tokens, logos) as a page and as plain files for AI tools; static, built from the kit in the same folder | `web-brand-ar-va-com` |

@@ -539,3 +539,26 @@ test('toEmail: a Telegram message as an email, escaped, link buttons only, foote
   assert.equal(toEmail({ text: 'You reserved this for Artur. Nobody else can reserve it now.' }).subject, 'You reserved this for Artur');
   assert.match(toEmail({ text: 'Tracks\n<blockquote expandable>1. A</blockquote>' }).html, /<blockquote[^>]*>1\. A<\/blockquote>/);
 });
+
+test('login codes: at most 3 per address per 15 minutes, decided in the one statement that stores them', async () => {
+  const { LOGIN_CODE_SQL } = await import('../lib/lib.ts');
+  const db = new DatabaseSync(':memory:');
+  db.exec('CREATE TABLE email_codes (email TEXT PRIMARY KEY, code_hash TEXT NOT NULL, expires_at INTEGER NOT NULL, tries INTEGER NOT NULL DEFAULT 0, window_at INTEGER NOT NULL, sends INTEGER NOT NULL)');
+  const ask = (hash, now) => db.prepare(LOGIN_CODE_SQL).get('a@x.com', hash, now + 600, now).sends;
+  assert.deepEqual([ask('h1', 1000), ask('h2', 1001), ask('h3', 1002), ask('h4', 1003), ask('h5', 1004)], [1, 2, 3, 4, 5]);
+  db.prepare('UPDATE email_codes SET tries = 2').run();
+  const kept = db.prepare('SELECT code_hash, tries, expires_at FROM email_codes').get();
+  assert.deepEqual({ ...kept }, { code_hash: 'h3', tries: 2, expires_at: 1602 }); // refused ones change nothing about the code
+  assert.equal(ask('h6', 1000 + 900), 1); // a new window
+  assert.deepEqual({ ...db.prepare('SELECT code_hash, tries, window_at FROM email_codes').get() }, { code_hash: 'h6', tries: 0, window_at: 1900 });
+});
+
+test('loginCodeHash: keyed, per address, so a copy of the database can’t be reversed into codes', async () => {
+  const { loginCodeHash, sha256 } = await import('../lib/lib.ts');
+  const h = await loginCodeHash('123456', 'a@x.com', 'k1');
+  assert.match(h, /^[0-9a-f]{64}$/);
+  assert.equal(h, await loginCodeHash('123456', 'a@x.com', 'k1'));
+  assert.notEqual(h, await sha256('123456'));
+  assert.notEqual(h, await loginCodeHash('123456', 'a@x.com', 'k2'));
+  assert.notEqual(h, await loginCodeHash('123456', 'b@x.com', 'k1'));
+});

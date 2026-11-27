@@ -48,7 +48,7 @@ export const wishAnchor = (key: string) => `wish-${wishSlug(key)}`;
 
 /** What happened, after a form on the wishlist or a record's page (?reserved, ?taken…), for a Notice. */
 export function wishNotice(q: URLSearchParams, ownerFirst: string) {
-  if (q.has('reserved')) return 'Reserved. You’ll find it in your settings too, and the bot will remind you on Telegram.';
+  if (q.has('reserved')) return 'Reserved. You’ll find it in your settings too, and you’ll get reminders about it.';
   if (q.has('taken')) return 'Someone reserved it a moment ago. Pick another?';
   if (q.has('limit')) return `You have ${RESERVATIONS_MAX} reservations open. Give or cancel one first.`;
   if (q.has('gifted')) return `Thank you! ${ownerFirst} has been told it’s from you.`;
@@ -190,7 +190,7 @@ export async function removeWish(user: User, id: number) {
 
 /**
  * Items that left the list (taken off it, or now on the shelf): their open reservations are deleted and each reserver
- * gets a Telegram message, so nobody buys a gift that's no longer wanted. Gifted reservations stay (they're history).
+ * gets a message (Telegram or email), so nobody buys a gift that's no longer wanted. Gifted reservations stay (they're history).
  */
 export async function closeReservations(owner: { id: number; name: string }, items: { key: string; title: string }[], why: 'removed' | 'owned') {
   if (!items.length) return;
@@ -304,7 +304,7 @@ export async function myReservations(user: User) {
 
 // ---- Reminders (the daily cron, music/src/worker.ts) ----
 
-/** Sends today's reminders on Telegram, each with "I gave it" / "Cancel reservation" buttons (api/telegram.ts). */
+/** Sends today's reminders (Telegram, or email for email accounts: notify), each with "I gave it" / "Cancel reservation" buttons (api/telegram.ts). */
 export async function sendReminders(origin: string, today = new Date().toISOString().slice(0, 10)) {
   const d = await db();
   const { results } = await d.prepare(`${reservationsSql} AND (w.data IS NOT NULL OR c.data IS NOT NULL)`).all<ReservationRow>();

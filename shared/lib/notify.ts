@@ -8,15 +8,20 @@ const MAIL_FROM = 'ARVA Music <music@ar-va.com>';
 const SETTINGS = 'https://music.ar-va.com/settings#your-account';
 
 /**
- * One email through Resend's HTTP API; true if Resend took it. Without RESEND_API_KEY (local runs) it's only logged.
+ * One email through Resend's HTTP API; true if Resend took it. Without RESEND_API_KEY it fails (logged without the
+ * email, which may hold a login code); local runs set EMAIL_LOG=1 in .dev.vars to see emails in the log instead.
  * shortcut: Resend's free plan sends 100 emails a day (3,000 a month), login codes and messages together; past that,
  * sends are refused and logged. Upgrade to Resend Pro ($20/month) or Cloudflare Workers Paid's Email Sending then.
  */
 export async function sendEmail(to: string, mail: { subject: string; html: string; text: string }) {
-  const key = (env as { RESEND_API_KEY?: string }).RESEND_API_KEY;
-  if (!key) {
+  const { RESEND_API_KEY: key, EMAIL_LOG } = env as { RESEND_API_KEY?: string; EMAIL_LOG?: string };
+  if (!key && EMAIL_LOG === '1') {
     console.log(`email (not sent: no RESEND_API_KEY) to ${to}\nSubject: ${mail.subject}\n${mail.text}`);
     return true;
+  }
+  if (!key) {
+    console.error('email not sent: RESEND_API_KEY is missing on this Worker');
+    return false;
   }
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',

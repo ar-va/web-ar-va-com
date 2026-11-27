@@ -11,3 +11,5 @@ TOKEN_KEY=change-me
 # YOUTUBE_API_KEY=
 # Messages by email for email accounts: Resend (resend.com, sending access to ar-va.com). Without it, only logged.
 # RESEND_API_KEY=
+# Local runs without a key: write emails to the log instead of failing.
+EMAIL_LOG=1

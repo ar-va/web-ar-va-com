@@ -23,6 +23,7 @@ const pendingEmail = Astro.cookies.get('login_email')?.value;
 const codeStep = q.has('code') && !!pendingEmail;
 const emailNote = q.get('bad') === 'email' ? 'That doesn’t look like an email address.'
   : q.get('bad') === 'check' ? 'The quick check that you’re a person didn’t go through. Please try again.'
+  : q.get('bad') === 'send' ? 'We couldn’t send the email just now. Try again later, or log in with Telegram above.'
   : q.has('wait') ? 'You asked for a few codes just now: use the newest one, or ask again in 15 minutes.'
   : q.has('wrong') ? 'That code isn’t right. Try again.'
   : q.has('expired') ? 'That code has run out or was tried too many times. Ask for a new one.'

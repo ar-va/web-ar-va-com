@@ -47,7 +47,7 @@ const replies = (id: number) => comments.filter((c) => c.parent_id === id);
   </form>
 ) : (
   <div class="flex flex-col gap-3">
-    <p class="text-sm text-zinc-500">Log in with Telegram to leave a comment.</p>
+    <p class="text-sm text-zinc-500">Log in to leave a comment, with Telegram or your email.</p>
     <slot name="login" />
   </div>
 )}

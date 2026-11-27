@@ -570,6 +570,28 @@ export function newLoginCode() {
   return String(n[0] % 1_000_000).padStart(6, '0');
 }
 
+export const LOGIN_CODES_PER_WINDOW = 3;
+export const LOGIN_CODE_WINDOW = 900;
+/**
+ * Stores a new login code for an address (bound: email, code hash, expires at, now) and returns how many codes it got
+ * in the current 15-minute window. Past 3, the stored code stays as it was and the caller sends nothing. One
+ * statement on the primary: parallel requests, or a read from a replica that hasn't seen the last one, can't slip past.
+ */
+const FRESH = `window_at <= ?4 - ${LOGIN_CODE_WINDOW}`;
+const SENDS = `(${FRESH} OR sends < ${LOGIN_CODES_PER_WINDOW})`;
+export const LOGIN_CODE_SQL = `INSERT INTO email_codes (email, code_hash, expires_at, tries, window_at, sends) VALUES (?1, ?2, ?3, 0, ?4, 1)
+  ON CONFLICT (email) DO UPDATE SET
+    code_hash = CASE WHEN ${SENDS} THEN ?2 ELSE code_hash END,
+    expires_at = CASE WHEN ${SENDS} THEN ?3 ELSE expires_at END,
+    tries = CASE WHEN ${SENDS} THEN 0 ELSE tries END,
+    sends = CASE WHEN ${FRESH} THEN 1 ELSE sends + 1 END,
+    window_at = CASE WHEN ${FRESH} THEN ?4 ELSE window_at END
+  RETURNING sends`;
+
+/** A login code as stored: hashed with a server secret and the address, so a copy of the database (10^6 codes) can't
+ *  be turned back into codes. */
+export const loginCodeHash = (code: string, email: string, key: string) => sha256(`${key}\n${email}\n${code}`);
+
 const unescapeHtml = (s: string) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
 const KIKYO = '#4A45B5';
 

@@ -3,6 +3,8 @@
 TELEGRAM_BOT_TOKEN=123456:bot-token-from-botfather
 # Email login: Resend (resend.com, API key with sending access to ar-va.com). Without it, emails are only logged.
 # RESEND_API_KEY=
+# Local runs without a key: write emails (and login codes) to the log instead of failing.
+EMAIL_LOG=1
 # Cloudflare Turnstile on the email form. Locally its published test keys (they always pass):
 TURNSTILE_SITE_KEY=1x00000000000000000000AA
 TURNSTILE_SECRET=1x0000000000000000000000000000000AA

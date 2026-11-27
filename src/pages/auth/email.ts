@@ -32,6 +32,7 @@ export const POST: APIRoute = async ({ request, cookies, url, redirect }) => {
     if (!email) return back('bad=email');
     if (!await isPerson(String(form.get('cf-turnstile-response') ?? ''), request.headers.get('CF-Connecting-IP'))) return back('bad=check');
     const sent = await requestLoginCode(email);
+    if (sent === 'failed') return back('bad=send');
     cookies.set(PENDING, email, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', maxAge: 900 });
     return back(sent === 'wait' ? 'code&wait' : 'code');
   }
