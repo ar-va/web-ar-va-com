@@ -2,7 +2,7 @@
 import { env } from 'cloudflare:workers';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { AstroCookies } from 'astro';
-import { activeLink, commentNotices, loginCodeHash, LOGIN_CODE_SQL, LOGIN_CODES_PER_WINDOW, nameKey, newLoginCode, toEmail, NOTICE_VERBS, NOTIFICATIONS_SQL, POST_COMMENTS_SQL, SHELF_THREAD, SITE_COMMENTS_SQL, seenUpTo, toSiteComment, type NoticeKind, type SiteComment, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
+import { activeLink, commentNotices, loginCodeEmail, loginCodeHash, LOGIN_CODE_SQL, LOGIN_CODES_PER_WINDOW, nameKey, newLoginCode, NOTICE_VERBS, NOTIFICATIONS_SQL, POST_COMMENTS_SQL, SHELF_THREAD, SITE_COMMENTS_SQL, seenUpTo, toSiteComment, type NoticeKind, type SiteComment, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
 import { notify, sendEmail } from './notify';
 
 // Tables are created lazily (no migration step in the deploy).
@@ -172,8 +172,7 @@ export async function requestLoginCode(email: string): Promise<'sent' | 'wait' |
   const row = await (await db()).prepare(LOGIN_CODE_SQL).bind(email, await loginCodeHash(code, email, codeKey()), now() + CODE_SECONDS, now())
     .first<{ sends: number }>();
   if (!row || row.sends > LOGIN_CODES_PER_WINDOW) return 'wait';
-  const mail = toEmail({ text: `Your code for ar-va.com is <b>${code}</b>\n\nIt works for 10 minutes. If you didn’t ask for it, ignore this email: nobody can log in without it.` });
-  return (await sendEmail(email, { ...mail, subject: `${code} is your ar-va.com code` })) ? 'sent' : 'failed';
+  return (await sendEmail(email, loginCodeEmail(code))) ? 'sent' : 'failed';
 }
 
 /**

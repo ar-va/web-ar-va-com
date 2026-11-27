@@ -39,6 +39,7 @@ Files are in `logo/`. Never redraw or retype the logo; always use the files. **T
 | `arva-horizontal-ink-kashiwa.svg` / `-washi-kashiwa.svg` | **Default on screen** (site header): Kashiwa leaf, wordmark in `--text` |
 | `arva-stacked-ink-kashiwa.svg` / `-washi-kashiwa.svg` | Square spaces on screen, two-tone |
 | `arva-mark-small-ink-kashiwa.svg` / `-washi-kashiwa.svg` | Leaf alone below 32 px on screen (phone header) |
+| `arva-horizontal-ink-kashiwa.png` (in `shared/public/brand/`, 218 × 60, transparent) | Emails: the two-tone logo shown at 109 × 30 (Gmail and Outlook don't show SVG) |
 | `favicon.svg` | Browser favicon: the Kashiwa leaf, switching to mint on dark tabs |
 | `../avatars/arva-avatar-{full,wordmark,leaf}-{scheme}.svg` / `.png` | Profile pictures (1:1, 1024 px PNG): full logo (stacked), wordmark or leaf on a solid ground. Schemes: `paper` (Kashiwa leaf, ink), `night` (mint, washi), `ink` (mint, paper), `kashiwa` / `kikyo` (all paper), `kikyo-light` (Kikyō's dark-theme value, all ink). Sized to keep the clear space and to survive a circle crop. Prefer `full-paper` / `full-night`; the leaf alone where the name shows next to it anyway |
 
@@ -247,6 +248,11 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 
 ## Changelog
 
+- **2026-11-27 (emails):** the site's emails (login codes, comment and reservation messages) use the brand: paper page,
+  the two-tone logo as a PNG, the message in a white card with `--line`, IBM Plex Sans (the email app's own sans-serif
+  where it doesn't load web fonts), Ink text, Slate footer and quotes, Kikyō links and buttons, the login code in IBM
+  Plex Mono on Mist, left-aligned like the text. Light values only (email apps can't read the tokens). No emoji in
+  messages (the gift message's 🎁 removed).
 - **2026-11-21 (facts separator):** the small leaf between facts is the secondary text grey (`zinc-500`), no longer
   Kashiwa: in green it was the loudest thing in the line and competed with the artist's name above it.
 - **2026-11-20 (logo names):** the two-tone and green logo files named after Kashiwa: `-moss.svg` →

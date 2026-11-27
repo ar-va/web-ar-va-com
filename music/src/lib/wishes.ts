@@ -270,7 +270,7 @@ export async function markGifted(ownerId: number, item: string, giver: { id: num
   const title = await itemTitle(ownerId, item);
   await notify([{
     chatId: ownerId,
-    text: `<b>${escapeHtml(giver.name)}</b> gave you <b>${escapeHtml(title)}</b> 🎁${item.startsWith('d:') ? '\n\nAdd it to your collection on Discogs, and take it off your wantlist.' : ''}`,
+    text: `<b>${escapeHtml(giver.name)}</b> gave you <b>${escapeHtml(title)}</b>${item.startsWith('d:') ? '\n\nAdd it to your collection on Discogs, and take it off your wantlist.' : ''}`,
   }]);
   return true;
 }

@@ -593,12 +593,28 @@ export const LOGIN_CODE_SQL = `INSERT INTO email_codes (email, code_hash, expire
 export const loginCodeHash = (code: string, email: string, key: string) => sha256(`${key}\n${email}\n${code}`);
 
 const unescapeHtml = (s: string) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
-const KIKYO = '#4A45B5';
+// The brand's light tokens (brand/arva-tokens.css) as plain values: email apps can't read CSS variables. Plex fonts
+// where the app loads web fonts (Apple Mail), its own sans-serif elsewhere (Gmail, Outlook). The logo is a PNG:
+// Gmail and Outlook don't show SVG.
+const MAIL = { paper: '#FDFDFB', line: '#D8DBE6', text: '#1F2335', slate: '#565F89', mist: '#F1F2F6', kikyo: '#4A45B5' };
+const MAIL_FONT = `'IBM Plex Sans',-apple-system,'Segoe UI',sans-serif`;
+const MAIL_LOGO = 'https://music.ar-va.com/brand/arva-horizontal-ink-kashiwa.png';
+
+/** Paper page, the two-tone logo, the message in a white card with the line colour, then the Slate footer (if any). */
+function emailFrame(body: string, footer: string | null) {
+  return '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">'
+    + `<div style="background:${MAIL.paper};padding:32px 16px;font-family:${MAIL_FONT};color:${MAIL.text}"><div style="max-width:560px;margin:0 auto">`
+    + `<img src="${MAIL_LOGO}" alt="ARVA" width="109" height="30" style="display:block;margin:0 4px 20px;border:0">`
+    + `<div style="background:#FFFFFF;border:1px solid ${MAIL.line};border-radius:24px;padding:28px;font-size:17px;line-height:1.6">${body}</div>`
+    + (footer ? `<p style="margin:20px 4px 0;color:${MAIL.slate};font-size:14px;line-height:1.5">${footer}</p>` : '')
+    + '</div></div>';
+}
 
 /**
- * A message written for Telegram (its HTML: <b>, <i>, <a href>, <blockquote>, line breaks) as an email: subject = the
- * first sentence, the cover photo, the link buttons as buttons (bot-only buttons can't work in email: every message
- * also links to the page that has the same controls), and with `settingsUrl` a footer to turn messages off.
+ * A message written for Telegram (its HTML: <b>, <i>, <a href>, <blockquote>, line breaks) as an email in the brand's
+ * frame: subject = the first sentence, the cover photo, the link buttons as Kikyō buttons (bot-only buttons can't work
+ * in email: every message also links to the page that has the same controls), and with `settingsUrl` a footer to turn
+ * messages off.
  */
 export function toEmail(m: { text: string; buttons?: ({ text: string; url: string } | { text: string; callback_data: string })[][]; photo?: string | null },
   settingsUrl: string | null = null) {
@@ -606,15 +622,26 @@ export function toEmail(m: { text: string; buttons?: ({ text: string; url: strin
   const first = plain(m.text).split('\n')[0].split(/: |\. /)[0].replace(/[.:]+$/, '').trim();
   const subject = first.length > 80 ? `${first.slice(0, 79)}…` : first;
   const links = (m.buttons ?? []).flat().filter((b): b is { text: string; url: string } => 'url' in b && /^https:\/\//.test(b.url));
-  const button = (b: { text: string; url: string }) => `<a href="${escapeHtml(b.url)}" style="display:inline-block;margin:4px 6px 4px 0;padding:10px 18px;border-radius:999px;background:${KIKYO};color:#ffffff;text-decoration:none;font-weight:600">${escapeHtml(b.text)}</a>`;
-  const footer = settingsUrl && `<p style="margin-top:28px;color:#6b7280;font-size:13px">You’re getting this because you have an account on music.ar-va.com. <a href="${escapeHtml(settingsUrl)}" style="color:#6b7280">Turn these emails off</a>.</p>`;
-  const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:16px;line-height:1.5;color:#1F2335;max-width:560px">`
-    + (m.photo?.startsWith('https://') ? `<img src="${escapeHtml(m.photo)}" alt="" width="240" style="display:block;width:240px;max-width:100%;border-radius:8px;margin-bottom:16px">` : '')
-    + `<p>${m.text.replace(/<blockquote[^>]*>/g, '<blockquote style="margin:8px 0;padding-left:12px;border-left:3px solid #d4d4d8">').replace(/\n/g, '<br>')}</p>`
-    + (links.length ? `<p>${links.map(button).join(' ')}</p>` : '') + (footer || '') + '</div>';
+  const button = (b: { text: string; url: string }) => `<a href="${escapeHtml(b.url)}" style="display:inline-block;margin:4px 6px 4px 0;padding:10px 18px;border-radius:999px;background:${MAIL.kikyo};color:#FFFFFF;text-decoration:none;font-size:16px;font-weight:600">${escapeHtml(b.text)}</a>`;
+  const body = (m.photo?.startsWith('https://') ? `<img src="${escapeHtml(m.photo)}" alt="" width="240" style="display:block;width:240px;max-width:100%;border-radius:8px;margin-bottom:20px">` : '')
+    + `<p style="margin:0">${m.text
+      .replace(/<a href="([^"]*)">/g, `<a href="$1" style="color:${MAIL.kikyo};text-decoration:underline">`)
+      .replace(/<blockquote[^>]*>/g, `<blockquote style="margin:8px 0;padding-left:12px;border-left:3px solid ${MAIL.line};color:${MAIL.slate}">`)
+      .replace(/\n/g, '<br>')}</p>`
+    + (links.length ? `<p style="margin:20px 0 0">${links.map(button).join(' ')}</p>` : '');
+  const footer = settingsUrl && `You’re getting this because you have an account on music.ar-va.com. <a href="${escapeHtml(settingsUrl)}" style="color:${MAIL.slate}">Turn these emails off</a>.`;
   const text = [plain(m.text), links.map((b) => `${b.text}: ${b.url}`).join('\n'),
     settingsUrl && `You’re getting this because you have an account on music.ar-va.com. Turn these emails off: ${settingsUrl}`].filter(Boolean).join('\n\n');
-  return { subject, html, text };
+  return { subject, html: emailFrame(body, footer), text };
+}
+
+/** The login code email: the code alone on a Mist box in Plex Mono, left-aligned with the text (the brand's rule). */
+export function loginCodeEmail(code: string) {
+  const after = 'It works for 10 minutes. If you didn’t ask for it, ignore this email: nobody can log in without it.';
+  const body = '<p style="margin:0">Your code for ar-va.com:</p>'
+    + `<p style="margin:16px 0;padding:16px 20px;background:${MAIL.mist};border-radius:16px;font-family:'IBM Plex Mono',Menlo,monospace;font-size:32px;letter-spacing:0.25em;color:${MAIL.text}">${code}</p>`
+    + `<p style="margin:0">${after}</p>`;
+  return { subject: `${code} is your ar-va.com code`, html: emailFrame(body, null), text: `Your code for ar-va.com: ${code}\n\n${after}` };
 }
 
 /** The same notices are saved for the header's bell (shared/scripts/bell.ts), worded the same. */

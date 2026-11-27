@@ -534,7 +534,7 @@ test('toEmail: a Telegram message as an email, escaped, link buttons only, foote
   assert.match(e.text, /Nice <i>/);
   assert.doesNotMatch(e.text, /<b>/);
   assert.doesNotMatch(toEmail(m, null).html, /settings#account/);
-  assert.doesNotMatch(toEmail({ ...m, photo: 'http://x/y.jpg' }).html, /<img/);
+  assert.doesNotMatch(toEmail({ ...m, photo: 'http://x/y.jpg' }).html, /<img[^>]+x\/y\.jpg/); // only https photos
   assert.match(toEmail({ ...m, photo: 'https://i.discogs.com/y.jpg' }).html, /<img[^>]+src="https:\/\/i\.discogs\.com\/y\.jpg"/);
   assert.equal(toEmail({ text: 'You reserved this for Artur. Nobody else can reserve it now.' }).subject, 'You reserved this for Artur');
   assert.match(toEmail({ text: 'Tracks\n<blockquote expandable>1. A</blockquote>' }).html, /<blockquote[^>]*>1\. A<\/blockquote>/);
@@ -561,4 +561,24 @@ test('loginCodeHash: keyed, per address, so a copy of the database can’t be re
   assert.notEqual(h, await sha256('123456'));
   assert.notEqual(h, await loginCodeHash('123456', 'a@x.com', 'k2'));
   assert.notEqual(h, await loginCodeHash('123456', 'b@x.com', 'k1'));
+});
+
+test('emails follow the brand: logo, paper and card, Plex Sans, Kikyō links, Slate footer; the login code in Plex Mono', async () => {
+  const { toEmail, loginCodeEmail } = await import('../lib/lib.ts');
+  const e = toEmail({ text: '<b>Maya</b> replied:\n\nHi\n\n<a href="https://music.ar-va.com/a/1#comment-5">Open the comment</a>' }, 'https://music.ar-va.com/settings#your-account');
+  assert.match(e.html, /<img[^>]+src="https:\/\/music\.ar-va\.com\/brand\/arva-horizontal-ink-kashiwa\.png"[^>]+alt="ARVA"/);
+  assert.match(e.html, /background:#FDFDFB/);
+  assert.match(e.html, /border:1px solid #D8DBE6/);
+  assert.match(e.html, /font-family:'IBM Plex Sans'/);
+  assert.match(e.html, /<a href="https:\/\/music\.ar-va\.com\/a\/1#comment-5" style="color:#4A45B5[^"]*">Open the comment<\/a>/);
+  assert.match(e.html, /color:#565F89[^>]*>You’re getting this/);
+  assert.doesNotMatch(e.html, /#6b7280|#d4d4d8/);
+
+  const c = loginCodeEmail('482913');
+  assert.equal(c.subject, '482913 is your ar-va.com code');
+  assert.match(c.html, /font-family:'IBM Plex Mono'[^>]*>482913</);
+  assert.match(c.html, /arva-horizontal-ink-kashiwa\.png/);
+  assert.match(c.text, /482913/);
+  assert.match(c.text, /10 minutes/);
+  assert.doesNotMatch(c.html, /Turn these emails off/); // codes always come, there's nothing to turn off
 });
