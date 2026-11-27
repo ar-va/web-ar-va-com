@@ -504,3 +504,38 @@ test('All comments (admin): newest 50 read by id without a sort, links only wher
   assert.deepEqual(view({ ...c, instance_id: 7, owner: null, shelf: '', record: null }), ['a removed record, a removed shelf', null, false]);
   assert.deepEqual(view({ ...c, post: 'my post' }), ['the blog post my post', 'https://ar-va.com/blog/my%20post#comment-5', false]);
 });
+
+test('normalizeEmail: one form per address, nonsense refused', async () => {
+  const { normalizeEmail } = await import('../lib/lib.ts');
+  assert.equal(normalizeEmail('  David@Example.COM '), 'david@example.com');
+  for (const bad of ['a@b', 'a b@c.d', '@c.d', 'a@@c.d', 'a@c.d.', `${'a'.repeat(300)}@c.d`, 42, null, '']) assert.equal(normalizeEmail(bad), null, String(bad));
+});
+
+test('newLoginCode: six digits, varied', async () => {
+  const { newLoginCode } = await import('../lib/lib.ts');
+  const codes = Array.from({ length: 200 }, () => newLoginCode());
+  assert.ok(codes.every((c) => /^\d{6}$/.test(c)), codes.find((c) => !/^\d{6}$/.test(c)));
+  assert.ok(new Set(codes).size > 150);
+});
+
+test('toEmail: a Telegram message as an email, escaped, link buttons only, footer when asked', async () => {
+  const { toEmail } = await import('../lib/lib.ts');
+  const m = {
+    text: '<b>Maya</b> commented on <b>Blackstar &amp; co</b>:\n\nNice &lt;i&gt;\n\n<a href="https://music.ar-va.com/a/1#comment-5">Open the comment</a>',
+    buttons: [[{ text: 'Open', url: 'https://music.ar-va.com/a/1' }, { text: 'I gave it', callback_data: 'gift:1:d:2' }]],
+  };
+  const e = toEmail(m, 'https://music.ar-va.com/settings#account');
+  assert.equal(e.subject, 'Maya commented on Blackstar & co');
+  assert.match(e.html, /Nice &lt;i&gt;/);
+  assert.match(e.html, /href="https:\/\/music\.ar-va\.com\/a\/1"/);
+  assert.doesNotMatch(e.html, /I gave it/);
+  assert.match(e.html, /settings#account/);
+  assert.match(e.text, /Open the comment: https:\/\/music\.ar-va\.com\/a\/1#comment-5/);
+  assert.match(e.text, /Nice <i>/);
+  assert.doesNotMatch(e.text, /<b>/);
+  assert.doesNotMatch(toEmail(m, null).html, /settings#account/);
+  assert.doesNotMatch(toEmail({ ...m, photo: 'http://x/y.jpg' }).html, /<img/);
+  assert.match(toEmail({ ...m, photo: 'https://i.discogs.com/y.jpg' }).html, /<img[^>]+src="https:\/\/i\.discogs\.com\/y\.jpg"/);
+  assert.equal(toEmail({ text: 'You reserved this for Artur. Nobody else can reserve it now.' }).subject, 'You reserved this for Artur');
+  assert.match(toEmail({ text: 'Tracks\n<blockquote expandable>1. A</blockquote>' }).html, /<blockquote[^>]*>1\. A<\/blockquote>/);
+});

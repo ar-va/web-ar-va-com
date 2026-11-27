@@ -554,6 +554,47 @@ export function commentNotices(c: { authorId: number; authorName: string; ownerI
   return out;
 }
 
+// ---- Email accounts (log in with a code; messages by email) ----
+
+/** An email address in one form (trimmed, lower-case), or null when it can't be one. */
+export function normalizeEmail(s: unknown) {
+  if (typeof s !== 'string') return null;
+  const e = s.trim().toLowerCase();
+  return e.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@.]+$/.test(e) ? e : null;
+}
+
+/** A 6-digit login code, every code equally likely (draws past the last whole million are thrown away). */
+export function newLoginCode() {
+  const n = new Uint32Array(1);
+  do crypto.getRandomValues(n); while (n[0] >= 4_294_000_000);
+  return String(n[0] % 1_000_000).padStart(6, '0');
+}
+
+const unescapeHtml = (s: string) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+const KIKYO = '#4A45B5';
+
+/**
+ * A message written for Telegram (its HTML: <b>, <i>, <a href>, <blockquote>, line breaks) as an email: subject = the
+ * first sentence, the cover photo, the link buttons as buttons (bot-only buttons can't work in email: every message
+ * also links to the page that has the same controls), and with `settingsUrl` a footer to turn messages off.
+ */
+export function toEmail(m: { text: string; buttons?: ({ text: string; url: string } | { text: string; callback_data: string })[][]; photo?: string | null },
+  settingsUrl: string | null = null) {
+  const plain = (html: string) => unescapeHtml(html.replace(/<a href="([^"]*)">([^<]*)<\/a>/g, '$2: $1').replace(/<[^>]+>/g, ''));
+  const first = plain(m.text).split('\n')[0].split(/: |\. /)[0].replace(/[.:]+$/, '').trim();
+  const subject = first.length > 80 ? `${first.slice(0, 79)}…` : first;
+  const links = (m.buttons ?? []).flat().filter((b): b is { text: string; url: string } => 'url' in b && /^https:\/\//.test(b.url));
+  const button = (b: { text: string; url: string }) => `<a href="${escapeHtml(b.url)}" style="display:inline-block;margin:4px 6px 4px 0;padding:10px 18px;border-radius:999px;background:${KIKYO};color:#ffffff;text-decoration:none;font-weight:600">${escapeHtml(b.text)}</a>`;
+  const footer = settingsUrl && `<p style="margin-top:28px;color:#6b7280;font-size:13px">You’re getting this because you have an account on music.ar-va.com. <a href="${escapeHtml(settingsUrl)}" style="color:#6b7280">Turn these emails off</a>.</p>`;
+  const html = `<div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:16px;line-height:1.5;color:#1F2335;max-width:560px">`
+    + (m.photo?.startsWith('https://') ? `<img src="${escapeHtml(m.photo)}" alt="" width="240" style="display:block;width:240px;max-width:100%;border-radius:8px;margin-bottom:16px">` : '')
+    + `<p>${m.text.replace(/<blockquote[^>]*>/g, '<blockquote style="margin:8px 0;padding-left:12px;border-left:3px solid #d4d4d8">').replace(/\n/g, '<br>')}</p>`
+    + (links.length ? `<p>${links.map(button).join(' ')}</p>` : '') + (footer || '') + '</div>';
+  const text = [plain(m.text), links.map((b) => `${b.text}: ${b.url}`).join('\n'),
+    settingsUrl && `You’re getting this because you have an account on music.ar-va.com. Turn these emails off: ${settingsUrl}`].filter(Boolean).join('\n\n');
+  return { subject, html, text };
+}
+
 /** The same notices are saved for the header's bell (shared/scripts/bell.ts), worded the same. */
 export type NoticeKind = 'reply' | 'place-reply' | 'comment';
 export const NOTICE_VERBS: Record<NoticeKind, string> = { reply: 'replied to your comment on', 'place-reply': 'replied to a comment on', comment: 'commented on' };
