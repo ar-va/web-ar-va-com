@@ -46,8 +46,9 @@ const songs = tracks.filter((t) => !t.heading);
     {item ? (
       <>
         {notice && <Toast>{notice}</Toast>}
-        {Astro.url.searchParams.has('nomsg') && (
-          <Toast>Reserved. Telegram didn’t let the bot message you, so there won’t be reminders. <a href={loginHref(Astro.url)} class="underline underline-offset-4">Log in again</a> and allow messages to get them.</Toast>
+        {Astro.url.searchParams.has('nomsg') && (user && user.id < 0
+          ? <Toast>Reserved, but we couldn’t email you, so there won’t be reminders. Check that messages are on in <a href="/settings#account" class="underline underline-offset-4">settings</a>.</Toast>
+          : <Toast>Reserved. Telegram didn’t let the bot message you, so there won’t be reminders. <a href={loginHref(Astro.url)} class="underline underline-offset-4">Log in again</a> and allow messages to get them.</Toast>
         )}
         <div class="!max-w-none">
           <RecordHero record={item} artist={item.artist} title={item.title} released={item.year ? String(item.year) : ''} genres={item.genres}

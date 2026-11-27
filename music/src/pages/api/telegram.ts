@@ -18,7 +18,7 @@ export const POST: APIRoute = async ({ request, url }) => {
   // Parts of the calendar that aren't buttons (weekday names, blanks): just acknowledged.
   if (data === 'noop') { await bot('answerCallbackQuery', { callback_query_id: tap.id }); return new Response('ok'); }
   // The giving-date calendar (shared/lib/wishlist.ts calendarKeyboard): show a month, save a day (or none), go back.
-  const cal = data.match(/^(cal|day|back):(\d+):([dc]:\d+)(?::(\d{4}-\d{2}(?:-\d{2})?|none))?$/);
+  const cal = data.match(/^(cal|day|back):(-?\d+):([dc]:\d+)(?::(\d{4}-\d{2}(?:-\d{2})?|none))?$/);
   if (cal) {
     const [, verb, ownerText, item, arg] = cal;
     const ownerId = Number(ownerText);
@@ -43,7 +43,7 @@ export const POST: APIRoute = async ({ request, url }) => {
     }
     return new Response('ok');
   }
-  const gift = data.match(/^(gift|unres):(\d+):([dc]:\d+)$/);
+  const gift = data.match(/^(gift|unres):(-?\d+):([dc]:\d+)$/);
   if (gift) {
     const [, verb, owner, item] = gift;
     const open = await openReservation(Number(owner), item);
@@ -63,7 +63,7 @@ export const POST: APIRoute = async ({ request, url }) => {
     } else await bot('answerCallbackQuery', { callback_query_id: tap.id, text: 'This reservation isn’t yours, or it’s already closed.' });
     return new Response('ok');
   }
-  const id = Number(String(tap?.data ?? '').match(/^invite:(\d+)$/)?.[1]);
+  const id = Number(String(tap?.data ?? '').match(/^invite:(-?\d+)$/)?.[1]);
   // Telegram retries anything but a 200, so everything else is acknowledged and dropped.
   if (!id) return new Response('ok');
 
@@ -87,8 +87,10 @@ export const POST: APIRoute = async ({ request, url }) => {
       });
       await answer(`Invite link sent to ${person.name}.`);
     } else {
-      // They never let the bot write to them: the admin gets the link to pass on another way.
-      await notify([{ chatId: admin.id, text: `Telegram won’t deliver to <b>${escapeHtml(person.name)}</b> (they haven’t allowed messages from this bot). Send them this invite link yourself:\n\n${link}` }]);
+      // They never let the bot write to them (or their email didn't go): the admin gets the link to pass on another way.
+      const why = person.id < 0 ? `The email to <b>${escapeHtml(person.name)}</b> didn’t go out (or they turned messages off).`
+        : `Telegram won’t deliver to <b>${escapeHtml(person.name)}</b> (they haven’t allowed messages from this bot).`;
+      await notify([{ chatId: admin.id, text: `${why} Send them this invite link yourself:\n\n${link}` }]);
       await answer('Couldn’t message them: the link is in this chat.');
     }
   }

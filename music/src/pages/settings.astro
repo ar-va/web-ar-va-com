@@ -12,10 +12,14 @@ import { checkShelfName, displayDate, escapeHtml, loginHref, timeAgo, timeLeft }
 import { myReservations } from '../lib/wishes';
 import { reservationEnds } from '@shared/lib/wishlist';
 import { connectWebhook, notify } from '@shared/lib/notify';
-import { OPEN_INVITES_MAX, adminTelegramId, allComments, inviteOptions, requestShelf, canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, listInvites, removeShelf, revokeInvite, setShelfName, setWho, shelfSlug } from '@shared/lib/store';
+import { OPEN_INVITES_MAX, adminTelegramId, allComments, emailOf, setEmailMessages, setName, inviteOptions, requestShelf, canCollect, createInvite, currentUser, endSession, isAdmin, listCollectors, listInvites, removeShelf, revokeInvite, setShelfName, setWho, shelfSlug } from '@shared/lib/store';
 
 const user = await currentUser(Astro.cookies);
 if (!user) return Astro.redirect(loginHref(Astro.url));
+// Accounts that log in with an email code (negative ids): their address, whether they get messages by email, and how
+// their invite link and messages reach them.
+const inbox = await emailOf(user);
+const by = inbox ? 'by email' : 'on Telegram';
 
 let notice: string | null = null;
 // Refusals and the welcome (it says what to do next) stay until closed; the rest fade.
@@ -31,7 +35,8 @@ const askForShelf = async () => {
   if (result === 'sent') {
     // People without a @username can still be opened from the message (tg://user), and the button has the bot send
     // them an invite link (api/telegram.ts).
-    const who = `<a href="tg://user?id=${user.id}">${escapeHtml(user.name)}</a>${user.username ? ` (@${escapeHtml(user.username)})` : ''}`;
+    const who = inbox ? `${escapeHtml(user.name)} (${escapeHtml(inbox.email)})`
+      : `<a href="tg://user?id=${user.id}">${escapeHtml(user.name)}</a>${user.username ? ` (@${escapeHtml(user.username)})` : ''}`;
     Astro.locals.cfContext.waitUntil(connectWebhook(Astro.url.host).then(() => notify([{
       chatId: adminTelegramId(),
       text: `<b>${who}</b> would like a shelf on music.ar-va.com.\n\nThe button sends them an invite link from this bot (works once, for 7 days).`,
@@ -44,8 +49,10 @@ if (Astro.url.searchParams.has('request') && Astro.request.method === 'GET') {
   const result = await askForShelf();
   if (result !== 'collector') return Astro.redirect(`/settings?${result === 'sent' ? 'requested' : 'asked'}#shelf`);
 }
-if (Astro.url.searchParams.has('requested')) notice = 'Request sent! You’ll get an invite link on Telegram.';
-if (Astro.url.searchParams.has('asked')) notice = 'You’ve already asked this week: your invite link will come on Telegram.';
+if (Astro.url.searchParams.has('requested')) notice = `Request sent! You’ll get an invite link ${by}.`;
+if (Astro.url.searchParams.has('asked')) notice = `You’ve already asked this week: your invite link will come ${by}.`;
+if (Astro.url.searchParams.has('renamed')) notice = 'Your name is saved.';
+if (Astro.url.searchParams.has('messages')) notice = inbox?.messages ? 'Messages by email are on.' : 'Messages by email are off. Login codes still come.';
 
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
@@ -53,6 +60,17 @@ if (Astro.request.method === 'POST') {
   if (action === 'logout') {
     await endSession(Astro.cookies, Astro.url.hostname);
     return Astro.redirect(`${Astro.url.protocol}//${Astro.url.host.replace(/^music\./, '')}/`, 303);
+  }
+  if (action === 'name' && inbox) {
+    const problem = await setName(user, form.get('name'));
+    if (!problem) return Astro.redirect('/settings?renamed#account', 303);
+    notice = problem;
+    persist = true;
+    Astro.response.status = 400;
+  }
+  if (action === 'email-messages' && inbox) {
+    await setEmailMessages(user, form.get('on') === '1');
+    return Astro.redirect('/settings?messages#account', 303);
   }
   if (action === 'request-shelf') {
     const result = await askForShelf();
@@ -111,7 +129,11 @@ const today = new Date().toISOString().slice(0, 10);
 const lastDay = new Date(Date.now() + 365 * 86400_000).toISOString().slice(0, 10);
 const since = new Date(user.created_at * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 const shelfUrl = `/${encodeURIComponent(shelfSlug(user))}`;
-const shared: [string, string][] = [
+const shared: [string, string][] = inbox ? [
+  ['Name', user.name],
+  ['Email', inbox.email],
+  ['Messages', inbox.messages ? 'by email: comments, replies and reservations' : 'off (login codes still come)'],
+] : [
   ['Name', user.name],
   ['Username', user.username ? `@${user.username}` : 'none set in Telegram'],
   ['Profile photo', user.photo_url ? 'yes, shown next to your comments' : 'none set in Telegram'],
@@ -124,7 +146,7 @@ const cardTitle = 'text-xl font-bold text-zinc-900 dark:text-white';
 const lead = 'mt-1.5 text-zinc-600 dark:text-zinc-400 leading-relaxed';
 const select = 'h-10 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-3 text-sm font-normal text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500';
 const steps = [
-  { done: true, title: 'Logged in with Telegram', text: 'Done. That’s your account here: no password to remember.' },
+  { done: true, title: inbox ? 'Logged in with your email' : 'Logged in with Telegram', text: 'Done. That’s your account here: no password to remember.' },
   { done: false, title: 'Connect Discogs', text: 'Discogs is the free catalogue where collectors keep a list of their records. Connecting lets this site read your list to show it; it never changes anything there.' },
   { done: false, title: 'Your shelf appears', text: 'Covers first, then tracklists and listening links, usually within a minute or two. After that it keeps itself up to date.' },
 ];
@@ -237,7 +259,7 @@ const steps = [
         <p class={lead}>Shelves are by invitation. Ask for one here, or ask a friend who has a shelf: they make an invite link in their settings in a second. Until then, you can comment on every shelf and record.</p>
         <div class="mt-5 flex flex-wrap items-center gap-3">
           {user.shelf_request_at && Date.now() / 1000 - user.shelf_request_at < 7 * 86400
-            ? <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Requested: your invite link will come on Telegram.</p>
+            ? <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Requested: your invite link will come {by}.</p>
             : <form method="post"><input type="hidden" name="action" value="request-shelf" /><button class={primary}>Request a shelf</button></form>}
           <a href="/" class="ctl">Browse the shelves</a>
         </div>
@@ -247,7 +269,7 @@ const steps = [
     {canCollect(user) && (
       <section id="invites" class={`${card} scroll-mt-6`} aria-labelledby="invites-heading">
         <h2 id="invites-heading" class={cardTitle}>Invite friends</h2>
-        <p class={lead}>Know someone with records on Discogs? Send them a link: they log in with Telegram, connect Discogs, and their shelf appears next to yours.</p>
+        <p class={lead}>Know someone with records on Discogs? Send them a link: they log in with Telegram or their email, connect Discogs, and their shelf appears next to yours.</p>
 
         {current ? (
           <div class="mt-5">
@@ -365,21 +387,46 @@ const steps = [
       </section>
     )}
 
-    <section class={card} aria-labelledby="account-heading">
+    <section id="account" class={`${card} scroll-mt-6`} aria-labelledby="account-heading">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div class="min-w-0">
           <h2 id="account-heading" class={cardTitle}>Your account</h2>
+          {inbox ? (
+            <p class="mt-1 flex items-center gap-1.5 text-sm text-zinc-500">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5v10.5H3.75zM3.75 7.5l8.25 6 8.25-6" /></svg>
+              <span class="break-all">{inbox.email}</span>, joined {since}
+            </p>
+          ) : (
           <p class="mt-1 flex items-center gap-1.5 text-sm text-zinc-500">
             <svg class="w-3.5 h-3.5 text-[#2aabee]" viewBox="0 0 48 48" fill="currentColor" aria-hidden="true"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
             Telegram{user.username && <> (<a href={`https://t.me/${user.username}`} class="hover:text-kikyo-500 transition-colors">@{user.username}</a>)</>}, joined {since}
           </p>
+          )}
         </div>
         <form method="post" class="shrink-0">
           <input type="hidden" name="action" value="logout" />
           <button class="ctl hover:!text-red-600 dark:hover:!text-red-400">Log out</button>
         </form>
       </div>
-      <p class="mt-4 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">No password lives here: Telegram vouches for you. The same login works on ar-va.com and music.ar-va.com, and logging out ends it on both.</p>
+      <p class="mt-4 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">No password lives here: {inbox ? 'a code sent to your email logs you in.' : 'Telegram vouches for you.'} The same login works on ar-va.com and music.ar-va.com, and logging out ends it on both.</p>
+      {inbox && (
+        <div class="mt-5 flex flex-col gap-4">
+          <form method="post" class="flex flex-wrap items-end gap-3">
+            <input type="hidden" name="action" value="name" />
+            <label class="flex flex-col gap-1.5 text-sm font-medium text-zinc-700 dark:text-zinc-300 grow min-w-48">Your name
+              <input name="name" required maxlength="64" autocomplete="name" value={user.name}
+                class="h-10 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-3 font-normal text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500" />
+            </label>
+            <button class="ctl">Save name</button>
+          </form>
+          <form method="post" class="flex flex-wrap items-center justify-between gap-3">
+            <input type="hidden" name="action" value="email-messages" />
+            <input type="hidden" name="on" value={inbox.messages ? '0' : '1'} />
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">Messages by email (comments, replies, reservations): <span class="font-medium text-zinc-900 dark:text-white">{inbox.messages ? 'on' : 'off'}</span></p>
+            <button class="ctl">{inbox.messages ? 'Turn off' : 'Turn on'}</button>
+          </form>
+        </div>
+      )}
       <Disclosure title="What this site knows about you" class="text-sm mt-4">
         <dl class="mt-3 grid grid-cols-1 sm:grid-cols-[9rem_1fr] gap-x-6 gap-y-1 sm:gap-y-2">
           {shared.map(([k, v]) => (
@@ -389,9 +436,9 @@ const steps = [
             </>
           ))}
           <dt class="text-zinc-500 mt-2 sm:mt-0">Never shared</dt>
-          <dd class="text-zinc-800 dark:text-zinc-200">Your phone number, contacts and chats. Telegram doesn’t give those to sites.</dd>
+          <dd class="text-zinc-800 dark:text-zinc-200">{inbox ? 'Your email address isn’t shown on the site (the admin sees it only if you ask for a shelf).' : 'Your phone number, contacts and chats. Telegram doesn’t give those to sites.'}</dd>
         </dl>
-        <p class="mt-3 text-xs text-zinc-500">Your name and photo update each time you log in.</p>
+        {!inbox && <p class="mt-3 text-xs text-zinc-500">Your name and photo update each time you log in.</p>}
       </Disclosure>
     </section>
 

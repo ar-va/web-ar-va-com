@@ -174,6 +174,8 @@ export function reservationCard(r: {
   ownerFirst: string; title: string; artist: string; year: number | null; top: boolean; tracks: Track[];
   note: string | null; where: string[]; giveOn: string | null;
   links: Record<LinkService, string>; pageUrl: string; item: string; ownerId: number;
+  /** Sent by email: no bot buttons there, so the giving date is set on the record's page. */
+  byEmail?: boolean;
 }) {
   const e = escapeHtml;
   const head = [
@@ -185,7 +187,7 @@ export function reservationCard(r: {
     ...(r.note ? ['', `${e(r.ownerFirst)}’s note: <i>${e(r.note)}</i>`] : []),
     ...(r.where.length ? ['', `Where to get it: ${r.where.map(e).join('; ')}`] : []),
   ].join('\n');
-  const tail = `\n\nIt’s held for you for ${RESERVATION_DAYS} days, or until a week after the day you’re giving it (set it with the button below, or on the record’s page). I’ll remind you before then.`;
+  const tail = `\n\nIt’s held for you for ${RESERVATION_DAYS} days, or until a week after the day you’re giving it (set it ${r.byEmail ? 'on the record’s page' : 'with the button below, or on the record’s page'}). I’ll remind you before then.`;
   const songs = r.tracks.filter((t) => !t.heading);
   const line = (t: Track, i: number) => `${i + 1}. ${e(t.title)}${t.duration ? ` (${t.duration})` : ''}`;
   const visible = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&(lt|gt|amp|quot);/g, '_').length;
