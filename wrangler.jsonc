@@ -19,7 +19,9 @@
   "triggers": { "crons": [] },
   "vars": {
     "TELEGRAM_BOT_NAME": "arvasitebot",
-    "ADMIN_TELEGRAM_ID": "284024981"
+    "ADMIN_TELEGRAM_ID": "284024981",
+    // Cloudflare Turnstile on the email login (public; its secret is TURNSTILE_SECRET). Empty = email login refused.
+    "TURNSTILE_SITE_KEY": ""
   },
   "observability": { "enabled": true }
   // Secret (wrangler secret put / .dev.vars): TELEGRAM_BOT_TOKEN (checks logins, sends blog comment notices).

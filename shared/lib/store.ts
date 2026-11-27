@@ -2,8 +2,8 @@
 import { env } from 'cloudflare:workers';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { AstroCookies } from 'astro';
-import { activeLink, commentNotices, nameKey, NOTICE_VERBS, NOTIFICATIONS_SQL, POST_COMMENTS_SQL, SHELF_THREAD, SITE_COMMENTS_SQL, seenUpTo, toSiteComment, type NoticeKind, type SiteComment, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
-import { notify } from './notify';
+import { activeLink, commentNotices, nameKey, newLoginCode, toEmail, NOTICE_VERBS, NOTIFICATIONS_SQL, POST_COMMENTS_SQL, SHELF_THREAD, SITE_COMMENTS_SQL, seenUpTo, toSiteComment, type NoticeKind, type SiteComment, randomToken, seal, sha256, shelfView, siteDomain, unseal, type Match, type Overrides, type ReleaseDetail, type ShelfRecord } from './lib';
+import { notify, sendEmail } from './notify';
 
 // Tables are created lazily (no migration step in the deploy).
 const SCHEMA = [
@@ -46,6 +46,11 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, source TEXT NOT NULL,
     comment_id INTEGER NOT NULL, kind TEXT NOT NULL, title TEXT NOT NULL, url TEXT NOT NULL, created_at INTEGER NOT NULL)`,
   `CREATE INDEX IF NOT EXISTS notifications_by_user ON notifications (user_id, id)`,
+  // Accounts that log in with an email code (2026-11-26): their users row has a negative id (Telegram ids are
+  // positive); the address, and whether they want messages by email. Codes waiting to be typed, stored as hashes.
+  `CREATE TABLE IF NOT EXISTS email_accounts (email TEXT PRIMARY KEY, user_id INTEGER NOT NULL UNIQUE, messages INTEGER NOT NULL DEFAULT 1)`,
+  `CREATE TABLE IF NOT EXISTS email_codes (email TEXT PRIMARY KEY, code_hash TEXT NOT NULL, expires_at INTEGER NOT NULL,
+    tries INTEGER NOT NULL DEFAULT 0, window_at INTEGER NOT NULL, sends INTEGER NOT NULL)`,
 ];
 
 // Changes to existing tables after launch (new columns are also in the definitions above, for a fresh database). Each
@@ -152,6 +157,87 @@ export async function startSession(cookies: AstroCookies, user: { id: number; na
   // The row always exists: the Telegram callback saves the user before starting the session.
   const saved = row.results[0] as User | undefined;
   if (saved) setWho(cookies, saved, hostname);
+}
+
+// ---- Email accounts ----
+
+const CODE_SECONDS = 600;
+const CODES_PER_WINDOW = 3;
+const CODE_WINDOW = 900;
+const CODE_TRIES = 5;
+
+/** Emails a new login code, unless this address already had 3 in the last 15 minutes. */
+export async function requestLoginCode(email: string): Promise<'sent' | 'wait'> {
+  const d = await db();
+  const row = await d.prepare('SELECT window_at, sends FROM email_codes WHERE email = ?').bind(email).first<{ window_at: number; sends: number }>();
+  const fresh = !row || row.window_at <= now() - CODE_WINDOW;
+  if (!fresh && row.sends >= CODES_PER_WINDOW) return 'wait';
+  const code = newLoginCode();
+  await d.prepare(`INSERT INTO email_codes (email, code_hash, expires_at, tries, window_at, sends) VALUES (?1, ?2, ?3, 0, ?4, ?5)
+    ON CONFLICT (email) DO UPDATE SET code_hash = ?2, expires_at = ?3, tries = 0, window_at = ?4, sends = ?5`)
+    .bind(email, await sha256(code), now() + CODE_SECONDS, fresh ? now() : row.window_at, fresh ? 1 : row.sends + 1).run();
+  const mail = toEmail({ text: `Your code for ar-va.com is <b>${code}</b>\n\nIt works for 10 minutes. If you didn’t ask for it, ignore this email: nobody can log in without it.` });
+  await sendEmail(email, { ...mail, subject: `${code} is your ar-va.com code` });
+  return 'sent';
+}
+
+/**
+ * Checks a typed code. Each check uses up one of the 5 tries first (in one statement, so parallel guesses can't get
+ * more); the right code is used up too. The row stays after the tries run out, so the 15-minute limit still holds.
+ */
+export async function checkLoginCode(email: string, code: string): Promise<'ok' | 'wrong' | 'expired'> {
+  const d = await db();
+  const row = await d.prepare('UPDATE email_codes SET tries = tries + 1 WHERE email = ? AND expires_at > ? AND tries < ? RETURNING code_hash, tries')
+    .bind(email, now(), CODE_TRIES).first<{ code_hash: string; tries: number }>();
+  if (!row) return 'expired';
+  if (/^\d{6}$/.test(code.trim()) && row.code_hash === await sha256(code.trim())) {
+    await d.prepare('DELETE FROM email_codes WHERE email = ?').bind(email).run();
+    return 'ok';
+  }
+  return row.tries >= CODE_TRIES ? 'expired' : 'wrong';
+}
+
+const NAME_MAX = 64;
+const cleanName = (s: unknown) => (typeof s === 'string' ? s.replace(/\s+/g, ' ').trim() : '');
+
+/** The account for a checked address, made on first use (next negative id; the name until they choose one: the
+ *  part of the address before @). */
+export async function emailAccount(email: string): Promise<{ user: User; isNew: boolean }> {
+  const d = await db();
+  const find = () => d.prepare('SELECT users.* FROM email_accounts JOIN users ON users.id = email_accounts.user_id WHERE email = ?').bind(email).first<User>();
+  for (let attempt = 0; ; attempt++) {
+    const found = await find();
+    if (found) return { user: found, isNew: false };
+    const id = ((await d.prepare('SELECT MIN(id) AS id FROM users WHERE id < 0').first<{ id: number | null }>())?.id ?? 0) - 1;
+    try {
+      // One transaction: an address claimed meanwhile (or the id taken) rolls both back, and the loop looks again.
+      await d.batch([
+        d.prepare('INSERT INTO users (id, name, created_at) VALUES (?, ?, ?)').bind(id, email.split('@')[0].slice(0, NAME_MAX), now()),
+        d.prepare('INSERT INTO email_accounts (email, user_id) VALUES (?, ?)').bind(email, id),
+      ]);
+      return { user: (await find())!, isNew: true };
+    } catch (e) {
+      if (attempt >= 2) throw e;
+    }
+  }
+}
+
+/** An email account's address and whether it wants messages; null for Telegram accounts. */
+export const emailOf = async (user: User) => (user.id < 0
+  ? (await db()).prepare('SELECT email, messages FROM email_accounts WHERE user_id = ?').bind(user.id).first<{ email: string; messages: number }>()
+  : null);
+
+/** An email account names itself (Telegram accounts get theirs from Telegram). Returns an error message or null. */
+export async function setName(user: User, name: unknown) {
+  const clean = cleanName(name);
+  if (!clean) return 'Write your name first.';
+  if (clean.length > NAME_MAX) return `Names can be up to ${NAME_MAX} characters.`;
+  await (await db()).prepare('UPDATE users SET name = ? WHERE id = ? AND id < 0').bind(clean, user.id).run();
+  return null;
+}
+
+export async function setEmailMessages(user: User, on: boolean) {
+  await (await db()).prepare('UPDATE email_accounts SET messages = ? WHERE user_id = ?').bind(on ? 1 : 0, user.id).run();
 }
 
 export async function currentUser(cookies: AstroCookies): Promise<User | null> {

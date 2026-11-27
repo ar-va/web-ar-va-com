@@ -1,3 +1,8 @@
 # Copy to .dev.vars for local runs. Production: npx wrangler secret put <NAME>
 # (music.ar-va.com has its own list: music/.dev.vars.example)
 TELEGRAM_BOT_TOKEN=123456:bot-token-from-botfather
+# Email login: Resend (resend.com, API key with sending access to ar-va.com). Without it, emails are only logged.
+# RESEND_API_KEY=
+# Cloudflare Turnstile on the email form. Locally its published test keys (they always pass):
+TURNSTILE_SITE_KEY=1x00000000000000000000AA
+TURNSTILE_SECRET=1x0000000000000000000000000000000AA
