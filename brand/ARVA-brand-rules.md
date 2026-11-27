@@ -10,15 +10,26 @@ Online at https://brand.ar-va.com (this file: https://brand.ar-va.com/ARVA-brand
 
 ## 1. Who ARVA is
 
-ARVA makes modern digital products with the patience of a century-old craft workshop. The symbol is a single oak leaf (*kashiwa*). In Japan the oak keeps its old leaves until new shoots appear, which stands for an unbroken line from one generation to the next.
+**What was missing, made well.** ARVA builds its own software for what people want but can't find, or can only find done badly: simple on the surface, exact underneath, made to outlast the trend. ARVA is new and claims no history.
+
+Four habits, in every product:
+
+1. **Start with what's missing:** something people want and can't find, or find done badly.
+2. **Build for the other side:** not for the expert, but for the friend who isn't a collector, the admin who isn't a designer, the person afraid to speak.
+3. **Hide the effort:** the engineering goes deep so the surface can stay light. Details are over-built on purpose, and none of it is there to show off.
+4. **Leave people the last word:** the software does the work; the person decides.
+
+The work so far: **music.ar-va.com** (a record shelf anyone can browse: a Discogs collection as covers to look at and albums to play), **vincent.ar-va.com** (Nextcloud, in your colours: a designed light and dark theme from the colour you pick), **anon.ar-va.com** (room to say the hard thing: one box, no name, no account), and **Solaris** (in progress: the whole tattoo studio in one place, doing the routine work while every decision stays with its people).
+
+The sign is an oak leaf (*kashiwa*). While other trees stand bare, the kashiwa oak keeps its leaves through the winter and lets them go only when the new ones are ready: ARVA's work is made to last the same way, through every passing trend, until something truly better takes its place. The leaf is drawn from 18 circles nobody sees, which is ARVA in one picture: the care stays underneath, so what people meet is simple. How it's drawn: https://brand.ar-va.com/story.
 
 - **Personality:** calm, precise, warm, unhurried, confident without being loud.
-- **The design should feel like** a well-made tool on a paper-covered desk: quiet surfaces, exact details, three colours used sparingly, each with one job.
-- **It should never feel like** a startup template, a nature or eco brand, or a luxury fashion house.
+- **The design should feel like** a well-engineered tool: quiet surfaces, exact details, three colours used sparingly, each with one job.
+- **It should never feel like** a startup template, a nature or eco brand, a luxury fashion house, or a heritage brand claiming a past it doesn't have.
 
 ### Voice (draft, for the owner to refine)
 - Short, plain sentences. Concrete nouns. No hype ("revolutionary", "game-changing", "unleash").
-- Speak as a maker: talk about how things are built and how long they last.
+- Speak as the people who build the thing: the problem, how the solution works, and why it will hold up. Never claim age, tradition or heritage for ARVA itself.
 - No exclamation marks, no emoji.
 
 ---
@@ -34,21 +45,21 @@ Files are in `logo/`. Never redraw or retype the logo; always use the files. **T
 | `arva-stacked-ink.svg` / `-washi.svg` | Square spaces: splash, social, about page |
 | `arva-mark-ink.svg` / `-washi.svg` | Mark alone, 32 px and larger |
 | `arva-mark-small-ink.svg` / `-washi.svg` | Mark alone, below 32 px (simplified, no midrib) |
-| `arva-mark-kashiwa.svg` | Heritage contexts only (print, packaging, an "about" page); Kashiwa `--kashiwa` |
+| `arva-mark-kashiwa.svg` | The leaf alone in Kashiwa `--kashiwa`, on light grounds: the brand's own pages and presentations |
 | `arva-wordmark-ink.svg` | Wordmark alone, only where the mark already appears nearby |
 | `arva-horizontal-ink-kashiwa.svg` / `-washi-kashiwa.svg` | **Default on screen** (site header): Kashiwa leaf, wordmark in `--text` |
 | `arva-stacked-ink-kashiwa.svg` / `-washi-kashiwa.svg` | Square spaces on screen, two-tone |
 | `arva-mark-small-ink-kashiwa.svg` / `-washi-kashiwa.svg` | Leaf alone below 32 px on screen (phone header) |
 | `arva-horizontal-ink-kashiwa.png` (in `shared/public/brand/`, 218 × 60, transparent) | Emails: the two-tone logo shown at 109 × 30 (Gmail and Outlook don't show SVG) |
 | `favicon.svg` | Browser favicon: the Kashiwa leaf, switching to mint on dark tabs |
-| `../avatars/arva-avatar-{full,wordmark,leaf}-{scheme}.svg` / `.png` | Profile pictures (1:1, 1024 px PNG): full logo (stacked), wordmark or leaf on a solid ground. Schemes: `paper` (Kashiwa leaf, ink), `night` (mint, washi), `ink` (mint, paper), `kashiwa` / `kikyo` (all paper), `kikyo-light` (Kikyō's dark-theme value, all ink). Sized to keep the clear space and to survive a circle crop. Prefer `full-paper` / `full-night`; the leaf alone where the name shows next to it anyway |
+| `../avatars/arva-avatar-{leaf,full,wordmark}-{paper,night}.svg` / `.png` | Profile pictures (1:1, 1024 px PNG), sized to keep the clear space and survive a circle crop. **The leaf is the default profile picture** (the name is unreadable at the usual 32–48 px); `full` (stacked logo) and `wordmark` only where the picture shows at 128 px or more. `paper`: Kashiwa leaf and Ink name on Paper, as `arva-*-ink-kashiwa`; `night`: mint leaf and Moonlight name on Night, as `arva-*-washi-kashiwa`. No other grounds: Kikyō is for actions and Kashiwa stays the leaf, never a large fill |
 
 Rules:
 - Header logo height is 24–32 px on desktop and 22–26 px on mobile. The sites use 30 px and 26 px (2026-11-20; 24 px left the letter-spaced wordmark too small).
 - Clear space on every side must be at least the width of the leaf's tip lobe (about ¼ of the mark's height).
 - Swap ink and washi files with the theme. Never place the ink logo on a dark background or the washi logo on a light one.
 - Never use Kikyō on the logo.
-- **Two-tone:** on screen the leaf may be `--kashiwa` while the wordmark stays `--text` (the `-kashiwa` files). This is the one place Kashiwa may sit on an interactive element (the logo as a home link). Use the one-colour ink / washi files for print, embossing, stamps and other single-colour uses.
+- **Two-tone:** on screen the leaf may be `--kashiwa` while the wordmark stays `--text` (the `-kashiwa` files). This is the one place Kashiwa may sit on an interactive element (the logo as a home link). Use the one-colour ink / washi files wherever only one colour is possible.
 - Never rotate, outline, add shadows to, add gradients to, stretch, or animate-distort the logo. The 45° lean is part of the mark.
 - Never put the leaf in a circle, a badge, or a frame.
 
@@ -90,7 +101,7 @@ ARVA has three named colours, each with **one job**. If a colour doesn't mean it
 | | **Kikyō** (bellflower violet) | **Kashiwa** (oak-leaf green) | **Bengara** (earth red) |
 |---|---|---|---|
 | Job | **Act**: you can press, follow or choose this | **Belong**: who made, owns or is speaking | **Notice**: worth a second look, no click needed |
-| Story | The Japanese bellflower's blue-violet, once worn by the nobility | The oak in the logo, which keeps its old leaves until new ones grow | The iron-oxide red of Kyoto's old wooden shopfronts, a workshop pigment |
+| Story | The blue-violet of the Japanese bellflower, a court colour since the Heian era | The oak leaf in the sign, which keeps its leaves through winter until the new ones are ready | The iron-oxide red earth on the old lattices of Kyoto's teahouse districts |
 | Tokens | `--kikyo` #4A45B5 / #979CF7, `--kikyo-hover`, `--on-kikyo`, `--kikyo-tint` | `--kashiwa` #15683F / #5FCF8F | `--bengara` #A3442B / #E57F57, `--bengara-tint` |
 | Use it for | Primary buttons, links, streaming buttons, the Telegram link, picked filters, the current view, open menus (its tint), count badges, focus rings | The leaf in the logo and the site name beside it, the artist above an album title, the owner's note (its rule and signature), the shelf's "just now" | The "Latest" label (shelves, blog), anon's "New" marker, the most played flame, the owner's favourite-track heart |
 | Form | The only one that fills shapes | Text-sized, or the leaf | Small marks or a tinted pill |
@@ -206,7 +217,7 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 
 ## 7. Imagery and icons
 
-- Photography shows real materials, hands, tools, workshops, and products in use. Use natural light and warm, slightly muted grading. No stock-photo smiles, no glowing abstract tech.
+- Images show real work: the product in use, screens in context, the people it serves and the places it's used in. Use natural light and warm, slightly muted grading. No stock-photo smiles, no glowing abstract tech.
 - Images sit in 12 px radius frames or run full-bleed. To place text over a photo, add a `--bg`-coloured overlay at 70% or more opacity.
 - Icons are line icons with a 1.5px stroke, round joins, 20 or 24 px, coloured `--text` or `--text-2`. Lucide is a good match. Never use filled multicolour icons or emoji.
 - Don't add decorative leaves, leaf patterns, or nature illustrations. The logo is the only leaf, with one exception (2026-11-20): the logo's small leaf, in the secondary text grey (`zinc-500`, like "Added to the shelf") at 0.7em, divides separate facts in a line (between "1959", "Jazz" and "5 tracks" on album pages). One leaf per gap, never a row of leaves on its own.
@@ -248,6 +259,17 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
 
 ## Changelog
 
+- **2026-11-26 (avatars):** 12 of the 18 avatars removed (`ink`, `kashiwa`, `kikyo`, `kikyo-light` grounds): Kikyō and
+  Kashiwa as large grounds broke their one-job rules (and turned the leaf white), and the Ink ground paired light-theme
+  Ink with the dark-theme mint and a paper-white name no logo uses. Paper and night stay, matching the two-tone logo
+  files; the leaf avatar is now the default profile picture.
+- **2026-11-26 (what ARVA is):** the owner corrected the brand's story. ARVA is new and claims no history; it builds
+  its own software, not print or craft objects: "What was missing, made well", with four habits and music, Vincent,
+  anon and Solaris as the work. The leaf stands for an aim (work that outlasts trends), not a line of generations.
+  Section 1, the voice, the Kashiwa-mark and one-colour logo uses, the colour stories and the imagery rule follow;
+  facts checked, and Bengara's story corrected (the red of the lattices in Kyoto's teahouse districts; ordinary
+  shopfronts were left unpainted). https://brand.ar-va.com/story explains the leaf and its construction. Older
+  entries keep the words of their day.
 - **2026-11-27 (emails):** the site's emails (login codes, comment and reservation messages) use the brand: paper page,
   the two-tone logo as a PNG, the message in a white card with `--line`, IBM Plex Sans (the email app's own sans-serif
   where it doesn't load web fonts), Ink text, Slate footer and quotes, Kikyō links and buttons, the login code in IBM

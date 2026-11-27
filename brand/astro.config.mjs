@@ -7,6 +7,8 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   // Favicons and the header's logos, the same files on every ARVA site.
   publicDir: '../shared/public',
+  // story.html, served at /story without a redirect to /story/.
+  build: { format: 'file' },
   vite: {
     plugins: [tailwindcss()],
   },

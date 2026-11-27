@@ -20,8 +20,11 @@ const prompt = `Follow ARVA's design language. Read ${SITE}/ARVA-brand-rules.md 
   <main class="max-w-5xl mx-auto px-6 w-full pt-12 pb-24">
     <h1 class="font-bold text-3xl sm:text-4xl text-zinc-900 dark:text-white">ARVA design language</h1>
     <p class="mt-4 max-w-3xl text-lg text-zinc-600 dark:text-zinc-400 text-pretty">
-      How ARVA looks and sounds: a well-made tool on a paper-covered desk. Quiet surfaces, exact details, three colours
-      used sparingly, each with one job.
+      What was missing, made well: ARVA’s own software, simple on the surface and exact underneath. This is how it looks
+      and sounds: quiet surfaces, exact details, three colours used sparingly, each with one job.
+    </p>
+    <p class="mt-3 max-w-3xl text-lg text-zinc-600 dark:text-zinc-400">
+      <a class="text-kikyo-600 dark:text-kikyo-400 underline underline-offset-3 hover:text-zinc-900 dark:hover:text-white" href="/story">What ARVA builds, and what the leaf stands for</a>
     </p>
 
     <section class="mt-12 max-w-3xl rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-6" aria-labelledby="for-ai">
@@ -101,7 +104,7 @@ const prompt = `Follow ARVA's design language. Read ${SITE}/ARVA-brand-rules.md 
         ))}
       </ul>
       <h3 class="mt-10 font-bold text-xl text-zinc-900 dark:text-white">Avatars</h3>
-      <p class="mt-2 text-zinc-600 dark:text-zinc-400">Profile pictures, each also as a 1024 px PNG (same name, <span class="font-mono">.png</span>).</p>
+      <p class="mt-2 text-zinc-600 dark:text-zinc-400">Profile pictures, each also as a 1024 px PNG (same name, <span class="font-mono">.png</span>). The leaf is the default; the full logo and the name only where the picture shows at 128 px or more.</p>
       <ul class="mt-4 flex flex-wrap gap-3">
         {avatars.map((f) => (
           <li><a href={`/avatars/${f}`} title={f} class="block rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500"><img src={`/avatars/${f}`} alt={f} width="64" height="64" class="w-16 h-16 rounded-xl ring-1 ring-zinc-200 dark:ring-zinc-800" loading="lazy" /></a></li>

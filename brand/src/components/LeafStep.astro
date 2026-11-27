@@ -1,0 +1,71 @@
+---
+// One step of the leaf's construction (story page), drawn from the geometry read out of the logo file. Earlier steps
+// stay faint; the part this step adds is in Kashiwa.
+import type { Leaf } from '../lib/leaf';
+
+interface Props {
+  leaf: Leaf;
+  step: 1 | 2 | 3 | 4 | 5 | 6;
+  label: string;
+}
+const { leaf, step, label } = Astro.props;
+const { base, tip, circles, joins } = leaf;
+const lobes = circles.filter((c) => c.kind === 'lobe');
+const notches = circles.filter((c) => c.kind === 'notch');
+const stem = `M${leaf.stem.map((p) => p.join(' ')).join('L')}Z`;
+const midrib = leaf.midrib && `M${leaf.midrib.map((p) => p.join(' ')).join('L')}Z`;
+// The 45° mark at the base: a short level line and the arc up to the axis.
+const arc = 10;
+const s = (n: number) => n.toFixed(2);
+const angle = `M${s(base[0] + arc)} ${s(base[1])}A${arc} ${arc} 0 0 0 ${s(base[0] + arc * Math.SQRT1_2)} ${s(base[1] - arc * Math.SQRT1_2)}`;
+const line = 'stroke-kashiwa dark:stroke-kashiwa-light';
+const faint = 'stroke-zinc-300 dark:stroke-zinc-700';
+const ns = { 'vector-effect': 'non-scaling-stroke', fill: 'none' };
+---
+<svg viewBox="-6 -8 112 112" role="img" aria-label={label} class="block w-full h-auto">
+  {step === 1 && (
+    <g>
+      <path d={`M${s(base[0])} ${s(base[1])}H${s(base[0] + 18)}`} class={faint} stroke-width="1" {...ns} />
+      <path d={angle} class={faint} stroke-width="1" {...ns} />
+      <path d={`M${s(base[0])} ${s(base[1])}L${s(tip[0])} ${s(tip[1])}`} class={line} stroke-width="1.5" {...ns} />
+      <circle cx={base[0]} cy={base[1]} r="1.4" class="fill-kashiwa dark:fill-kashiwa-light" />
+      <circle cx={tip[0]} cy={tip[1]} r="1.4" class="fill-kashiwa dark:fill-kashiwa-light" />
+      <text x={base[0] + 13} y={base[1] - 4} font-size="4.5" class="fill-zinc-500">45°</text>
+      <text x={base[0] + 4} y={base[1] + 6.5} font-size="4.5" class="fill-zinc-500">Base</text>
+      <text x={tip[0] - 4} y={tip[1] - 4} font-size="4.5" text-anchor="end" class="fill-zinc-500">Tip</text>
+    </g>
+  )}
+  {step >= 2 && step <= 4 && (
+    <path d={`M${s(base[0])} ${s(base[1])}L${s(tip[0])} ${s(tip[1])}`} class={faint} stroke-width="1" stroke-dasharray="3 3" {...ns} />
+  )}
+  {step === 2 && lobes.map((c) => (
+    <g>
+      <circle cx={c.cx} cy={c.cy} r={c.r} class={`${line} fill-kashiwa/10 dark:fill-kashiwa-light/10`} stroke-width="1.25" vector-effect="non-scaling-stroke" />
+      <circle cx={c.cx} cy={c.cy} r="0.8" class="fill-kashiwa dark:fill-kashiwa-light" />
+    </g>
+  ))}
+  {step >= 3 && step <= 4 && lobes.map((c) => <circle cx={c.cx} cy={c.cy} r={c.r} class={faint} stroke-width="1" {...ns} />)}
+  {step === 3 && notches.map((c) => (
+    <circle cx={c.cx} cy={c.cy} r={c.r} class={`${line} fill-kashiwa/10 dark:fill-kashiwa-light/10`} stroke-width="1.25" stroke-dasharray="2.5 2" vector-effect="non-scaling-stroke" />
+  ))}
+  {step === 4 && notches.map((c) => <circle cx={c.cx} cy={c.cy} r={c.r} class={faint} stroke-width="1" stroke-dasharray="2.5 2" {...ns} />)}
+  {step === 4 && (
+    <g>
+      <path d={leaf.outline} class={line} stroke-width="2" stroke-linejoin="round" {...ns} />
+      {joins.map(([x, y]) => <circle cx={x} cy={y} r="0.9" class="fill-zinc-900 dark:fill-zinc-100" />)}
+    </g>
+  )}
+  {step === 5 && (
+    <g class="fill-kashiwa dark:fill-kashiwa-light">
+      <path d={leaf.outline} />
+      <path d={stem} />
+      <path d={`M${s(base[0])} ${s(base[1])}L${s(tip[0])} ${s(tip[1])}`} class="stroke-zinc-50/70 dark:stroke-zinc-950/70" stroke-width="1" stroke-dasharray="3 3" {...ns} />
+    </g>
+  )}
+  {step === 6 && (
+    <g>
+      <path d={leaf.path} class="fill-kashiwa dark:fill-kashiwa-light" />
+      {midrib && <path d={midrib} class="stroke-zinc-900 dark:stroke-zinc-100" stroke-width="1" stroke-linejoin="round" {...ns} />}
+    </g>
+  )}
+</svg>
