@@ -1,6 +1,7 @@
 ---
 // The one login page (ar-va.com/login). Left: why to join (a community of collectors: what you can do, who's here,
-// "Request a shelf"); right: the Telegram login. Names the page the visitor came from when it can.
+// "Request a shelf"); right: the Telegram login, or a code by email (auth/email.ts: ?code = the code step, the address
+// waiting in the login_email cookie). Names the page the visitor came from when it can.
 export const prerender = false;
 import { getCollection } from 'astro:content';
 import { MAIN_SITE_PUBLIC } from '@shared/site';
@@ -16,6 +17,18 @@ import { adminShelfOwner, currentUser, directory, hasPendingInvite, shelfOwner, 
 
 const returnTo = safeReturnPath(Astro.url.searchParams.get('return'), Astro.url.hostname);
 const failed = Astro.url.searchParams.has('failed');
+// Email login: the code step while an address waits for its code; messages for each way it can go wrong.
+const q = Astro.url.searchParams;
+const pendingEmail = Astro.cookies.get('login_email')?.value;
+const codeStep = q.has('code') && !!pendingEmail;
+const emailNote = q.get('bad') === 'email' ? 'That doesn’t look like an email address.'
+  : q.get('bad') === 'check' ? 'The quick check that you’re a person didn’t go through. Please try again.'
+  : q.has('wait') ? 'You asked for a few codes just now: use the newest one, or ask again in 15 minutes.'
+  : q.has('wrong') ? 'That code isn’t right. Try again.'
+  : q.has('expired') ? 'That code has run out or was tried too many times. Ask for a new one.'
+  : q.has('gone') ? 'That took a while: ask for a new code.' : null;
+const anotherCode = `/login?return=${encodeURIComponent(returnTo)}#email`;
+const field = 'w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-3.5 text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500 transition-colors';
 
 const musicOrigin = `${Astro.url.protocol}//music.${Astro.url.host}`;
 const back = new URL(returnTo, Astro.url);
@@ -59,19 +72,19 @@ const requestAuth = botId ? telegramAuthUrl(botId, Astro.url.origin, requestNext
 // Someone who opened an invite link first doesn't need to ask: logging in accepts it (auth/telegram.ts).
 const invited = hasPendingInvite(Astro.cookies);
 const joins = [
-  { icon: 'M7.5 8.5h9M7.5 12.5h6M5 19.5V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8z', title: 'Talk records', text: 'Comment on any shelf or album and reply to others. Telegram tells you when someone answers.' },
+  { icon: 'M7.5 8.5h9M7.5 12.5h6M5 19.5V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H8z', title: 'Talk records', text: 'Comment on any shelf or album and reply to others. You hear when someone answers, on Telegram or by email.' },
   { icon: 'M4 6h16M4 12h16M4 18h10', title: 'Put your shelf up', text: 'Connect Discogs and your collection appears with covers, tracklists, listening links and your own notes. Free.' },
   { icon: 'M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19M10 10.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM20 19v-1.5a3.5 3.5 0 0 0-2.5-3.35M15.5 4.6a3 3 0 0 1 0 5.8', title: 'Grow it together', text: 'Every collector can invite friends, so each shelf here belongs to someone you can talk to.' },
 ];
 const ring = (width: string) => `rounded-full ${width} ring-white dark:ring-night-surface`;
 
 const perks = [
-  { icon: 'M13 10V3L4 14h7v7l9-11h-7z', text: 'No password, no email, no new account to make.' },
+  { icon: 'M13 10V3L4 14h7v7l9-11h-7z', text: 'No password to make or remember.' },
   { icon: 'M9 12.75 11.25 15 15 9.75M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z', text: 'Telegram shares your name, @username and photo. Never your phone number.' },
   { icon: 'M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244', text: 'One login for ar-va.com and music.ar-va.com. Log out any time.' },
 ];
 ---
-<Layout title="Log in - ARVA" description={`Join a community of record collectors: log in with Telegram to comment on ${MAIN_SITE_PUBLIC ? 'articles, shelves and records' : 'shelves and records'}, or ask for a shelf of your own.`}>
+<Layout title="Log in - ARVA" description={`Join a community of record collectors: log in with Telegram or email to comment on ${MAIN_SITE_PUBLIC ? 'articles, shelves and records' : 'shelves and records'}, or ask for a shelf of your own.`}>
   <!-- Explanation on the left, the action on the right (phones: headline, action, then the previews). -->
   <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-16 md:pb-24 grid grid-cols-1 md:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] gap-x-16 gap-y-10 md:content-center">
 
@@ -89,11 +102,42 @@ const perks = [
         <div class="w-12 h-12 rounded-full bg-[#2aabee] text-white grid place-items-center mb-5" aria-hidden="true">
           <svg class="w-6 h-6 -ml-0.5" viewBox="0 0 48 48" fill="currentColor"><path d="M41.4193 7.30899C41.4193 7.30899 45.3046 5.79399 44.9808 9.47328C44.8729 10.9883 43.9016 16.2908 43.1461 22.0262L40.5559 39.0159C40.5559 39.0159 40.3401 41.5048 38.3974 41.9377C36.4547 42.3705 33.5408 40.4227 33.0011 39.9898C32.5694 39.6652 24.9068 34.7955 22.2086 32.4148C21.4531 31.7655 20.5897 30.4669 22.3165 28.9519L33.6487 18.1305C34.9438 16.8319 36.2389 13.8019 30.8426 17.4812L15.7331 27.7616C15.7331 27.7616 14.0063 28.8437 10.7686 27.8698L3.75342 25.7055C3.75342 25.7055 1.16321 24.0823 5.58815 22.459C16.3807 17.3729 29.6555 12.1786 41.4193 7.30899Z"/></svg>
         </div>
-        <h2 id="login-heading" class="text-xl font-bold text-zinc-900 dark:text-white mb-1">Log in with Telegram</h2>
-        <p class="text-sm text-zinc-500 mb-6">Telegram asks you to confirm, then brings you right back.</p>
+        <h2 id="login-heading" class="text-xl font-bold text-zinc-900 dark:text-white mb-1">Log in</h2>
+        <p class="text-sm text-zinc-500 mb-6">With Telegram, which asks you to confirm and brings you right back, or with a code we email you.</p>
 
         {failed && <p class="text-sm text-red-600 dark:text-red-400 mb-4" role="alert">That login didn’t work. Please try again.</p>}
         <div class="min-h-[46px]"><TelegramLogin returnTo={returnTo} /></div>
+
+        <!-- Or a 6-digit code by email (auth/email.ts). Turnstile keeps the form from being used to flood inboxes. -->
+        <div id="email" class="mt-6 pt-5 border-t border-zinc-100 dark:border-zinc-800 scroll-mt-6">
+          <p class="text-sm font-medium text-zinc-900 dark:text-white mb-3">Or use your email</p>
+          {emailNote && <p class="text-sm text-red-600 dark:text-red-400 mb-3" role="alert">{emailNote}</p>}
+          {codeStep ? (
+            <form method="post" action="/auth/email" class="flex flex-col gap-3">
+              <input type="hidden" name="step" value="verify" />
+              <input type="hidden" name="return" value={returnTo} />
+              <p class="text-sm text-zinc-600 dark:text-zinc-400">We sent a code to <span class="font-medium text-zinc-900 dark:text-white break-all">{pendingEmail}</span>. It works for 10 minutes. Not there? Check your spam folder.</p>
+              <label for="email-code" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Code from the email</label>
+              <input id="email-code" name="code" required inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" autofocus
+                class={`${field} font-mono text-lg tracking-[0.35em]`} />
+              <button class="btn-primary w-full">Log in</button>
+              <p class="flex flex-wrap justify-between gap-2 text-sm">
+                <a href={anotherCode} class="text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">Use another address</a>
+                <a href={anotherCode} class="text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">Send a new code</a>
+              </p>
+            </form>
+          ) : (
+            <form method="post" action="/auth/email" class="flex flex-col gap-3">
+              <input type="hidden" name="step" value="send" />
+              <input type="hidden" name="return" value={returnTo} />
+              <label for="email-address" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Your email</label>
+              <input id="email-address" name="email" type="email" required autocomplete="email" maxlength="254" value={pendingEmail ?? ''} class={field} />
+              <div class="cf-turnstile" data-sitekey={env.TURNSTILE_SITE_KEY} data-appearance="interaction-only" data-size="flexible"></div>
+              <button class="btn-primary w-full">Send me a code</button>
+            </form>
+          )}
+        </div>
+        {!codeStep && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
 
         <ul class="mt-7 pt-6 border-t border-zinc-100 dark:border-zinc-800 flex flex-col gap-3.5">
           {perks.map((p) => (
@@ -159,17 +203,18 @@ const perks = [
           {invited ? (
             <div class="min-w-0 max-w-sm">
               <p class="font-medium text-zinc-900 dark:text-white">You have an invite</p>
-              <p class="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">Log in with Telegram and it’s accepted: next you connect Discogs and your shelf fills itself.</p>
+              <p class="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">Log in and it’s accepted: next you connect Discogs and your shelf fills itself.</p>
             </div>
           ) : (<>
           <div class="min-w-0 max-w-sm">
             <p class="font-medium text-zinc-900 dark:text-white">Have records on Discogs?</p>
-            <p class="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">Shelves are invite-only. Ask for one and your invite link comes on Telegram.</p>
+            <p class="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">Shelves are invite-only. Ask for one and your invite link comes on Telegram or by email.</p>
           </div>
           <div>
             <a href={`/login?return=${encodeURIComponent(requestNext)}`} data-tg-auth={requestAuth} data-tg-next={requestNext}
               class="btn-primary">Request a shelf</a>
             <p data-tg-hint hidden class="mt-2 text-xs text-zinc-500">Window closed? Log in on the right, then use “Request a shelf” in settings.</p>
+            <a href={`/login?return=${encodeURIComponent(requestNext)}#email`} class="mt-2 block text-xs text-kikyo-600 dark:text-kikyo-400 hover:underline underline-offset-4">No Telegram? Use your email</a>
           </div>
           </>)}
         </div>

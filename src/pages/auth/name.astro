@@ -1,0 +1,37 @@
+---
+// A new email account chooses the name shown with its comments and shelf (Telegram accounts get theirs from Telegram),
+// then goes on to where it was going. Until then the name is the part of the address before @.
+import Layout from '@shared/layouts/Layout.astro';
+import { safeReturnPath } from '@shared/lib/lib';
+import { currentUser, setName, setWho } from '@shared/lib/store';
+export const prerender = false;
+
+const returnTo = safeReturnPath(Astro.url.searchParams.get('return'), Astro.url.hostname);
+const user = await currentUser(Astro.cookies);
+if (!user || user.id > 0) return Astro.redirect(returnTo);
+
+let error: string | null = null;
+let value = '';
+if (Astro.request.method === 'POST') {
+  value = String((await Astro.request.formData()).get('name') ?? '');
+  error = await setName(user, value);
+  if (!error) {
+    const named = await currentUser(Astro.cookies);
+    if (named) setWho(Astro.cookies, named, Astro.url.hostname);
+    return Astro.redirect(returnTo, 303);
+  }
+}
+const field = 'w-full h-11 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-3.5 text-zinc-900 dark:text-white focus:outline-none focus:border-kikyo-500 transition-colors';
+---
+<Layout title="Your name - ARVA" noindex>
+  <div class="max-w-5xl mx-auto px-6 w-full flex-grow pt-12 pb-24 *:max-w-md">
+    <h1 class="text-3xl font-bold text-zinc-900 dark:text-white">What should we call you?</h1>
+    <p class="mt-2 text-zinc-600 dark:text-zinc-400 leading-relaxed">Your name shows next to your comments and on your shelf. You can change it later in settings.</p>
+    <form method="post" class="mt-8 flex flex-col gap-3">
+      <label for="name" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Your name</label>
+      <input id="name" name="name" required maxlength="64" autocomplete="name" autofocus value={value} class={field} />
+      {error && <p class="text-sm text-red-600 dark:text-red-400" role="alert">{error}</p>}
+      <button class="btn-primary w-full">Continue</button>
+    </form>
+  </div>
+</Layout>
