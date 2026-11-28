@@ -3,7 +3,7 @@ import { SITE, kitFiles } from '../lib/files';
 
 export const GET = () => new Response(`# ARVA design language
 
-> ARVA's brand rules: logo, colour, type, layout, components and voice for every ARVA site and product. Follow them when designing or coding for ARVA; if a request conflicts with a rule, follow the rule and say so.
+> ARVA makes its own software (music.ar-va.com, vincent.ar-va.com, anon.ar-va.com, Solaris in progress) for things people want and can't find, or can only find done badly. These are its brand rules: logo, colour, type, layout, components and voice for every ARVA site and product. Follow them when designing or coding for ARVA; if a request conflicts with a rule, follow the rule and say so.
 
 ## Read first
 

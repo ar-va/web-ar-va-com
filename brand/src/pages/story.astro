@@ -3,10 +3,11 @@
 // and number comes from the logo files beside this site (src/lib/leaf.ts), and the build fails if the leaf stops
 // adding up. Facts checked 2026-11-26: the kashiwa oak's winter leaves (RHS), kamon drawn with compass and ruler (Tokyo
 // Metropolitan Government, Sydney University Library), kikyō as a Heian court colour, bengara on Kyoto's teahouse
-// lattices (nippon.com), Brygada 1918's revival (Google Design).
+// lattices (nippon.com), Brygada 1918's revival (Google Design). Positioning: .agents/product-marketing.md.
 import { readFileSync } from 'node:fs';
 import Layout from '@shared/layouts/Layout.astro';
 import Disclosure from '@shared/components/Disclosure.astro';
+import BrandNav from '../components/BrandNav.astro';
 import LeafStep from '../components/LeafStep.astro';
 import LeafJoint from '../components/LeafJoint.astro';
 import tokensCss from '../../arva-tokens.css?raw';
@@ -22,58 +23,59 @@ const n = (x: number) => x.toFixed(2);
 const products = [
   {
     name: 'music.ar-va.com', href: 'https://music.ar-va.com', status: '', line: 'A record shelf anyone can browse',
-    text: 'Discogs keeps a collection for collectors. music.ar-va.com puts it on a shelf for everyone else: covers to look at, albums to play, no catalogue numbers in the way.',
+    text: 'Collectors keep their vinyl on Discogs, a catalogue written for other collectors. Here the same collection stands on a shelf as covers, and every album page plays the album, so a friend who has never heard of a record can hear it first.',
   },
   {
-    name: 'vincent.ar-va.com', href: 'https://vincent.ar-va.com', status: '', line: 'Nextcloud, in your colours',
-    text: 'Nextcloud lets you pick a colour. Vincent designs everything around it: a matching light and dark theme, checked for contrast, ready to apply.',
+    name: 'vincent.ar-va.com', href: 'https://vincent.ar-va.com', status: '', line: 'Nextcloud in your colours',
+    text: 'Nextcloud’s own settings start from one colour. Vincent turns the colours you like into a whole light and dark theme, checks every text colour against its background, and hands you the exact settings to paste in.',
   },
   {
     name: 'anon.ar-va.com', href: 'https://anon.ar-va.com', status: '', line: 'Room to say the hard thing',
-    text: 'One box. No name, no account, no tracking. Write what you couldn’t say out loud; a private link brings back the answer.',
+    text: 'One text box for what is hard to say out loud. It never asks who you are, and a private link brings back the answer.',
   },
   {
-    name: 'Solaris', href: '', status: 'In progress', line: 'The whole tattoo studio, in one place',
-    text: 'Artists, managers and the front desk, connected. Solaris thinks ahead and takes on the routine work, and every decision stays yours.',
+    name: 'Solaris', href: '', status: 'In progress', line: 'A tattoo studio in one system',
+    text: 'Artists, the manager and the front desk each keep their own part of a studio running. Solaris joins those parts and takes on the routine work, and every decision stays with the people who run the studio.',
   },
 ];
 
 const habits = [
-  { title: 'Start with what’s missing', text: 'Every product begins with a gap: something people want and can’t find, or find done badly.' },
-  { title: 'Build for the other side', text: 'Not for the expert. For the friend who isn’t a collector, the admin who isn’t a designer, the person afraid to speak, the artist who would rather be tattooing.' },
-  { title: 'Hide the effort', text: 'The engineering goes deep so the surface can stay light. Every detail is over-built on purpose, and none of it is there to show off.' },
-  { title: 'Leave people the last word', text: 'The software does the work. The person decides.' },
+  { title: 'Start with what’s missing', text: 'Each product begins with something people already want and can’t get, or get only in a form they give up on.' },
+  { title: 'Build for the person who isn’t an expert', text: 'The friend who doesn’t collect records, the admin who isn’t a designer, the person who is afraid to speak, the artist who would rather tattoo than do paperwork.' },
+  { title: 'Put the effort underneath', text: 'The details are over-built on purpose. On music.ar-va.com the record turns at 33⅓ revolutions a minute and drops the needle with a sound made in the browser. Vincent’s tests run about a thousand generated themes through every contrast check. None of it asks for attention: it is there so the part people touch can stay simple and feel good to use.' },
+  { title: 'Leave people the last word', text: 'The software does the routine work and people make the calls: their colours, whether their message goes public, how their studio runs.' },
 ];
 
 const steps = [
-  { title: 'Axis', text: 'One line at 45°. Everything hangs from it: the base low on the left, the tip high on the right.' },
+  { title: 'Axis', text: 'One line at 45°. Everything else hangs from it, with the base at the bottom left and the tip at the top right.' },
   { title: 'Lobes', text: `Nine circles, four on each side and one at the tip, growing from a radius of ${n(Math.min(...lobes))} to ${n(Math.max(...lobes))}.` },
-  { title: 'Notches', text: 'Between every two lobes, a circle that just touches both. Each one carves a notch; the ninth makes room for the stem.' },
-  { title: 'Trace', text: `Run along the outside of each lobe and the inside of each notch: ${leaf.circles.length} arcs, each handing over to the next.` },
-  { title: 'Fill and stem', text: 'Fill it in. The stem is a straight bar on the same line, cut flat like the nib of a pen.' },
-  { title: 'Midrib', text: 'The stem runs on into the leaf as a thin cut, narrowing to nothing.' },
-];
+  { title: 'Notches', text: 'Between every two lobes, a circle that touches both. Each one carves a notch, and the ninth leaves room for the stem.' },
+  { title: 'Trace', text: `Follow the outside of each lobe and the inside of each notch. That makes ${leaf.circles.length} arcs; the dots mark where one hands over to the next.` },
+  { title: 'Fill and stem', text: 'Fill the outline. The stem is a straight bar on the same line, cut flat at the end like a pen nib.' },
+  { title: 'Midrib', text: 'The stem carries on into the leaf as a thin cut that narrows to a point.' },
+] as const;
 
 const tokens = colourTokens(tokensCss);
 const colours = [
-  { name: 'kikyo', title: 'Kikyō', origin: 'The blue-violet of the Japanese bellflower, a court colour since the Heian era.', job: 'Act', use: 'Everything you can press, follow or choose.' },
-  { name: 'kashiwa', title: 'Kashiwa', origin: 'The green of the oak leaf in the sign.', job: 'Belong', use: 'The leaf, and the people who make and own things.' },
-  { name: 'bengara', title: 'Bengara', origin: 'The red earth on the old lattices of Kyoto’s teahouse districts.', job: 'Notice', use: 'The few things worth a second look.' },
+  { name: 'kikyo', title: 'Kikyō', origin: 'The blue-violet of the Japanese bellflower, a court colour in the Heian period.', job: 'Act', use: 'everything you can press, follow or choose.' },
+  { name: 'kashiwa', title: 'Kashiwa', origin: 'The green of the oak leaf.', job: 'Belong', use: 'the leaf, and the people who make and own things.' },
+  { name: 'bengara', title: 'Bengara', origin: 'The iron-oxide red on the lattices of Kyoto’s old teahouse districts.', job: 'Notice', use: 'the few things worth a second look.' },
 ].map((c) => ({ ...c, ...tokens.find((t) => t.name === c.name)! }));
 
 const link = 'text-kikyo-600 dark:text-kikyo-400 underline underline-offset-3 hover:text-zinc-900 dark:hover:text-white';
 const body = 'text-lg text-zinc-700 dark:text-zinc-300 text-pretty';
 const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
 ---
-<Layout title="ARVA: what was missing, made well" description="What ARVA makes and how, what its oak leaf stands for, and how the leaf is drawn with a compass and a ruler." header={{ label: 'brand', home: '/', minimal: true }}>
+<Layout title="ARVA: what was missing, made well" description="ARVA builds its own software for what people want but can’t find: music.ar-va.com, Vincent, anon and Solaris. What the oak leaf stands for, and how it is drawn from 18 circles." header={{ label: 'brand', home: '/', minimal: true }}>
+  <BrandNav slot="header-actions" />
   <main class="max-w-5xl mx-auto px-6 w-full pt-12 pb-24">
     <header class="grid gap-8 sm:grid-cols-[minmax(0,14rem)_1fr] sm:items-center">
       <svg viewBox="0 0 100 100" class="w-32 sm:w-full h-auto" aria-hidden="true"><path d={leaf.path} class="fill-kashiwa dark:fill-kashiwa-light" /></svg>
       <div>
         <h1 class="font-bold text-4xl sm:text-5xl text-zinc-900 dark:text-white text-balance">What was missing, made well</h1>
         <p class={`mt-4 max-w-2xl ${body}`}>
-          ARVA builds its own software for what people want but can’t find, or can only find done badly. Simple on the
-          surface, exact underneath, made to outlast the trend.
+          ARVA makes its own software for things people want and can’t find, or can only find done badly. Each product is
+          simple to use, carefully engineered underneath, and made to outlast the trend it was built in.
         </p>
       </div>
     </header>
@@ -97,7 +99,7 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
     </section>
 
     <section class="mt-20" aria-labelledby="habits">
-      <h2 id="habits" class={h2}>Four habits</h2>
+      <h2 id="habits" class={h2}>How ARVA builds</h2>
       <dl class="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2 max-w-4xl">
         {habits.map((w) => (
           <div>
@@ -111,32 +113,62 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
     <section class="mt-20" aria-labelledby="leaf">
       <h2 id="leaf" class={h2}>The leaf</h2>
       <p class={`mt-4 max-w-3xl ${body}`}>
-        The sign is an oak leaf, <i>kashiwa</i>. While other trees stand bare, the kashiwa oak keeps its leaves through
-        the winter and lets them go only when the new ones are ready. ARVA’s work is made to last the same way: through
-        every passing trend, until something truly better takes its place.
+        ARVA’s sign is a single oak leaf, <i>kashiwa</i> in Japanese. The kashiwa oak keeps its dry leaves all winter,
+        long after the trees around it are bare, and lets them go in spring when the new leaves open. ARVA’s products
+        are made to hold on the same way, through passing trends, until something better is ready to take their place.
       </p>
       <ul class="mt-10 grid gap-8 sm:grid-cols-3">
         <li>
           <h3 class="font-sans font-medium text-zinc-900 dark:text-white">It leans forward</h3>
-          <p class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">Set on a 45° line, base low and tip high, it points the way you read: ahead.</p>
+          <p class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">It sits on a 45° line with the tip at the top right, the way a reader’s eye travels.</p>
         </li>
         <li>
-          <h3 class="font-sans font-medium text-zinc-900 dark:text-white">It grows as you read it</h3>
-          <p class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">The lobes widen from stem to tip; the last is more than twice the first.</p>
+          <h3 class="font-sans font-medium text-zinc-900 dark:text-white">It grows toward the tip</h3>
+          <p class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">Each lobe is larger than the one before it, and the last has more than twice the radius of the first.</p>
         </li>
         <li>
-          <h3 class="font-sans font-medium text-zinc-900 dark:text-white">It grew; it wasn’t stamped</h3>
-          <p class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">The lobes on one side fall between those on the other, as on a real oak. A mirrored leaf looks printed; this one looks alive.</p>
+          <h3 class="font-sans font-medium text-zinc-900 dark:text-white">Its sides alternate</h3>
+          <p class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">The lobes on one side sit between the lobes on the other, the way they grow on a real oak.</p>
         </li>
       </ul>
     </section>
 
+    <section class="mt-20" aria-labelledby="wordmark">
+      <h2 id="wordmark" class={h2}>The name</h2>
+      <div class="mt-8 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-6 py-12 grid place-items-center">
+        <img src="/logo/arva-horizontal-ink-kashiwa.svg" alt="ARVA" class="h-16 sm:h-24 w-auto dark:hidden" />
+        <img src="/logo/arva-horizontal-washi-kashiwa.svg" alt="ARVA" class="h-16 sm:h-24 w-auto hidden dark:block" />
+      </div>
+      <p class={`mt-6 max-w-3xl ${body}`}>
+        The letters are Brygada 1918, a Polish typeface probably cut between the wars and then forgotten. Its metal
+        matrices turned up in a museum in Łódź, and it was recut in 2018. Every ARVA title is set in it. In the logo the
+        capitals are spaced wide, centred on the leaf and saved as shapes, so the logo looks the same on every screen.
+      </p>
+    </section>
+
+    <section class="mt-20" aria-labelledby="colours">
+      <h2 id="colours" class={h2}>Three colours</h2>
+      <p class={`mt-4 max-w-3xl ${body}`}>Each colour has one job, and anything without a job stays neutral.</p>
+      <ul class="mt-8 grid gap-4 sm:grid-cols-3">
+        {colours.map((c) => (
+          <li class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface overflow-hidden">
+            <div class="grid grid-cols-2 h-20" aria-hidden="true"><span style={`background:${c.light}`}></span><span style={`background:${c.dark}`}></span></div>
+            <div class="p-5">
+              <h3 class="font-bold text-xl text-zinc-900 dark:text-white">{c.title}</h3>
+              <p class="mt-1 text-zinc-600 dark:text-zinc-400">{c.origin}</p>
+              <p class="mt-3 text-zinc-900 dark:text-white"><span class="font-medium">{c.job}:</span> {c.use}</p>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+
     <section class="mt-20" aria-labelledby="drawn">
-      <h2 id="drawn" class={h2}>How it’s drawn</h2>
+      <h2 id="drawn" class={h2}>How the leaf is drawn</h2>
       <p class={`mt-4 max-w-3xl ${body}`}>
-        Eighteen circles you never see, and one straight line. The leaf is drawn with a compass and a ruler,
-        the way craftsmen have drawn Japanese family crests, <i>kamon</i>, for centuries: perfect circles and straight
-        lines, nothing by hand. ARVA borrows the method, not the history.
+        The leaf is drawn with a compass and a ruler: nine circles for the lobes, nine for the notches and one straight
+        line. Japanese family crests, <i>kamon</i>, have been drawn this way for centuries, from perfect circles and
+        straight lines. ARVA borrows the method, not a family history.
       </p>
       <ol class="mt-10 grid gap-px rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-200 dark:bg-zinc-800 sm:grid-cols-2 lg:grid-cols-3">
         {steps.map((s, i) => (
@@ -156,9 +188,9 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
         <div class="max-w-2xl">
           <h3 class="font-bold text-2xl text-zinc-900 dark:text-white">No corners</h3>
           <p class={`mt-3 ${body}`}>
-            Where a lobe meets a notch, the two circles touch at a single point and leave it in the same direction. The
-            outline passes from curve to curve the way a train changes tracks: without a jolt. All {leaf.circles.length} joints
-            work this way, and this page checks every one of them each time it’s built.
+            Where a lobe meets a notch, the two circles touch at a single point and leave it heading the same way, along
+            the straight line. The outline moves from one curve to the next without a bump, the way a train changes
+            tracks. All {leaf.circles.length} joints work like this, and every build of this page checks each one.
           </p>
         </div>
       </div>
@@ -168,20 +200,20 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
         <dl class="mt-6 grid gap-6 sm:grid-cols-3">
           <div>
             <dt class="font-medium text-zinc-900 dark:text-white">Anyone can redraw it</dt>
-            <dd class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">{leaf.circles.length} circles and a line. From the numbers below, anyone draws the same leaf, exactly.</dd>
+            <dd class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">The {leaf.circles.length} circles and the line below are the whole leaf. A designer, a developer or a machine gets the same shape from them.</dd>
           </div>
           <div>
             <dt class="font-medium text-zinc-900 dark:text-white">Sharp at any size</dt>
-            <dd class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">A circle has no wobble to magnify. The leaf is as clean full screen as in a browser tab.</dd>
+            <dd class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">A circle has no wobble to magnify, so the leaf stays clean from a browser tab to a full screen.</dd>
           </div>
           <div>
-            <dt class="font-medium text-zinc-900 dark:text-white">Easy to tend</dt>
-            <dd class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">To change the leaf, change one circle. The rest of the outline stays where it is.</dd>
+            <dt class="font-medium text-zinc-900 dark:text-white">Easy to change</dt>
+            <dd class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">Changing the leaf means changing one circle. The rest of the outline stays where it is.</dd>
           </div>
         </dl>
         <p class={`mt-8 ${body}`}>
-          Nobody sees the circles. They only see a leaf that looks calm and certain. That is ARVA in one picture: the
-          care stays underneath, so what you meet is simple.
+          Nobody looking at the leaf sees the circles. The products work the same way: a visitor sees a shelf of
+          records or a finished theme, and the engineering underneath stays out of sight.
         </p>
         <Disclosure title={`The ${leaf.circles.length} circles, as numbers`} class="mt-8">
           <p class="text-sm">In the logo file’s 100 × 100 box, in the order the outline meets them, starting at the base.</p>
@@ -199,14 +231,14 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
           </div>
         </Disclosure>
       </div>
-    </section>
 
-    <section class="mt-20" aria-labelledby="small">
-      <h2 id="small" class={h2}>Small sizes</h2>
-      <p class={`mt-4 max-w-3xl ${body}`}>
-        Below 32 pixels, nine lobes and a midrib are more than a screen can hold. The small leaf keeps {small.circles.filter((c) => c.kind === 'lobe').length} lobes
-        and lets the midrib go, drawn the same way.
-      </p>
+      <div class="mt-16 max-w-3xl">
+        <h3 class="font-bold text-2xl text-zinc-900 dark:text-white">Small sizes</h3>
+        <p class={`mt-3 ${body}`}>
+          Below 32 pixels the nine lobes and the midrib blur together, so the small leaf keeps seven lobes and
+          drops the midrib. It is drawn the same way.
+        </p>
+      </div>
       <div class="mt-8 grid gap-8 sm:grid-cols-[minmax(0,14rem)_1fr] sm:items-center">
         <div class="max-w-56"><LeafStep leaf={small} step={4} label="The small leaf traced from its 14 circles" /></div>
         <ul class="flex flex-wrap items-end gap-x-8 gap-y-6">
@@ -226,38 +258,8 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
       </div>
     </section>
 
-    <section class="mt-20" aria-labelledby="wordmark">
-      <h2 id="wordmark" class={h2}>The name</h2>
-      <div class="mt-8 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface px-6 py-12 grid place-items-center">
-        <img src="/logo/arva-horizontal-ink-kashiwa.svg" alt="ARVA" class="h-16 sm:h-24 w-auto dark:hidden" />
-        <img src="/logo/arva-horizontal-washi-kashiwa.svg" alt="ARVA" class="h-16 sm:h-24 w-auto hidden dark:block" />
-      </div>
-      <p class={`mt-6 max-w-3xl ${body}`}>
-        ARVA is set in Brygada 1918, a Polish typeface from between the wars that was forgotten for decades and recut
-        in 2018 from metal matrices found in a museum: letters that outlasted their own century. Spaced wide and centred
-        on the leaf, it’s the same family as every ARVA title, drawn into the logo as shapes so it never waits for a font.
-      </p>
-    </section>
-
-    <section class="mt-20" aria-labelledby="colours">
-      <h2 id="colours" class={h2}>Three colours</h2>
-      <p class={`mt-4 max-w-3xl ${body}`}>Each has one job. Everything else stays quiet.</p>
-      <ul class="mt-8 grid gap-4 sm:grid-cols-3">
-        {colours.map((c) => (
-          <li class="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface overflow-hidden">
-            <div class="grid grid-cols-2 h-20" aria-hidden="true"><span style={`background:${c.light}`}></span><span style={`background:${c.dark}`}></span></div>
-            <div class="p-5">
-              <h3 class="font-bold text-xl text-zinc-900 dark:text-white">{c.title}</h3>
-              <p class="mt-1 text-zinc-600 dark:text-zinc-400">{c.origin}</p>
-              <p class="mt-3 text-zinc-900 dark:text-white"><span class="font-medium">{c.job}.</span> {c.use}</p>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </section>
-
     <p class="mt-20 max-w-3xl text-lg text-zinc-700 dark:text-zinc-300">
-      The values, the type, the logo files and every rule live in <a class={link} href="/">the ARVA design language</a>.
+      Colour values, the type, the logo files and every rule are in <a class={link} href="/">the ARVA design language</a>.
     </p>
   </main>
 </Layout>

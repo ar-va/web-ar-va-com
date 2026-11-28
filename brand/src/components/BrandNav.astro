@@ -1,0 +1,14 @@
+---
+// The two pages of brand.ar-va.com, linked from the header of both.
+const here = Astro.url.pathname.replace(/(index)?\.html$/, ''); // pages build as /index.html and /story.html
+const pages = [
+  { href: '/story', label: 'Story', short: '' },
+  { href: '/', label: 'Design language', short: 'Design' },
+];
+---
+<nav aria-label="brand.ar-va.com" class="flex items-center sm:gap-1 text-sm font-medium">
+  {pages.map((p) => (
+    <a href={p.href} aria-current={here === p.href ? 'page' : undefined}
+      class="rounded-full px-2 max-[399px]:px-1 sm:px-3 py-2 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white aria-[current=page]:text-kikyo-600 dark:aria-[current=page]:text-kikyo-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-kikyo-500">{p.short ? <><span class="sm:hidden">{p.short}</span><span class="max-sm:hidden">{p.label}</span></> : p.label}</a>
+  ))}
+</nav>
