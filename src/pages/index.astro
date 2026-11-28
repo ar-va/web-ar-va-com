@@ -8,42 +8,42 @@ import { MAIN_SITE_PUBLIC } from '@shared/site';
 
 const products = [
   {
-    name: 'music.ar-va.com', href: 'https://music.ar-va.com', status: '', line: 'A record shelf anyone can browse',
-    text: 'Collectors keep their vinyl on Discogs, a catalogue written for other collectors. I put the same collection on a shelf as covers, and every album page plays the album, so a friend who has never heard of a record can hear it first.',
+    name: 'music.ar-va.com', href: 'https://music.ar-va.com', status: '', line: 'Your records, on a shelf again',
+    text: 'Discogs knows every pressing and catalogue number in a collection. A friend would rather see the covers and hear what you love. Here the collection stands on a shelf, and every record is a click away from playing.',
   },
   {
-    name: 'vincent.ar-va.com', href: 'https://vincent.ar-va.com', status: '', line: 'Nextcloud in your colours',
-    text: 'Nextcloud’s own settings start from one colour. Vincent turns the colours you like into a whole light and dark theme, checks every text colour against its background, and hands you the exact settings to paste in.',
+    name: 'vincent.ar-va.com', href: 'https://vincent.ar-va.com', status: '', line: 'Your colours, all through Nextcloud',
+    text: 'Choose the colours you like and Vincent carries them across Nextcloud, in light and in dark, keeping every word readable. You leave with the exact settings to paste in.',
   },
   {
-    name: 'anon.ar-va.com', href: 'https://anon.ar-va.com', status: '', line: 'Room to say the hard thing',
-    text: 'One text box for telling me what is hard to say out loud. It never asks who you are, and a private link brings back my answer.',
+    name: 'anon.ar-va.com', href: 'https://anon.ar-va.com', status: '', line: 'Say it without your name',
+    text: 'Some things are easier to write than to say out loud. anon is a single box that never asks who you are, and a private link brings back my reply.',
   },
   {
-    name: 'Solaris', href: '', status: 'In progress', line: 'A tattoo studio in one system',
-    text: 'Artists, the manager and the front desk each keep their own part of a studio running. I’m building Solaris to join those parts and take on the routine work, while every decision stays with the people who run the studio.',
+    name: 'Solaris', href: '', status: 'In progress', line: 'A studio’s day, in one place',
+    text: 'Between the front desk and the chair, a tattoo studio runs on a hundred small tasks. I’m building Solaris to carry them quietly and to ask before it decides anything that matters.',
   },
 ];
 
 const habits = [
-  { title: 'Start with what’s missing', text: 'Every product I make begins with something people already want and can’t get, or get only in a form they give up on.' },
-  { title: 'Build for the person who isn’t an expert', text: 'I build for the friend who doesn’t collect records, the admin who isn’t a designer, the person who is afraid to speak, the artist who would rather tattoo than do paperwork.' },
-  { title: 'Put the effort underneath', text: 'I over-build the details on purpose. On music.ar-va.com the record turns at 33⅓ revolutions a minute and drops the needle with a sound made in the browser. Vincent’s tests run about a thousand generated themes through every contrast check. None of it asks for attention: it is there so the part you touch can stay simple and feel good to use.' },
-  { title: 'Leave people the last word', text: 'My software does the routine work and you make the calls: your colours, whether your message goes public, how your studio runs.' },
+  { title: 'Begin with the gap', text: 'I start where people have been making do: a tool built for experts, or no tool at all.' },
+  { title: 'Design for the first visit', text: 'If someone new to the subject can use it on the first try, it is ready. If not, I keep going.' },
+  { title: 'Keep the engineering out of sight', text: 'Most of the work never shows. The record on the shelf turns at a true 33⅓ rpm, and Vincent’s tests put about a thousand generated themes through every contrast check. All you should notice is that nothing gets in your way.' },
+  { title: 'Leave the choices to you', text: 'The software takes the chores. Your colours, your words and your studio stay your call.' },
 ];
 
 const link = 'text-kikyo-600 dark:text-kikyo-400 underline underline-offset-3 hover:text-zinc-900 dark:hover:text-white';
 const body = 'text-lg text-zinc-700 dark:text-zinc-300 text-pretty';
 const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
 ---
-<Layout title="ARVA: what was missing, made well" description="I’m Artur. I make my own software for things people want and can’t find: a record shelf anyone can browse, Nextcloud in your colours, a safe place to say the hard thing, and Solaris for tattoo studios.">
+<Layout title="ARVA: what was missing, made well" description="I’m Artur, and ARVA is the name I build under: a record shelf for friends who don’t collect, Nextcloud in your own colours, a box for saying things without your name, and soon Solaris, for tattoo studios.">
   <main class="max-w-5xl mx-auto px-6 w-full pt-12 pb-24">
     <header class="max-w-3xl">
       <div>
         <h1 class="font-bold text-5xl sm:text-6xl leading-[1.05] text-zinc-900 dark:text-white text-balance">What was missing, made well</h1>
         <p class={`mt-6 max-w-2xl text-xl text-zinc-700 dark:text-zinc-300 text-pretty`}>
-          I’m Artur, and ARVA is where I make my own software for things people want and can’t find, or can only find done
-          badly. Each product is simple to use, carefully engineered underneath, and made to outlast the trend it was built in.
+          I’m Artur, and ARVA is the name I build under. I make software for the gaps other tools leave behind: calm to
+          use, precise in how it works, and meant to stay useful long after the season it arrived in.
         </p>
       </div>
     </header>
@@ -67,7 +67,7 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
     </section>
 
     <section class="mt-20" aria-labelledby="habits">
-      <h2 id="habits" class={h2}>How I build</h2>
+      <h2 id="habits" class={h2}>How I work</h2>
       <dl class="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2 max-w-4xl">
         {habits.map((w) => (
           <div>
@@ -81,9 +81,8 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
     <section class="mt-20 max-w-3xl" aria-labelledby="leaf">
       <h2 id="leaf" class={h2}>The leaf</h2>
       <p class={`mt-4 ${body}`}>
-        My sign is an oak leaf, <i>kashiwa</i> in Japanese. The kashiwa oak keeps its leaves all winter and lets them go
-        only when the new ones open, and I make my products to hold on the same way, until something better is ready to
-        take their place.
+        My sign is a <i>kashiwa</i> leaf, from the Japanese oak that holds its leaves through winter and lets them go only
+        when new ones are ready. I want what I make to last like that.
       </p>
       <p class={`mt-4 ${body}`}>
         <a class={link} href="https://brand.ar-va.com/story">How the leaf is drawn from 18 circles</a> and <a class={link} href="https://brand.ar-va.com/">the rules all my products follow</a> are on brand.ar-va.com.

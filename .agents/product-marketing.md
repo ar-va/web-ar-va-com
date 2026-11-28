@@ -1,10 +1,10 @@
 # Product Marketing Context
 
-**Document version:** v5
+**Document version:** v6
 **Last updated:** 2026-11-28
 
 ## Product Overview
-**One-liner:** ARVA builds the software people have been missing: simple and pleasant on the surface, carefully engineered underneath.
+**One-liner:** I'm Artur, and ARVA is the name I build under: software for the gaps other tools leave behind. [NEED: slogan, being chosen]
 **What it does:** ARVA makes its own products, each for something people want and can't find, or can only find done badly. Every product hides a lot of engineering under a surface that a non-expert can use without help.
 **Product category:** A maker of its own web products (not an agency, not work for hire).
 **Product type:** Web apps; Solaris (in progress) is a business system for tattoo studios.
@@ -44,7 +44,7 @@ Each product has its own reader. What they share: they are on the other side of 
 **Anti-persona:** someone who wants every option exposed (Discogs power users already have Discogs).
 
 ## Customer Language
-**How the owner describes the products (verbatim, 2026-11-26):**
+**How the owner describes the products (verbatim, 2026-11-26; for understanding only, never to reuse in copy):**
 - "a wrapper for Discogs that innovates on how the vinyl collection is being shown"
 - "one of a kind theme generator for Nextcloud that people have been wanting to have forever"
 - "combines simplicity and openness to a touchy subject"
@@ -82,6 +82,8 @@ Each product has its own reader. What they share: they are on the other side of 
 *Decisions and tested lessons. Newest first.*
 | Date | Learning | Evidence | Applies to | Status |
 |------|----------|----------|------------|--------|
+| 2026-11-28 | The owner's explanations are a brief, not copy: write fresh lines from the idea, never reuse their wording | Owner's correction | All copy | active |
+| 2026-11-28 | "What was missing, made well" is retired as the slogan | Owner disliked it | Hero, rules | active |
 | 2026-11-28 | No separate product logos: every site uses the original ARVA logo | Owner rejected nine product-mark concepts | All sites | active |
 | 2026-11-28 | ar-va.com is the landing page (who I am, the work); brand.ar-va.com is the reference for people and AI tools building for ARVA | Owner chose option A | Site structure | active |
 | 2026-11-28 | No product screenshots on brand.ar-va.com; the products are described in words and linked | Owner's decision | Brand site | active |
@@ -93,6 +95,7 @@ Each product has its own reader. What they share: they are on the other side of 
 
 ## Changelog
 *Newest first. One line per revision: what changed and why.*
+- v6 (2026-11-28) — One-liner rewritten; Learnings: the owner's words are a brief, not copy; the old slogan retired.
 - v5 (2026-11-28) — Learnings: products keep the ARVA logo, no product marks (owner's decision).
 - v4 (2026-11-28) — Site structure: ar-va.com is the landing page, brand.ar-va.com the reference (owner's choice A).
 - v3 (2026-11-28) — Learnings: no product screenshots on the brand site (owner's decision).

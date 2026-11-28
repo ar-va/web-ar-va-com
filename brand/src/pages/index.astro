@@ -17,7 +17,7 @@ const avatars = kitFiles('avatars');
 const ground = (f: string) => (f.includes('washi') ? 'bg-zinc-950' : 'bg-zinc-50');
 const prompt = `Follow ARVA's design language. Read ${SITE}/ARVA-brand-rules.md and treat every rule as a requirement; use the CSS variables in ${SITE}/arva-tokens.css; take logo files from ${SITE}/llms.txt.`;
 ---
-<Layout title="ARVA design language" description="The rules all of ARVA’s products follow: the oak-leaf logo, three colours, the type and the voice, as a page for people and plain files for AI tools." header={{ label: 'brand', home: '/', minimal: true }}>
+<Layout title="ARVA design language" description="The rules all of ARVA’s products follow: the oak-leaf logo, three colours, the type and the voice, as a page for people and plain files for AI tools." header={{ home: '/', minimal: true }}>
   <BrandNav slot="header-actions" />
   <main class="max-w-5xl mx-auto px-6 w-full pt-12 pb-24">
     <h1 class="font-bold text-3xl sm:text-4xl text-zinc-900 dark:text-white">ARVA design language</h1>

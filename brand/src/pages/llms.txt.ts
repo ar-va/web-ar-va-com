@@ -3,7 +3,7 @@ import { SITE, kitFiles } from '../lib/files';
 
 export const GET = () => new Response(`# ARVA design language
 
-> ARVA is Artur's brand: software Artur makes (music.ar-va.com, vincent.ar-va.com, anon.ar-va.com, Solaris in progress) for things people want and can't find, or can only find done badly. Copy in ARVA's voice is written as Artur, in the first person ("I make", never "we"). These are its brand rules: logo, colour, type, layout, components and voice for every ARVA site and product. Follow them when designing or coding for ARVA; if a request conflicts with a rule, follow the rule and say so.
+> ARVA is Artur's brand: software Artur makes (music.ar-va.com, vincent.ar-va.com, anon.ar-va.com, Solaris in progress) for the gaps other tools leave behind. Copy in ARVA's voice is written as Artur, in the first person ("I make", never "we"). These are its brand rules: logo, colour, type, layout, components and voice for every ARVA site and product. Follow them when designing or coding for ARVA; if a request conflicts with a rule, follow the rule and say so.
 
 ## Read first
 

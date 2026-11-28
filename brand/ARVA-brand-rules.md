@@ -12,18 +12,18 @@ Online at https://brand.ar-va.com (this file: https://brand.ar-va.com/ARVA-brand
 
 ARVA is Artur's brand, and it speaks as Artur, in the first person: "I make", "my products", never "we".
 
-**What was missing, made well.** I make my own software for things people want and can't find, or can only find done badly. Each product is simple to use, carefully engineered underneath, and made to outlast the trend it was built in. ARVA is new and claims no history.
+I'm Artur, and ARVA is the name I build under. I make software for the gaps other tools leave behind: calm to use, precise in how it works, and meant to stay useful long after the season it arrived in. ARVA is new and claims no history.
 
-How I build, in every product:
+How I work, in every product:
 
-1. **Start with what's missing:** something people already want and can't get, or get only in a form they give up on.
-2. **Build for the person who isn't an expert:** the friend who doesn't collect records, the admin who isn't a designer, the person who is afraid to speak.
-3. **Put the effort underneath:** I over-build the details on purpose so the part you touch stays simple and feels good to use. None of it is there to be noticed.
-4. **Leave people the last word:** my software does the routine work; you make the calls.
+1. **Begin with the gap:** I start where people have been making do, with a tool built for experts or no tool at all.
+2. **Design for the first visit:** if someone new to the subject can use it on the first try, it is ready.
+3. **Keep the engineering out of sight:** most of the work never shows; all you should notice is that nothing gets in your way.
+4. **Leave the choices to you:** the software takes the chores, and the decisions stay yours.
 
-My work so far: **music.ar-va.com** (a Discogs collection as a shelf of covers anyone can browse, with each album playable), **vincent.ar-va.com** (your colours turned into a whole light and dark Nextcloud theme, checked for readable contrast), **anon.ar-va.com** (one text box for telling me what is hard to say out loud; it never asks who you are), and **Solaris** (in progress: one system for a tattoo studio that takes on the routine work while every decision stays with its people).
+My work so far: **music.ar-va.com** (your records on a shelf again: covers to browse, every record a click from playing), **vincent.ar-va.com** (your colours carried across Nextcloud, in light and in dark, every word readable), **anon.ar-va.com** (a single box for saying something without your name; a private link brings back my reply), and **Solaris** (in progress: a tattoo studio's day in one place).
 
-My sign is an oak leaf (*kashiwa*). The kashiwa oak keeps its dry leaves all winter and lets them go in spring when the new leaves open; I make my products to hold on the same way, through passing trends, until something better is ready to take their place. The leaf is drawn from 18 circles nobody sees, the way my products keep their engineering out of sight. Who I am and what I make: https://ar-va.com. How the leaf is drawn: https://brand.ar-va.com/story.
+My sign is a *kashiwa* leaf, from the Japanese oak that holds its leaves through winter and lets them go only when new ones are ready. I want what I make to last like that. The leaf is drawn from 18 circles nobody sees, the way my products keep their engineering out of sight. Who I am and what I make: https://ar-va.com. How the leaf is drawn: https://brand.ar-va.com/story.
 
 - **Personality:** calm, precise, warm, unhurried, confident without being loud.
 - **The design should feel like** a well-engineered tool: quiet surfaces, exact details, three colours used sparingly, each with one job.
@@ -276,6 +276,9 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
   Kashiwa as large grounds broke their one-job rules (and turned the leaf white), and the Ink ground paired light-theme
   Ink with the dark-theme mint and a paper-white name no logo uses. Paper and night stay, matching the two-tone logo
   files; the leaf avatar is now the default profile picture.
+- **2026-11-28 (own words):** section 1 rewritten in fresh lines: the owner's explanations of the products had been
+  reused almost word for word, and they were a brief, not copy. "What was missing, made well" is retired; the new
+  slogan is still being chosen.
 - **2026-11-28 (first person):** the owner chose the first person: ARVA speaks as Artur ("I make", "my products"),
   never "we" or the third person in copy. Section 1, the voice rules, the story page and the design-language intro follow.
 - **2026-11-28 (who ARVA is, voice):** section 1 rewritten after a review with the copywriting, copy-editing and
