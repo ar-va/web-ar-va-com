@@ -12,18 +12,17 @@ Online at https://brand.ar-va.com (this file: https://brand.ar-va.com/ARVA-brand
 
 ARVA is Artur's brand, and it speaks as Artur, in the first person: "I make", "my products", never "we".
 
-I'm Artur, and ARVA is the name I build under. I make software for the gaps other tools leave behind: calm to use, precise in how it works, and meant to stay useful long after the season it arrived in. ARVA is new and claims no history.
+**Digital craft, evermore.** I'm Artur. Under the name ARVA I build web software for people the usual tools leave out. ARVA is new and claims no history.
 
 How I work, in every product:
 
-1. **Begin with the gap:** I start where people have been making do, with a tool built for experts or no tool at all.
-2. **Design for the first visit:** if someone new to the subject can use it on the first try, it is ready.
-3. **Keep the engineering out of sight:** most of the work never shows; all you should notice is that nothing gets in your way.
-4. **Leave the choices to you:** the software takes the chores, and the decisions stay yours.
+1. Start from the person who doesn't know the subject, and cut until they can use it on their first visit.
+2. Spend the time on the part nobody sees: the record on music.ar-va.com turns at 33⅓ rpm with a needle drop generated in the browser, and Vincent's tests run about a thousand generated themes through every contrast check.
+3. Where the software could decide for people, leave the decision with them: Vincent hands over settings instead of touching a server, and anon publishes a message only when its writer asks.
 
-My work so far: **music.ar-va.com** (your records on a shelf again: covers to browse, every record a click from playing), **vincent.ar-va.com** (your colours carried across Nextcloud, in light and in dark, every word readable), **anon.ar-va.com** (a single box for saying something without your name; a private link brings back my reply), and **Solaris** (in progress: a tattoo studio's day in one place).
+My work so far: **music.ar-va.com** (record shelves for people who don't collect: covers on a shelf, each album playable), **vincent.ar-va.com** (Nextcloud themes from your colours, light and dark, every text colour checked for contrast), **anon.ar-va.com** (anonymous messages to me: no sign-in, answers behind a private link), and **Solaris** (in progress: one system for a tattoo studio's artists, manager and front desk).
 
-My sign is a *kashiwa* leaf, from the Japanese oak that holds its leaves through winter and lets them go only when new ones are ready. I want what I make to last like that. The leaf is drawn from 18 circles nobody sees, the way my products keep their engineering out of sight. Who I am and what I make: https://ar-va.com. How the leaf is drawn: https://brand.ar-va.com/story.
+My sign is a *kashiwa* leaf, from a Japanese oak that keeps its dry leaves all winter and drops them only when the new ones open: that is where "evermore" comes from. The leaf is drawn from 18 circles nobody sees, the way my products keep their engineering out of sight. Who I am and what I make: https://ar-va.com. How the leaf is drawn: https://brand.ar-va.com/story.
 
 - **Personality:** calm, precise, warm, unhurried, confident without being loud.
 - **The design should feel like** a well-engineered tool: quiet surfaces, exact details, three colours used sparingly, each with one job.
@@ -276,6 +275,9 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
   Kashiwa as large grounds broke their one-job rules (and turned the leaf white), and the Ink ground paired light-theme
   Ink with the dark-theme mint and a paper-white name no logo uses. Paper and night stay, matching the two-tone logo
   files; the leaf avatar is now the default profile picture.
+- **2026-11-28 (slogan):** the slogan is **"Digital craft, evermore"** (the owner's, from their "Evermore Digital
+  Craftsmanship"). Section 1 rewritten again against the copywriting rules: no lists of three by reflex, no sayings, no
+  tidy closers, claims only about what exists.
 - **2026-11-28 (own words):** section 1 rewritten in fresh lines: the owner's explanations of the products had been
   reused almost word for word, and they were a brief, not copy. "What was missing, made well" is retired; the new
   slogan is still being chosen.

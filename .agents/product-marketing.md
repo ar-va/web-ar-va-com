@@ -1,10 +1,11 @@
 # Product Marketing Context
 
-**Document version:** v6
+**Document version:** v7
 **Last updated:** 2026-11-28
 
 ## Product Overview
-**One-liner:** I'm Artur, and ARVA is the name I build under: software for the gaps other tools leave behind. [NEED: slogan, being chosen]
+**Slogan:** Digital craft, evermore (owner's choice, 2026-11-28).
+**One-liner:** I'm Artur. Under the name ARVA I build web software for people the usual tools leave out.
 **What it does:** ARVA makes its own products, each for something people want and can't find, or can only find done badly. Every product hides a lot of engineering under a surface that a non-expert can use without help.
 **Product category:** A maker of its own web products (not an agency, not work for hire).
 **Product type:** Web apps; Solaris (in progress) is a business system for tattoo studios.
@@ -51,7 +52,7 @@ Each product has its own reader. What they share: they are on the other side of 
 - "making it think and do work for them but at the same time give them the reassurance that they are still in control"
 - "overengineered creative choices that make the website pleasant and fun to interact with without making them flashy or bloated"
 **Words to use:** shelf, records, covers, listen; your colours, readable; say, private link; studio, control.
-**Words to avoid:** heritage, generations, century-old, workshop, craft (as ARVA's past); revolutionary, seamless, unlock, solution (as a noun on its own).
+**Words to avoid:** heritage, generations, century-old, workshop, craft as a claim about ARVA's past ("digital craft" in the slogan is fine); revolutionary, seamless, unlock, solution (as a noun on its own).
 
 ## Brand Voice
 | Attribute | Means | Doesn't mean | Example line |
@@ -95,6 +96,7 @@ Each product has its own reader. What they share: they are on the other side of 
 
 ## Changelog
 *Newest first. One line per revision: what changed and why.*
+- v7 (2026-11-28) — Slogan "Digital craft, evermore"; one-liner rewritten against the copywriting rules.
 - v6 (2026-11-28) — One-liner rewritten; Learnings: the owner's words are a brief, not copy; the old slogan retired.
 - v5 (2026-11-28) — Learnings: products keep the ARVA logo, no product marks (owner's decision).
 - v4 (2026-11-28) — Site structure: ar-va.com is the landing page, brand.ar-va.com the reference (owner's choice A).

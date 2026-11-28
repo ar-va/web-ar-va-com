@@ -8,42 +8,35 @@ import { MAIN_SITE_PUBLIC } from '@shared/site';
 
 const products = [
   {
-    name: 'music.ar-va.com', href: 'https://music.ar-va.com', status: '', line: 'Your records, on a shelf again',
-    text: 'Discogs knows every pressing and catalogue number in a collection. A friend would rather see the covers and hear what you love. Here the collection stands on a shelf, and every record is a click away from playing.',
+    name: 'music.ar-va.com', href: 'https://music.ar-va.com', status: '', line: 'Record shelves for people who don’t collect',
+    text: 'Discogs lists every pressing and catalogue number, which collectors need and their friends skip. music.ar-va.com shows the same collection as covers on a shelf, and each album page plays the album.',
   },
   {
-    name: 'vincent.ar-va.com', href: 'https://vincent.ar-va.com', status: '', line: 'Your colours, all through Nextcloud',
-    text: 'Choose the colours you like and Vincent carries them across Nextcloud, in light and in dark, keeping every word readable. You leave with the exact settings to paste in.',
+    name: 'vincent.ar-va.com', href: 'https://vincent.ar-va.com', status: '', line: 'Nextcloud themes from your colours',
+    text: 'Nextcloud’s own settings take a single colour. Vincent builds a full light and dark theme from yours and checks every text colour for contrast; you copy the settings and CSS into Nextcloud.',
   },
   {
-    name: 'anon.ar-va.com', href: 'https://anon.ar-va.com', status: '', line: 'Say it without your name',
-    text: 'Some things are easier to write than to say out loud. anon is a single box that never asks who you are, and a private link brings back my reply.',
+    name: 'anon.ar-va.com', href: 'https://anon.ar-va.com', status: '', line: 'Anonymous messages to me',
+    text: 'A single text box with no sign-in. You write, I answer, and the answer stays behind your private link unless you ask me to publish it.',
   },
   {
-    name: 'Solaris', href: '', status: 'In progress', line: 'A studio’s day, in one place',
-    text: 'Between the front desk and the chair, a tattoo studio runs on a hundred small tasks. I’m building Solaris to carry them quietly and to ask before it decides anything that matters.',
+    name: 'Solaris', href: '', status: 'In progress', line: 'Software for tattoo studios',
+    text: 'One system for a studio’s artists, manager and front desk. It isn’t public yet.',
   },
-];
-
-const habits = [
-  { title: 'Begin with the gap', text: 'I start where people have been making do: a tool built for experts, or no tool at all.' },
-  { title: 'Design for the first visit', text: 'If someone new to the subject can use it on the first try, it is ready. If not, I keep going.' },
-  { title: 'Keep the engineering out of sight', text: 'Most of the work never shows. The record on the shelf turns at a true 33⅓ rpm, and Vincent’s tests put about a thousand generated themes through every contrast check. All you should notice is that nothing gets in your way.' },
-  { title: 'Leave the choices to you', text: 'The software takes the chores. Your colours, your words and your studio stay your call.' },
 ];
 
 const link = 'text-kikyo-600 dark:text-kikyo-400 underline underline-offset-3 hover:text-zinc-900 dark:hover:text-white';
 const body = 'text-lg text-zinc-700 dark:text-zinc-300 text-pretty';
 const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
 ---
-<Layout title="ARVA: what was missing, made well" description="I’m Artur, and ARVA is the name I build under: a record shelf for friends who don’t collect, Nextcloud in your own colours, a box for saying things without your name, and soon Solaris, for tattoo studios.">
+<Layout title="ARVA: digital craft, evermore" description="I’m Artur. Under the name ARVA I build web software for people the usual tools leave out: record shelves for friends who don’t collect, Nextcloud themes from your colours, anonymous messages, and Solaris for tattoo studios.">
   <main class="max-w-5xl mx-auto px-6 w-full pt-12 pb-24">
     <header class="max-w-3xl">
       <div>
-        <h1 class="font-bold text-5xl sm:text-6xl leading-[1.05] text-zinc-900 dark:text-white text-balance">What was missing, made well</h1>
+        <h1 class="font-bold text-5xl sm:text-6xl leading-[1.05] text-zinc-900 dark:text-white text-balance">Digital craft, evermore</h1>
         <p class={`mt-6 max-w-2xl text-xl text-zinc-700 dark:text-zinc-300 text-pretty`}>
-          I’m Artur, and ARVA is the name I build under. I make software for the gaps other tools leave behind: calm to
-          use, precise in how it works, and meant to stay useful long after the season it arrived in.
+          I’m Artur. Under the name ARVA I build web software for people the usual tools leave out: the friend who doesn’t
+          collect records, the Nextcloud admin who isn’t a designer, the person with something hard to say.
         </p>
       </div>
     </header>
@@ -68,21 +61,28 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
 
     <section class="mt-20" aria-labelledby="habits">
       <h2 id="habits" class={h2}>How I work</h2>
-      <dl class="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2 max-w-4xl">
-        {habits.map((w) => (
-          <div>
-            <dt class="font-medium text-lg text-zinc-900 dark:text-white">{w.title}</dt>
-            <dd class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">{w.text}</dd>
-          </div>
-        ))}
-      </dl>
+      <div class={`mt-4 max-w-3xl space-y-4 ${body}`}>
+        <p>
+          Most tools are built for people who already know the subject. I start from the person who doesn’t, and cut until
+          they can use it on their first visit.
+        </p>
+        <p>
+          Most of my time goes into the part nobody sees. On music.ar-va.com the record turns at 33⅓ rpm and the needle
+          drop is a sound generated in the browser. Vincent’s test suite runs about a thousand generated themes through
+          every contrast check. Visitors aren’t meant to notice any of it.
+        </p>
+        <p>
+          Where the software could decide for you, it leaves the decision with you. Vincent gives you the settings instead
+          of touching your server, and anon publishes a message only when its writer asks.
+        </p>
+      </div>
     </section>
 
     <section class="mt-20 max-w-3xl" aria-labelledby="leaf">
       <h2 id="leaf" class={h2}>The leaf</h2>
       <p class={`mt-4 ${body}`}>
-        My sign is a <i>kashiwa</i> leaf, from the Japanese oak that holds its leaves through winter and lets them go only
-        when new ones are ready. I want what I make to last like that.
+        My sign is a <i>kashiwa</i> leaf, from a Japanese oak that keeps its dry leaves all winter and drops them only
+        when the new ones open. That is where “evermore” comes from.
       </p>
       <p class={`mt-4 ${body}`}>
         <a class={link} href="https://brand.ar-va.com/story">How the leaf is drawn from 18 circles</a> and <a class={link} href="https://brand.ar-va.com/">the rules all my products follow</a> are on brand.ar-va.com.
