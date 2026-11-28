@@ -1,6 +1,6 @@
 # Product Marketing Context
 
-**Document version:** v4
+**Document version:** v5
 **Last updated:** 2026-11-28
 
 ## Product Overview
@@ -82,6 +82,7 @@ Each product has its own reader. What they share: they are on the other side of 
 *Decisions and tested lessons. Newest first.*
 | Date | Learning | Evidence | Applies to | Status |
 |------|----------|----------|------------|--------|
+| 2026-11-28 | No separate product logos: every site uses the original ARVA logo | Owner rejected nine product-mark concepts | All sites | active |
 | 2026-11-28 | ar-va.com is the landing page (who I am, the work); brand.ar-va.com is the reference for people and AI tools building for ARVA | Owner chose option A | Site structure | active |
 | 2026-11-28 | No product screenshots on brand.ar-va.com; the products are described in words and linked | Owner's decision | Brand site | active |
 | 2026-11-28 | Copy speaks as Artur in the first person ("I"), never "we" or the third person | Owner's decision | All copy | active |
@@ -92,6 +93,7 @@ Each product has its own reader. What they share: they are on the other side of 
 
 ## Changelog
 *Newest first. One line per revision: what changed and why.*
+- v5 (2026-11-28) — Learnings: products keep the ARVA logo, no product marks (owner's decision).
 - v4 (2026-11-28) — Site structure: ar-va.com is the landing page, brand.ar-va.com the reference (owner's choice A).
 - v3 (2026-11-28) — Learnings: no product screenshots on the brand site (owner's decision).
 - v2 (2026-11-28) — Brand voice: first person as Artur (owner's decision); added to Learnings.
