@@ -1,6 +1,6 @@
 # Product Marketing Context
 
-**Document version:** v3
+**Document version:** v4
 **Last updated:** 2026-11-28
 
 ## Product Overview
@@ -76,12 +76,13 @@ Each product has its own reader. What they share: they are on the other side of 
 
 ## Goals
 **Business goal:** [NEED]
-**Conversion action:** for brand.ar-va.com: understand ARVA, then try a product or build with the design language.
+**Conversion action:** on ar-va.com, understand who I am and open a product; on brand.ar-va.com, build with the design language.
 
 ## Learnings
 *Decisions and tested lessons. Newest first.*
 | Date | Learning | Evidence | Applies to | Status |
 |------|----------|----------|------------|--------|
+| 2026-11-28 | ar-va.com is the landing page (who I am, the work); brand.ar-va.com is the reference for people and AI tools building for ARVA | Owner chose option A | Site structure | active |
 | 2026-11-28 | No product screenshots on brand.ar-va.com; the products are described in words and linked | Owner's decision | Brand site | active |
 | 2026-11-28 | Copy speaks as Artur in the first person ("I"), never "we" or the third person | Owner's decision | All copy | active |
 | 2026-11-26 | ARVA makes its own products, not work for hire | Owner's answer | All copy | active |
@@ -91,6 +92,7 @@ Each product has its own reader. What they share: they are on the other side of 
 
 ## Changelog
 *Newest first. One line per revision: what changed and why.*
+- v4 (2026-11-28) — Site structure: ar-va.com is the landing page, brand.ar-va.com the reference (owner's choice A).
 - v3 (2026-11-28) — Learnings: no product screenshots on the brand site (owner's decision).
 - v2 (2026-11-28) — Brand voice: first person as Artur (owner's decision); added to Learnings.
 - v1 (2026-11-28) — Initial context, drafted from the owner's descriptions of the products and the brand rules.

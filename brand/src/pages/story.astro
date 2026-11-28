@@ -1,5 +1,6 @@
 ---
-// brand.ar-va.com/story, in Artur's own voice ("I", owner 2026-11-28): what ARVA makes and how, what its leaf stands for, and how the leaf is drawn. Every drawing
+// brand.ar-va.com/story, in Artur's own voice ("I", owner 2026-11-28): what the leaf stands for and how it is drawn, the name
+// and the colours (what ARVA makes moved to ar-va.com's landing page, 2026-11-28). Every drawing
 // and number comes from the logo files beside this site (src/lib/leaf.ts), and the build fails if the leaf stops
 // adding up. Facts checked 2026-11-26: the kashiwa oak's winter leaves (RHS), kamon drawn with compass and ruler (Tokyo
 // Metropolitan Government, Sydney University Library), kikyō as a Heian court colour, bengara on Kyoto's teahouse
@@ -7,6 +8,7 @@
 import { readFileSync } from 'node:fs';
 import Layout from '@shared/layouts/Layout.astro';
 import Disclosure from '@shared/components/Disclosure.astro';
+import LeafMark from '@shared/components/LeafMark.astro';
 import BrandNav from '../components/BrandNav.astro';
 import LeafStep from '../components/LeafStep.astro';
 import LeafJoint from '../components/LeafJoint.astro';
@@ -18,33 +20,6 @@ const leaf = readLeaf(readFileSync('logo/arva-mark-ink.svg', 'utf8'));
 const small = readLeaf(readFileSync('logo/arva-mark-small-ink.svg', 'utf8'));
 const lobes = leaf.circles.filter((c) => c.kind === 'lobe').map((c) => c.r);
 const n = (x: number) => x.toFixed(2);
-
-// ARVA's own products: the proof of everything else on this page.
-const products = [
-  {
-    name: 'music.ar-va.com', href: 'https://music.ar-va.com', status: '', line: 'A record shelf anyone can browse',
-    text: 'Collectors keep their vinyl on Discogs, a catalogue written for other collectors. I put the same collection on a shelf as covers, and every album page plays the album, so a friend who has never heard of a record can hear it first.',
-  },
-  {
-    name: 'vincent.ar-va.com', href: 'https://vincent.ar-va.com', status: '', line: 'Nextcloud in your colours',
-    text: 'Nextcloud’s own settings start from one colour. Vincent turns the colours you like into a whole light and dark theme, checks every text colour against its background, and hands you the exact settings to paste in.',
-  },
-  {
-    name: 'anon.ar-va.com', href: 'https://anon.ar-va.com', status: '', line: 'Room to say the hard thing',
-    text: 'One text box for telling me what is hard to say out loud. It never asks who you are, and a private link brings back my answer.',
-  },
-  {
-    name: 'Solaris', href: '', status: 'In progress', line: 'A tattoo studio in one system',
-    text: 'Artists, the manager and the front desk each keep their own part of a studio running. I’m building Solaris to join those parts and take on the routine work, while every decision stays with the people who run the studio.',
-  },
-];
-
-const habits = [
-  { title: 'Start with what’s missing', text: 'Every product I make begins with something people already want and can’t get, or get only in a form they give up on.' },
-  { title: 'Build for the person who isn’t an expert', text: 'I build for the friend who doesn’t collect records, the admin who isn’t a designer, the person who is afraid to speak, the artist who would rather tattoo than do paperwork.' },
-  { title: 'Put the effort underneath', text: 'I over-build the details on purpose. On music.ar-va.com the record turns at 33⅓ revolutions a minute and drops the needle with a sound made in the browser. Vincent’s tests run about a thousand generated themes through every contrast check. None of it asks for attention: it is there so the part you touch can stay simple and feel good to use.' },
-  { title: 'Leave people the last word', text: 'My software does the routine work and you make the calls: your colours, whether your message goes public, how your studio runs.' },
-];
 
 const steps = [
   { title: 'Axis', text: 'One line at 45°. Everything else hangs from it, with the base at the bottom left and the tip at the top right.' },
@@ -66,72 +41,35 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline underline-offset-3 ho
 const body = 'text-lg text-zinc-700 dark:text-zinc-300 text-pretty';
 const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
 ---
-<Layout title="ARVA: what was missing, made well" description="I make my own software for things people want and can’t find: music.ar-va.com, Vincent, anon and Solaris. What my oak leaf stands for, and how it is drawn from 18 circles." header={{ label: 'brand', home: '/', minimal: true }}>
+<Layout title="ARVA: an oak leaf, drawn with a compass" description="What my oak leaf stands for, how it is drawn from 18 circles and one straight line, and the name and three colours that go with it." header={{ label: 'brand', home: '/', minimal: true }}>
   <BrandNav slot="header-actions" />
   <main class="max-w-5xl mx-auto px-6 w-full pt-12 pb-24">
     <header class="grid gap-8 sm:grid-cols-[minmax(0,14rem)_1fr] sm:items-center">
-      <svg viewBox="0 0 100 100" class="w-32 sm:w-full h-auto" aria-hidden="true"><path d={leaf.path} class="fill-kashiwa dark:fill-kashiwa-light" /></svg>
+      <LeafMark class="w-32 sm:w-full h-auto" />
       <div>
-        <h1 class="font-bold text-4xl sm:text-5xl text-zinc-900 dark:text-white text-balance">What was missing, made well</h1>
+        <h1 class="font-bold text-4xl sm:text-5xl text-zinc-900 dark:text-white text-balance">An oak leaf, drawn with a compass</h1>
         <p class={`mt-4 max-w-2xl ${body}`}>
-          I’m Artur, and ARVA is where I make my own software for things people want and can’t find, or can only find done
-          badly. Each product is simple to use, carefully engineered underneath, and made to outlast the trend it was built in.
+          My sign is a single oak leaf, <i>kashiwa</i> in Japanese. The kashiwa oak keeps its dry leaves all winter, long
+          after the trees around it are bare, and lets them go in spring when the new leaves open. I make my products to
+          hold on the same way, until something better is ready to take their place. <a class={link} href="https://ar-va.com/">What I make is on ar-va.com</a>.
         </p>
       </div>
     </header>
 
-    <section class="mt-20" aria-labelledby="work">
-      <h2 id="work" class={h2}>The work</h2>
-      <ul class="mt-8 grid gap-4 sm:grid-cols-2">
-        {products.map((p) => (
-          <li class:list={['relative rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-6', p.href && 'hover:border-zinc-500 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-kikyo-500']}>
-            <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <h3 class="font-bold text-xl text-zinc-900 dark:text-white">
-                {p.href ? <a href={p.href} class="after:absolute after:inset-0 focus-visible:outline-none">{p.name}</a> : p.name}
-              </h3>
-              {p.status && <span class="rounded-md bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:text-zinc-300">{p.status}</span>}
-            </div>
-            <p class="mt-1 font-medium text-zinc-800 dark:text-zinc-200">{p.line}</p>
-            <p class="mt-3 text-zinc-600 dark:text-zinc-400 text-pretty">{p.text}</p>
-          </li>
-        ))}
-      </ul>
-    </section>
-
-    <section class="mt-20" aria-labelledby="habits">
-      <h2 id="habits" class={h2}>How I build</h2>
-      <dl class="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2 max-w-4xl">
-        {habits.map((w) => (
-          <div>
-            <dt class="font-medium text-lg text-zinc-900 dark:text-white">{w.title}</dt>
-            <dd class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">{w.text}</dd>
-          </div>
-        ))}
-      </dl>
-    </section>
-
-    <section class="mt-20" aria-labelledby="leaf">
-      <h2 id="leaf" class={h2}>The leaf</h2>
-      <p class={`mt-4 max-w-3xl ${body}`}>
-        My sign is a single oak leaf, <i>kashiwa</i> in Japanese. The kashiwa oak keeps its dry leaves all winter, long
-        after the trees around it are bare, and lets them go in spring when the new leaves open. I make my products to
-        hold on the same way, through passing trends, until something better is ready to take their place.
-      </p>
-      <ul class="mt-10 grid gap-8 sm:grid-cols-3">
-        <li>
-          <h3 class="font-sans font-medium text-zinc-900 dark:text-white">It leans forward</h3>
-          <p class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">It sits on a 45° line with the tip at the top right, the way a reader’s eye travels.</p>
-        </li>
-        <li>
-          <h3 class="font-sans font-medium text-zinc-900 dark:text-white">It grows toward the tip</h3>
-          <p class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">Each lobe is larger than the one before it, and the last has more than twice the radius of the first.</p>
-        </li>
-        <li>
-          <h3 class="font-sans font-medium text-zinc-900 dark:text-white">Its sides alternate</h3>
-          <p class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">The lobes on one side sit between the lobes on the other, the way they grow on a real oak.</p>
-        </li>
-      </ul>
-    </section>
+    <ul class="mt-16 grid gap-8 sm:grid-cols-3" aria-label="The leaf in three details">
+      <li>
+        <h2 class="font-sans font-medium text-zinc-900 dark:text-white">It leans forward</h2>
+        <p class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">It sits on a 45° line with the tip at the top right, the way a reader’s eye travels.</p>
+      </li>
+      <li>
+        <h2 class="font-sans font-medium text-zinc-900 dark:text-white">It grows toward the tip</h2>
+        <p class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">Each lobe is larger than the one before it, and the last has more than twice the radius of the first.</p>
+      </li>
+      <li>
+        <h2 class="font-sans font-medium text-zinc-900 dark:text-white">Its sides alternate</h2>
+        <p class="mt-1.5 text-zinc-600 dark:text-zinc-400 text-pretty">The lobes on one side sit between the lobes on the other, the way they grow on a real oak.</p>
+      </li>
+    </ul>
 
     <section class="mt-20" aria-labelledby="wordmark">
       <h2 id="wordmark" class={h2}>The name</h2>

@@ -1,6 +1,6 @@
 ---
 import ThemeToggle from './ThemeToggle.astro';
-import { MAIN_SITE_PUBLIC } from '../site';
+import { HOME_PUBLIC, MAIN_SITE_PUBLIC } from '../site';
 
 // `label` names the site next to the logo ("anon"), `home` is where the logo leads; `minimal` drops the menu and the
 // account link (anon.ar-va.com: nobody logs in there, and a visitor's own name on an anonymous site would feel like
@@ -15,9 +15,10 @@ const link = 'text-zinc-500 hover:text-kikyo-500 transition-colors dark:text-zin
 // The section the visitor is in stays highlighted: Home on /, Blog on /blog and its posts, Music on music.ar-va.com.
 const path = Astro.url.pathname;
 const current = (on: boolean) => (on ? 'page' : undefined);
-// While home and blog are hidden (src/site.ts) the logo leads to the shelf and the menu is empty (Music alone would
+// While home and blog are hidden (shared/site.ts) the logo leads to the shelf (to ar-va.com's landing page from ar-va.com once
+// it's public on its own) and the menu is empty (Music alone would
 // repeat the logo).
-const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : 'https://music.ar-va.com/');
+const home = homeHref ?? (MAIN_SITE_PUBLIC ? `${main}/` : onMusic ? '/' : HOME_PUBLIC ? '/' : 'https://music.ar-va.com/');
 const menu = MAIN_SITE_PUBLIC && !minimal;
 ---
 

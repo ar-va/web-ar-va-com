@@ -12,7 +12,8 @@ export const GET = () => new Response(`# ARVA design language
 
 ## Background
 
-- [What ARVA builds](${SITE}/story): ARVA's products and how they are built, what the oak leaf stands for, and how it is drawn from 18 circles and one line.
+- [ar-va.com](https://ar-va.com/): who Artur is, the products, and how they are built.
+- [The leaf](${SITE}/story): what the oak leaf stands for, how it is drawn from 18 circles and one line, the name and the three colours.
 
 ## Logo files (SVG; never redraw the logo)
 

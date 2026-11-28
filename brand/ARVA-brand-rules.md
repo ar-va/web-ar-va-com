@@ -23,7 +23,7 @@ How I build, in every product:
 
 My work so far: **music.ar-va.com** (a Discogs collection as a shelf of covers anyone can browse, with each album playable), **vincent.ar-va.com** (your colours turned into a whole light and dark Nextcloud theme, checked for readable contrast), **anon.ar-va.com** (one text box for telling me what is hard to say out loud; it never asks who you are), and **Solaris** (in progress: one system for a tattoo studio that takes on the routine work while every decision stays with its people).
 
-My sign is an oak leaf (*kashiwa*). The kashiwa oak keeps its dry leaves all winter and lets them go in spring when the new leaves open; I make my products to hold on the same way, through passing trends, until something better is ready to take their place. The leaf is drawn from 18 circles nobody sees, the way my products keep their engineering out of sight. How it's drawn: https://brand.ar-va.com/story.
+My sign is an oak leaf (*kashiwa*). The kashiwa oak keeps its dry leaves all winter and lets them go in spring when the new leaves open; I make my products to hold on the same way, through passing trends, until something better is ready to take their place. The leaf is drawn from 18 circles nobody sees, the way my products keep their engineering out of sight. Who I am and what I make: https://ar-va.com. How the leaf is drawn: https://brand.ar-va.com/story.
 
 - **Personality:** calm, precise, warm, unhurried, confident without being loud.
 - **The design should feel like** a well-engineered tool: quiet surfaces, exact details, three colours used sparingly, each with one job.
