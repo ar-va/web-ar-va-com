@@ -8,7 +8,6 @@
 import { readFileSync } from 'node:fs';
 import Layout from '@shared/layouts/Layout.astro';
 import Disclosure from '@shared/components/Disclosure.astro';
-import LeafMark from '@shared/components/LeafMark.astro';
 import BrandNav from '../components/BrandNav.astro';
 import LeafStep from '../components/LeafStep.astro';
 import LeafJoint from '../components/LeafJoint.astro';
@@ -44,11 +43,10 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
 <Layout title="ARVA: an oak leaf, drawn with a compass" description="What my oak leaf stands for, how it is drawn from 18 circles and one straight line, and the name and three colours that go with it." header={{ label: 'brand', home: '/', minimal: true }}>
   <BrandNav slot="header-actions" />
   <main class="max-w-5xl mx-auto px-6 w-full pt-12 pb-24">
-    <header class="grid gap-8 sm:grid-cols-[minmax(0,14rem)_1fr] sm:items-center">
-      <LeafMark class="w-32 sm:w-full h-auto" />
+    <header class="max-w-3xl">
       <div>
-        <h1 class="font-bold text-4xl sm:text-5xl text-zinc-900 dark:text-white text-balance">An oak leaf, drawn with a compass</h1>
-        <p class={`mt-4 max-w-2xl ${body}`}>
+        <h1 class="font-bold text-5xl sm:text-6xl leading-[1.05] text-zinc-900 dark:text-white text-balance">An oak leaf, drawn with a compass</h1>
+        <p class={`mt-6 max-w-2xl text-xl text-zinc-700 dark:text-zinc-300 text-pretty`}>
           My sign is a single oak leaf, <i>kashiwa</i> in Japanese. The kashiwa oak keeps its dry leaves all winter, long
           after the trees around it are bare, and lets them go in spring when the new leaves open. I make my products to
           hold on the same way, until something better is ready to take their place. <a class={link} href="https://ar-va.com/">What I make is on ar-va.com</a>.

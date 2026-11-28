@@ -1,9 +1,0 @@
----
-// The leaf from the logo file, drawn inline so it takes the theme's Kashiwa (light and dark). Used large, as a page's
-// sign (ar-va.com's landing page, brand.ar-va.com/story); the header keeps the logo files.
-import mark from '../../brand/logo/arva-mark-ink.svg?raw';
-
-interface Props { class?: string }
-const d = mark.match(/ d="([^"]+)"/)![1];
----
-<svg viewBox="0 0 100 100" class={Astro.props.class} aria-hidden="true"><path d={d} class="fill-kashiwa dark:fill-kashiwa-light" /></svg>

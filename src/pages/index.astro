@@ -3,7 +3,6 @@
 // reference for the design language and how the leaf is drawn). Written as Artur, in the first person. Positioning:
 // .agents/product-marketing.md. The blog's list returns here when the blog is public again (shared/site.ts).
 import Layout from '@shared/layouts/Layout.astro';
-import LeafMark from '@shared/components/LeafMark.astro';
 import Writing from '../components/Writing.astro';
 import { MAIN_SITE_PUBLIC } from '@shared/site';
 
@@ -39,11 +38,10 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
 ---
 <Layout title="ARVA: what was missing, made well" description="I’m Artur. I make my own software for things people want and can’t find: a record shelf anyone can browse, Nextcloud in your colours, a safe place to say the hard thing, and Solaris for tattoo studios.">
   <main class="max-w-5xl mx-auto px-6 w-full pt-12 pb-24">
-    <header class="grid gap-8 sm:grid-cols-[minmax(0,14rem)_1fr] sm:items-center">
-      <LeafMark class="w-32 sm:w-full h-auto" />
+    <header class="max-w-3xl">
       <div>
-        <h1 class="font-bold text-4xl sm:text-5xl text-zinc-900 dark:text-white text-balance">What was missing, made well</h1>
-        <p class={`mt-4 max-w-2xl ${body}`}>
+        <h1 class="font-bold text-5xl sm:text-6xl leading-[1.05] text-zinc-900 dark:text-white text-balance">What was missing, made well</h1>
+        <p class={`mt-6 max-w-2xl text-xl text-zinc-700 dark:text-zinc-300 text-pretty`}>
           I’m Artur, and ARVA is where I make my own software for things people want and can’t find, or can only find done
           badly. Each product is simple to use, carefully engineered underneath, and made to outlast the trend it was built in.
         </p>
