@@ -1,5 +1,5 @@
 ---
-// brand.ar-va.com/story: what ARVA makes and how, what its leaf stands for, and how the leaf is drawn. Every drawing
+// brand.ar-va.com/story, in Artur's own voice ("I", owner 2026-11-28): what ARVA makes and how, what its leaf stands for, and how the leaf is drawn. Every drawing
 // and number comes from the logo files beside this site (src/lib/leaf.ts), and the build fails if the leaf stops
 // adding up. Facts checked 2026-11-26: the kashiwa oak's winter leaves (RHS), kamon drawn with compass and ruler (Tokyo
 // Metropolitan Government, Sydney University Library), kikyō as a Heian court colour, bengara on Kyoto's teahouse
@@ -23,7 +23,7 @@ const n = (x: number) => x.toFixed(2);
 const products = [
   {
     name: 'music.ar-va.com', href: 'https://music.ar-va.com', status: '', line: 'A record shelf anyone can browse',
-    text: 'Collectors keep their vinyl on Discogs, a catalogue written for other collectors. Here the same collection stands on a shelf as covers, and every album page plays the album, so a friend who has never heard of a record can hear it first.',
+    text: 'Collectors keep their vinyl on Discogs, a catalogue written for other collectors. I put the same collection on a shelf as covers, and every album page plays the album, so a friend who has never heard of a record can hear it first.',
   },
   {
     name: 'vincent.ar-va.com', href: 'https://vincent.ar-va.com', status: '', line: 'Nextcloud in your colours',
@@ -31,19 +31,19 @@ const products = [
   },
   {
     name: 'anon.ar-va.com', href: 'https://anon.ar-va.com', status: '', line: 'Room to say the hard thing',
-    text: 'One text box for what is hard to say out loud. It never asks who you are, and a private link brings back the answer.',
+    text: 'One text box for telling me what is hard to say out loud. It never asks who you are, and a private link brings back my answer.',
   },
   {
     name: 'Solaris', href: '', status: 'In progress', line: 'A tattoo studio in one system',
-    text: 'Artists, the manager and the front desk each keep their own part of a studio running. Solaris joins those parts and takes on the routine work, and every decision stays with the people who run the studio.',
+    text: 'Artists, the manager and the front desk each keep their own part of a studio running. I’m building Solaris to join those parts and take on the routine work, while every decision stays with the people who run the studio.',
   },
 ];
 
 const habits = [
-  { title: 'Start with what’s missing', text: 'Each product begins with something people already want and can’t get, or get only in a form they give up on.' },
-  { title: 'Build for the person who isn’t an expert', text: 'The friend who doesn’t collect records, the admin who isn’t a designer, the person who is afraid to speak, the artist who would rather tattoo than do paperwork.' },
-  { title: 'Put the effort underneath', text: 'The details are over-built on purpose. On music.ar-va.com the record turns at 33⅓ revolutions a minute and drops the needle with a sound made in the browser. Vincent’s tests run about a thousand generated themes through every contrast check. None of it asks for attention: it is there so the part people touch can stay simple and feel good to use.' },
-  { title: 'Leave people the last word', text: 'The software does the routine work and people make the calls: their colours, whether their message goes public, how their studio runs.' },
+  { title: 'Start with what’s missing', text: 'Every product I make begins with something people already want and can’t get, or get only in a form they give up on.' },
+  { title: 'Build for the person who isn’t an expert', text: 'I build for the friend who doesn’t collect records, the admin who isn’t a designer, the person who is afraid to speak, the artist who would rather tattoo than do paperwork.' },
+  { title: 'Put the effort underneath', text: 'I over-build the details on purpose. On music.ar-va.com the record turns at 33⅓ revolutions a minute and drops the needle with a sound made in the browser. Vincent’s tests run about a thousand generated themes through every contrast check. None of it asks for attention: it is there so the part you touch can stay simple and feel good to use.' },
+  { title: 'Leave people the last word', text: 'My software does the routine work and you make the calls: your colours, whether your message goes public, how your studio runs.' },
 ];
 
 const steps = [
@@ -66,7 +66,7 @@ const link = 'text-kikyo-600 dark:text-kikyo-400 underline underline-offset-3 ho
 const body = 'text-lg text-zinc-700 dark:text-zinc-300 text-pretty';
 const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
 ---
-<Layout title="ARVA: what was missing, made well" description="ARVA builds its own software for what people want but can’t find: music.ar-va.com, Vincent, anon and Solaris. What the oak leaf stands for, and how it is drawn from 18 circles." header={{ label: 'brand', home: '/', minimal: true }}>
+<Layout title="ARVA: what was missing, made well" description="I make my own software for things people want and can’t find: music.ar-va.com, Vincent, anon and Solaris. What my oak leaf stands for, and how it is drawn from 18 circles." header={{ label: 'brand', home: '/', minimal: true }}>
   <BrandNav slot="header-actions" />
   <main class="max-w-5xl mx-auto px-6 w-full pt-12 pb-24">
     <header class="grid gap-8 sm:grid-cols-[minmax(0,14rem)_1fr] sm:items-center">
@@ -74,8 +74,8 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
       <div>
         <h1 class="font-bold text-4xl sm:text-5xl text-zinc-900 dark:text-white text-balance">What was missing, made well</h1>
         <p class={`mt-4 max-w-2xl ${body}`}>
-          ARVA makes its own software for things people want and can’t find, or can only find done badly. Each product is
-          simple to use, carefully engineered underneath, and made to outlast the trend it was built in.
+          I’m Artur, and ARVA is where I make my own software for things people want and can’t find, or can only find done
+          badly. Each product is simple to use, carefully engineered underneath, and made to outlast the trend it was built in.
         </p>
       </div>
     </header>
@@ -99,7 +99,7 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
     </section>
 
     <section class="mt-20" aria-labelledby="habits">
-      <h2 id="habits" class={h2}>How ARVA builds</h2>
+      <h2 id="habits" class={h2}>How I build</h2>
       <dl class="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2 max-w-4xl">
         {habits.map((w) => (
           <div>
@@ -113,9 +113,9 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
     <section class="mt-20" aria-labelledby="leaf">
       <h2 id="leaf" class={h2}>The leaf</h2>
       <p class={`mt-4 max-w-3xl ${body}`}>
-        ARVA’s sign is a single oak leaf, <i>kashiwa</i> in Japanese. The kashiwa oak keeps its dry leaves all winter,
-        long after the trees around it are bare, and lets them go in spring when the new leaves open. ARVA’s products
-        are made to hold on the same way, through passing trends, until something better is ready to take their place.
+        My sign is a single oak leaf, <i>kashiwa</i> in Japanese. The kashiwa oak keeps its dry leaves all winter, long
+        after the trees around it are bare, and lets them go in spring when the new leaves open. I make my products to
+        hold on the same way, through passing trends, until something better is ready to take their place.
       </p>
       <ul class="mt-10 grid gap-8 sm:grid-cols-3">
         <li>
@@ -141,7 +141,7 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
       </div>
       <p class={`mt-6 max-w-3xl ${body}`}>
         The letters are Brygada 1918, a Polish typeface probably cut between the wars and then forgotten. Its metal
-        matrices turned up in a museum in Łódź, and it was recut in 2018. Every ARVA title is set in it. In the logo the
+        matrices turned up in a museum in Łódź, and it was recut in 2018. I set every ARVA title in it. In the logo the
         capitals are spaced wide, centred on the leaf and saved as shapes, so the logo looks the same on every screen.
       </p>
     </section>
@@ -168,7 +168,7 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
       <p class={`mt-4 max-w-3xl ${body}`}>
         The leaf is drawn with a compass and a ruler: nine circles for the lobes, nine for the notches and one straight
         line. Japanese family crests, <i>kamon</i>, have been drawn this way for centuries, from perfect circles and
-        straight lines. ARVA borrows the method, not a family history.
+        straight lines. I borrow the method, not a family history.
       </p>
       <ol class="mt-10 grid gap-px rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-200 dark:bg-zinc-800 sm:grid-cols-2 lg:grid-cols-3">
         {steps.map((s, i) => (
@@ -212,8 +212,8 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
           </div>
         </dl>
         <p class={`mt-8 ${body}`}>
-          Nobody looking at the leaf sees the circles. The products work the same way: a visitor sees a shelf of
-          records or a finished theme, and the engineering underneath stays out of sight.
+          Nobody looking at the leaf sees the circles. I build my products the same way: you see a shelf of records or
+          a finished theme, and the engineering underneath stays out of sight.
         </p>
         <Disclosure title={`The ${leaf.circles.length} circles, as numbers`} class="mt-8">
           <p class="text-sm">In the logo file’s 100 × 100 box, in the order the outline meets them, starting at the base.</p>
@@ -259,7 +259,7 @@ const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
     </section>
 
     <p class="mt-20 max-w-3xl text-lg text-zinc-700 dark:text-zinc-300">
-      Colour values, the type, the logo files and every rule are in <a class={link} href="/">the ARVA design language</a>.
+      Colour values, the type, the logo files and every rule I follow are in <a class={link} href="/">the ARVA design language</a>.
     </p>
   </main>
 </Layout>

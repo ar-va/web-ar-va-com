@@ -10,18 +10,20 @@ Online at https://brand.ar-va.com (this file: https://brand.ar-va.com/ARVA-brand
 
 ## 1. Who ARVA is
 
-**What was missing, made well.** ARVA makes its own software for things people want and can't find, or can only find done badly. Each product is simple to use, carefully engineered underneath, and made to outlast the trend it was built in. ARVA is new and claims no history.
+ARVA is Artur's brand, and it speaks as Artur, in the first person: "I make", "my products", never "we".
 
-How ARVA builds, in every product:
+**What was missing, made well.** I make my own software for things people want and can't find, or can only find done badly. Each product is simple to use, carefully engineered underneath, and made to outlast the trend it was built in. ARVA is new and claims no history.
+
+How I build, in every product:
 
 1. **Start with what's missing:** something people already want and can't get, or get only in a form they give up on.
 2. **Build for the person who isn't an expert:** the friend who doesn't collect records, the admin who isn't a designer, the person who is afraid to speak.
-3. **Put the effort underneath:** details are over-built on purpose so the part people touch stays simple and feels good to use. None of it is there to be noticed.
-4. **Leave people the last word:** the software does the routine work; people make the calls.
+3. **Put the effort underneath:** I over-build the details on purpose so the part you touch stays simple and feels good to use. None of it is there to be noticed.
+4. **Leave people the last word:** my software does the routine work; you make the calls.
 
-The work so far: **music.ar-va.com** (a Discogs collection as a shelf of covers anyone can browse, with each album playable), **vincent.ar-va.com** (your colours turned into a whole light and dark Nextcloud theme, checked for readable contrast), **anon.ar-va.com** (one text box for what is hard to say out loud; it never asks who you are), and **Solaris** (in progress: one system for a tattoo studio that takes on the routine work while every decision stays with its people).
+My work so far: **music.ar-va.com** (a Discogs collection as a shelf of covers anyone can browse, with each album playable), **vincent.ar-va.com** (your colours turned into a whole light and dark Nextcloud theme, checked for readable contrast), **anon.ar-va.com** (one text box for telling me what is hard to say out loud; it never asks who you are), and **Solaris** (in progress: one system for a tattoo studio that takes on the routine work while every decision stays with its people).
 
-The sign is an oak leaf (*kashiwa*). The kashiwa oak keeps its dry leaves all winter and lets them go in spring when the new leaves open; ARVA's products are made to hold on the same way, through passing trends, until something better is ready to take their place. The leaf is drawn from 18 circles nobody sees, the way the products keep their engineering out of sight. How it's drawn: https://brand.ar-va.com/story.
+My sign is an oak leaf (*kashiwa*). The kashiwa oak keeps its dry leaves all winter and lets them go in spring when the new leaves open; I make my products to hold on the same way, through passing trends, until something better is ready to take their place. The leaf is drawn from 18 circles nobody sees, the way my products keep their engineering out of sight. How it's drawn: https://brand.ar-va.com/story.
 
 - **Personality:** calm, precise, warm, unhurried, confident without being loud.
 - **The design should feel like** a well-engineered tool: quiet surfaces, exact details, three colours used sparingly, each with one job.
@@ -37,7 +39,8 @@ The sign is an oak leaf (*kashiwa*). The kashiwa oak keeps its dry leaves all wi
 | Unhurried | Confident without selling | Vague or slow | "What was missing, made well" |
 
 - No hype ("revolutionary", "game-changing", "unleash", "seamless"). Replace a vague word with the fact behind it.
-- Speak as the people who build the thing: the problem, how it works, and why it will hold up. Never claim age, tradition or heritage for ARVA itself.
+- **First person singular.** ARVA speaks as Artur: "I make", "my products", "tell me". Never "we", and never ARVA in the third person in copy (product names, file names and these rules are the exception). First name only: no surname anywhere.
+- Speak as the person who builds the thing: the problem, how it works, and why it will hold up. Never claim age, tradition or heritage for ARVA itself.
 - State what is true without hedging, and leave out what isn't known. A claim about another product must be checkable.
 - Avoid the patterns that make copy read as generated: "it's not X, it's Y", lists of three by reflex, a one-line closer that repeats the point.
 - No exclamation marks, no emoji.
@@ -273,6 +276,8 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
   Kashiwa as large grounds broke their one-job rules (and turned the leaf white), and the Ink ground paired light-theme
   Ink with the dark-theme mint and a paper-white name no logo uses. Paper and night stay, matching the two-tone logo
   files; the leaf avatar is now the default profile picture.
+- **2026-11-28 (first person):** the owner chose the first person: ARVA speaks as Artur ("I make", "my products"),
+  never "we" or the third person in copy. Section 1, the voice rules, the story page and the design-language intro follow.
 - **2026-11-28 (who ARVA is, voice):** section 1 rewritten after a review with the copywriting, copy-editing and
   humanizer skills (fewer stock patterns, the products described by what they do), and the voice is a table of four
   qualities with real lines from the sites (it was a draft). The positioning behind it is in the repo's

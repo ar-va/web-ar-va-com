@@ -1,6 +1,6 @@
 # Product Marketing Context
 
-**Document version:** v1
+**Document version:** v2
 **Last updated:** 2026-11-28
 
 ## Product Overview
@@ -61,6 +61,7 @@ Each product has its own reader. What they share: they are on the other side of 
 | Warm | Speaks to one person, about their thing | Cute or emoji | "Records are better shared" (login page) |
 | Unhurried | Confident without selling | Vague or slow | "What was missing, made well" |
 
+**Person:** first person singular. ARVA speaks as Artur: "I make", "my products", "tell me"; never "we", never ARVA in the third person in copy. First name only.
 **Tone by context:** product pages warm and concrete; brand rules precise; errors say what happened and what to do.
 **Never use (and why):** claims of age or tradition (ARVA is new); hype words (the brand rules forbid them); exclamation marks and emoji (brand rules).
 
@@ -81,6 +82,7 @@ Each product has its own reader. What they share: they are on the other side of 
 *Decisions and tested lessons. Newest first.*
 | Date | Learning | Evidence | Applies to | Status |
 |------|----------|----------|------------|--------|
+| 2026-11-28 | Copy speaks as Artur in the first person ("I"), never "we" or the third person | Owner's decision | All copy | active |
 | 2026-11-26 | ARVA makes its own products, not work for hire | Owner's answer | All copy | active |
 | 2026-11-26 | Never imply heritage or generations; the leaf is an aim (outlast trends) | Owner's correction | Brand story, rules | active |
 | 2026-11-26 | Not about print or craft objects; mostly digital products | Owner's correction | Brand story, rules | active |
@@ -88,4 +90,5 @@ Each product has its own reader. What they share: they are on the other side of 
 
 ## Changelog
 *Newest first. One line per revision: what changed and why.*
+- v2 (2026-11-28) — Brand voice: first person as Artur (owner's decision); added to Learnings.
 - v1 (2026-11-28) — Initial context, drafted from the owner's descriptions of the products and the brand rules.
