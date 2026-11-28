@@ -5,7 +5,8 @@
     "superpowers@superpowers-marketplace": true,
     "impeccable@impeccable": true,
     "claude-mem@thedotmack": true,
-    "task-observer@one-skill-to-rule-them-all": true
+    "task-observer@one-skill-to-rule-them-all": true,
+    "humanizer@humanizer": true
   },
   "extraKnownMarketplaces": {
     "ponytail": {
@@ -56,6 +57,13 @@
       "source": {
         "source": "github",
         "repo": "rebelytics/one-skill-to-rule-them-all"
+      },
+      "autoUpdate": true
+    },
+    "humanizer": {
+      "source": {
+        "source": "github",
+        "repo": "blader/humanizer"
       },
       "autoUpdate": true
     }
