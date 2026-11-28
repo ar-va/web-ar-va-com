@@ -65,7 +65,7 @@ Files are in `logo/`. Never redraw or retype the logo; always use the files. **T
 | `arva-mark-small-ink-kashiwa.svg` / `-washi-kashiwa.svg` | Leaf alone below 32 px on screen (phone header) |
 | `arva-horizontal-ink-kashiwa.png` (in `shared/public/brand/`, 218 × 60, transparent) | Emails: the two-tone logo shown at 109 × 30 (Gmail and Outlook don't show SVG) |
 | `favicon.svg` | Browser favicon: the Kashiwa leaf, switching to mint on dark tabs |
-| `../avatars/arva-avatar-{leaf,full,wordmark}-{paper,night}.svg` / `.png` | Profile pictures (1:1, 1024 px PNG), sized to keep the clear space and survive a circle crop. **The leaf is the default profile picture** (the name is unreadable at the usual 32–48 px); `full` (stacked logo) and `wordmark` only where the picture shows at 128 px or more. `paper`: Kashiwa leaf and Ink name on Paper, as `arva-*-ink-kashiwa`; `night`: mint leaf and Moonlight name on Night, as `arva-*-washi-kashiwa`. No other grounds: Kikyō is for actions and Kashiwa stays the leaf, never a large fill |
+| `../avatars/arva-avatar-{leaf,full,wordmark}-{paper,night}.svg` / `.png`, and `../avatars/arva-avatar-{leaf,full}-{kashiwa,kikyo,bengara,black}-white` / `…-{white,paper}-black` (`.svg` / `.png`) | Profile pictures (1:1, 1024 px PNG), sized to keep the clear space and survive a circle crop. **The leaf is the default profile picture** (the name is unreadable at the usual 32–48 px); `full` (stacked logo) and `wordmark` only where the picture shows at 128 px or more. Two-tone: `paper` (Kashiwa leaf and Ink name on Paper) and `night` (mint leaf and Moonlight name on Night), as the `-kashiwa` logo files. One-colour (since 2026-11-28, owner's request): a white logo on Kashiwa, Kikyō, Bengara or black (Night #15161C), and a black logo (Night) on white or Paper; name = ground, then logo colour. Profile pictures are the one place the three colours may fill a whole ground: they name ARVA, they are not interface. White on each colour reads at 6.1:1 or more |
 
 Rules:
 - Header logo height is 24–32 px on desktop and 22–26 px on mobile. The sites use 30 px and 26 px (2026-11-20; 24 px left the letter-spaced wordmark too small).
@@ -276,6 +276,10 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
   Kashiwa as large grounds broke their one-job rules (and turned the leaf white), and the Ink ground paired light-theme
   Ink with the dark-theme mint and a paper-white name no logo uses. Paper and night stay, matching the two-tone logo
   files; the leaf avatar is now the default profile picture.
+- **2026-11-28 (colour avatars):** 12 one-colour avatars at the owner's request: white logo on Kashiwa, Kikyō, Bengara and
+  black, black logo on white and Paper (leaf and full logo, SVG + 1024 px PNG). An exception to the colour roles: a profile
+  picture may use one of the three colours as its whole ground. The dark-theme leaf colour is under review (sage, deep
+  Kashiwa, a warm night or one colour were shown); nothing changed yet.
 - **2026-11-28 (projects for others):** ARVA also takes on projects for other people, and Artur does all the work himself
   (no outside hires). Section 1 says so; ar-va.com ends on an invitation to describe a job.
 - **2026-11-28 (general first):** the owner asked for copy about how I work and what could be built in any field, with
