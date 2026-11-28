@@ -12,15 +12,15 @@ Online at https://brand.ar-va.com (this file: https://brand.ar-va.com/ARVA-brand
 
 ARVA is Artur's brand, and it speaks as Artur, in the first person: "I make", "my products", never "we".
 
-**Digital craft, evermore.** I'm Artur. Under the name ARVA I build web software for people the usual tools leave out. ARVA is new and claims no history.
+**Digital craft, evermore.** I'm Artur. I build web tools for the work that still happens in spreadsheets, group chats and software made for somebody else, and I make each one to stay useful for years. ARVA is new and claims no history.
 
-How I work, in every product:
+How I work, in any field:
 
-1. Start from the person who doesn't know the subject, and cut until they can use it on their first visit.
-2. Spend the time on the part nobody sees: the record on music.ar-va.com turns at 33⅓ rpm with a needle drop generated in the browser, and Vincent's tests run about a thousand generated themes through every contrast check.
-3. Where the software could decide for people, leave the decision with them: Vincent hands over settings instead of touching a server, and anon publishes a message only when its writer asks.
+1. Look for the jobs a trade still does by hand, or forces a general-purpose tool to do, and start with the person who does that work every day.
+2. Put the effort into the parts nobody sees, so the part people use can stay plain. On music.ar-va.com a record turns at a true 33⅓ rpm; Vincent's tests run about a thousand generated themes through every contrast check.
+3. Where software could make a choice for the people using it, leave the choice with them. Vincent hands over settings to apply yourself; anon publishes a message only when its writer asks.
 
-My work so far: **music.ar-va.com** (record shelves for people who don't collect: covers on a shelf, each album playable), **vincent.ar-va.com** (Nextcloud themes from your colours, light and dark, every text colour checked for contrast), **anon.ar-va.com** (anonymous messages to me: no sign-in, answers behind a private link), and **Solaris** (in progress: one system for a tattoo studio's artists, manager and front desk).
+Built so far, as evidence for the above: **music.ar-va.com** (a Discogs collection shown as a shelf of covers), **vincent.ar-va.com** (a light and dark Nextcloud theme from your colours), **anon.ar-va.com** (writing to me without giving your name), and **Solaris** (in progress: one system for a tattoo studio).
 
 My sign is a *kashiwa* leaf, from a Japanese oak that keeps its dry leaves all winter and drops them only when the new ones open: that is where "evermore" comes from. The leaf is drawn from 18 circles nobody sees, the way my products keep their engineering out of sight. Who I am and what I make: https://ar-va.com. How the leaf is drawn: https://brand.ar-va.com/story.
 
@@ -38,6 +38,7 @@ My sign is a *kashiwa* leaf, from a Japanese oak that keeps its dry leaves all w
 | Unhurried | Confident without selling | Vague or slow | "What was missing, made well" |
 
 - No hype ("revolutionary", "game-changing", "unleash", "seamless"). Replace a vague word with the fact behind it.
+- **The work first, the products as proof.** Describe how I work in terms a reader from any field recognises, so they can picture a tool for their own trade; name the products briefly, as evidence.
 - **First person singular.** ARVA speaks as Artur: "I make", "my products", "tell me". Never "we", and never ARVA in the third person in copy (product names, file names and these rules are the exception). First name only: no surname anywhere.
 - Speak as the person who builds the thing: the problem, how it works, and why it will hold up. Never claim age, tradition or heritage for ARVA itself.
 - State what is true without hedging, and leave out what isn't known. A claim about another product must be checkable.
@@ -275,6 +276,9 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
   Kashiwa as large grounds broke their one-job rules (and turned the leaf white), and the Ink ground paired light-theme
   Ink with the dark-theme mint and a paper-white name no logo uses. Paper and night stay, matching the two-tone logo
   files; the leaf avatar is now the default profile picture.
+- **2026-11-28 (general first):** the owner asked for copy about how I work and what could be built in any field, with
+  the products as short evidence rather than the subject. Section 1 and a voice rule follow; ar-va.com's landing page
+  leads with "How I work" and lists the products under "Built so far".
 - **2026-11-28 (slogan):** the slogan is **"Digital craft, evermore"** (the owner's, from their "Evermore Digital
   Craftsmanship"). Section 1 rewritten again against the copywriting rules: no lists of three by reflex, no sayings, no
   tidy closers, claims only about what exists.

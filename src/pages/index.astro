@@ -1,92 +1,83 @@
 ---
-// ar-va.com: who I am and what I make (2026-11-28, user: the main domain is the landing page; brand.ar-va.com stays the
-// reference for the design language and how the leaf is drawn). Written as Artur, in the first person. Positioning:
-// .agents/product-marketing.md. The blog's list returns here when the blog is public again (shared/site.ts).
+// ar-va.com: who I am and how I work (2026-11-28, user: the main domain is the landing page; brand.ar-va.com stays the
+// reference). Written as Artur, in the first person, about the kind of work in any field; the products are the proof,
+// kept short (user, 2026-11-28). Positioning: .agents/product-marketing.md. The blog's list returns here when the blog
+// is public again (shared/site.ts).
 import Layout from '@shared/layouts/Layout.astro';
 import Writing from '../components/Writing.astro';
 import { MAIN_SITE_PUBLIC } from '@shared/site';
 
-const products = [
-  {
-    name: 'music.ar-va.com', href: 'https://music.ar-va.com', status: '', line: 'Record shelves for people who don’t collect',
-    text: 'Discogs lists every pressing and catalogue number, which collectors need and their friends skip. music.ar-va.com shows the same collection as covers on a shelf, and each album page plays the album.',
-  },
-  {
-    name: 'vincent.ar-va.com', href: 'https://vincent.ar-va.com', status: '', line: 'Nextcloud themes from your colours',
-    text: 'Nextcloud’s own settings take a single colour. Vincent builds a full light and dark theme from yours and checks every text colour for contrast; you copy the settings and CSS into Nextcloud.',
-  },
-  {
-    name: 'anon.ar-va.com', href: 'https://anon.ar-va.com', status: '', line: 'Anonymous messages to me',
-    text: 'A single text box with no sign-in. You write, I answer, and the answer stays behind your private link unless you ask me to publish it.',
-  },
-  {
-    name: 'Solaris', href: '', status: 'In progress', line: 'Software for tattoo studios',
-    text: 'One system for a studio’s artists, manager and front desk. It isn’t public yet.',
-  },
+const built = [
+  { name: 'music.ar-va.com', href: 'https://music.ar-va.com', status: '', text: 'A Discogs collection shown as a shelf of covers, every album ready to play.' },
+  { name: 'vincent.ar-va.com', href: 'https://vincent.ar-va.com', status: '', text: 'A light and dark Nextcloud theme built from the colours you choose.' },
+  { name: 'anon.ar-va.com', href: 'https://anon.ar-va.com', status: '', text: 'A box for writing to me without giving your name.' },
+  { name: 'Solaris', href: '', status: 'In progress', text: 'One system for a tattoo studio’s artists, manager and front desk.' },
 ];
 
 const link = 'text-kikyo-600 dark:text-kikyo-400 underline underline-offset-3 hover:text-zinc-900 dark:hover:text-white';
 const body = 'text-lg text-zinc-700 dark:text-zinc-300 text-pretty';
 const h2 = 'font-bold text-2xl sm:text-3xl text-zinc-900 dark:text-white';
 ---
-<Layout title="ARVA: digital craft, evermore" description="I’m Artur. Under the name ARVA I build web software for people the usual tools leave out: record shelves for friends who don’t collect, Nextcloud themes from your colours, anonymous messages, and Solaris for tattoo studios.">
+<Layout title="ARVA: digital craft, evermore" description="I’m Artur. I build web tools for the work that still happens in spreadsheets, group chats and software made for somebody else, and each one is made to stay useful for years.">
   <main class="max-w-5xl mx-auto px-6 w-full pt-12 pb-24">
     <header class="max-w-3xl">
-      <div>
-        <h1 class="font-bold text-5xl sm:text-6xl leading-[1.05] text-zinc-900 dark:text-white text-balance">Digital craft, evermore</h1>
-        <p class={`mt-6 max-w-2xl text-xl text-zinc-700 dark:text-zinc-300 text-pretty`}>
-          I’m Artur. Under the name ARVA I build web software for people the usual tools leave out: the friend who doesn’t
-          collect records, the Nextcloud admin who isn’t a designer, the person with something hard to say.
-        </p>
-      </div>
+      <h1 class="font-bold text-5xl sm:text-6xl leading-[1.05] text-zinc-900 dark:text-white text-balance">Digital craft, evermore</h1>
+      <p class="mt-6 max-w-2xl text-xl text-zinc-700 dark:text-zinc-300 text-pretty">
+        I’m Artur. I build web tools for the work that still happens in spreadsheets, group chats and software made for
+        somebody else. Each one is made to stay useful for years.
+      </p>
     </header>
 
-    <section class="mt-20" aria-labelledby="work">
-      <h2 id="work" class={h2}>The work</h2>
-      <ul class="mt-8 grid gap-4 sm:grid-cols-2">
-        {products.map((p) => (
-          <li class:list={['relative rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-night-surface p-6', p.href && 'hover:border-zinc-500 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-2 has-[a:focus-visible]:outline-kikyo-500']}>
-            <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <h3 class="font-bold text-xl text-zinc-900 dark:text-white">
-                {p.href ? <a href={p.href} class="after:absolute after:inset-0 focus-visible:outline-none">{p.name}</a> : p.name}
-              </h3>
-              {p.status && <span class="rounded-md bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:text-zinc-300">{p.status}</span>}
-            </div>
-            <p class="mt-1 font-medium text-zinc-800 dark:text-zinc-200">{p.line}</p>
-            <p class="mt-3 text-zinc-600 dark:text-zinc-400 text-pretty">{p.text}</p>
+    <section class="mt-20 max-w-3xl" aria-labelledby="how">
+      <h2 id="how" class={h2}>How I work</h2>
+      <div class={`mt-4 space-y-4 ${body}`}>
+        <p>
+          Every trade has jobs that people still do by hand, or force a general-purpose tool to do, because nobody built
+          for them. Those are the jobs I look for. I start with the person who does that work every day. Then I keep
+          simplifying until they can use the tool on their first try.
+        </p>
+        <p>
+          Most of the effort goes into the parts nobody sees, so the part people use can stay plain. On music.ar-va.com a
+          record turns at a true 33⅓ rpm, and Vincent’s tests run about a thousand generated themes through every
+          contrast check.
+        </p>
+        <p>
+          Where software could make a choice for the people using it, I leave the choice with them. Vincent hands over
+          settings you apply yourself, and anon publishes a message only when its writer asks.
+        </p>
+      </div>
+    </section>
+
+    <section class="mt-20 max-w-3xl" aria-labelledby="built">
+      <h2 id="built" class={h2}>Built so far</h2>
+      <ul class="mt-6 divide-y divide-zinc-200 dark:divide-zinc-800 border-y border-zinc-200 dark:border-zinc-800">
+        {built.map((b) => (
+          <li class="py-4 grid gap-1 sm:grid-cols-[12rem_1fr] sm:gap-6 sm:items-baseline">
+            <span class="flex items-baseline gap-2 font-medium text-zinc-900 dark:text-white">
+              {b.href ? <a class={link} href={b.href}>{b.name}</a> : b.name}
+              {b.status && <span class="rounded-md bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-xs font-medium text-zinc-600 dark:text-zinc-300">{b.status}</span>}
+            </span>
+            <span class="text-zinc-600 dark:text-zinc-400 text-pretty">{b.text}</span>
           </li>
         ))}
       </ul>
     </section>
 
-    <section class="mt-20" aria-labelledby="habits">
-      <h2 id="habits" class={h2}>How I work</h2>
-      <div class={`mt-4 max-w-3xl space-y-4 ${body}`}>
-        <p>
-          Most tools are built for people who already know the subject. I start from the person who doesn’t, and cut until
-          they can use it on their first visit.
-        </p>
-        <p>
-          Most of my time goes into the part nobody sees. On music.ar-va.com the record turns at 33⅓ rpm and the needle
-          drop is a sound generated in the browser. Vincent’s test suite runs about a thousand generated themes through
-          every contrast check. Visitors aren’t meant to notice any of it.
-        </p>
-        <p>
-          Where the software could decide for you, it leaves the decision with you. Vincent gives you the settings instead
-          of touching your server, and anon publishes a message only when its writer asks.
-        </p>
-      </div>
-    </section>
-
     <section class="mt-20 max-w-3xl" aria-labelledby="leaf">
       <h2 id="leaf" class={h2}>The leaf</h2>
       <p class={`mt-4 ${body}`}>
-        My sign is a <i>kashiwa</i> leaf, from a Japanese oak that keeps its dry leaves all winter and drops them only
-        when the new ones open. That is where “evermore” comes from.
+        My sign is the leaf of the <i>kashiwa</i> oak, which keeps its dry leaves all winter and drops them only when new
+        ones open. The “evermore” in my slogan comes from that habit. <a class={link} href="https://brand.ar-va.com/story">How the leaf is drawn</a> and <a class={link} href="https://brand.ar-va.com/">the rules my work follows</a> are on brand.ar-va.com.
       </p>
+    </section>
+
+    <section class="mt-20 max-w-3xl" aria-labelledby="yours">
+      <h2 id="yours" class={h2}>In your field</h2>
       <p class={`mt-4 ${body}`}>
-        <a class={link} href="https://brand.ar-va.com/story">How the leaf is drawn from 18 circles</a> and <a class={link} href="https://brand.ar-va.com/">the rules all my products follow</a> are on brand.ar-va.com.
+        If your work has a job like this, handled in a spreadsheet or a chat thread because nothing fits it, tell me
+        about it.
       </p>
+      <a class="btn-primary mt-6" href="mailto:contact@ar-va.com">Write to me</a>
     </section>
 
     {MAIN_SITE_PUBLIC && <div class="mt-20"><Writing /></div>}

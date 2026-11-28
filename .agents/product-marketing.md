@@ -1,11 +1,11 @@
 # Product Marketing Context
 
-**Document version:** v7
+**Document version:** v8
 **Last updated:** 2026-11-28
 
 ## Product Overview
 **Slogan:** Digital craft, evermore (owner's choice, 2026-11-28).
-**One-liner:** I'm Artur. Under the name ARVA I build web software for people the usual tools leave out.
+**One-liner:** I'm Artur. I build web tools for the work that still happens in spreadsheets, group chats and software made for somebody else.
 **What it does:** ARVA makes its own products, each for something people want and can't find, or can only find done badly. Every product hides a lot of engineering under a surface that a non-expert can use without help.
 **Product category:** A maker of its own web products (not an agency, not work for hire).
 **Product type:** Web apps; Solaris (in progress) is a business system for tattoo studios.
@@ -77,12 +77,13 @@ Each product has its own reader. What they share: they are on the other side of 
 
 ## Goals
 **Business goal:** [NEED]
-**Conversion action:** on ar-va.com, understand who I am and open a product; on brand.ar-va.com, build with the design language.
+**Conversion action:** on ar-va.com, picture a tool for your own field and write to me (contact@ar-va.com); on brand.ar-va.com, build with the design language. [NEED: whether ARVA takes commissions, or only collects ideas for its own products]
 
 ## Learnings
 *Decisions and tested lessons. Newest first.*
 | Date | Learning | Evidence | Applies to | Status |
 |------|----------|----------|------------|--------|
+| 2026-11-28 | Lead with how I work and what could be built in any field; the products are short evidence, never the subject | Owner's direction | All copy | active |
 | 2026-11-28 | The owner's explanations are a brief, not copy: write fresh lines from the idea, never reuse their wording | Owner's correction | All copy | active |
 | 2026-11-28 | "What was missing, made well" is retired as the slogan | Owner disliked it | Hero, rules | active |
 | 2026-11-28 | No separate product logos: every site uses the original ARVA logo | Owner rejected nine product-mark concepts | All sites | active |
@@ -96,6 +97,7 @@ Each product has its own reader. What they share: they are on the other side of 
 
 ## Changelog
 *Newest first. One line per revision: what changed and why.*
+- v8 (2026-11-28) — General first: how I work in any field, products as evidence; one-liner and conversion action updated.
 - v7 (2026-11-28) — Slogan "Digital craft, evermore"; one-liner rewritten against the copywriting rules.
 - v6 (2026-11-28) — One-liner rewritten; Learnings: the owner's words are a brief, not copy; the old slogan retired.
 - v5 (2026-11-28) — Learnings: products keep the ARVA logo, no product marks (owner's decision).
