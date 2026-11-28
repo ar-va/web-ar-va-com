@@ -12,7 +12,7 @@ Online at https://brand.ar-va.com (this file: https://brand.ar-va.com/ARVA-brand
 
 ARVA is Artur's brand, and it speaks as Artur, in the first person: "I make", "my products", never "we".
 
-**Digital craft, evermore.** I'm Artur. I build web tools for the work that still happens in spreadsheets, group chats and software made for somebody else, and I make each one to stay useful for years. I build my own products and take on projects for other people, and I do every part of the work myself. ARVA is new and claims no history.
+**Digital craft, evermore.** I'm Artur. I build web tools for the work that still happens in spreadsheets, group chats and software made for somebody else, and I make each one to stay useful for years. I build my own products and take on projects for other people. I do all of the work myself: I study each job until I know it as well as the people who do it, compare the ways it could be solved, and build from what I learned. ARVA is new and claims no history.
 
 How I work, in any field:
 

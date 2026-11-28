@@ -1,6 +1,6 @@
 # Product Marketing Context
 
-**Document version:** v9
+**Document version:** v10
 **Last updated:** 2026-11-28
 
 ## Product Overview
@@ -32,6 +32,7 @@ Each product has its own reader. What they share: they are on the other side of 
 
 ## Differentiation
 **Key differentiators:**
+- One person from first question to last line of code: Artur studies each job in depth, compares the possible solutions and builds from what was learned (the reason Artur hires nobody).
 - The engineering is deep and hidden: music's record turns at 33⅓ rpm with a synthesized needle drop; Vincent's tests run about a thousand generated themes through every contrast check; the brand page's own leaf is checked on every build.
 - Built for the non-expert first.
 - People stay in control (their colours, public or private, their studio's decisions).
@@ -98,6 +99,7 @@ Each product has its own reader. What they share: they are on the other side of 
 
 ## Changelog
 *Newest first. One line per revision: what changed and why.*
+- v10 (2026-11-28) — Differentiation: why the work stays with one person (depth of study, then building from it).
 - v9 (2026-11-28) — Business model: client projects too, all work done by Artur; the "not for hire" learning retired.
 - v8 (2026-11-28) — General first: how I work in any field, products as evidence; one-liner and conversion action updated.
 - v7 (2026-11-28) — Slogan "Digital craft, evermore"; one-liner rewritten against the copywriting rules.
