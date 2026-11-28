@@ -12,7 +12,7 @@ Online at https://brand.ar-va.com (this file: https://brand.ar-va.com/ARVA-brand
 
 ARVA is Artur's brand, and it speaks as Artur, in the first person: "I make", "my products", never "we".
 
-**Digital craft, evermore.** I'm Artur. I build web tools for the work that still happens in spreadsheets, group chats and software made for somebody else, and I make each one to stay useful for years. ARVA is new and claims no history.
+**Digital craft, evermore.** I'm Artur. I build web tools for the work that still happens in spreadsheets, group chats and software made for somebody else, and I make each one to stay useful for years. I build my own products and take on projects for other people, and I do every part of the work myself. ARVA is new and claims no history.
 
 How I work, in any field:
 
@@ -276,6 +276,8 @@ On the site, Brygada is applied to `h1`–`h4` in the CSS base layer, so an elem
   Kashiwa as large grounds broke their one-job rules (and turned the leaf white), and the Ink ground paired light-theme
   Ink with the dark-theme mint and a paper-white name no logo uses. Paper and night stay, matching the two-tone logo
   files; the leaf avatar is now the default profile picture.
+- **2026-11-28 (projects for others):** ARVA also takes on projects for other people, and Artur does all the work himself
+  (no outside hires). Section 1 says so; ar-va.com ends on an invitation to describe a job.
 - **2026-11-28 (general first):** the owner asked for copy about how I work and what could be built in any field, with
   the products as short evidence rather than the subject. Section 1 and a voice rule follow; ar-va.com's landing page
   leads with "How I work" and lists the products under "Built so far".

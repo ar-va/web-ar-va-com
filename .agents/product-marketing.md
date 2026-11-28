@@ -1,15 +1,15 @@
 # Product Marketing Context
 
-**Document version:** v8
+**Document version:** v9
 **Last updated:** 2026-11-28
 
 ## Product Overview
 **Slogan:** Digital craft, evermore (owner's choice, 2026-11-28).
 **One-liner:** I'm Artur. I build web tools for the work that still happens in spreadsheets, group chats and software made for somebody else.
 **What it does:** ARVA makes its own products, each for something people want and can't find, or can only find done badly. Every product hides a lot of engineering under a surface that a non-expert can use without help.
-**Product category:** A maker of its own web products (not an agency, not work for hire).
+**Product category:** A one-person maker of web tools: its own products, and projects for other people.
 **Product type:** Web apps; Solaris (in progress) is a business system for tattoo studios.
-**Business model:** [NEED: how ARVA earns, per product; music, Vincent and anon are free today]
+**Business model:** own products (music, Vincent and anon are free today) and projects built for other people. One person: Artur does all the work himself, with no outside hires. [NEED: pricing for client projects]
 
 ## Target Audience
 Each product has its own reader. What they share: they are on the other side of an expert tool.
@@ -77,12 +77,13 @@ Each product has its own reader. What they share: they are on the other side of 
 
 ## Goals
 **Business goal:** [NEED]
-**Conversion action:** on ar-va.com, picture a tool for your own field and write to me (contact@ar-va.com); on brand.ar-va.com, build with the design language. [NEED: whether ARVA takes commissions, or only collects ideas for its own products]
+**Conversion action:** on ar-va.com, picture a tool for your own field and write to me (contact@ar-va.com); on brand.ar-va.com, build with the design language.
 
 ## Learnings
 *Decisions and tested lessons. Newest first.*
 | Date | Learning | Evidence | Applies to | Status |
 |------|----------|----------|------------|--------|
+| 2026-11-28 | Takes on projects for other people; does every part of the work himself, no outside hires (say it: clients talk to the person writing the code) | Owner's answer | Landing page, rules | active |
 | 2026-11-28 | Lead with how I work and what could be built in any field; the products are short evidence, never the subject | Owner's direction | All copy | active |
 | 2026-11-28 | The owner's explanations are a brief, not copy: write fresh lines from the idea, never reuse their wording | Owner's correction | All copy | active |
 | 2026-11-28 | "What was missing, made well" is retired as the slogan | Owner disliked it | Hero, rules | active |
@@ -97,6 +98,7 @@ Each product has its own reader. What they share: they are on the other side of 
 
 ## Changelog
 *Newest first. One line per revision: what changed and why.*
+- v9 (2026-11-28) — Business model: client projects too, all work done by Artur; the "not for hire" learning retired.
 - v8 (2026-11-28) — General first: how I work in any field, products as evidence; one-liner and conversion action updated.
 - v7 (2026-11-28) — Slogan "Digital craft, evermore"; one-liner rewritten against the copywriting rules.
 - v6 (2026-11-28) — One-liner rewritten; Learnings: the owner's words are a brief, not copy; the old slogan retired.
